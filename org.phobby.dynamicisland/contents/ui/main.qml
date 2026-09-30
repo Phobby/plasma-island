@@ -71,9 +71,78 @@ PlasmoidItem {
         notificationDuration: root.cfg.notificationDuration
     }
 
-    // Every provider feeds the manager independently.
+    // ---- backends -------------------------------------------------------------------
+    // Private-API backends (see PlasmaBackend.qml / backend/). Each one is loaded
+    // through a Loader: if its Plasma/KDE module is missing on this system only
+    // that feature disappears (e.g. no KDE Connect, no bluez-qt, no plasma-nm).
+    component OptionalBackend: Loader {
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: optional backend unavailable:", source)
+    }
+    OptionalBackend { id: powerLoader; source: "backend/PowerBackend.qml" }
+    OptionalBackend { id: bluetoothLoader; source: "backend/BluetoothBackend.qml" }
+    OptionalBackend { id: displayLoader; source: "backend/DisplayBackend.qml" }
+    OptionalBackend { id: keyboardLoader; source: "backend/KeyboardBackend.qml" }
+    OptionalBackend { id: networkLoader; source: "backend/NetworkBackend.qml" }
+    OptionalBackend { id: dndLoader; source: "backend/DndBackend.qml" }
+    OptionalBackend { id: tasksLoader; source: "backend/TasksBackend.qml" }
+    OptionalBackend { id: jobsLoader; source: "backend/JobsBackend.qml" }
+    OptionalBackend { id: calendarLoader; source: root.cfg.showCalendar ? "backend/CalendarBackend.qml" : "" }
+    OptionalBackend { id: kdeconnectLoader; source: root.cfg.showKdeConnect ? "backend/KdeConnectBackend.qml" : "" }
+
+    readonly property var powerBackend: powerLoader.item
+    readonly property var bluetoothBackend: bluetoothLoader.item
+    readonly property var displayBackend: displayLoader.item
+    readonly property var keyboardBackend: keyboardLoader.item
+    readonly property var networkBackend: networkLoader.item
+    readonly property var dndBackend: dndLoader.item
+    readonly property var tasksBackend: tasksLoader.item
+    readonly property var jobsBackend: jobsLoader.item
+    readonly property var calendarBackend: calendarLoader.item
+    readonly property var kdeconnectBackend: kdeconnectLoader.item
+
+    // ---- native core (optional: native/core) ------------------------------------
+    Loader {
+        id: coreLoader
+        source: "NativeBridge.qml"
+        onStatusChanged: if (status === Loader.Error) {
+            console.info("org.phobby.dynamicisland: native core not installed; screen recording, privacy indicators, unlock, calls, D-Bus API and updates are disabled");
+        }
+    }
+    readonly property var core: coreLoader.status === Loader.Ready ? coreLoader.item : null
+
+    // Timer / alarm sound (QtMultimedia; optional). Loaded on first use only,
+    // so an idle island never initialises the multimedia stack.
+    Loader {
+        id: soundLoader
+        active: false
+        source: "SoundPlayer.qml"
+    }
+    QtObject {
+        id: soundProxy
+        function play(source) {
+            if (!source) return;
+            soundLoader.active = true;
+            if (soundLoader.item) soundLoader.item.play(source);
+        }
+    }
+    readonly property var sound: soundProxy
+
+    // ---- providers --------------------------------------------------------------------
+    // Every provider feeds the manager independently. Providers that need an
+    // optional backend only exist while that backend is available.
+    // Inside these implicit components a bare `theme` / `backend` would resolve
+    // to the provider's own property, so they reference these instead.
+    readonly property Theme islandTheme: theme
+    readonly property PlasmaBackend plasmaBackend: backend
+
+    component WhenAvailable: Loader {
+        required property var dependency
+        active: dependency !== null && dependency !== undefined
+    }
+
     Item {
         id: providers
+
         MediaProvider {
             manager: activities
             backend: backend
@@ -84,56 +153,74 @@ PlasmoidItem {
             manager: activities
             backend: backend
             enabled: root.cfg.showNotifications
-            doNotDisturb: dndBackend.active
+            doNotDisturb: root.dndBackend ? root.dndBackend.active : false
         }
-        PowerProvider {
-            manager: activities
-            backend: backend
-            power: powerBackend
-            theme: theme
-            enabled: root.cfg.showPowerEvents
-            lowThreshold: root.cfg.lowBatteryThreshold
-            criticalThreshold: root.cfg.criticalBatteryThreshold
+        WhenAvailable {
+            dependency: root.powerBackend
+            sourceComponent: PowerProvider {
+                manager: activities
+                backend: root.plasmaBackend
+                power: root.powerBackend
+                theme: root.islandTheme
+                enabled: root.cfg.showPowerEvents
+                lowThreshold: root.cfg.lowBatteryThreshold
+                criticalThreshold: root.cfg.criticalBatteryThreshold
+            }
         }
-        BluetoothProvider {
-            manager: activities
-            bluetooth: bluetoothBackend
-            theme: theme
-            enabled: root.cfg.showBluetoothEvents
-            lowBattery: root.cfg.deviceBatteryThreshold
+        WhenAvailable {
+            dependency: root.bluetoothBackend
+            sourceComponent: BluetoothProvider {
+                manager: activities
+                bluetooth: root.bluetoothBackend
+                theme: root.islandTheme
+                enabled: root.cfg.showBluetoothEvents
+                lowBattery: root.cfg.deviceBatteryThreshold
+            }
         }
         OsdProvider {
             manager: activities
             backend: backend
-            display: displayBackend
+            display: root.displayBackend
             theme: theme
             enabled: root.cfg.showOsdEvents
         }
-        KeyboardProvider {
-            manager: activities
-            keyboard: keyboardBackend
-            theme: theme
-            enabled: root.cfg.showKeyboardEvents
+        WhenAvailable {
+            dependency: root.keyboardBackend
+            sourceComponent: KeyboardProvider {
+                manager: activities
+                keyboard: root.keyboardBackend
+                theme: root.islandTheme
+                enabled: root.cfg.showKeyboardEvents
+            }
         }
-        NetworkProvider {
-            manager: activities
-            network: networkBackend
-            theme: theme
-            enabled: root.cfg.showNetworkEvents
+        WhenAvailable {
+            dependency: root.networkBackend
+            sourceComponent: NetworkProvider {
+                manager: activities
+                network: root.networkBackend
+                theme: root.islandTheme
+                enabled: root.cfg.showNetworkEvents
+            }
         }
-        DndProvider {
-            manager: activities
-            dnd: dndBackend
-            theme: theme
-            enabled: root.cfg.showDndEvents
-            missed: notificationProvider.missedWhileDnd
+        WhenAvailable {
+            dependency: root.dndBackend
+            sourceComponent: DndProvider {
+                manager: activities
+                dnd: root.dndBackend
+                theme: root.islandTheme
+                enabled: root.cfg.showDndEvents
+                missed: notificationProvider.missedWhileDnd
+            }
         }
-        RecordingProvider {
-            manager: activities
-            theme: theme
-            tasks: tasksBackend
-            core: root.core
-            enabled: root.cfg.showRecording
+        WhenAvailable {
+            dependency: root.core
+            sourceComponent: RecordingProvider {
+                manager: activities
+                theme: root.islandTheme
+                tasks: root.tasksBackend
+                core: root.core
+                enabled: root.cfg.showRecording
+            }
         }
         PrivacyProvider {
             manager: activities
@@ -142,11 +229,14 @@ PlasmoidItem {
             core: root.core
             enabled: root.cfg.showPrivacy
         }
-        JobsProvider {
-            manager: activities
-            jobs: jobsBackend
-            theme: theme
-            enabled: root.cfg.showJobs
+        WhenAvailable {
+            dependency: root.jobsBackend
+            sourceComponent: JobsProvider {
+                manager: activities
+                jobs: root.jobsBackend
+                theme: root.islandTheme
+                enabled: root.cfg.showJobs
+            }
         }
         TimerProvider {
             id: timerProvider
@@ -179,12 +269,24 @@ PlasmoidItem {
             sound: root.sound
             enabled: root.cfg.showTools
         }
-        CalendarProvider {
+        WhenAvailable {
+            dependency: root.calendarBackend
+            sourceComponent: CalendarProvider {
+                manager: activities
+                calendar: root.calendarBackend
+                theme: root.islandTheme
+                leadMinutes: root.cfg.calendarLeadMinutes
+                enabled: root.cfg.showCalendar
+            }
+        }
+        KdeConnectProvider {
             manager: activities
-            calendar: calendarBackend
+            backend: backend
             theme: theme
-            leadMinutes: root.cfg.calendarLeadMinutes
-            enabled: root.cfg.showCalendar
+            kdeconnect: root.kdeconnectBackend
+            core: root.core
+            enabled: root.cfg.showKdeConnect
+            lowBattery: root.cfg.deviceBatteryThreshold
         }
         UnlockProvider {
             manager: activities
@@ -194,49 +296,20 @@ PlasmoidItem {
         }
     }
 
-    // ---- native core (optional: native/core) ------------------------------------
-    Loader {
-        id: coreLoader
-        source: "NativeBridge.qml"
-        onStatusChanged: if (status === Loader.Error) {
-            console.info("org.phobby.dynamicisland: native core not installed; screen recording, privacy indicators, unlock, D-Bus API and updates are disabled");
-        }
-    }
-    readonly property var core: coreLoader.status === Loader.Ready ? coreLoader.item : null
-
-    // Private-API backends (see PlasmaBackend.qml / backend/).
-    PowerBackend { id: powerBackend }
-    BluetoothBackend { id: bluetoothBackend }
-    DisplayBackend { id: displayBackend }
-    KeyboardBackend { id: keyboardBackend }
-    NetworkBackend { id: networkBackend }
-    DndBackend { id: dndBackend }
-    TasksBackend { id: tasksBackend }
-    JobsBackend { id: jobsBackend }
-    CalendarBackend { id: calendarBackend; enabled: root.cfg.showCalendar }
-
-    // Timer / alarm sound (QtMultimedia; optional). Loaded on first use only,
-    // so an idle island never initialises the multimedia stack.
-    Loader {
-        id: soundLoader
-        active: false
-        source: "SoundPlayer.qml"
-    }
-    QtObject {
-        id: soundProxy
-        function play(source) {
-            if (!source) return;
-            soundLoader.active = true;
-            if (soundLoader.item) soundLoader.item.play(source);
-        }
-    }
-    readonly property var sound: soundProxy
-
-    // Everything shown on the "Devices" page.
+    // Everything shown on the "Devices" page: Bluetooth devices + phones.
     readonly property var deviceList: {
         const list = [];
-        for (const d of bluetoothBackend.connectedDevices) {
-            list.push({ icon: bluetoothBackend.iconFor(d), name: d.name, battery: bluetoothBackend.batteryOf(d), charging: false, detail: i18n("Bluetooth") });
+        const bt = root.bluetoothBackend;
+        if (bt) {
+            for (const d of bt.connectedDevices) {
+                list.push({ icon: bt.iconFor(d), name: d.name, battery: bt.batteryOf(d), charging: false, detail: i18n("Bluetooth") });
+            }
+        }
+        const kc = root.kdeconnectBackend;
+        if (kc) {
+            for (const p of kc.phones) {
+                list.push({ icon: p.icon, name: p.name, battery: p.charge, charging: p.charging, detail: i18n("KDE Connect") });
+            }
         }
         return list;
     }
@@ -283,11 +356,18 @@ PlasmoidItem {
                                           ? Math.max(theme.expandedHeight, theme.notificationHeight)
                                           : theme.pillHeight) + theme.windowTopPad + theme.windowBottomPad
 
+    Connections {
+        target: island
+        function onWantsKeyboardChanged() { if (island.wantsKeyboard) dialog.requestActivate(); }
+    }
+
     PlasmaCore.Dialog {
         id: dialog
 
         type: PlasmaCore.Dialog.Notification
-        flags: Qt.WindowStaysOnTopHint | Qt.WindowDoesNotAcceptFocus
+        // Never takes focus, except while typing a quick reply (the same
+        // trick as Plasma's notification popups).
+        flags: Qt.WindowStaysOnTopHint | (island.wantsKeyboard ? 0 : Qt.WindowDoesNotAcceptFocus)
         location: PlasmaCore.Types.Floating
         backgroundHints: PlasmaCore.Dialog.NoBackground
         hideOnWindowDeactivate: false
@@ -316,7 +396,7 @@ PlasmoidItem {
                 extraPages: [
                     { key: "tools", icon: "chronometer", title: i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },
                     { key: "devices", icon: "network-bluetooth", title: i18n("Devices"), component: devicesPage,
-                      visible: root.cfg.showDevicesModule && (bluetoothBackend.available || root.deviceList.length > 0) }
+                      visible: root.cfg.showDevicesModule && ((root.bluetoothBackend && root.bluetoothBackend.available) || root.deviceList.length > 0) }
                 ]
             }
         }

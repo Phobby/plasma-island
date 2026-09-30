@@ -45,6 +45,8 @@ Item {
     readonly property var secondary: manager.secondary
 
     readonly property bool hovered: hover.hovered || bubbleHover.hovered
+    // A text field (quick reply) needs keyboard focus: see main.qml.
+    readonly property bool wantsKeyboard: expanded && expandedContent.interacting
     readonly property string mode: expanded ? "expanded"
                                  : currentEvent ? (currentEvent.kind === "notification" ? "notification" : "event")
                                  : secondary ? "split"

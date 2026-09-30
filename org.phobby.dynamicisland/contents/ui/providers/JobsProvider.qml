@@ -6,13 +6,12 @@
 */
 import QtQuick
 import ".."
-import "../backend"
 
 Item {
     id: provider
 
     required property ActivityManager manager
-    required property JobsBackend jobs
+    required property var jobs
     required property Theme theme
     property bool enabled: true
 
@@ -21,7 +20,7 @@ Item {
         if (/cop|kopya/.test(s)) return "edit-copy-symbolic";
         if (/mov|taşı/.test(s)) return "transform-move";
         if (/delet|sil|trash|çöp/.test(s)) return "edit-delete-symbolic";
-        if (/download|indir/.test(s)) return "download";
+        if (/download|indir|receiv|alın/.test(s)) return "download";
         if (/extract|unpack|aç|çıkar/.test(s)) return "archive-extract";
         if (/upload|send|gönder|yükle/.test(s)) return "document-send";
         return "view-refresh-symbolic";
@@ -41,7 +40,7 @@ Item {
         category: "transfer"
         active: provider.enabled && provider.jobs.count > 0
         readonly property var first: provider.jobs.count > 0 ? provider.jobs.jobs[0] : null
-        icon: first ? provider.iconFor(first.summary) : "view-refresh-symbolic"
+        icon: !first ? "view-refresh-symbolic" : first.app === "KDE Connect" ? "smartphone-symbolic" : provider.iconFor(first.summary)
         color: provider.theme.blue
         title: provider.jobs.count > 1 ? i18np("%1 operation", "%1 operations", provider.jobs.count) : (first ? first.summary : "")
         subtitle: first ? first.detail : ""

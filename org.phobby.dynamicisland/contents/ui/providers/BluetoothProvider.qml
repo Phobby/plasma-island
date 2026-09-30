@@ -4,13 +4,12 @@
 */
 import QtQuick
 import ".."
-import "../backend"
 
 Item {
     id: provider
 
     required property ActivityManager manager
-    required property BluetoothBackend bluetooth
+    required property var bluetooth
     required property Theme theme
     property bool enabled: true
     property int lowBattery: 15

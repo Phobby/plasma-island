@@ -232,6 +232,8 @@ Item {
             summary: notifications.data(idx, R.SummaryRole) || "",
             body: plainText(notifications.data(idx, R.BodyRole) || ""),
             appName: notifications.data(idx, R.ApplicationNameRole) || "",
+            notifyRcName: notifications.data(idx, R.NotifyRcNameRole) || "",
+            hasReplyAction: !!notifications.data(idx, R.HasReplyActionRole),
             icon: notifications.data(idx, R.ImageRole)
                   || notifications.data(idx, R.IconNameRole)
                   || notifications.data(idx, R.ApplicationIconNameRole)
@@ -257,6 +259,11 @@ Item {
         } else {
             notifications.expire(idx);
         }
+    }
+
+    function replyToNotification(id: var, text: string): void {
+        const row = rowForId(id);
+        if (row >= 0) notifications.reply(notifications.index(row, 0), text, NotificationManager.Notifications.Close);
     }
 
     function closeNotification(id: var): void {

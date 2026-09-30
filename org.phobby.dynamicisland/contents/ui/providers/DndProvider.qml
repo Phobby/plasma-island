@@ -4,13 +4,12 @@
 */
 import QtQuick
 import ".."
-import "../backend"
 
 Item {
     id: provider
 
     required property ActivityManager manager
-    required property DndBackend dnd
+    required property var dnd
     required property Theme theme
     property bool enabled: true
     // Notifications that arrived while DND was on (from NotificationProvider).

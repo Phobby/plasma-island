@@ -23,8 +23,10 @@ Item {
     property bool showNotificationModule: true
     property bool showClock: true
 
-    // True while the user drags a slider, so the island does not collapse.
-    readonly property bool interacting: false
+    // True while the user types a reply: the island keeps keyboard focus
+    // and does not collapse.
+    property bool interacting: false
+    onActiveChanged: if (!active) interacting = false
 
     // Live activities that have no page of their own (media has one).
     readonly property var listedActivities: manager.live.concat(manager.indicators).filter(a => a.listed)
@@ -276,6 +278,7 @@ Item {
             theme: expanded.theme
             backend: expanded.backend
             active: expanded.active
+            onReplyingChanged: expanded.interacting = replying
         }
     }
 }

@@ -6,14 +6,13 @@
 */
 import QtQuick
 import ".."
-import "../backend"
 
 Item {
     id: provider
 
     required property ActivityManager manager
     required property Theme theme
-    required property TasksBackend tasks
+    required property var tasks
     property var core: null
     property bool enabled: true
 

@@ -13,6 +13,10 @@ Item {
     required property Theme theme
     required property PlasmaBackend backend
     property bool active: false
+    // Quick reply in progress (the island then takes keyboard focus).
+    readonly property bool replying: replyTarget !== null
+    property var replyTarget: null     // { id, summary }
+    onActiveChanged: if (!active) replyTarget = null
     property int maximumCount: 3
     readonly property real rowHeight: 36
 
@@ -54,6 +58,16 @@ Item {
                     Layout.preferredWidth: 22
                     Layout.preferredHeight: 22
                     source: row.model.image || row.model.iconName || row.model.applicationIconName || "preferences-desktop-notification-bell"
+
+                    PhoneBadge {
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.margins: -4
+                        width: 12
+                        height: 12
+                        visible: row.model.notifyRcName === "kdeconnect"
+                        tint: notif.theme.blue
+                    }
                 }
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -93,6 +107,18 @@ Item {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: notif.backend.activateNotification(row.model.notificationId)
             }
+            // Quick reply (SMS / messengers via KDE Connect or apps that support it)
+            IconButton {
+                anchors.right: parent.right
+                anchors.rightMargin: 40
+                anchors.verticalCenter: parent.verticalCenter
+                visible: row.model.hasReplyAction === true && rowMouse.containsMouse
+                iconName: "mail-reply-sender-symbolic"
+                toolTip: i18n("Reply")
+                color: notif.theme.text
+                hoverColor: notif.theme.faint
+                onClicked: notif.replyTarget = { id: row.model.notificationId, summary: row.model.summary || row.model.applicationName }
+            }
         }
     }
 
@@ -115,4 +141,68 @@ Item {
             font.pointSize: notif.theme.fontNormal
         }
     }
+
+    // Reply bar
+    Rectangle {
+        anchors.fill: parent
+        visible: notif.replying
+        radius: 14
+        color: notif.theme.bodyMid
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            spacing: 6
+            Text {
+                Layout.fillWidth: true
+                text: i18n("Reply to %1", notif.replyTarget?.summary ?? "")
+                color: notif.theme.subText
+                font.pointSize: notif.theme.fontSmall
+                elide: Text.ElideRight
+            }
+            RowLayout {
+                spacing: 6
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 30
+                    radius: 15
+                    color: notif.theme.faint
+                    border.width: 1
+                    border.color: replyInput.activeFocus ? notif.theme.blue : "transparent"
+                    TextInput {
+                        id: replyInput
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        verticalAlignment: TextInput.AlignVCenter
+                        color: notif.theme.text
+                        font.pointSize: notif.theme.fontNormal
+                        clip: true
+                        onAccepted: sendButton.clicked()
+                        Keys.onEscapePressed: notif.replyTarget = null
+                    }
+                }
+                IconButton {
+                    id: sendButton
+                    iconName: "document-send-symbolic"
+                    color: notif.theme.blue
+                    hoverColor: notif.theme.faint
+                    enabled: replyInput.text.length > 0
+                    onClicked: {
+                        notif.backend.replyToNotification(notif.replyTarget.id, replyInput.text);
+                        replyInput.text = "";
+                        notif.replyTarget = null;
+                    }
+                }
+                IconButton {
+                    iconName: "dialog-cancel-symbolic"
+                    color: notif.theme.subText
+                    hoverColor: notif.theme.faint
+                    onClicked: notif.replyTarget = null
+                }
+            }
+            Item { Layout.fillHeight: true }
+        }
+    }
+    onReplyingChanged: if (replying) Qt.callLater(() => replyInput.forceActiveFocus())
 }

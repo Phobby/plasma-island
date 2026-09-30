@@ -5,13 +5,12 @@
 */
 import QtQuick
 import ".."
-import "../backend"
 
 Item {
     id: provider
 
     required property ActivityManager manager
-    required property CalendarBackend calendar
+    required property var calendar
     required property Theme theme
     property int leadMinutes: 15
     property bool enabled: true

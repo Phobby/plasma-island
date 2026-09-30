@@ -4,13 +4,12 @@
 */
 import QtQuick
 import ".."
-import "../backend"
 
 Item {
     id: provider
 
     required property ActivityManager manager
-    required property NetworkBackend network
+    required property var network
     required property Theme theme
     property bool enabled: true
 

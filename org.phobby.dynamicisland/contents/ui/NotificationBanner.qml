@@ -27,6 +27,14 @@ Item {
             Layout.preferredWidth: 38
             Layout.preferredHeight: 38
             source: banner.notification?.icon ?? ""
+
+            PhoneBadge {
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: -3
+                visible: banner.notification?.notifyRcName === "kdeconnect"
+                tint: banner.theme.blue
+            }
         }
         ColumnLayout {
             Layout.fillWidth: true

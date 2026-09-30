@@ -16,7 +16,8 @@
         trailing: { type: "ring" | "battery" | "slider" | "text" | "dot", value, color, text, charging },
         duration (ms), notification (for kind "notification"), activate: function,
         key (coalesce repeats), live (feedback like volume: dropped instead of
-        queued when it cannot be shown right away) }
+        queued when it cannot be shown right away), force (shown even above a
+        higher-priority live activity, e.g. an incoming call) }
 */
 import QtQuick
 
@@ -100,7 +101,7 @@ Item {
     function flash(ev: var): void {
         ev.kind = ev.kind || "event";
         if (!warm && ev.kind === "event") return;
-        if (ev.live && !eventsAllowed) return;
+        if (ev.live && !eventsAllowed && !ev.force) return;
         ev.queuedAt = Date.now();
         // Coalesce repeated events of the same key (e.g. volume ticks).
         if (ev.key) {
@@ -122,11 +123,12 @@ Item {
     }
 
     function showNext(): void {
-        if (currentEvent || !eventsAllowed) return;
+        if (currentEvent || holdEvents) return;
         const now = Date.now();
         queue = queue.filter(q => now - q.queuedAt < maxEventAge);
-        if (queue.length === 0) return;
-        currentEvent = queue.shift();
+        const i = eventsAllowed ? 0 : queue.findIndex(q => q.force);
+        if (i < 0 || queue.length === 0) return;
+        currentEvent = queue.splice(i, 1)[0];
         eventTimer.interval = durationOf(currentEvent);
         eventTimer.restart();
     }

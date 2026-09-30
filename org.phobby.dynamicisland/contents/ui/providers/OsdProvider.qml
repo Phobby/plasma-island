@@ -6,14 +6,13 @@
 */
 import QtQuick
 import ".."
-import "../backend"
 
 Item {
     id: provider
 
     required property ActivityManager manager
     required property PlasmaBackend backend
-    required property DisplayBackend display
+    required property var display
     required property Theme theme
     property bool enabled: true
 

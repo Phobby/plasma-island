@@ -4,13 +4,12 @@
 */
 import QtQuick
 import ".."
-import "../backend"
 
 Item {
     id: provider
 
     required property ActivityManager manager
-    required property KeyboardBackend keyboard
+    required property var keyboard
     required property Theme theme
     property bool enabled: true
 
