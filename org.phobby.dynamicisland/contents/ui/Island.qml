@@ -79,7 +79,21 @@ Item {
 
     Binding { target: island.manager; property: "holdEvents"; value: island.expanded }
     Binding { target: island.manager; property: "hovered"; value: island.hovered }
-    onCurrentEventChanged: if (!currentEvent && hovered && !expanded) expandTimer.restart()
+    onCurrentEventChanged: {
+        if (!currentEvent && hovered && !expanded) expandTimer.restart();
+        // Timer done / alarm: the island shakes like the iPhone's.
+        if (currentEvent && currentEvent.shake) shakeAnim.restart();
+    }
+
+    SequentialAnimation {
+        id: shakeAnim
+        loops: 2
+        NumberAnimation { target: surface; property: "anchors.horizontalCenterOffset"; to: 9; duration: 55; easing.type: Easing.OutQuad }
+        NumberAnimation { target: surface; property: "anchors.horizontalCenterOffset"; to: -9; duration: 90; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: surface; property: "anchors.horizontalCenterOffset"; to: 5; duration: 80; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: surface; property: "anchors.horizontalCenterOffset"; to: -3; duration: 70; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: surface; property: "anchors.horizontalCenterOffset"; to: 0; duration: 60; easing.type: Easing.OutQuad }
+    }
 
     // ---- hover → expand / collapse --------------------------------------------
     Timer {

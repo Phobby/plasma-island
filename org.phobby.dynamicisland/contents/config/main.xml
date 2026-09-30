@@ -72,6 +72,29 @@
     <entry name="showUnlock" type="Bool"><default>true</default></entry>
     <entry name="showJobs" type="Bool"><default>true</default></entry>
 
+    <!-- Time & productivity (end times are epoch ms strings so they survive restarts) -->
+    <entry name="showTools" type="Bool"><default>true</default></entry>
+    <entry name="timerEndsAt" type="String"><default>0</default></entry>
+    <entry name="timerTotal" type="Int"><default>300</default></entry>
+    <entry name="timerPausedRemaining" type="Int"><default>0</default></entry>
+    <entry name="stopwatchStartedAt" type="String"><default>0</default></entry>
+    <entry name="stopwatchElapsed" type="String"><default>0</default></entry>
+    <entry name="stopwatchLaps" type="String"><default>[]</default></entry>
+    <entry name="pomodoroPhase" type="String"><default></default></entry>
+    <entry name="pomodoroEndsAt" type="String"><default>0</default></entry>
+    <entry name="pomodoroRound" type="Int"><default>0</default></entry>
+    <entry name="pomodoroWork" type="Int"><default>25</default></entry>
+    <entry name="pomodoroShortBreak" type="Int"><default>5</default></entry>
+    <entry name="pomodoroLongBreak" type="Int"><default>15</default></entry>
+    <entry name="pomodoroRounds" type="Int"><default>4</default></entry>
+    <entry name="alarmAt" type="String"><default>0</default></entry>
+    <entry name="alarmTime" type="String"><default>07:00</default></entry>
+    <entry name="alarmLabel" type="String"><default></default></entry>
+    <entry name="timerSoundEnabled" type="Bool"><default>true</default></entry>
+    <entry name="timerSound" type="String"><default>/usr/share/sounds/ocean/stereo/alarm-clock-elapsed.oga</default></entry>
+    <entry name="showCalendar" type="Bool"><default>true</default></entry>
+    <entry name="calendarLeadMinutes" type="Int"><default>15</default></entry>
+
     <!-- Modules -->
     <entry name="showMediaModule" type="Bool">
       <default>true</default>

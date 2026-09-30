@@ -148,6 +148,44 @@ PlasmoidItem {
             theme: theme
             enabled: root.cfg.showJobs
         }
+        TimerProvider {
+            id: timerProvider
+            manager: activities
+            theme: theme
+            cfg: root.cfg
+            sound: root.sound
+            enabled: root.cfg.showTools
+        }
+        StopwatchProvider {
+            id: stopwatchProvider
+            manager: activities
+            theme: theme
+            cfg: root.cfg
+            enabled: root.cfg.showTools
+        }
+        PomodoroProvider {
+            id: pomodoroProvider
+            manager: activities
+            theme: theme
+            cfg: root.cfg
+            sound: root.sound
+            enabled: root.cfg.showTools
+        }
+        AlarmProvider {
+            id: alarmProvider
+            manager: activities
+            theme: theme
+            cfg: root.cfg
+            sound: root.sound
+            enabled: root.cfg.showTools
+        }
+        CalendarProvider {
+            manager: activities
+            calendar: calendarBackend
+            theme: theme
+            leadMinutes: root.cfg.calendarLeadMinutes
+            enabled: root.cfg.showCalendar
+        }
         UnlockProvider {
             manager: activities
             theme: theme
@@ -175,6 +213,14 @@ PlasmoidItem {
     DndBackend { id: dndBackend }
     TasksBackend { id: tasksBackend }
     JobsBackend { id: jobsBackend }
+    CalendarBackend { id: calendarBackend; enabled: root.cfg.showCalendar }
+
+    // Timer / alarm sound (QtMultimedia; optional).
+    Loader {
+        id: soundLoader
+        source: "SoundPlayer.qml"
+    }
+    readonly property var sound: soundLoader.status === Loader.Ready ? soundLoader.item : null
 
     // Everything shown on the "Devices" page.
     readonly property var deviceList: {
@@ -183,6 +229,18 @@ PlasmoidItem {
             list.push({ icon: bluetoothBackend.iconFor(d), name: d.name, battery: bluetoothBackend.batteryOf(d), charging: false, detail: i18n("Bluetooth") });
         }
         return list;
+    }
+
+    Component {
+        id: toolsPage
+        ToolsPage {
+            theme: theme
+            timer: timerProvider
+            stopwatch: stopwatchProvider
+            pomodoro: pomodoroProvider
+            alarm: alarmProvider
+            active: island.expanded
+        }
     }
 
     Component {
@@ -246,6 +304,7 @@ PlasmoidItem {
                 showVolumeModule: root.cfg.showVolumeModule
                 showNotificationModule: root.cfg.showNotificationModule
                 extraPages: [
+                    { key: "tools", icon: "chronometer", title: i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },
                     { key: "devices", icon: "network-bluetooth", title: i18n("Devices"), component: devicesPage,
                       visible: root.cfg.showDevicesModule && (bluetoothBackend.available || root.deviceList.length > 0) }
                 ]
