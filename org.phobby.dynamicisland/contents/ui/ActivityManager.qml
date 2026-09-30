@@ -14,7 +14,9 @@
       { kind: "notification" | "event",
         icon, color, title, subtitle,
         trailing: { type: "ring" | "battery" | "slider" | "text" | "dot", value, color, text, charging },
-        duration (ms), notification (for kind "notification"), activate: function }
+        duration (ms), notification (for kind "notification"), activate: function,
+        key (coalesce repeats), live (feedback like volume: dropped instead of
+        queued when it cannot be shown right away) }
 */
 import QtQuick
 
@@ -87,8 +89,18 @@ Item {
     property var queue: []
     readonly property bool eventsAllowed: !holdEvents && (!primary || rank("event") <= rank(primary.category))
 
+    // System events fired while providers read their initial state are noise.
+    property bool warm: false
+    Timer {
+        interval: 4000
+        running: true
+        onTriggered: manager.warm = true
+    }
+
     function flash(ev: var): void {
         ev.kind = ev.kind || "event";
+        if (!warm && ev.kind === "event") return;
+        if (ev.live && !eventsAllowed) return;
         ev.queuedAt = Date.now();
         // Coalesce repeated events of the same key (e.g. volume ticks).
         if (ev.key) {

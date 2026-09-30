@@ -5,6 +5,10 @@
     Every UI module consumes the normalized properties and functions below.
     If a Plasma update changes one of these modules, fix it here.
 
+    More private modules (Bluetooth, power profiles, brightness, keyboard,
+    network, DND, …) live in backend/*.qml — likewise the only files allowed
+    to import them.
+
     Verified against Plasma 6.6 (plasma-workspace, plasma-pa, plasma-nm, libksysguard):
       org.kde.plasma.private.mpris      Mpris2Model / PlayerContainer
       org.kde.notificationmanager       Notifications
@@ -133,6 +137,11 @@ Item {
     readonly property bool batteryCharging: batteryControl.pluggedIn
                                             && batteryControl.state === Battery.BatteryControlModel.Charging
     readonly property bool batteryPluggedIn: batteryControl.pluggedIn
+    readonly property bool batteryFull: batteryControl.pluggedIn
+                                        && batteryControl.state === Battery.BatteryControlModel.FullyCharged
+    readonly property bool batteryDischarging: batteryControl.state === Battery.BatteryControlModel.Discharging
+    // Default output device name (e.g. "Speakers" → "Headphones").
+    readonly property string sinkName: hasSink ? (sink.description || sink.name || "") : ""
 
     Battery.BatteryControlModel {
         id: batteryControl

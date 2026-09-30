@@ -25,6 +25,7 @@ import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
 import "providers"
+import "backend"
 
 PlasmoidItem {
     id: root
@@ -83,6 +84,75 @@ PlasmoidItem {
             manager: activities
             backend: backend
             enabled: root.cfg.showNotifications
+            doNotDisturb: dndBackend.active
+        }
+        PowerProvider {
+            manager: activities
+            backend: backend
+            power: powerBackend
+            theme: theme
+            enabled: root.cfg.showPowerEvents
+            lowThreshold: root.cfg.lowBatteryThreshold
+            criticalThreshold: root.cfg.criticalBatteryThreshold
+        }
+        BluetoothProvider {
+            manager: activities
+            bluetooth: bluetoothBackend
+            theme: theme
+            enabled: root.cfg.showBluetoothEvents
+            lowBattery: root.cfg.deviceBatteryThreshold
+        }
+        OsdProvider {
+            manager: activities
+            backend: backend
+            display: displayBackend
+            theme: theme
+            enabled: root.cfg.showOsdEvents
+        }
+        KeyboardProvider {
+            manager: activities
+            keyboard: keyboardBackend
+            theme: theme
+            enabled: root.cfg.showKeyboardEvents
+        }
+        NetworkProvider {
+            manager: activities
+            network: networkBackend
+            theme: theme
+            enabled: root.cfg.showNetworkEvents
+        }
+        DndProvider {
+            manager: activities
+            dnd: dndBackend
+            theme: theme
+            enabled: root.cfg.showDndEvents
+            missed: notificationProvider.missedWhileDnd
+        }
+    }
+
+    // Private-API backends (see PlasmaBackend.qml / backend/).
+    PowerBackend { id: powerBackend }
+    BluetoothBackend { id: bluetoothBackend }
+    DisplayBackend { id: displayBackend }
+    KeyboardBackend { id: keyboardBackend }
+    NetworkBackend { id: networkBackend }
+    DndBackend { id: dndBackend }
+
+    // Everything shown on the "Devices" page.
+    readonly property var deviceList: {
+        const list = [];
+        for (const d of bluetoothBackend.connectedDevices) {
+            list.push({ icon: bluetoothBackend.iconFor(d), name: d.name, battery: bluetoothBackend.batteryOf(d), charging: false, detail: i18n("Bluetooth") });
+        }
+        return list;
+    }
+
+    Component {
+        id: devicesPage
+        DevicesPage {
+            theme: theme
+            devices: root.deviceList
+            lowBattery: root.cfg.deviceBatteryThreshold
         }
     }
 
@@ -137,6 +207,10 @@ PlasmoidItem {
                 showSystemModule: root.cfg.showSystemModule
                 showVolumeModule: root.cfg.showVolumeModule
                 showNotificationModule: root.cfg.showNotificationModule
+                extraPages: [
+                    { key: "devices", icon: "network-bluetooth", title: i18n("Devices"), component: devicesPage,
+                      visible: root.cfg.showDevicesModule && (bluetoothBackend.available || root.deviceList.length > 0) }
+                ]
             }
         }
     }

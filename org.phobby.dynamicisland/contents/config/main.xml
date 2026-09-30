@@ -56,6 +56,18 @@
       <default>3000</default>
     </entry>
 
+    <!-- System events -->
+    <entry name="showPowerEvents" type="Bool"><default>true</default></entry>
+    <entry name="lowBatteryThreshold" type="Int"><default>20</default></entry>
+    <entry name="criticalBatteryThreshold" type="Int"><default>10</default></entry>
+    <entry name="showBluetoothEvents" type="Bool"><default>true</default></entry>
+    <entry name="deviceBatteryThreshold" type="Int"><default>15</default></entry>
+    <entry name="showOsdEvents" type="Bool"><default>true</default></entry>
+    <entry name="showKeyboardEvents" type="Bool"><default>true</default></entry>
+    <entry name="showNetworkEvents" type="Bool"><default>true</default></entry>
+    <entry name="showDndEvents" type="Bool"><default>true</default></entry>
+    <entry name="showDevicesModule" type="Bool"><default>true</default></entry>
+
     <!-- Modules -->
     <entry name="showMediaModule" type="Bool">
       <default>true</default>

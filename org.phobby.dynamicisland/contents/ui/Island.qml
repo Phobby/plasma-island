@@ -33,6 +33,8 @@ Item {
     property bool showSystemModule: true
     property bool showVolumeModule: true
     property bool showNotificationModule: true
+    // Provider pages for the expanded view: [{ key, icon, title, component, visible }]
+    property var extraPages: []
 
     // ---- state ----------------------------------------------------------------
     property bool expanded: false
@@ -288,6 +290,7 @@ Item {
                 showVolumeModule: island.showVolumeModule
                 showNotificationModule: island.showNotificationModule
                 showClock: island.showClock
+                extraPages: island.extraPages
             }
         }
     }

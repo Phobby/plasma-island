@@ -15,7 +15,7 @@ Item {
     property bool doNotDisturb: false
     property int missedWhileDnd: 0
 
-    onDoNotDisturbChanged: if (!doNotDisturb) missedWhileDnd = 0
+    onDoNotDisturbChanged: if (doNotDisturb) missedWhileDnd = 0
 
     Connections {
         target: provider.backend
