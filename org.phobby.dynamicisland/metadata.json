@@ -1,0 +1,21 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "121060008+Phobby@users.noreply.github.com",
+                "Name": "phobby"
+            }
+        ],
+        "Category": "Utilities",
+        "Description": "iOS Dynamic Island style live activity pill for the top of the screen",
+        "Description[tr]": "Ekranın üst ortasında iOS Dynamic Island tarzı canlı etkinlik adası",
+        "Icon": "view-media-track",
+        "Id": "org.phobby.dynamicisland",
+        "License": "GPL-2.0-or-later",
+        "Name": "Dynamic Island",
+        "Name[tr]": "Dinamik Ada",
+        "Version": "1.0.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

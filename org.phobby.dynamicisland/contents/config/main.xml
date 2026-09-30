@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name=""/>
+  <group name="General">
+    <!-- Appearance -->
+    <entry name="surfaceOpacity" type="Int">
+      <default>82</default>
+      <min>30</min>
+      <max>100</max>
+    </entry>
+    <entry name="blurEnabled" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- 0 = follow Plasma color scheme, 1 = always dark, 2 = always light -->
+    <entry name="themeMode" type="Int">
+      <default>1</default>
+    </entry>
+    <entry name="showClock" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="topMargin" type="Int">
+      <default>6</default>
+    </entry>
+    <entry name="avoidPanels" type="Bool">
+      <default>true</default>
+    </entry>
+
+    <!-- Behavior -->
+    <entry name="showNotifications" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="notificationDuration" type="Int">
+      <default>4000</default>
+    </entry>
+    <entry name="hoverDelay" type="Int">
+      <default>120</default>
+    </entry>
+    <entry name="collapseDelay" type="Int">
+      <default>400</default>
+    </entry>
+    <entry name="preferredPlayer" type="String">
+      <default>spotify</default>
+    </entry>
+
+    <!-- Modules -->
+    <entry name="showMediaModule" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="showSystemModule" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="showVolumeModule" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="showNotificationModule" type="Bool">
+      <default>true</default>
+    </entry>
+  </group>
+</kcfg>
