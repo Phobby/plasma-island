@@ -56,6 +56,16 @@ void WindowBlur::setRegion(const QRectF &region)
     scheduleApply();
 }
 
+void WindowBlur::setRegion2(const QRectF &region)
+{
+    if (m_region2 == region) {
+        return;
+    }
+    m_region2 = region;
+    Q_EMIT region2Changed();
+    scheduleApply();
+}
+
 void WindowBlur::setRadius(qreal radius)
 {
     if (qFuzzyCompare(m_radius, radius)) {
@@ -108,6 +118,10 @@ void WindowBlur::apply()
     QPainterPath path;
     const qreal r = qMin(m_radius, qMin(m_region.width(), m_region.height()) / 2.0);
     path.addRoundedRect(m_region.adjusted(0.5, 0.5, -0.5, -0.5), r, r);
+    if (!m_region2.isEmpty()) {
+        const qreal r2 = qMin(m_region2.width(), m_region2.height()) / 2.0;
+        path.addRoundedRect(m_region2.adjusted(0.5, 0.5, -0.5, -0.5), r2, r2);
+    }
     const QRegion region(path.toFillPolygon().toPolygon());
     KWindowEffects::enableBlurBehind(m_window, true, region);
 }

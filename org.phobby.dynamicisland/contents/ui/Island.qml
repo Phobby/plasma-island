@@ -4,12 +4,15 @@
     Island: state machine + morphing surface.
 
       idle          small pill (clock or status dot)
-      live          wider pill: album art · title · equalizer   (media playing)
+      live          compact view of the primary Live Activity (media: art · title · equalizer)
+      split         primary in the pill + secondary in a detached bubble
       notification  banner with icon, title, first line          (queued)
+      event         transient system event (charging, Bluetooth…) (queued)
       expanded      paged modules                                (hover)
 
-    Priority: expanded > notification > live > idle. While a banner is shown,
-    hovering pauses it instead of expanding, so it can be clicked.
+    What is live / queued is decided by the ActivityManager. While a banner or
+    event is shown, hovering pauses it instead of expanding, so it can be clicked.
+    Privacy dots (mic / camera / screen) always sit right of the island.
 */
 import QtQuick
 import QtQuick.Layouts
@@ -20,11 +23,10 @@ Item {
 
     required property Theme theme
     required property PlasmaBackend backend
+    required property ActivityManager manager
 
     // configuration
     property bool showClock: true
-    property bool showNotifications: true
-    property int notificationDuration: 4000
     property int hoverDelay: 120
     property int collapseDelay: 400
     property bool showMediaModule: true
@@ -34,81 +36,54 @@ Item {
 
     // ---- state ----------------------------------------------------------------
     property bool expanded: false
-    property var currentNotification: null
-    property var queue: []
+    // Kept for the notification layer (the ActivityManager owns the queue).
+    readonly property var currentEvent: manager.currentEvent
+    readonly property var currentNotification: currentEvent?.kind === "notification" ? currentEvent.notification : null
+    readonly property var primary: manager.primary
+    readonly property var secondary: manager.secondary
 
-    readonly property bool hovered: hover.hovered
+    readonly property bool hovered: hover.hovered || bubbleHover.hovered
     readonly property string mode: expanded ? "expanded"
-                                 : currentNotification ? "notification"
-                                 : backend.isPlaying && showMediaModule ? "live"
+                                 : currentEvent ? (currentEvent.kind === "notification" ? "notification" : "event")
+                                 : secondary ? "split"
+                                 : primary ? "live"
                                  : "idle"
 
+    readonly property real liveWidth: primary && primary.compactWidth > 0 ? primary.compactWidth : theme.liveWidth
     readonly property real targetWidth: mode === "expanded" ? theme.expandedWidth
                                       : mode === "notification" ? theme.notificationWidth
-                                      : mode === "live" ? theme.liveWidth
+                                      : mode === "event" ? (currentEvent.width || theme.eventWidth)
+                                      : mode === "split" ? theme.splitMainWidth
+                                      : mode === "live" ? liveWidth
                                       : theme.pillWidth
     readonly property real targetHeight: mode === "expanded" ? theme.expandedHeight
                                        : mode === "notification" ? theme.notificationHeight
+                                       : mode === "event" ? theme.eventHeight
                                        : theme.pillHeight
     readonly property real targetRadius: mode === "expanded" ? theme.expandedRadius
                                        : mode === "notification" ? theme.notificationRadius
+                                       : mode === "event" ? theme.eventHeight / 2
                                        : theme.pillHeight / 2
 
     // The window has to stay large while the surface is still bigger than
     // the small window (i.e. until the collapse animation has finished).
-    readonly property bool needsLargeWindow: mode === "expanded" || mode === "notification"
+    readonly property bool needsLargeWindow: mode === "expanded" || mode === "notification" || mode === "event"
                                              || surface.height > theme.pillHeight + 1
-                                             || surface.width > theme.liveWidth + theme.windowSidePad
-    // Geometry of the glass surface in window coordinates (for the blur region).
+                                             || surface.width / 2 > theme.smallHalfWidth - theme.privacyAreaWidth
+    // Geometry of the glass surfaces in window coordinates (for the blur region).
     readonly property rect surfaceRect: Qt.rect(surface.x, surface.y, surface.width, surface.height)
     readonly property real surfaceRadius: surface.radius
+    readonly property rect bubbleRect: bubble.opacity > 0.05 ? Qt.rect(bubble.x, bubble.y, bubble.width, bubble.height) : Qt.rect(0, 0, 0, 0)
 
-    // ---- notifications queue --------------------------------------------------
-    function enqueue(n: var): void {
-        if (!showNotifications) return;
-        queue.push(n);
-        if (!currentNotification && !expanded) showNext();
-    }
-
-    function showNext(): void {
-        if (queue.length === 0) {
-            currentNotification = null;
-            if (hovered) expandTimer.restart();
-            return;
-        }
-        currentNotification = queue.shift();
-        bannerTimer.restart();
-    }
-
-    function dismissBanner(): void {
-        bannerTimer.stop();
-        currentNotification = null;
-        if (queue.length > 0) nextBannerTimer.restart();
-        else if (hovered) expandTimer.restart();
-    }
-
-    Connections {
-        target: island.backend
-        function onNotificationArrived(n) { island.enqueue(n); }
-    }
-
-    Timer {
-        id: bannerTimer
-        interval: island.notificationDuration
-        onTriggered: island.hovered ? restart() : island.dismissBanner()
-    }
-    // Small gap so consecutive banners visibly "pulse" back and forth.
-    Timer {
-        id: nextBannerTimer
-        interval: 220
-        onTriggered: island.showNext()
-    }
+    Binding { target: island.manager; property: "holdEvents"; value: island.expanded }
+    Binding { target: island.manager; property: "hovered"; value: island.hovered }
+    onCurrentEventChanged: if (!currentEvent && hovered && !expanded) expandTimer.restart()
 
     // ---- hover → expand / collapse --------------------------------------------
     Timer {
         id: expandTimer
         interval: island.hoverDelay
-        onTriggered: if (island.hovered && !island.currentNotification) island.expanded = true
+        onTriggered: if (island.hovered && !island.currentEvent) island.expanded = true
     }
     Timer {
         id: collapseTimer
@@ -118,7 +93,7 @@ Item {
     onHoveredChanged: {
         if (hovered) {
             collapseTimer.stop();
-            if (!currentNotification && !expanded) expandTimer.restart();
+            if (!currentEvent && !expanded) expandTimer.restart();
         } else {
             expandTimer.stop();
             if (expanded) collapseTimer.restart();
@@ -134,8 +109,6 @@ Item {
         if (expanded) {
             expandedContent.selectDefaultPage();
             if (!hovered) unattendedCollapseTimer.restart();
-        } else if (!currentNotification && queue.length > 0) {
-            nextBannerTimer.restart();
         }
     }
 
@@ -178,7 +151,7 @@ Item {
         }
 
         TapHandler {
-            enabled: island.mode === "idle" || island.mode === "live"
+            enabled: island.mode === "idle" || island.mode === "live" || island.mode === "split"
             onTapped: {
                 expandTimer.stop();
                 island.expanded = true;
@@ -245,39 +218,35 @@ Item {
             }
         }
 
-        // live activity
+        // live activity (primary): its own compact component or the generic one
         Layer {
+            id: liveLayer
             layerMode: "live"
-            width: island.theme.liveWidth
+            readonly property bool shownAlso: island.mode === "split"
+            opacity: shown || shownAlso ? 1 : 0
+            scale: shown || shownAlso ? 1 : 0.94
+            width: island.mode === "split" ? island.theme.splitMainWidth : island.liveWidth
             height: island.theme.pillHeight
 
-            RowLayout {
+            ActivityView {
                 anchors.fill: parent
-                anchors.leftMargin: 5
-                anchors.rightMargin: 14
-                spacing: 8
+                theme: island.theme
+                activity: island.primary
+                component: island.primary ? (island.primary.compact ?? genericCompact) : null
+            }
+        }
 
-                AlbumArt {
-                    Layout.preferredWidth: island.theme.pillHeight - 10
-                    Layout.preferredHeight: island.theme.pillHeight - 10
-                    radius: height / 2
-                    source: island.backend.artUrl
-                    fallbackIcon: island.backend.playerIcon || "media-album-cover"
-                    fallbackColor: island.theme.faint
-                }
-                Text {
-                    Layout.fillWidth: true
-                    text: island.backend.track
-                    color: island.theme.subText
-                    font.pointSize: island.theme.fontSmall
-                    elide: Text.ElideRight
-                    maximumLineCount: 1
-                }
-                Equalizer {
-                    running: parent.parent.visible && island.backend.isPlaying
-                    color: island.theme.live
-                    Layout.preferredHeight: 14
-                }
+        // transient system event
+        Layer {
+            layerMode: "event"
+            width: island.currentEvent?.width || island.theme.eventWidth
+            height: island.theme.eventHeight
+
+            EventBanner {
+                anchors.fill: parent
+                theme: island.theme
+                event: island.mode === "event" ? island.currentEvent : null
+                onActivated: island.manager.activateEvent()
             }
         }
 
@@ -293,11 +262,8 @@ Item {
                 anchors.rightMargin: 18
                 theme: island.theme
                 notification: island.currentNotification
-                onActivated: {
-                    island.backend.activateNotification(island.currentNotification.id);
-                    island.dismissBanner();
-                }
-                onDismissed: island.dismissBanner()
+                onActivated: island.manager.activateEvent()
+                onDismissed: island.manager.dismissEvent()
             }
         }
 
@@ -315,12 +281,98 @@ Item {
                 anchors.topMargin: island.theme.padding * 0.7
                 theme: island.theme
                 backend: island.backend
+                manager: island.manager
                 active: island.expanded
                 showMediaModule: island.showMediaModule
                 showSystemModule: island.showSystemModule
                 showVolumeModule: island.showVolumeModule
                 showNotificationModule: island.showNotificationModule
                 showClock: island.showClock
+            }
+        }
+    }
+
+    Component { id: genericCompact; ActivityCompact {} }
+    Component { id: genericMinimal; ActivityMinimal {} }
+
+    // ---- split: secondary activity in a detached bubble ---------------------------
+    // The bubble is tucked under the right end of the pill and "drips" out with
+    // a spring; a neck between them thins out while they separate.
+    readonly property bool split: mode === "split"
+    readonly property real bubbleRestX: surface.x + surface.width + theme.splitGap
+    readonly property real bubbleTuckedX: surface.x + surface.width - bubble.width
+
+    Rectangle {
+        id: neck
+        readonly property real distance: Math.max(0, bubble.x - (surface.x + surface.width))
+        readonly property real thickness: island.theme.pillHeight * 0.55 * Math.max(0, 1 - distance / (island.theme.splitGap * 0.85))
+        visible: bubble.visible && thickness > 1
+        x: surface.x + surface.width - island.theme.pillHeight / 2
+        width: bubble.x + bubble.width / 2 - x
+        y: surface.y + (island.theme.pillHeight - thickness) / 2
+        height: thickness
+        radius: height / 2
+        color: island.theme.bodyMid
+        z: -1
+    }
+
+    IslandShape {
+        id: bubble
+        theme: island.theme
+        z: -1
+        width: island.theme.bubbleSize
+        height: island.theme.bubbleSize
+        radius: width / 2
+        y: surface.y
+        x: island.split ? island.bubbleRestX : island.bubbleTuckedX
+        scale: island.split ? 1 : 0.55
+        opacity: island.split ? 1 : 0
+        visible: opacity > 0.01
+        Behavior on x { SpringAnimation { spring: 3.2; damping: 0.28; epsilon: 0.2 } }
+        Behavior on scale { SpringAnimation { spring: 3.2; damping: 0.3; epsilon: 0.005 } }
+        Behavior on opacity { NumberAnimation { duration: 160 } }
+
+        HoverHandler { id: bubbleHover }
+        TapHandler {
+            onTapped: {
+                expandTimer.stop();
+                island.expanded = true;
+            }
+        }
+
+        // Keeps showing the last secondary while the bubble merges back.
+        ActivityView {
+            id: bubbleView
+            anchors.fill: parent
+            theme: island.theme
+            property var lastActivity: null
+            activity: lastActivity
+            component: lastActivity ? (lastActivity.minimal ?? genericMinimal) : null
+            Connections {
+                target: island
+                function onSecondaryChanged() { if (island.secondary) bubbleView.lastActivity = island.secondary; }
+            }
+        }
+    }
+
+    // ---- privacy dots (mic = orange, camera = green, screen = red) --------------
+    Row {
+        id: privacyDots
+        spacing: 4
+        x: (bubble.visible ? bubble.x + bubble.width : surface.x + surface.width) + 8
+        y: surface.y + island.theme.pillHeight / 2 - height / 2
+        visible: island.mode !== "expanded"
+        Repeater {
+            model: island.manager.indicators
+            delegate: Rectangle {
+                required property var modelData
+                width: island.theme.privacyDotSize
+                height: width
+                radius: width / 2
+                color: modelData.color
+                scale: 0
+                Component.onCompleted: scale = 1
+                Behavior on scale { SpringAnimation { spring: 4; damping: 0.3; epsilon: 0.01 } }
             }
         }
     }

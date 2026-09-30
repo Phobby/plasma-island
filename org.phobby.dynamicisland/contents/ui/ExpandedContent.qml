@@ -15,6 +15,7 @@ Item {
 
     required property Theme theme
     required property PlasmaBackend backend
+    required property ActivityManager manager
     property bool active: false
     property bool showMediaModule: true
     property bool showSystemModule: true
@@ -25,11 +26,18 @@ Item {
     // True while the user drags a slider, so the island does not collapse.
     readonly property bool interacting: false
 
+    // Live activities that have no page of their own (media has one).
+    readonly property var listedActivities: manager.live.concat(manager.indicators).filter(a => a.listed)
+    // Extra pages contributed by providers: [{ key, icon, title, component, visible }]
+    property var extraPages: []
+
     readonly property var pages: {
         const p = [];
+        if (listedActivities.length > 0) p.push({ key: "activities", icon: "view-list-details", title: i18n("Activities") });
         if (showMediaModule) p.push({ key: "media", icon: "view-media-track", title: i18n("Media") });
         if (showSystemModule || showVolumeModule) p.push({ key: "control", icon: "speedometer", title: i18n("System") });
         if (showNotificationModule) p.push({ key: "notifications", icon: "notifications", title: i18n("Notifications") });
+        for (const e of extraPages) if (e.visible !== false) p.push(e);
         return p;
     }
     property int currentIndex: 0
@@ -44,7 +52,11 @@ Item {
     function selectDefaultPage(): void {
         slide = false;
         const media = pages.findIndex(p => p.key === "media");
-        if (backend.hasMedia && media >= 0) {
+        const acts = pages.findIndex(p => p.key === "activities");
+        // Open on what the pill was showing: a non-media primary activity → its list.
+        if (acts >= 0 && manager.primary && manager.primary.listed) {
+            currentIndex = acts;
+        } else if (backend.hasMedia && media >= 0) {
             currentIndex = media;
         } else if (currentKey === "media" && pages.length > 1) {
             currentIndex = media === 0 ? 1 : 0;
@@ -119,7 +131,7 @@ Item {
                 visible: expanded.backend.hasBattery
                 Layout.preferredWidth: 14
                 Layout.preferredHeight: 14
-                source: expanded.backend.batteryCharging ? "battery-charging-symbolic"
+                source: expanded.backend.batteryCharging ? "battery-100-charging-symbolic"
                         : "battery-" + String(Math.min(100, Math.round(expanded.backend.batteryPercent / 10) * 10)).padStart(3, "0") + "-symbolic"
                 color: expanded.theme.subText
                 isMask: true
@@ -162,8 +174,10 @@ Item {
                         // only rendered while sliding.
                         active: expanded.active && Math.abs(index - expanded.currentIndex) <= 1
                         visible: index === expanded.currentIndex || stripAnim.running
-                        sourceComponent: modelData.key === "media" ? mediaPage
+                        sourceComponent: modelData.component ? modelData.component
+                                       : modelData.key === "media" ? mediaPage
                                        : modelData.key === "control" ? controlPage
+                                       : modelData.key === "activities" ? activitiesPage
                                        : notificationsPage
                     }
                 }
@@ -231,6 +245,31 @@ Item {
             Item { Layout.fillHeight: true }
         }
     }
+    Component {
+        id: activitiesPage
+        Flickable {
+            clip: true
+            contentHeight: activityColumn.implicitHeight
+            boundsBehavior: Flickable.StopAtBounds
+            Column {
+                id: activityColumn
+                width: parent.width
+                spacing: 6
+                Repeater {
+                    model: expanded.listedActivities
+                    delegate: ActivityView {
+                        required property var modelData
+                        width: activityColumn.width
+                        height: item ? item.implicitHeight : 0
+                        theme: expanded.theme
+                        activity: modelData
+                        component: modelData.expanded ?? genericCard
+                    }
+                }
+            }
+        }
+    }
+    Component { id: genericCard; ActivityCard {} }
     Component {
         id: notificationsPage
         NotificationModule {

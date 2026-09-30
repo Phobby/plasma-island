@@ -19,6 +19,8 @@ class WindowBlur : public QObject
     Q_PROPERTY(QWindow *window READ window WRITE setWindow NOTIFY windowChanged)
     Q_PROPERTY(QRectF region READ region WRITE setRegion NOTIFY regionChanged)
     Q_PROPERTY(qreal radius READ radius WRITE setRadius NOTIFY radiusChanged)
+    // Optional second shape (the split island's bubble), always a pill/circle.
+    Q_PROPERTY(QRectF region2 READ region2 WRITE setRegion2 NOTIFY region2Changed)
     Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(bool available READ isAvailable NOTIFY availableChanged)
 
@@ -31,6 +33,8 @@ public:
     QRectF region() const { return m_region; }
     void setRegion(const QRectF &region);
     qreal radius() const { return m_radius; }
+    QRectF region2() const { return m_region2; }
+    void setRegion2(const QRectF &region);
     void setRadius(qreal radius);
     bool isEnabled() const { return m_enabled; }
     void setEnabled(bool enabled);
@@ -40,6 +44,7 @@ Q_SIGNALS:
     void windowChanged();
     void regionChanged();
     void radiusChanged();
+    void region2Changed();
     void enabledChanged();
     void availableChanged();
 
@@ -53,6 +58,7 @@ private:
     QPointer<QWindow> m_window;
     QRectF m_region;
     qreal m_radius = 0;
+    QRectF m_region2;
     bool m_enabled = false;
     bool m_pending = false;
 };

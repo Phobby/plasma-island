@@ -44,6 +44,18 @@
       <default>spotify</default>
     </entry>
 
+    <!-- Activities -->
+    <!-- Highest first. Categories: privacy, call, recording, event, timer, transfer, media -->
+    <entry name="priorityOrder" type="String">
+      <default>privacy,call,recording,event,timer,transfer,media</default>
+    </entry>
+    <entry name="splitIsland" type="Bool">
+      <default>true</default>
+    </entry>
+    <entry name="eventDuration" type="Int">
+      <default>3000</default>
+    </entry>
+
     <!-- Modules -->
     <entry name="showMediaModule" type="Bool">
       <default>true</default>

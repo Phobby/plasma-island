@@ -12,6 +12,7 @@ Item {
     property alias window: helper.window
     property alias rect: helper.region
     property alias radius: helper.radius
+    property alias rect2: helper.region2
     property alias enabled: helper.enabled
     readonly property bool available: helper.available
 

@@ -24,6 +24,7 @@ import QtQuick.Window
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
+import "providers"
 
 PlasmoidItem {
     id: root
@@ -60,6 +61,31 @@ PlasmoidItem {
         preferredPlayer: root.cfg.preferredPlayer
     }
 
+    // ---- activities -----------------------------------------------------------
+    ActivityManager {
+        id: activities
+        order: String(root.cfg.priorityOrder).split(",").map(s => s.trim()).filter(s => s.length > 0)
+        splitEnabled: root.cfg.splitIsland
+        eventDuration: root.cfg.eventDuration
+        notificationDuration: root.cfg.notificationDuration
+    }
+
+    // Every provider feeds the manager independently.
+    Item {
+        id: providers
+        MediaProvider {
+            manager: activities
+            backend: backend
+            enabled: root.cfg.showMediaModule
+        }
+        NotificationProvider {
+            id: notificationProvider
+            manager: activities
+            backend: backend
+            enabled: root.cfg.showNotifications
+        }
+    }
+
     // ---- placement --------------------------------------------------------------
     readonly property rect screenRect: {
         const c = Plasmoid.containment;
@@ -75,8 +101,8 @@ PlasmoidItem {
     }
 
     readonly property real windowWidth: (island.needsLargeWindow
-                                         ? Math.max(theme.expandedWidth, theme.notificationWidth)
-                                         : Math.max(theme.liveWidth, theme.pillWidth)) + 2 * theme.windowSidePad
+                                         ? Math.max(theme.expandedWidth, theme.notificationWidth, theme.eventWidth)
+                                         : 2 * theme.smallHalfWidth) + 2 * theme.windowSidePad
     readonly property real windowHeight: (island.needsLargeWindow
                                           ? Math.max(theme.expandedHeight, theme.notificationHeight)
                                           : theme.pillHeight) + theme.windowTopPad + theme.windowBottomPad
@@ -103,9 +129,8 @@ PlasmoidItem {
                 anchors.fill: parent
                 theme: theme
                 backend: backend
+                manager: activities
                 showClock: root.cfg.showClock
-                showNotifications: root.cfg.showNotifications
-                notificationDuration: root.cfg.notificationDuration
                 hoverDelay: root.cfg.hoverDelay
                 collapseDelay: root.cfg.collapseDelay
                 showMediaModule: root.cfg.showMediaModule
@@ -127,6 +152,7 @@ PlasmoidItem {
             item.window = dialog;
             item.rect = Qt.binding(() => island.surfaceRect);
             item.radius = Qt.binding(() => island.surfaceRadius);
+            item.rect2 = Qt.binding(() => island.bubbleRect);
             item.enabled = true;
         }
         onStatusChanged: if (status === Loader.Error) {

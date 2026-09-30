@@ -29,6 +29,18 @@ QtObject {
     readonly property real expandedHeight: Math.round(gu * 11.5)
     readonly property real expandedRadius: 28
     readonly property real notificationRadius: 26
+    // Transient system events (charging, Bluetooth, volume…): a wide pill.
+    readonly property real eventWidth: Math.round(gu * 19)
+    readonly property real eventHeight: Math.round(gu * 2.9)
+    // Split island: main pill + detached "minimal" bubble on the right.
+    readonly property real splitMainWidth: Math.round(gu * 11.5)
+    readonly property real splitGap: 7
+    readonly property real bubbleSize: pillHeight
+    // Privacy dots right of the island.
+    readonly property real privacyDotSize: 7
+    readonly property real privacyAreaWidth: 30
+    // Half-width the small window must cover around the centered main pill.
+    readonly property real smallHalfWidth: Math.max(liveWidth / 2, splitMainWidth / 2 + splitGap + bubbleSize) + privacyAreaWidth
     readonly property real spacing: Kirigami.Units.smallSpacing * 2
     readonly property real padding: Math.round(gu * 0.9)
 
@@ -67,7 +79,11 @@ QtObject {
     readonly property color faint: dark ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(0, 0, 0, 0.10)
     readonly property color track: dark ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(0, 0, 0, 0.14)
     readonly property color accent: Kirigami.Theme.highlightColor
-    readonly property color live: "#32d74b"      // iOS green
+    readonly property color live: "#32d74b"      // iOS green: charging, camera, success
+    readonly property color orange: "#ff9f0a"    // microphone, timers
+    readonly property color red: "#ff3b30"       // recording, low battery, errors
+    readonly property color purple: "#bf5af2"    // do not disturb
+    readonly property color blue: "#0a84ff"      // Bluetooth, info
     readonly property color network: "#0a84ff"   // iOS blue
     readonly property color warning: "#ff9f0a"
     readonly property color danger: "#ff453a"
