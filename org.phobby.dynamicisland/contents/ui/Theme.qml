@@ -75,7 +75,7 @@ QtObject {
     readonly property color dropShadow: dark ? Qt.rgba(0, 0, 0, 0.45) : Qt.rgba(0, 0, 0, 0.22)
 
     readonly property color text: dark ? "#f4f5f7" : "#16171a"
-    readonly property color subText: dark ? Qt.rgba(0.92, 0.93, 0.96, 0.62) : Qt.rgba(0.08, 0.09, 0.10, 0.62)
+    readonly property color subText: dark ? Qt.rgba(0.92, 0.93, 0.96, 0.62) : Qt.rgba(0.08, 0.09, 0.10, 0.74)
     readonly property color faint: dark ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(0, 0, 0, 0.10)
     readonly property color track: dark ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(0, 0, 0, 0.14)
     readonly property color accent: Kirigami.Theme.highlightColor
@@ -87,6 +87,44 @@ QtObject {
     readonly property color network: "#0a84ff"   // iOS blue
     readonly property color warning: "#ff9f0a"
     readonly property color danger: "#ff453a"
+
+    // ---- contrast (WCAG 2.x) ----------------------------------------------------
+    // Opaque approximation of the glass body behind content (its mid tone).
+    readonly property color surface: dark ? Qt.rgba(0.10, 0.105, 0.115, 1) : Qt.rgba(0.84, 0.85, 0.87, 1)
+    // State fills for buttons/chips, visible in both themes.
+    readonly property color hoverFill: dark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.06)
+    readonly property color pressedFill: dark ? Qt.rgba(1, 1, 1, 0.20) : Qt.rgba(0, 0, 0, 0.16)
+    readonly property real minContrast: 4.5
+
+    function luminance(c: color): real {
+        const f = v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
+    }
+    // Composites a (possibly translucent) colour over an opaque background.
+    function over(fg: color, bg: color): color {
+        const a = fg.a;
+        return Qt.rgba(fg.r * a + bg.r * (1 - a), fg.g * a + bg.g * (1 - a), fg.b * a + bg.b * (1 - a), 1);
+    }
+    function contrast(fg: color, bg: color): real {
+        const b = over(bg, surface);
+        const l1 = luminance(over(fg, b)) + 0.05, l2 = luminance(b) + 0.05;
+        return l1 > l2 ? l1 / l2 : l2 / l1;
+    }
+    // White or near-black, whichever reads better on `bg` (e.g. icon on a tinted toggle).
+    function onColor(bg: color): color {
+        const w = Qt.rgba(1, 1, 1, 1), k = Qt.rgba(0.07, 0.07, 0.08, 1);
+        return contrast(w, bg) >= contrast(k, bg) ? w : k;
+    }
+    // `c` adjusted (lighter on dark, darker on light) until it reaches 4.5:1 on `bg`.
+    function readable(c: color, bg: color): color {
+        const back = bg === undefined ? surface : bg;
+        let out = Qt.rgba(c.r, c.g, c.b, 1);
+        for (let i = 0; i < 12 && contrast(out, back) < minContrast; ++i) {
+            out = luminance(over(back, surface)) < 0.2 ? Qt.lighter(out, 1.12) : Qt.darker(out, 1.12);
+            if (luminance(out) > 0.98 || luminance(out) < 0.005) break;
+        }
+        return out;
+    }
 
     // ---- typography ---------------------------------------------------------
     readonly property real fontNormal: Kirigami.Theme.defaultFont.pointSize > 0 ? Kirigami.Theme.defaultFont.pointSize : 10

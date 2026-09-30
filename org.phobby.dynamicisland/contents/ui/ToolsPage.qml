@@ -34,12 +34,12 @@ Item {
         implicitWidth: label.implicitWidth + 18
         implicitHeight: 22
         radius: 11
-        color: current ? tools.theme.faint : chipMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
+        color: chipMouse.pressed ? tools.theme.pressedFill : current ? tools.theme.faint : chipMouse.containsMouse ? tools.theme.hoverFill : "transparent"
         Text {
             id: label
             anchors.centerIn: parent
             text: parent.text
-            color: parent.current ? parent.tint : tools.theme.subText
+            color: parent.current ? tools.theme.readable(parent.tint, tools.theme.faint) : tools.theme.subText
             font.pointSize: tools.theme.fontSmall
             font.weight: Font.DemiBold
         }
@@ -50,17 +50,23 @@ Item {
         property string icon
         property color tint: tools.theme.text
         property color fill: tools.theme.faint
+        // Foreground guaranteed ≥ 4.5:1 against this button's own fill.
+        readonly property color ink: tools.theme.readable(tint, fill)
         signal clicked()
         implicitWidth: 40
         implicitHeight: 40
         radius: width / 2
-        color: rbMouse.pressed ? Qt.darker(fill, 1.4) : fill
+        color: rbMouse.pressed ? tools.theme.over(tools.theme.pressedFill, tools.theme.over(fill, tools.theme.surface))
+             : rbMouse.containsMouse ? tools.theme.over(tools.theme.hoverFill, tools.theme.over(fill, tools.theme.surface))
+             : fill
+        border.width: rbMouse.containsMouse ? 1 : 0
+        border.color: ink
         opacity: enabled ? 1 : 0.4
         Text {
             anchors.centerIn: parent
             visible: parent.icon.length === 0
             text: parent.text
-            color: parent.tint
+            color: parent.ink
             font.pointSize: tools.theme.fontSmall
             font.weight: Font.DemiBold
         }
@@ -70,10 +76,10 @@ Item {
             width: 16
             height: 16
             source: parent.icon
-            color: parent.tint
+            color: parent.ink
             isMask: true
         }
-        MouseArea { id: rbMouse; anchors.fill: parent; enabled: parent.enabled; cursorShape: Qt.PointingHandCursor; onClicked: parent.clicked() }
+        MouseArea { id: rbMouse; anchors.fill: parent; enabled: parent.enabled; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: parent.clicked() }
     }
     component Stepper: RowLayout {
         property int value
@@ -163,7 +169,7 @@ Item {
                     }
                     Text {
                         text: TimeFormat.clock(tools.timer.remaining)
-                        color: tools.theme.orange
+                        color: tools.theme.readable(tools.theme.orange, tools.theme.surface)
                         font.pointSize: tools.theme.fontNormal * 2
                         font.weight: Font.DemiBold
                         font.features: { "tnum": 1 }
@@ -298,7 +304,7 @@ Item {
                     Text {
                         Layout.alignment: Qt.AlignRight
                         text: tools.alarm.armed ? i18n("Rings at %1", tools.alarm.alarmTime) : i18n("Off")
-                        color: tools.alarm.armed ? tools.theme.orange : tools.theme.subText
+                        color: tools.alarm.armed ? tools.theme.readable(tools.theme.orange, tools.theme.surface) : tools.theme.subText
                         font.pointSize: tools.theme.fontSmall
                     }
                     RoundButton {

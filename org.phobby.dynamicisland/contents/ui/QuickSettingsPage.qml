@@ -31,25 +31,34 @@ Item {
         Layout.preferredWidth: 64
 
         Rectangle {
+            id: circle
             Layout.alignment: Qt.AlignHCenter
             implicitWidth: 44
             implicitHeight: 44
             radius: 22
-            color: toggle.checked ? toggle.tint : page.theme.faint
+            // on: vivid tint; off: neutral fill. Hover/pressed stay distinguishable in both.
+            readonly property color base: toggle.checked ? toggle.tint : page.theme.faint
+            color: mouse.pressed ? (toggle.checked ? Qt.darker(toggle.tint, 1.25) : page.theme.pressedFill)
+                 : mouse.containsMouse && !toggle.checked ? page.theme.over(page.theme.hoverFill, page.theme.over(page.theme.faint, page.theme.surface))
+                 : base
+            border.width: mouse.containsMouse ? 1.5 : 0
+            border.color: page.theme.readable(toggle.checked ? toggle.tint : page.theme.text, page.theme.surface)
             scale: mouse.pressed ? 0.92 : 1
-            Behavior on color { ColorAnimation { duration: 180 } }
+            Behavior on color { ColorAnimation { duration: 150 } }
             Behavior on scale { NumberAnimation { duration: 100 } }
             Kirigami.Icon {
                 anchors.centerIn: parent
                 width: 20
                 height: 20
                 source: toggle.icon
-                color: toggle.checked ? "white" : page.theme.text
+                // WCAG: icon colour picked against the actual button colour.
+                color: toggle.checked ? page.theme.onColor(toggle.tint) : page.theme.text
                 isMask: true
             }
             MouseArea {
                 id: mouse
                 anchors.fill: parent
+                hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: toggle.clicked()
             }
@@ -132,7 +141,7 @@ Item {
             Layout.preferredHeight: 34
             visible: page.core !== null && page.core.updatesAvailable
             radius: 17
-            color: updatesMouse.containsMouse ? page.theme.track : page.theme.faint
+            color: updatesMouse.pressed ? page.theme.pressedFill : updatesMouse.containsMouse ? page.theme.track : page.theme.faint
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 12
@@ -142,7 +151,7 @@ Item {
                     Layout.preferredWidth: 16
                     Layout.preferredHeight: 16
                     source: "system-software-update"
-                    color: page.core && page.core.securityUpdateCount > 0 ? page.theme.red : page.theme.blue
+                    color: page.theme.readable(page.core && page.core.securityUpdateCount > 0 ? page.theme.red : page.theme.blue, page.theme.faint)
                     isMask: true
                 }
                 Text {
@@ -156,7 +165,7 @@ Item {
                 Text {
                     visible: page.core && page.core.updateCount > 0
                     text: i18n("Open Discover")
-                    color: page.theme.blue
+                    color: page.theme.readable(page.theme.blue, page.theme.faint)
                     font.pointSize: page.theme.fontSmall
                     font.weight: Font.DemiBold
                 }
