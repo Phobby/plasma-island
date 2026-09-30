@@ -30,6 +30,9 @@ Item {
     // ---- inputs -------------------------------------------------------------
     // Sensors only poll while this is true (i.e. the system module is on screen).
     property bool systemActive: false
+    // Temperature sensors also poll slowly (every 10 s) while this is true,
+    // for the overheating warning.
+    property bool thermalWatch: false
     // Player position is only refreshed while the media module is on screen.
     property bool positionActive: false
     // Case-insensitive substring matched against player identity / desktop entry.
@@ -174,12 +177,21 @@ Item {
         updateRateLimit: 1500
     }
     SystemSensor { id: cpuSensor; sensorId: "cpu/all/usage" }
-    SystemSensor { id: cpuTempSensor; sensorId: "cpu/all/maximumTemperature" }
+    SystemSensor {
+        id: cpuTempSensor
+        sensorId: "cpu/all/maximumTemperature"
+        enabled: backend.systemActive || backend.thermalWatch
+        updateRateLimit: backend.systemActive ? 1500 : 10000
+    }
     SystemSensor { id: memSensor; sensorId: "memory/physical/usedPercent"; updateRateLimit: 2000 }
     SystemSensor { id: gpuSensor; sensorId: "gpu/all/usage" }
-    SystemSensor { id: gpu0Temp; sensorId: "gpu/gpu0/temperature"; updateRateLimit: 3000 }
-    SystemSensor { id: gpu1Temp; sensorId: "gpu/gpu1/temperature"; updateRateLimit: 3000 }
-    SystemSensor { id: gpu2Temp; sensorId: "gpu/gpu2/temperature"; updateRateLimit: 3000 }
+    component GpuTempSensor: SystemSensor {
+        enabled: backend.systemActive || backend.thermalWatch
+        updateRateLimit: backend.systemActive ? 3000 : 10000
+    }
+    GpuTempSensor { id: gpu0Temp; sensorId: "gpu/gpu0/temperature" }
+    GpuTempSensor { id: gpu1Temp; sensorId: "gpu/gpu1/temperature" }
+    GpuTempSensor { id: gpu2Temp; sensorId: "gpu/gpu2/temperature" }
     SystemSensor { id: downSensor; sensorId: "network/all/download" }
     SystemSensor { id: upSensor; sensorId: "network/all/upload" }
 

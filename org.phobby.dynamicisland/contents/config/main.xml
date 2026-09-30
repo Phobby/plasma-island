@@ -72,6 +72,11 @@
     <entry name="showUnlock" type="Bool"><default>true</default></entry>
     <entry name="showJobs" type="Bool"><default>true</default></entry>
     <entry name="showKdeConnect" type="Bool"><default>true</default></entry>
+    <entry name="showQuickSettings" type="Bool"><default>true</default></entry>
+    <entry name="showUpdates" type="Bool"><default>true</default></entry>
+    <entry name="showThermalWarning" type="Bool"><default>true</default></entry>
+    <entry name="cpuTempThreshold" type="Int"><default>90</default></entry>
+    <entry name="gpuTempThreshold" type="Int"><default>85</default></entry>
 
     <!-- Time & productivity (end times are epoch ms strings so they survive restarts) -->
     <entry name="showTools" type="Bool"><default>true</default></entry>

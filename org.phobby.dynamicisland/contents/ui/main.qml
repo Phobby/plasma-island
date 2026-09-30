@@ -109,6 +109,7 @@ PlasmoidItem {
         }
     }
     readonly property var core: coreLoader.status === Loader.Ready ? coreLoader.item : null
+    Binding { target: root.core; property: "updatesEnabled"; value: root.cfg.showUpdates; when: root.core !== null }
 
     // Timer / alarm sound (QtMultimedia; optional). Loaded on first use only,
     // so an idle island never initialises the multimedia stack.
@@ -288,6 +289,20 @@ PlasmoidItem {
             enabled: root.cfg.showKdeConnect
             lowBattery: root.cfg.deviceBatteryThreshold
         }
+        ThermalProvider {
+            manager: activities
+            backend: backend
+            theme: theme
+            enabled: root.cfg.showThermalWarning
+            cpuThreshold: root.cfg.cpuTempThreshold
+            gpuThreshold: root.cfg.gpuTempThreshold
+        }
+        UpdatesProvider {
+            manager: activities
+            theme: theme
+            core: root.core
+            enabled: root.cfg.showUpdates
+        }
         UnlockProvider {
             manager: activities
             theme: theme
@@ -312,6 +327,19 @@ PlasmoidItem {
             }
         }
         return list;
+    }
+
+    Component {
+        id: quickSettingsPage
+        QuickSettingsPage {
+            theme: theme
+            dnd: root.dndBackend
+            display: root.displayBackend
+            power: root.powerBackend
+            bluetooth: root.bluetoothBackend
+            network: root.networkBackend
+            core: root.cfg.showUpdates ? root.core : null
+        }
     }
 
     Component {
@@ -394,6 +422,7 @@ PlasmoidItem {
                 showVolumeModule: root.cfg.showVolumeModule
                 showNotificationModule: root.cfg.showNotificationModule
                 extraPages: [
+                    { key: "quicksettings", icon: "configure", title: i18n("Controls"), component: quickSettingsPage, visible: root.cfg.showQuickSettings },
                     { key: "tools", icon: "chronometer", title: i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },
                     { key: "devices", icon: "network-bluetooth", title: i18n("Devices"), component: devicesPage,
                       visible: root.cfg.showDevicesModule && ((root.bluetoothBackend && root.bluetoothBackend.available) || root.deviceList.length > 0) }

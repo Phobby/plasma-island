@@ -12,6 +12,11 @@ Item {
 
     readonly property bool available: true
     property bool pipewireEnabled: true
+    property bool updatesEnabled: true
+
+    readonly property bool updatesAvailable: updates.available
+    readonly property int updateCount: updates.count
+    readonly property int securityUpdateCount: updates.securityCount
 
     readonly property var microphoneApps: pipewire.microphoneApps
     readonly property var cameraApps: pipewire.cameraApps
@@ -34,6 +39,10 @@ Item {
     }
     Core.Launcher {
         id: launcher
+    }
+    Core.UpdatesChecker {
+        id: updates
+        enabled: bridge.updatesEnabled
     }
     Core.DBusSignalWatcher {
         service: "org.freedesktop.ScreenSaver"
