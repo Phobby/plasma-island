@@ -346,6 +346,8 @@ PlasmoidItem {
             bluetooth: root.bluetoothBackend
             network: root.networkBackend
             core: root.cfg.showUpdates ? root.core : null
+            backend: root.plasmaBackend
+            showVolume: root.cfg.showVolumeModule
         }
     }
 

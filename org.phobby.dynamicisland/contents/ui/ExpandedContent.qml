@@ -37,7 +37,8 @@ Item {
         const p = [];
         if (listedActivities.length > 0) p.push({ key: "activities", icon: "view-list-details", title: i18n("Activities") });
         if (showMediaModule) p.push({ key: "media", icon: "view-media-track", title: i18n("Media") });
-        if (showSystemModule || showVolumeModule) p.push({ key: "control", icon: "speedometer", title: i18n("System") });
+        // System = information only; the volume slider lives in Controls.
+        if (showSystemModule) p.push({ key: "control", icon: "speedometer", title: i18n("System") });
         if (showNotificationModule) p.push({ key: "notifications", icon: "notifications", title: i18n("Notifications") });
         for (const e of extraPages) if (e.visible !== false) p.push(e);
         return p;
@@ -276,12 +277,6 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: implicitHeight
                 visible: expanded.showSystemModule
-                theme: expanded.theme
-                backend: expanded.backend
-            }
-            VolumeModule {
-                Layout.fillWidth: true
-                visible: expanded.showVolumeModule
                 theme: expanded.theme
                 backend: expanded.backend
             }

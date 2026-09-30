@@ -145,7 +145,7 @@ KCM.SimpleKCM {
         }
         QQC2.CheckBox {
             id: volumeCheck
-            text: i18n("Volume")
+            text: i18n("Volume (in Controls)")
         }
         QQC2.CheckBox {
             id: notifModuleCheck

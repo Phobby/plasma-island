@@ -1,7 +1,7 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
     Control Center: round toggles (Do Not Disturb, Night Light, power profile,
-    Bluetooth, Wi-Fi, updates) and the adjustable sliders (brightness). Any
+    Bluetooth, Wi-Fi, updates) and the adjustable sliders (volume, brightness). Any
     backend that is not available simply hides its control.
 */
 import QtQuick
@@ -18,6 +18,8 @@ Item {
     property var bluetooth: null
     property var network: null
     property var core: null
+    property var backend: null           // PlasmaBackend (output volume)
+    property bool showVolume: true
     property bool showBrightness: true
 
     component Toggle: ColumnLayout {
@@ -166,6 +168,12 @@ Item {
                 id: sliders
                 width: parent.width
                 spacing: 4
+                VolumeModule {
+                    Layout.fillWidth: true
+                    visible: page.showVolume && page.backend !== null
+                    theme: page.theme
+                    backend: page.backend
+                }
                 BrightnessModule {
                     Layout.fillWidth: true
                     theme: page.theme
