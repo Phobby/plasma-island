@@ -109,6 +109,10 @@
     <entry name="showMediaModule" type="Bool">
       <default>true</default>
     </entry>
+    <!-- 0 = fixed (5 cards, 3+2), 1 = dynamic (active metrics grow) -->
+    <entry name="systemView" type="Int">
+      <default>1</default>
+    </entry>
     <entry name="showSystemModule" type="Bool">
       <default>true</default>
     </entry>

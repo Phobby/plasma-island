@@ -430,6 +430,7 @@ PlasmoidItem {
                 showSystemModule: root.cfg.showSystemModule
                 showVolumeModule: root.cfg.showVolumeModule
                 showNotificationModule: root.cfg.showNotificationModule
+                systemView: root.cfg.systemView === 0 ? "fixed" : "dynamic"
                 extraPages: [
                     { key: "quicksettings", icon: "configure", title: i18n("Controls"), component: quickSettingsPage, visible: root.cfg.showQuickSettings },
                     { key: "tools", icon: "chronometer", title: i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },

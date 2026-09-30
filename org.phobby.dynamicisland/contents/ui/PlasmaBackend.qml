@@ -172,6 +172,12 @@ Item {
     readonly property real netDownRate: Number(downSensor.value) || 0    // bytes/s
     readonly property real netUpRate: Number(upSensor.value) || 0        // bytes/s
 
+    readonly property real memUsedBytes: Number(memUsedSensor.value) || 0
+    readonly property real memTotalBytes: Number(memTotalSensor.value) || 0
+    readonly property real diskUsage: Number(diskSensor.value) || 0       // percent, all mounted disks
+    readonly property real diskFreeBytes: Number(diskFreeSensor.value) || 0
+    readonly property real diskIoRate: (Number(diskReadSensor.value) || 0) + (Number(diskWriteSensor.value) || 0)   // bytes/s
+
     component SystemSensor: Sensors.Sensor {
         enabled: backend.systemActive
         updateRateLimit: 1500
@@ -192,8 +198,22 @@ Item {
     GpuTempSensor { id: gpu0Temp; sensorId: "gpu/gpu0/temperature" }
     GpuTempSensor { id: gpu1Temp; sensorId: "gpu/gpu1/temperature" }
     GpuTempSensor { id: gpu2Temp; sensorId: "gpu/gpu2/temperature" }
+    SystemSensor { id: memUsedSensor; sensorId: "memory/physical/used"; updateRateLimit: 2000 }
+    SystemSensor { id: memTotalSensor; sensorId: "memory/physical/total"; updateRateLimit: 60000 }
+    SystemSensor { id: diskSensor; sensorId: "disk/all/usedPercent"; updateRateLimit: 10000 }
+    SystemSensor { id: diskFreeSensor; sensorId: "disk/all/free"; updateRateLimit: 10000 }
+    SystemSensor { id: diskReadSensor; sensorId: "disk/all/read" }
+    SystemSensor { id: diskWriteSensor; sensorId: "disk/all/write" }
     SystemSensor { id: downSensor; sensorId: "network/all/download" }
     SystemSensor { id: upSensor; sensorId: "network/all/upload" }
+
+    // 1536 → "1.5 KB", 7.1e9 → "6.6 GB"
+    function formatBytes(bytes: real): string {
+        const units = ["B", "KB", "MB", "GB", "TB"];
+        let b = Math.max(0, bytes), i = 0;
+        while (b >= 1024 && i < units.length - 1) { b /= 1024; ++i; }
+        return (i === 0 ? Math.round(b) : b.toFixed(b >= 10 ? 0 : 1)) + " " + units[i];
+    }
 
     // "1.2M" / "340K" / "12" — compact byte rate for tight ring labels.
     function compactRate(bytes: real): string {

@@ -22,6 +22,7 @@ Item {
     property bool showVolumeModule: true
     property bool showNotificationModule: true
     property bool showClock: true
+    property string systemView: "dynamic"
 
     // True while the user types a reply: the island keeps keyboard focus
     // and does not collapse.
@@ -271,16 +272,12 @@ Item {
     }
     Component {
         id: controlPage
-        ColumnLayout {
-            spacing: 10
-            SystemModule {
-                Layout.fillWidth: true
-                Layout.preferredHeight: implicitHeight
-                visible: expanded.showSystemModule
-                theme: expanded.theme
-                backend: expanded.backend
-            }
-            Item { Layout.fillHeight: true }
+        // Fills the whole page: no empty space in either layout.
+        SystemModule {
+            visible: expanded.showSystemModule
+            theme: expanded.theme
+            backend: expanded.backend
+            mode: expanded.systemView
         }
     }
     Component {

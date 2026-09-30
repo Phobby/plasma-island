@@ -33,6 +33,7 @@ Item {
     property bool showSystemModule: true
     property bool showVolumeModule: true
     property bool showNotificationModule: true
+    property string systemView: "dynamic"
     // Provider pages for the expanded view: [{ key, icon, title, component, visible }]
     property var extraPages: []
 
@@ -307,6 +308,7 @@ Item {
                 showNotificationModule: island.showNotificationModule
                 showClock: island.showClock
                 extraPages: island.extraPages
+                systemView: island.systemView
             }
         }
     }

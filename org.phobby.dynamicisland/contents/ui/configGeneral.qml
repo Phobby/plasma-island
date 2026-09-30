@@ -23,6 +23,7 @@ KCM.SimpleKCM {
     property alias cfg_preferredPlayer: playerField.text
     property alias cfg_showMediaModule: mediaCheck.checked
     property alias cfg_showSystemModule: systemCheck.checked
+    property alias cfg_systemView: systemViewCombo.currentIndex
     property alias cfg_showVolumeModule: volumeCheck.checked
     property alias cfg_showNotificationModule: notifModuleCheck.checked
 
@@ -142,6 +143,12 @@ KCM.SimpleKCM {
         QQC2.CheckBox {
             id: systemCheck
             text: i18n("System status (CPU, RAM, battery, network)")
+        }
+        QQC2.ComboBox {
+            id: systemViewCombo
+            Kirigami.FormData.label: i18n("System view:")
+            enabled: systemCheck.checked
+            model: [i18n("Fixed (5 cards)"), i18n("Dynamic (active metrics grow)")]
         }
         QQC2.CheckBox {
             id: volumeCheck
