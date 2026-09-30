@@ -1,8 +1,8 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
     Control Center: round toggles (Do Not Disturb, Night Light, power profile,
-    Bluetooth, Wi-Fi) and the pending update count. Any backend that is not
-    available simply hides its toggle.
+    Bluetooth, Wi-Fi, updates) and the adjustable sliders (brightness). Any
+    backend that is not available simply hides its control.
 */
 import QtQuick
 import QtQuick.Layouts
@@ -18,24 +18,25 @@ Item {
     property var bluetooth: null
     property var network: null
     property var core: null
+    property bool showBrightness: true
 
     component Toggle: ColumnLayout {
         id: toggle
         property string icon
         property string label
-        property string detail
+        property string badge
         property bool checked
         property color tint: page.theme.blue
         signal clicked()
-        spacing: 3
-        Layout.preferredWidth: 64
+        spacing: 2
+        Layout.preferredWidth: 60
 
         Rectangle {
             id: circle
             Layout.alignment: Qt.AlignHCenter
-            implicitWidth: 44
-            implicitHeight: 44
-            radius: 22
+            implicitWidth: 40
+            implicitHeight: 40
+            radius: 20
             // on: vivid tint; off: neutral fill. Hover/pressed stay distinguishable in both.
             readonly property color base: toggle.checked ? toggle.tint : page.theme.faint
             color: mouse.pressed ? (toggle.checked ? Qt.darker(toggle.tint, 1.25) : page.theme.pressedFill)
@@ -55,6 +56,25 @@ Item {
                 color: toggle.checked ? page.theme.onColor(toggle.tint) : page.theme.text
                 isMask: true
             }
+            // Small count badge (connected devices, pending updates)
+            Rectangle {
+                visible: toggle.badge.length > 0
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: -3
+                width: Math.max(16, badgeText.implicitWidth + 8)
+                height: 16
+                radius: 8
+                color: page.theme.text
+                Text {
+                    id: badgeText
+                    anchors.centerIn: parent
+                    text: toggle.badge
+                    color: page.theme.onColor(page.theme.text)
+                    font.pointSize: page.theme.fontSmall * 0.8
+                    font.weight: Font.Bold
+                }
+            }
             MouseArea {
                 id: mouse
                 anchors.fill: parent
@@ -69,15 +89,6 @@ Item {
             text: toggle.label
             color: page.theme.text
             font.pointSize: page.theme.fontSmall * 0.95
-            elide: Text.ElideRight
-        }
-        Text {
-            Layout.fillWidth: true
-            horizontalAlignment: Text.AlignHCenter
-            visible: text.length > 0
-            text: toggle.detail
-            color: page.theme.subText
-            font.pointSize: page.theme.fontSmall * 0.85
             elide: Text.ElideRight
         }
     }
@@ -122,9 +133,18 @@ Item {
                 visible: page.bluetooth !== null && page.bluetooth.available
                 icon: page.bluetooth && page.bluetooth.enabled ? "network-bluetooth-activated" : "network-bluetooth-inactive"
                 label: i18n("Bluetooth")
-                detail: page.bluetooth && page.bluetooth.connectedDevices.length > 0 ? i18np("%1 device", "%1 devices", page.bluetooth.connectedDevices.length) : ""
+                badge: page.bluetooth && page.bluetooth.connectedDevices.length > 0 ? String(page.bluetooth.connectedDevices.length) : ""
                 checked: page.bluetooth ? page.bluetooth.enabled : false
                 onClicked: page.bluetooth.setEnabled(!page.bluetooth.enabled)
+            }
+            Toggle {
+                visible: page.core !== null && page.core.updatesAvailable
+                icon: "system-software-update"
+                label: i18nc("@action:button short", "Updates")
+                badge: page.core && page.core.updateCount > 0 ? String(page.core.updateCount) : ""
+                checked: page.core ? page.core.securityUpdateCount > 0 : false
+                tint: page.theme.red
+                onClicked: page.core.startDetached("plasma-discover", ["--mode", "update"])
             }
             Toggle {
                 visible: page.network !== null && page.network.wirelessAvailable
@@ -135,49 +155,23 @@ Item {
             }
         }
 
-        // Updates
-        Rectangle {
+        // Adjustable controls
+        Flickable {
             Layout.fillWidth: true
-            Layout.preferredHeight: 34
-            visible: page.core !== null && page.core.updatesAvailable
-            radius: 17
-            color: updatesMouse.pressed ? page.theme.pressedFill : updatesMouse.containsMouse ? page.theme.track : page.theme.faint
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                spacing: 8
-                Kirigami.Icon {
-                    Layout.preferredWidth: 16
-                    Layout.preferredHeight: 16
-                    source: "system-software-update"
-                    color: page.theme.readable(page.core && page.core.securityUpdateCount > 0 ? page.theme.red : page.theme.blue, page.theme.faint)
-                    isMask: true
-                }
-                Text {
+            Layout.fillHeight: true
+            clip: true
+            contentHeight: sliders.implicitHeight
+            boundsBehavior: Flickable.StopAtBounds
+            ColumnLayout {
+                id: sliders
+                width: parent.width
+                spacing: 4
+                BrightnessModule {
                     Layout.fillWidth: true
-                    text: page.core && page.core.updateCount > 0
-                          ? i18np("%1 update available", "%1 updates available", page.core.updateCount)
-                          : i18n("System is up to date")
-                    color: page.theme.text
-                    font.pointSize: page.theme.fontSmall
+                    theme: page.theme
+                    display: page.showBrightness ? page.display : null
                 }
-                Text {
-                    visible: page.core && page.core.updateCount > 0
-                    text: i18n("Open Discover")
-                    color: page.theme.readable(page.theme.blue, page.theme.faint)
-                    font.pointSize: page.theme.fontSmall
-                    font.weight: Font.DemiBold
-                }
-            }
-            MouseArea {
-                id: updatesMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: page.core.startDetached("plasma-discover", ["--mode", "update"])
             }
         }
-        Item { Layout.fillHeight: true }
     }
 }
