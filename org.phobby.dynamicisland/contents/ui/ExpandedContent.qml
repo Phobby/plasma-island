@@ -40,7 +40,7 @@ Item {
         if (showMediaModule) p.push({ key: "media", icon: "view-media-track", title: i18n("Media") });
         // System = information only; the volume slider lives in Controls.
         if (showSystemModule) p.push({ key: "control", icon: "speedometer", title: i18n("System") });
-        if (showNotificationModule) p.push({ key: "notifications", icon: "notifications", title: i18n("Notifications") });
+        if (showNotificationModule) p.push({ key: "notifications", icon: "notifications", title: i18n("Notifications"), badge: backend.notificationCount });
         for (const e of extraPages) if (e.visible !== false) p.push(e);
         return p;
     }
@@ -149,6 +149,24 @@ Item {
                             font.weight: Font.DemiBold
                             opacity: tab.current ? 1 : 0
                             Behavior on opacity { NumberAnimation { duration: 150 } }
+                        }
+                    }
+                    // Count badge (e.g. notifications)
+                    Rectangle {
+                        visible: (tab.modelData.badge ?? 0) > 0 && !tab.current
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        width: Math.max(12, badgeLabel.implicitWidth + 6)
+                        height: 12
+                        radius: 6
+                        color: expanded.theme.red
+                        Text {
+                            id: badgeLabel
+                            anchors.centerIn: parent
+                            text: (tab.modelData.badge ?? 0) > 99 ? "99+" : String(tab.modelData.badge ?? 0)
+                            color: expanded.theme.onColor(expanded.theme.red)
+                            font.pointSize: expanded.theme.fontSmall * 0.7
+                            font.weight: Font.Bold
                         }
                     }
                     MouseArea {
@@ -308,6 +326,7 @@ Item {
     Component {
         id: notificationsPage
         NotificationModule {
+            objectName: "notificationModule"
             theme: expanded.theme
             backend: expanded.backend
             active: expanded.active

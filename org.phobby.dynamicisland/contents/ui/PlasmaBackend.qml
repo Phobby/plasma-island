@@ -228,6 +228,10 @@ Item {
     signal notificationArrived(var notification)
 
     readonly property alias notificationModel: notifications
+    // Notifications.count emits its change signal BEFORE rows are inserted, so
+    // bindings on it lag one step behind; this counter follows the rows.
+    property int notificationCount: 0
+    function updateNotificationCount(): void { notificationCount = notifications.rowCount(); }
     readonly property int summaryRole: NotificationManager.Notifications.SummaryRole
     readonly property int bodyRole: NotificationManager.Notifications.BodyRole
 
@@ -244,7 +248,11 @@ Item {
         groupMode: NotificationManager.Notifications.GroupDisabled
         urgencies: NotificationManager.Notifications.NormalUrgency | NotificationManager.Notifications.CriticalUrgency
 
+        onRowsRemoved: backend.updateNotificationCount()
+        onModelReset: backend.updateNotificationCount()
+        Component.onCompleted: backend.updateNotificationCount()
         onRowsInserted: (parent, first, last) => {
+            backend.updateNotificationCount();
             for (let row = first; row <= last; ++row) {
                 const n = backend.notificationAt(row);
                 if (!n || backend.seenIds[n.id] || n.created < backend.startTime) continue;
@@ -296,6 +304,16 @@ Item {
     function replyToNotification(id: var, text: string): void {
         const row = rowForId(id);
         if (row >= 0) notifications.reply(notifications.index(row, 0), text, NotificationManager.Notifications.Close);
+    }
+
+    // Removes every notification: open ones are closed (the app is told),
+    // expired ones are cleared from history — the tray badge resets too.
+    function clearAllNotifications(): void {
+        for (let i = notifications.count - 1; i >= 0; --i) {
+            const idx = notifications.index(i, 0);
+            if (notifications.data(idx, NotificationManager.Notifications.ClosableRole)) notifications.close(idx);
+        }
+        notifications.clear(NotificationManager.Notifications.ClearExpired);
     }
 
     function closeNotification(id: var): void {
