@@ -100,9 +100,25 @@ Item {
                 Behavior on width { NumberAnimation { duration: 120 } }
             }
         }
+        // trailing: button (the whole banner is clickable)
+        Rectangle {
+            visible: banner.trailing?.type === "button"
+            Layout.preferredHeight: 24
+            Layout.preferredWidth: buttonLabel.implicitWidth + 20
+            radius: 12
+            color: banner.theme.faint
+            Text {
+                id: buttonLabel
+                anchors.centerIn: parent
+                text: banner.trailing?.type === "button" ? banner.trailing.text : ""
+                color: banner.theme.text
+                font.pointSize: banner.theme.fontSmall
+                font.weight: Font.DemiBold
+            }
+        }
         // trailing: text (percentages etc.)
         Text {
-            visible: (banner.trailing?.text ?? "").length > 0 && banner.trailing?.type !== "ring"
+            visible: (banner.trailing?.text ?? "").length > 0 && banner.trailing?.type !== "ring" && banner.trailing?.type !== "button"
             text: banner.trailing?.text ?? ""
             color: banner.trailing?.color ?? banner.accent
             font.pointSize: banner.theme.fontNormal

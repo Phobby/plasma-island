@@ -142,6 +142,12 @@ PlasmoidItem {
             core: root.core
             enabled: root.cfg.showPrivacy
         }
+        JobsProvider {
+            manager: activities
+            jobs: jobsBackend
+            theme: theme
+            enabled: root.cfg.showJobs
+        }
         UnlockProvider {
             manager: activities
             theme: theme
@@ -168,6 +174,7 @@ PlasmoidItem {
     NetworkBackend { id: networkBackend }
     DndBackend { id: dndBackend }
     TasksBackend { id: tasksBackend }
+    JobsBackend { id: jobsBackend }
 
     // Everything shown on the "Devices" page.
     readonly property var deviceList: {

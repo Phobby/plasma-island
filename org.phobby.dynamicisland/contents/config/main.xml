@@ -70,6 +70,7 @@
     <entry name="showRecording" type="Bool"><default>true</default></entry>
     <entry name="showPrivacy" type="Bool"><default>true</default></entry>
     <entry name="showUnlock" type="Bool"><default>true</default></entry>
+    <entry name="showJobs" type="Bool"><default>true</default></entry>
 
     <!-- Modules -->
     <entry name="showMediaModule" type="Bool">
