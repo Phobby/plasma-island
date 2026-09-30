@@ -231,14 +231,42 @@ PlasmoidItem {
             core: root.core
             enabled: root.cfg.showPrivacy
         }
+        // ---- transfers: one hub, one provider per source -----------------------
+        TransferHub {
+            id: transferHub
+            manager: activities
+            theme: theme
+            enabled: root.cfg.showJobs
+        }
         WhenAvailable {
             dependency: root.jobsBackend
-            sourceComponent: JobsProvider {
-                manager: activities
+            sourceComponent: JobsProvider {                  // KIO: Dolphin, kioclient, Ark, remote uploads
                 jobs: root.jobsBackend
-                theme: root.islandTheme
+                hub: transferHub
                 enabled: root.cfg.showJobs
             }
+        }
+        WhenAvailable {
+            dependency: root.jobsBackend
+            sourceComponent: KdeConnectTransferProvider {    // phone ⇄ computer
+                jobs: root.jobsBackend
+                hub: transferHub
+                enabled: root.cfg.showJobs && root.cfg.showKdeConnect
+            }
+        }
+        WhenAvailable {
+            dependency: root.jobsBackend
+            sourceComponent: RemovableTransferProvider {     // USB sticks, external disks
+                jobs: root.jobsBackend
+                hub: transferHub
+                enabled: root.cfg.showJobs
+            }
+        }
+        BrowserDownloadProvider {                            // Browser Integration jobs + download folder
+            jobs: root.jobsBackend
+            hub: transferHub
+            core: root.core
+            enabled: root.cfg.showJobs && root.cfg.watchDownloads
         }
         TimerProvider {
             id: timerProvider

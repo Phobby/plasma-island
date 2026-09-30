@@ -25,6 +25,7 @@ KCM.SimpleKCM {
     property alias cfg_showPrivacy: privacyCheck.checked
     property alias cfg_showUnlock: unlockCheck.checked
     property alias cfg_showJobs: jobsCheck.checked
+    property alias cfg_watchDownloads: downloadsCheck.checked
     property alias cfg_showKdeConnect: kdeconnectCheck.checked
     property alias cfg_showUpdates: updatesCheck.checked
     property alias cfg_showThermalWarning: thermalCheck.checked
@@ -138,7 +139,8 @@ KCM.SimpleKCM {
         }
         QQC2.CheckBox { id: recordingCheck; Kirigami.FormData.label: i18n("Show:"); text: i18n("Screen recording / sharing") }
         QQC2.CheckBox { id: privacyCheck; text: i18n("Microphone and camera indicators") }
-        QQC2.CheckBox { id: jobsCheck; text: i18n("File operations and downloads") }
+        QQC2.CheckBox { id: jobsCheck; text: i18n("File transfers (Dolphin, KDE Connect, USB drives, downloads)") }
+        QQC2.CheckBox { id: downloadsCheck; enabled: jobsCheck.checked; text: i18n("Watch the download folder for browser downloads") }
         QQC2.CheckBox { id: kdeconnectCheck; text: i18n("KDE Connect (calls, phone battery)") }
         QQC2.CheckBox { id: dbusCheck; text: i18n("Activities from other programs (D-Bus, island-push)") }
 

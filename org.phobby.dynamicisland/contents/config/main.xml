@@ -74,6 +74,7 @@
     <entry name="showPrivacy" type="Bool"><default>true</default></entry>
     <entry name="showUnlock" type="Bool"><default>true</default></entry>
     <entry name="showJobs" type="Bool"><default>true</default></entry>
+    <entry name="watchDownloads" type="Bool"><default>true</default></entry>
     <entry name="showKdeConnect" type="Bool"><default>true</default></entry>
     <entry name="showQuickSettings" type="Bool"><default>true</default></entry>
     <entry name="showUpdates" type="Bool"><default>true</default></entry>

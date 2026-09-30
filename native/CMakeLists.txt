@@ -49,6 +49,7 @@ qt_add_qml_module(dynamicislandcore
         core/launcher.h core/launcher.cpp
         core/updateschecker.h core/updateschecker.cpp
         core/islandservice.h core/islandservice.cpp
+        core/downloadwatcher.h core/downloadwatcher.cpp
     OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml/org/phobby/dynamicisland/core
 )
 target_include_directories(dynamicislandcore PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)

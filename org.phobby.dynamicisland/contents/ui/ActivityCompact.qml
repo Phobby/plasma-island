@@ -42,7 +42,8 @@ Item {
             font.features: { "tnum": 1 }
         }
         MiniRing {
-            visible: (compact.activity?.progress ?? -1) >= 0
+            visible: (compact.activity?.progress ?? -1) >= 0 || indeterminate
+            indeterminate: (compact.activity?.progress ?? -1) === -2
             Layout.preferredWidth: 20
             Layout.preferredHeight: 20
             value: compact.activity?.progress ?? 0

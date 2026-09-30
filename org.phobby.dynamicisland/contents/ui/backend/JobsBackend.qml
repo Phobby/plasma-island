@@ -9,7 +9,7 @@ import org.kde.notificationmanager as NotificationManager
 Item {
     id: jobsBackend
 
-    // { summary, app, icon, destUrl, error (bool), errorText }
+    // the job's info (see below) + { destUrl, error (bool), cancelled, errorCode, errorText }
     signal jobFinished(var info)
 
     // Running jobs: [{ id, summary, app, icon, percentage, suspended, speed, eta, detail, job }]
@@ -71,6 +71,12 @@ Item {
                 detail: job ? (job.descriptionValue2 || job.descriptionValue1 || "") : "",
                 processed: job ? job.processedBytes : 0,
                 total: job ? job.totalBytes : 0,
+                desktopEntry: model.desktopEntry || "",
+                label1: job ? job.descriptionLabel1 || "" : "",
+                value1: job ? job.descriptionValue1 || "" : "",
+                label2: job ? job.descriptionLabel2 || "" : "",
+                value2: job ? job.descriptionValue2 || "" : "",
+                destUrl: job ? String(job.effectiveDestUrl || job.destUrl || "") : "",
                 job: job
             })
             property int lastState: state
@@ -78,14 +84,16 @@ Item {
                 const was = lastState;
                 lastState = state;
                 if (state === NotificationManager.Notifications.JobStateStopped && was !== state) {
-                    jobsBackend.jobFinished({
-                        summary: model.summary || "",
-                        app: model.applicationName || "",
-                        icon: model.applicationIconName || "",
-                        destUrl: job ? String(job.destUrl || job.effectiveDestUrl || "") : "",
-                        error: (model.jobError || "").length > 0,
-                        errorText: model.jobError || ""
-                    });
+                    jobsBackend.jobFinished(Object.assign({}, info, {
+                        destUrl: job ? String(job.effectiveDestUrl || job.destUrl || "") : "",
+                        // KJob: 0 = success, 1 = KilledJobError (cancelled), other = failure
+                        errorCode: job ? job.error : 0,
+                        error: (job && job.error !== 0) || (model.jobError || "").length > 0,
+                        cancelled: job ? job.error === 1 : false,
+                        // jobError carries the code; the human-readable text is on the Job.
+                        errorText: (job && job.errorText) ? job.errorText
+                                 : (model.jobError && isNaN(Number(model.jobError)) ? model.jobError : "")
+                    }));
                 }
                 Qt.callLater(jobsBackend.rebuild);
             }

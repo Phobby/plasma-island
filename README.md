@@ -381,3 +381,24 @@ OSD'si de görünmeye devam eder. İkisinden birini seçin:
 - **D-Bus API** aynı anda yalnızca bir ada örneğine bağlanır (ilk kayıt olan).
 - **Dosya işleri ve bildirimler** yalnızca widget plasmashell içinde
   çalışırken görünür.
+
+## Dosya transferleri: ne izlenebilir, ne izlenemez
+
+Tüm transferler ortak `TransferActivity`/`TransferHub` üzerinden gösterilir:
+kaynak adı, yüzde, kalan süre (mm:ss) ve bitişte "Tamamlandı"/"Gönderildi"
+ya da kırmızı "Başarısız". Kalan süre yalnızca kaynak bildiriyorsa ya da
+hızdan hesaplanabiliyorsa gösterilir; tahmini/sahte süre gösterilmez.
+
+| Kaynak | Sağlayıcı | Durum |
+|---|---|---|
+| Dolphin kopyala/taşı/sil, Ark çıkarma, uzak konumlara (sftp/smb/MTP) kopyalama | `JobsProvider` | Tam destek (KDE iş sistemi) |
+| KDE Connect dosya alma/gönderme | `KdeConnectTransferProvider` | Tam destek; "Pixel 7 → Computer: foto.jpg" |
+| USB/harici disk (`/media`, `/run/media`) | `RemovableTransferProvider` | Tam destek; "USB DISK → Belgeler: rapor.pdf" |
+| Tarayıcı indirmesi + Plasma Browser Integration eklentisi | `BrowserDownloadProvider` | Tam destek (yüzde, süre) |
+| Tarayıcı indirmesi, eklenti yok / Flatpak-Snap tarayıcı (ör. Zen) | `BrowserDownloadProvider` + native `DownloadWatcher` | İndirme klasöründeki `*.part`/`*.crdownload` izlenir: indirilen boyut ve hız var, **yüzde ve kalan süre yok** (tarayıcı toplam boyutu diske yazmaz) |
+| Tarayıcıdan yükleme (upload) | — | **İzlenemez**: tarayıcı yüklemeleri hiçbir sistem API'sine iş olarak düşmez |
+
+Neden Zen indirmeleri görünmüyordu: Zen bir Flatpak uygulaması; sandbox içinden
+sistemdeki Plasma Browser Integration host'una ulaşamadığı için indirmeleri KDE
+iş sistemine hiç düşmüyordu. Klasör izleyici bu boşluğu kapatır.
+Not: `kioclient` komut satırı aracı KDE iş izleyicisini kullanmaz; test için Dolphin veya `ark --batch` kullanın.

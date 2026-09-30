@@ -32,7 +32,7 @@ QtObject {
     property string title
     property string subtitle
     property string trailingText
-    property real progress: -1        // 0..1, < 0 = none
+    property real progress: -1        // 0..1; -1 = none; -2 = indeterminate (unknown total)
     property bool pulse: false        // blinking leading icon (recording)
     property real compactWidth: 0     // 0 → Theme.liveWidth
 

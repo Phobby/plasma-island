@@ -82,7 +82,7 @@ Rectangle {
         }
         Rectangle {
             Layout.fillWidth: true
-            visible: (card.activity?.progress ?? -1) >= 0
+            visible: (card.activity?.progress ?? -1) >= 0 || (card.activity?.progress ?? -1) === -2
             Layout.preferredHeight: 4
             radius: 2
             color: card.theme.track

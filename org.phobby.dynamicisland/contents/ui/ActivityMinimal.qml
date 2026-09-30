@@ -11,7 +11,7 @@ Item {
     required property var activity
     required property Theme theme
 
-    readonly property bool hasProgress: (activity?.progress ?? -1) >= 0
+    readonly property bool hasProgress: (activity?.progress ?? -1) >= 0 || (activity?.progress ?? -1) === -2
 
     MiniRing {
         anchors.centerIn: parent
@@ -19,6 +19,7 @@ Item {
         width: parent.width - 8
         height: width
         value: minimal.activity?.progress ?? 0
+        indeterminate: (minimal.activity?.progress ?? -1) === -2
         color: minimal.activity?.color ?? minimal.theme.text
         trackColor: minimal.theme.track
         icon: minimal.activity?.icon ?? ""

@@ -17,6 +17,8 @@ Item {
     property string text
     property color textColor: color
     property real fontSize: 7
+    // Unknown progress: a quarter arc spinning (no fake percentage).
+    property bool indeterminate: false
 
     implicitWidth: 22
     implicitHeight: 22
@@ -45,8 +47,14 @@ Item {
             PathAngleArc {
                 centerX: ring.width / 2; centerY: ring.height / 2
                 radiusX: Math.min(ring.width, ring.height) / 2 - ring.lineWidth / 2; radiusY: radiusX
-                startAngle: -90; sweepAngle: 360 * ring.shown
+                startAngle: -90; sweepAngle: ring.indeterminate ? 90 : 360 * ring.shown
             }
+        }
+        RotationAnimation on rotation {
+            running: ring.indeterminate && ring.visible
+            loops: Animation.Infinite
+            from: 0; to: 360
+            duration: 1100
         }
     }
     Kirigami.Icon {

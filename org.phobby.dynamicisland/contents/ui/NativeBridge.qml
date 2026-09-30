@@ -29,6 +29,14 @@ Item {
     signal eventFlashed(var properties)
     function activityClicked(id: string): void { service.emitClicked(id); }
 
+    // Browser downloads seen in the download folder (partial files)
+    property bool downloadsEnabled: true
+    property var downloadDirectories: []
+    onDownloadDirectoriesChanged: if (downloads.item) downloads.item.directories = downloadDirectories
+    signal downloadStarted(string id, string fileName, string application)
+    signal downloadProgress(string id, real bytes, real speed)
+    signal downloadFinished(string id, string finalPath, bool success)
+
     signal screenUnlocked()
     // KDE Connect telephony: event = ringing | talking | missedCall | disconnected …
     signal callEvent(string event, string number, string contactName, string devicePath)
@@ -52,6 +60,22 @@ Item {
         onPushed: (id, props) => bridge.activityPushed(id, props)
         onFinished: (id, status) => bridge.activityFinished(id, status)
         onFlashed: props => bridge.eventFlashed(props)
+    }
+    Loader {
+        id: downloads
+        source: "DownloadBridge.qml"
+        onLoaded: {
+            item.enabled = Qt.binding(() => bridge.downloadsEnabled);
+            if (bridge.downloadDirectories.length > 0) item.directories = bridge.downloadDirectories;
+        }
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old for download watching; run install.sh again")
+    }
+    Connections {
+        target: downloads.item
+        ignoreUnknownSignals: true
+        function onStarted(id, fileName, app) { bridge.downloadStarted(id, fileName, app); }
+        function onProgress(id, bytes, speed) { bridge.downloadProgress(id, bytes, speed); }
+        function onFinished(id, finalPath, ok) { bridge.downloadFinished(id, finalPath, ok); }
     }
     Core.UpdatesChecker {
         id: updates
