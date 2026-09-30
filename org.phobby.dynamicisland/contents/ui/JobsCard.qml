@@ -83,7 +83,7 @@ Rectangle {
                 }
                 Rectangle {
                     Layout.fillWidth: true
-                    height: 4
+                    Layout.preferredHeight: 4
                     radius: 2
                     color: card.theme.track
                     Rectangle {

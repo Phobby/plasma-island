@@ -135,7 +135,7 @@ Item {
                             onClicked: tools.timer.start(modelData * 60)
                         }
                     }
-                    Rectangle { width: 1; height: 28; color: tools.theme.track }
+                    Rectangle { Layout.preferredWidth: 1; Layout.preferredHeight: 28; color: tools.theme.track }
                     Stepper {
                         value: tools.customMinutes
                         from: 1; to: 180

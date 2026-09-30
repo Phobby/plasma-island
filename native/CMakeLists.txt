@@ -28,7 +28,7 @@ target_link_libraries(dynamicislandeffects PRIVATE Qt6::Core Qt6::Gui Qt6::Qml K
 
 # Installs to <prefix>/org/phobby/dynamicisland/effects; install.sh passes a
 # prefix that is on QML_IMPORT_PATH (or the system QML dir with sudo).
-set(QML_INSTALL_DIR "lib/qml" CACHE PATH "QML import directory")
+set(QML_INSTALL_DIR "lib/qml" CACHE STRING "QML import directory (absolute, or relative to CMAKE_INSTALL_PREFIX)")
 install(TARGETS dynamicislandeffects DESTINATION ${QML_INSTALL_DIR}/org/phobby/dynamicisland/effects)
 install(FILES
     ${CMAKE_BINARY_DIR}/qml/org/phobby/dynamicisland/effects/qmldir

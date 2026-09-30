@@ -12,11 +12,36 @@ Test edilen ortam: Kubuntu, Plasma 6.6.6, Qt 6.10.2, Wayland.
 | Durum | Ne zaman | Görünüm |
 |---|---|---|
 | Boşta | Hiçbir şey yokken | Küçük hap (180×36): saat veya durum noktası; medya duraklatılmışsa ⏸ işareti |
-| Canlı aktivite | Bir MPRIS oynatıcı çalarken | Solda yuvarlak albüm kapağı, ortada parça adı, sağda hareketli equalizer |
-| Bildirim | Yeni bildirim gelince | Uygulama ikonu, uygulama adı, başlık, metnin ilk satırı. Sol tık varsayılan eylemi çalıştırır, orta tık kapatır. Bildirimler sıraya alınır; fare üzerindeyken süre durur. |
-| Genişletilmiş | Fare üzerine gelince veya tıklanınca | Sayfalar: **Medya**, **Sistem** (CPU, CPU sıcaklığı, GPU kullanımı + sıcaklığı, RAM, ağ ↓/↑ ve varsa pil halkaları; altında ses) ve **Bildirimler** (son 3) |
+| Canlı etkinlik (compact) | En öncelikli kalıcı etkinlik | Medya: albüm kapağı + parça adı + equalizer. Diğerleri: solda renkli ikon, sağda süre/değer veya ilerleme halkası |
+| Bölünmüş ada (split) | Aynı anda iki kalıcı etkinlik | Ana hapta birinci, sağında "damla" gibi ayrılan dairede ikinci etkinlik (minimal görünüm) |
+| Bildirim | Yeni bildirim gelince | Uygulama ikonu (KDE Connect ise telefon rozeti), uygulama adı, başlık, metnin ilk satırı. Sol tık varsayılan eylemi çalıştırır, orta tık kapatır |
+| Anlık olay | Şarj, Bluetooth, ses, Caps Lock… | Geniş hap: ikon, başlık, sağda halka / pil / kaydırıcı / düğme. 2–4 sn sonra ada kaldığı yere döner |
+| Genişletilmiş | Fare üzerine gelince veya tıklanınca | Sayfalar (aşağıda) |
+| Gizlilik noktaları | Mikrofon / kamera kullanımda | Adanın sağında turuncu (mikrofon) / yeşil (kamera) nokta, her durumda görünür |
 
-Öncelik sırası: genişletilmiş > bildirim > canlı > boşta.
+Genişletilmiş sayfalar: **Etkinlikler** (tüm kalıcı etkinlikler, işlemler ve
+gizlilik ayrıntıları), **Medya**, **Sistem** (CPU, CPU sıcaklığı, GPU kullanımı +
+sıcaklığı, RAM, ağ ↓/↑ ve varsa pil halkaları; altında ses), **Bildirimler**
+(son 3, hızlı yanıt), **Denetim** (Rahatsız Etmeyin, Gece Işığı, güç profili,
+Bluetooth, Wi-Fi, güncellemeler), **Araçlar** (zamanlayıcı, kronometre,
+Pomodoro, alarm), **Cihazlar** (Bluetooth cihazları ve telefonlar, pilleriyle).
+
+### Etkinlik yöneticisi ve öncelik
+
+Her özellik bağımsız bir *sağlayıcıdır* (`contents/ui/providers/`). Sağlayıcılar
+`ActivityManager`'a **kalıcı etkinlik** (`Activity`, sürdüğü sürece adada) veya
+**anlık olay** (`flash()`, birkaç saniye) gönderir. Varsayılan öncelik
+(Ayarlar → Etkinlikler'den değiştirilebilir):
+
+`gizlilik > arama > ekran kaydı > anlık olaylar > zamanlayıcı/Pomodoro/takvim > dosya işleri/özel etkinlikler > medya > boşta`
+
+- Anlık olaylar, kendilerinden düşük öncelikli kalıcı etkinliği geçici olarak
+  örter. Üstte bir etkinlik varken (ör. ekran kaydı) sırada bekler; 30 sn'den
+  eski bekleyen olaylar atılır. Gelen arama bu kuralı aşar.
+- Birden fazla anlık olay sıraya alınır; aynı türden olaylar (ör. ses) tek
+  olayda birleştirilir.
+- Ada genişletilmişken olaylar bekler. Ses/parlaklık gibi anlık geri bildirimler
+  ise beklemez, atlanır.
 
 **Neden sayfalı yerleşim?** Dört modülü alt alta dizmek adayı ~360 px
 yüksekliğinde bir panele çevirir ve ekranın üstünü kapatır. Sayfalı yapıda ada
@@ -28,13 +53,20 @@ doldurmadığı için Sistem sayfasının altında yer alır.
 ## Kurulum
 
 ```bash
-./install.sh               # plasmoid'i kurar (zaten kuruluysa -u ile günceller)
-./install.sh --with-blur   # + gerçek blur için native yardımcıyı derleyip kurar
-./install.sh --remove      # kaldırır
+./install.sh               # plasmoid + native modüller + island-push
+./install.sh --no-native   # yalnızca plasmoid (QML özellikleri)
+./install.sh --remove      # hepsini kaldırır
 ```
 
-`--with-blur` için gereken derleme paketleri:
+Native modüller için derleme paketleri:
 `cmake extra-cmake-modules qt6-base-dev qt6-declarative-dev libkf6windowsystem-dev`.
+Ayrıca `pw-dump` (pipewire-bin) çalışma zamanında gerekir.
+
+Native modüllere bağlı özellikler: şekilli blur, ekran kaydı, mikrofon/kamera
+göstergeleri, kilit açılışı, KDE Connect aramaları, güncelleme sayısı ve D-Bus
+API'si. Native modül yoksa bu özellikler kendini gizler, geri kalan her şey
+çalışır. Aynı şekilde, eksik bir KDE modülü (ör. KDE Connect, bluez-qt,
+plasma-nm) yalnızca kendi özelliğini devre dışı bırakır.
 
 Ardından plasmashell'i yeniden yükleyin:
 
@@ -72,6 +104,17 @@ Adanın kendisi ayrı bir üst pencere olduğundan, plasmoid'i **nereye eklediğ
 | Tercih edilen oynatıcı | Örn. `spotify`. Çalıyorsa (veya başka hiçbir şey çalmıyorsa) bu oynatıcı gösterilir; boşsa Plasma otomatik seçer. Kimlik/desktop dosyası adında büyük-küçük harf duyarsız eşleşir |
 | Modüller | Medya (canlı aktiviteyi de açar), Sistem, Ses, Son bildirimler |
 
+**Etkinlikler** sekmesi: öncelik sıralaması (yukarı/aşağı), bölünmüş ada
+açık/kapalı, anlık olay süresi, her sistem olayı ve canlı etkinlik türü için
+ayrı açma/kapama, genişletilmiş sayfalar.
+**Uyarılar** sekmesi: düşük/kritik pil eşiği, Bluetooth cihazı/telefon pil
+eşiği, CPU/GPU sıcaklık eşiği, takvim hatırlatma süresi.
+**Araçlar** sekmesi: zamanlayıcı/alarm bitiş sesi (dosya seçilebilir), Pomodoro
+süreleri ve tur sayısı.
+
+Zamanlayıcı, kronometre, Pomodoro ve alarmın bitiş zamanları ayarlarda saklanır;
+plasmashell yeniden başlasa da kaldıkları yerden devam ederler.
+
 ## Test ve hata ayıklama
 
 ```bash
@@ -89,10 +132,36 @@ QML_IMPORT_PATH=$PWD/native/build/qml plasmawindowed org.phobby.dynamicisland
 journalctl --user -f | grep -iE "dynamicisland|qml"
 ```
 
-Not: `plasmawindowed`/`plasmoidviewer` ayrı bir süreçte çalışır. Bildirim
-servisi plasmashell'e ait olduğundan bu modda bildirimler **görünmez**
-(`Failed to register Notification service on DBus` mesajı normaldir).
-Bildirimleri gerçek ortamda `notify-send "Başlık" "Metin"` ile deneyin.
+Not: `plasmawindowed`/`plasmoidviewer` ayrı bir süreçte çalışır. Bildirim ve
+iş (job) servisi plasmashell'e ait olduğundan bu modda bildirimler ve dosya
+işleri **görünmez** (`Failed to register Notification service on DBus` mesajı
+normaldir). Bunları gerçek ortamda (widget plasmashell'de eklenmişken) deneyin.
+
+### Modül modül test
+
+| Modül | Nasıl tetiklenir |
+|---|---|
+| Bildirim | `notify-send "Test" "Merhaba"` · birden fazla: `for i in 1 2 3; do notify-send "Test $i"; done` |
+| Rahatsız Etmeyin | Denetim sayfasındaki ay düğmesi veya sistem tepsisindeki bildirimler → Rahatsız Etmeyin; açıkken `notify-send` gösterilmez, kapatınca kaçırılan sayı yazar |
+| Medya | Spotify/Elisa/tarayıcıda bir şey çalın; `playerctl play-pause` |
+| Ses / çıkış cihazı | `wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+` · `wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle` · çıkış cihazını değiştirin |
+| Parlaklık | Parlaklık tuşları (dizüstü) veya DDC destekli monitör |
+| Şarj / pil | Dizüstünde şarj kablosunu takıp çıkarın (masaüstünde bu modül gizlenir) |
+| Güç profili | `powerprofilesctl set performance` → `powerprofilesctl set balanced` |
+| Bluetooth | `bluetoothctl connect <MAC>` / `bluetoothctl disconnect <MAC>` |
+| Klavye | Caps Lock / Num Lock tuşları; düzen değişimi: `qdbus6 org.kde.keyboard /Layouts org.kde.KeyboardLayouts.switchToNextLayout` |
+| Wi-Fi / VPN | `nmcli radio wifi off/on` · `nmcli connection up <vpn>` / `down` · hotspot: `nmcli device wifi hotspot` |
+| Ekran kaydı | Spectacle ile ekran kaydı, OBS, tarayıcıda ekran paylaşımı |
+| Mikrofon | `pw-record /tmp/test.wav` (Ctrl+C ile durdurun) |
+| Kamera | Kamera uygulaması (ör. Kamoso) veya tarayıcıda kamera testi |
+| Kilit açılışı | `loginctl lock-session`, ardından kilidi açın |
+| Dosya işi | Dolphin ile büyük bir dosya kopyalayın; `kioclient copy büyük.iso ~/Masaüstü/` |
+| Zamanlayıcı vb. | Genişletilmiş → Araçlar sayfası (1 dk'lık zamanlayıcı en hızlı test) |
+| Takvim | PIM takvim eklentisi (KOrganizer/Akonadi) kuruluysa 15 dk içinde başlayacak bir etkinlik ekleyin |
+| KDE Connect | `kdeconnect-cli --list-devices` · `kdeconnect-cli -d <id> --ping` · telefondan dosya gönderin / telefonu arayın |
+| Güncellemeler | Denetim sayfası; `pkcon get-updates` ile karşılaştırın |
+| Sıcaklık | Ayarlar → Uyarılar'da eşiği düşürün (ör. 50 °C) |
+| Özel etkinlik | `island-push --id demo --title "Demo" --progress 30` → `island-push --id demo --done --status success` |
 
 ## Mimari
 
@@ -101,19 +170,43 @@ org.phobby.dynamicisland/
 ├── metadata.json
 ├── contents/config/{main.xml, config.qml}
 └── contents/ui/
-    ├── main.qml               PlasmoidItem + üstte duran PlasmaCore.Dialog + blur Loader
-    ├── PlasmaBackend.qml      ← TÜM private Plasma API'leri yalnızca burada
-    ├── Theme.qml              renkler, ölçüler (gridUnit tabanlı), süreler
-    ├── IslandShape.qml        metalik cam yüzey
-    ├── Island.qml             durum makinesi, morph animasyonu, bildirim kuyruğu
+    ├── main.qml               PlasmoidItem, üstte duran Dialog, arka uç Loader'ları, sağlayıcılar
+    ├── ActivityManager.qml    kalıcı etkinlikler + öncelik + anlık olay kuyruğu
+    ├── Activity.qml           bir canlı etkinlik (minimal / compact / expanded)
+    ├── Island.qml             durum makinesi, morph, bölünmüş ada, gizlilik noktaları
     ├── ExpandedContent.qml    sekmeler + sayfalar
-    ├── MediaModule.qml / SystemModule.qml / VolumeModule.qml / NotificationModule.qml
-    ├── NotificationBanner.qml, Clock.qml, Equalizer.qml, AlbumArt.qml,
-    │   RingGauge.qml, GlassSlider.qml, IconButton.qml
-    ├── BlurBridge.qml         native modülü içe aktarır (yoksa sessizce düşer)
-    └── configGeneral.qml
-native/                        isteğe bağlı C++ QML modülü: org.phobby.dynamicisland.effects
+    ├── PlasmaBackend.qml      ┐ private Plasma/KDE API'leri YALNIZCA
+    ├── backend/*.qml          ┘ bu iki yerde (her biri Loader ile isteğe bağlı)
+    ├── providers/*.qml        her özellik: Media, Notification, Power, Bluetooth, Osd,
+    │                          Keyboard, Network, Dnd, Recording, Privacy, Jobs, Timer,
+    │                          Stopwatch, Pomodoro, Alarm, Calendar, KdeConnect,
+    │                          Thermal, Updates, Dbus, Unlock
+    ├── Theme.qml, IslandShape.qml, ActivityCompact/Minimal/Card.qml, EventBanner.qml,
+    │   BatteryGlyph.qml, MiniRing.qml, …        ortak görsel dil
+    ├── *Module.qml, *Page.qml                    genişletilmiş sayfalar
+    ├── NativeBridge.qml, BlurBridge.qml          native modülleri içe aktarır
+    └── config*.qml                                ayar sayfaları
+native/
+├── windowblur.*               org.phobby.dynamicisland.effects (şekilli KWin blur)
+└── core/                      org.phobby.dynamicisland.core:
+                               PipeWireWatcher, DBusSignalWatcher, Launcher,
+                               UpdatesChecker, IslandService (D-Bus API)
+tools/island-push, tools/notify-done.sh
 ```
+
+**Yeni bir özellik eklemek:** `providers/` altına bir dosya yazın. İçinde bir
+`Activity { … Component.onCompleted: manager.register(this) }` tanımlayın
+ve/veya `manager.flash({ icon, color, title, subtitle, trailing })` çağırın.
+Ardından sağlayıcıyı `main.qml`'deki `providers` bloğuna ekleyin. Varsayılan
+compact/minimal/expanded görünümleri istemiyorsanız `compact`, `minimal`,
+`expanded` özelliklerine kendi `Component`'inizi verin.
+
+**Gizlilik ve ekran kaydı tespiti:** native `PipeWireWatcher`, `pw-dump
+--monitor` çıktısını olay tabanlı dinler (polling yok). Mikrofon: gerçek bir
+`Audio/Source`'a bağlı çalışan kayıt akışı (ses ölçerleri ve masaüstü sesini
+yakalayan uygulamaları saymaz). Kamera: v4l2/libcamera cihaz düğümünü tüketen
+akış. Ekran: cihaz olmayan video kaynağını (KWin/portal ekran yayını) tüketen
+akış. plasmashell'in kendi pencere önizlemeleri sayılmaz.
 
 **Pencere stratejisi (b: tek çerçevesiz Dialog):** Masaüstü widget'ları
 pencerelerin altında kalır. Panel + ayrı popup (a) yaklaşımında ise küçük hap
@@ -142,10 +235,108 @@ modele sadece görünürken bağlanır.
 
 **Private API'ler:** `org.kde.plasma.private.mpris`,
 `org.kde.plasma.private.volume`, `org.kde.plasma.private.battery`,
-`org.kde.notificationmanager`,
-`org.kde.ksysguard.sensors` yalnızca `PlasmaBackend.qml` içinde kullanılır.
-Diğer dosyalar sadece onun normalize edilmiş özelliklerini görür. Bir Plasma
-güncellemesi API'yi değiştirirse düzeltilecek tek dosya burasıdır.
+`org.kde.notificationmanager`, `org.kde.ksysguard.sensors` yalnızca
+`PlasmaBackend.qml` içinde; `org.kde.plasma.private.batterymonitor`,
+`org.kde.bluezqt`, `org.kde.plasma.private.brightnesscontrolplugin`,
+`org.kde.plasma.private.keyboardindicator`,
+`org.kde.plasma.workspace.keyboardlayout`, `org.kde.plasma.networkmanagement`,
+`org.kde.taskmanager`, `org.kde.plasma.workspace.calendar` ve
+`org.kde.kdeconnect` yalnızca `backend/` altında kullanılır. Sağlayıcılar ve
+görünümler sadece bu dosyaların normalize edilmiş özelliklerini görür. Bir
+Plasma güncellemesi API'yi değiştirirse düzeltilecek yer burasıdır.
+
+## D-Bus API
+
+Herhangi bir program kendi canlı etkinliğini gönderebilir:
+
+| | |
+|---|---|
+| Servis | `org.phobby.DynamicIsland` (oturum veriyolu) |
+| Nesne | `/org/phobby/DynamicIsland` |
+| Arayüz | `org.phobby.DynamicIsland` |
+| `Push(s id, a{sv} props)` | Etkinlik oluştur/güncelle |
+| `Update(s id, a{sv} props)` | `Push` ile aynı |
+| `Finish(s id, s status)` | Bitir; `success` (yeşil), `error` (kırmızı), `cancel` veya `""` (sessiz) |
+| `Flash(a{sv} props)` | Tek seferlik anlık olay |
+| `List() → as` | D-Bus ile gönderilmiş etkin kimlikler |
+| sinyal `ActivityClicked(s id)` | Kullanıcı etkinliğe veya bitiş olayına tıkladı |
+
+`props`: `title` s, `subtitle` s, `icon` s, `progress` i (0–100, −1 = yok),
+`color` s (`red|green|blue|orange|purple|gray` veya `#rrggbb`), `trailing` s,
+`priority` i, `category` s (`timer|transfer|recording|call|media`; varsayılan
+`transfer`), `timeout` i (sn, otomatik bitir), `duration` i (ms, yalnızca Flash).
+
+### island-push
+
+```bash
+island-push --id build --title "Derleme" --progress 40 --icon run-build
+island-push --id build --progress 80 --subtitle "bağlanıyor…"
+island-push --id build --done --status success
+island-push --flash --title "Yedek alındı" --icon document-save --color green
+island-push --list
+```
+
+### notify-done
+
+```bash
+source ~/dev/plasma-island/tools/notify-done.sh   # ~/.bashrc veya ~/.zshrc içine
+notify-done make -j16        # sürerken adada, bitince yeşil "Done" / kırmızı "Failed"
+```
+
+Çıkış kodu korunur, bu yüzden `notify-done make && ./run` gibi zincirler bozulmaz.
+
+### Başka bir programdan (Go örneği)
+
+```go
+package main
+
+import (
+	"time"
+
+	"github.com/godbus/dbus/v5"
+)
+
+func main() {
+	conn, err := dbus.ConnectSessionBus()
+	if err != nil {
+		panic(err)
+	}
+	island := conn.Object("org.phobby.DynamicIsland", "/org/phobby/DynamicIsland")
+	const iface = "org.phobby.DynamicIsland."
+
+	for p := 0; p <= 100; p += 20 {
+		island.Call(iface+"Push", 0, "sync", map[string]dbus.Variant{
+			"title":    dbus.MakeVariant("Senkronizasyon"),
+			"subtitle": dbus.MakeVariant("Nextcloud"),
+			"icon":     dbus.MakeVariant("folder-sync"),
+			"color":    dbus.MakeVariant("blue"),
+			"progress": dbus.MakeVariant(int32(p)),
+		})
+		time.Sleep(time.Second)
+	}
+	island.Call(iface+"Finish", 0, "sync", "success")
+
+	// Tıklamaları dinlemek için:
+	conn.AddMatchSignal(dbus.WithMatchInterface("org.phobby.DynamicIsland"), dbus.WithMatchMember("ActivityClicked"))
+}
+```
+
+`busctl` ile: `busctl --user call org.phobby.DynamicIsland /org/phobby/DynamicIsland
+org.phobby.DynamicIsland Push 'sa{sv}' demo 2 title s "Merhaba" progress i 50`
+
+## Plasma OSD'si ile birlikte kullanım
+
+Ses ve parlaklık değişince ada ince bir kaydırıcı gösterir; Plasma'nın kendi
+OSD'si de görünmeye devam eder. İkisinden birini seçin:
+
+- **Adadaki göstergeyi kapatmak:** Ayarlar → Etkinlikler → "Volume, brightness
+  and audio output".
+- **Plasma'nın ses OSD'sini kapatmak:** Sistem Ayarları → Ses → sağ üstteki
+  menü (⋮) → yapılandırma sayfasındaki "Show OSD popups for changes to:"
+  (Türkçe arayüzde "Şu değişiklikler için OSD açılır pencereleri göster")
+  altındaki ses/mikrofon/sessiz seçeneklerinin işaretini kaldırın. Plasma 6'da
+  parlaklık OSD'sini kapatacak bir ayar yok; sistemi bozacak bir değişiklik
+  yapılmadı.
 
 ## Bilinen kısıtlamalar
 
@@ -172,3 +363,21 @@ güncellemesi API'yi değiştirirse düzeltilecek tek dosya burasıdır.
   piksellik saydam alan tıklamaları yakalar.
 - Aynı anda başka bir "dynamic island" widget'ı (ör. `com.arvin.dynamicisland`)
   etkinse ikisi üst üste biner.
+- **Bluetooth kulaklık pilleri:** BlueZ yalnızca tek bir pil değeri verir.
+  AirPods gibi kulaklıklarda sol/sağ/kutu pilleri ayrı okunamaz; tek değer
+  gösterilir.
+- **Hotspot:** NetworkManager hotspot'a bağlı istemci sayısını bildirmez. Ada
+  yalnızca "Hotspot açık" kalıcı etkinliğini gösterir.
+- **Ekran kaydını durdurma:** başka bir uygulamanın ekran yakalamasını durdurmak
+  için genel bir API yok. Genişletilmiş görünümde "uygulamaya geç" düğmesi var.
+- **KDE Connect aramaları:** KDE Connect "arama bitti" sinyali yaymaz. Görüşme
+  etkinliği, KDE Connect'in arama bildirimini kapatmasıyla (veya güvenlik
+  zaman aşımıyla) biter. SMS/mesaj hızlı yanıtı yalnızca yanıt destekleyen
+  bildirimlerde görünür.
+- **Takvim** yalnızca Plasma'nın PIM takvim eklentisi (`pimevents`,
+  KOrganizer/Akonadi) kuruluysa çalışır; yoksa modül gizlenir.
+- **Güncellemeler** PackageKit önbelleğinden okunur (apt/dnf paketleri).
+  Flatpak güncellemeleri sayılmaz.
+- **D-Bus API** aynı anda yalnızca bir ada örneğine bağlanır (ilk kayıt olan).
+- **Dosya işleri ve bildirimler** yalnızca widget plasmashell içinde
+  çalışırken görünür.
