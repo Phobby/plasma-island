@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# island-push — send a Live Activity to the Dynamic Island over D-Bus.
+#
+#   island-push --id build --title "Derleme" --progress 40 --icon run-build
+#   island-push --id build --progress 80 --subtitle "linking…"
+#   island-push --id build --done --status success
+#   island-push --flash --title "Yedek alındı" --icon document-save --color green
+#   island-push --list
+#
+# Options
+#   --id ID            activity id (required except with --flash / --list)
+#   --title TEXT       --subtitle TEXT   --icon NAME   --trailing TEXT
+#   --progress 0-100   (-1 hides the ring)
+#   --color C          red | green | blue | orange | purple | gray | #rrggbb
+#   --priority N       tie-break within the category (higher first)
+#   --category C       timer | transfer | recording | call | media (default transfer)
+#   --timeout SEC      finish automatically after SEC seconds
+#   --duration MS      how long a --flash event stays
+#   --done             finish the activity   --status success|error|cancel
+#   --flash            one-off transient event instead of a live activity
+#   --list             print active ids pushed over D-Bus
+set -euo pipefail
+
+SERVICE=org.phobby.DynamicIsland
+OBJECT=/org/phobby/DynamicIsland
+IFACE=org.phobby.DynamicIsland
+
+id="" done=0 flash=0 list=0 status=""
+declare -a props=()   # busctl a{sv} triples: key type value
+
+add() { props+=("$1" "$2" "$3"); }
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --id) id="$2"; shift 2 ;;
+        --title|--subtitle|--icon|--trailing|--color|--category) add "${1#--}" s "$2"; shift 2 ;;
+        --progress|--priority|--timeout|--duration) add "${1#--}" i "$2"; shift 2 ;;
+        --done) done=1; shift ;;
+        --status) status="$2"; shift 2 ;;
+        --flash) flash=1; shift ;;
+        --list) list=1; shift ;;
+        -h|--help) sed -n '2,23p' "$0"; exit 0 ;;
+        *) echo "island-push: unknown option $1" >&2; exit 2 ;;
+    esac
+done
+
+call() { busctl --user call "$SERVICE" "$OBJECT" "$IFACE" "$@"; }
+
+if ! busctl --user status "$SERVICE" >/dev/null 2>&1; then
+    echo "island-push: $SERVICE is not running (is the Dynamic Island widget with its native module active?)" >&2
+    exit 1
+fi
+
+if [[ $list -eq 1 ]]; then
+    call List | sed -E 's/^as [0-9]+ ?//; s/" "/\n/g; s/"//g'
+    exit 0
+fi
+if [[ $flash -eq 1 ]]; then
+    call Flash 'a{sv}' $(( ${#props[@]} / 3 )) "${props[@]}" >/dev/null
+    exit 0
+fi
+if [[ -z "$id" ]]; then
+    echo "island-push: --id is required" >&2
+    exit 2
+fi
+if [[ $done -eq 1 ]]; then
+    # Last-second updates (e.g. a final subtitle) are applied before finishing.
+    [[ ${#props[@]} -gt 0 ]] && call Push 'sa{sv}' "$id" $(( ${#props[@]} / 3 )) "${props[@]}" >/dev/null
+    call Finish ss "$id" "$status" >/dev/null
+    exit 0
+fi
+call Push 'sa{sv}' "$id" $(( ${#props[@]} / 3 )) "${props[@]}" >/dev/null

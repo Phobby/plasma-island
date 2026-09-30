@@ -22,6 +22,13 @@ Item {
     readonly property var cameraApps: pipewire.cameraApps
     readonly property var screenCastApps: pipewire.screenCastApps
 
+    // D-Bus API (org.phobby.DynamicIsland), see native/core/islandservice.h
+    readonly property bool serviceRegistered: service.registered
+    signal activityPushed(string id, var properties)
+    signal activityFinished(string id, string status)
+    signal eventFlashed(var properties)
+    function activityClicked(id: string): void { service.emitClicked(id); }
+
     signal screenUnlocked()
     // KDE Connect telephony: event = ringing | talking | missedCall | disconnected …
     signal callEvent(string event, string number, string contactName, string devicePath)
@@ -39,6 +46,12 @@ Item {
     }
     Core.Launcher {
         id: launcher
+    }
+    Core.IslandService {
+        id: service
+        onPushed: (id, props) => bridge.activityPushed(id, props)
+        onFinished: (id, status) => bridge.activityFinished(id, status)
+        onFlashed: props => bridge.eventFlashed(props)
     }
     Core.UpdatesChecker {
         id: updates

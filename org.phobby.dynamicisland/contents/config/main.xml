@@ -75,6 +75,7 @@
     <entry name="showQuickSettings" type="Bool"><default>true</default></entry>
     <entry name="showUpdates" type="Bool"><default>true</default></entry>
     <entry name="showThermalWarning" type="Bool"><default>true</default></entry>
+    <entry name="enableDbusApi" type="Bool"><default>true</default></entry>
     <entry name="cpuTempThreshold" type="Int"><default>90</default></entry>
     <entry name="gpuTempThreshold" type="Int"><default>85</default></entry>
 

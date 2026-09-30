@@ -303,6 +303,12 @@ PlasmoidItem {
             core: root.core
             enabled: root.cfg.showUpdates
         }
+        DbusProvider {
+            manager: activities
+            theme: theme
+            core: root.core
+            enabled: root.cfg.enableDbusApi
+        }
         UnlockProvider {
             manager: activities
             theme: theme
