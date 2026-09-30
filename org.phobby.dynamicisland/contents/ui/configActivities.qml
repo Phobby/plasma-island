@@ -13,6 +13,7 @@ KCM.SimpleKCM {
 
     property string cfg_priorityOrder
     property alias cfg_splitIsland: splitCheck.checked
+    property alias cfg_keepMediaVisible: keepMediaCheck.checked
     property alias cfg_eventDuration: eventSpin.value
     property alias cfg_showPowerEvents: powerCheck.checked
     property alias cfg_showBluetoothEvents: btCheck.checked
@@ -101,6 +102,11 @@ KCM.SimpleKCM {
             id: splitCheck
             Kirigami.FormData.label: i18n("Split island:")
             text: i18n("Show a second activity in a separate bubble")
+        }
+        QQC2.CheckBox {
+            id: keepMediaCheck
+            enabled: splitCheck.checked
+            text: i18n("Keep playing media visible (album art takes the bubble if needed)")
         }
         QQC2.SpinBox {
             id: eventSpin

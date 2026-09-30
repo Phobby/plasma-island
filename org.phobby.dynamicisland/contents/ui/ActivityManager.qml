@@ -27,6 +27,9 @@ Item {
     // ---- configuration ------------------------------------------------------
     property var order: ["privacy", "call", "recording", "event", "timer", "transfer", "media"]
     property bool splitEnabled: true
+    // Playing media never drops out of sight: if it is not among the two
+    // shown activities it takes the split bubble (others wait in the list).
+    property bool keepMediaVisible: true
     property int eventDuration: 3000
     property int notificationDuration: 4000
     property int maxEventAge: 30000
@@ -75,6 +78,10 @@ Item {
         const act = registered.filter(a => a && a.active);
         const sorted = act.filter(a => !a.indicatorOnly).sort((a, b) =>
             (rank(a.category) - rank(b.category)) || (b.priority - a.priority) || (a.startedAt - b.startedAt));
+        if (keepMediaVisible && splitEnabled) {
+            const m = sorted.findIndex(a => a.category === "media");
+            if (m > 1) sorted.splice(1, 0, sorted.splice(m, 1)[0]);
+        }
         live = sorted;
         indicators = act.filter(a => a.indicatorOnly);
         if (!currentEvent) Qt.callLater(showNext);

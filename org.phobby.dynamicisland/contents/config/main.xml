@@ -52,6 +52,9 @@
     <entry name="splitIsland" type="Bool">
       <default>true</default>
     </entry>
+    <entry name="keepMediaVisible" type="Bool">
+      <default>true</default>
+    </entry>
     <entry name="eventDuration" type="Int">
       <default>3000</default>
     </entry>

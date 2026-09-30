@@ -67,6 +67,7 @@ PlasmoidItem {
         id: activities
         order: String(root.cfg.priorityOrder).split(",").map(s => s.trim()).filter(s => s.length > 0)
         splitEnabled: root.cfg.splitIsland
+        keepMediaVisible: root.cfg.keepMediaVisible
         eventDuration: root.cfg.eventDuration
         notificationDuration: root.cfg.notificationDuration
     }
