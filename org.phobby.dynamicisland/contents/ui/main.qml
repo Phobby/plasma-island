@@ -215,12 +215,22 @@ PlasmoidItem {
     JobsBackend { id: jobsBackend }
     CalendarBackend { id: calendarBackend; enabled: root.cfg.showCalendar }
 
-    // Timer / alarm sound (QtMultimedia; optional).
+    // Timer / alarm sound (QtMultimedia; optional). Loaded on first use only,
+    // so an idle island never initialises the multimedia stack.
     Loader {
         id: soundLoader
+        active: false
         source: "SoundPlayer.qml"
     }
-    readonly property var sound: soundLoader.status === Loader.Ready ? soundLoader.item : null
+    QtObject {
+        id: soundProxy
+        function play(source) {
+            if (!source) return;
+            soundLoader.active = true;
+            if (soundLoader.item) soundLoader.item.play(source);
+        }
+    }
+    readonly property var sound: soundProxy
 
     // Everything shown on the "Devices" page.
     readonly property var deviceList: {
