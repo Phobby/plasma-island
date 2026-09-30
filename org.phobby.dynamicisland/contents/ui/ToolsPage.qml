@@ -19,7 +19,10 @@ Item {
     required property var alarm
     property bool active: false
 
-    property int section: timer.running || timer.paused ? 0 : stopwatch.running ? 1 : pomodoro.running ? 2 : 0
+    // Chosen once when the page opens (not a binding: starting/stopping a tool
+    // must never switch the section under the user's cursor).
+    property int section: -1
+    Component.onCompleted: if (section < 0) section = timer.running || timer.paused ? 0 : stopwatch.running ? 1 : pomodoro.running ? 2 : 0
     property int customMinutes: 15
     property int alarmHour: Number(String(alarm.alarmTime).split(":")[0]) || 7
     property int alarmMinute: Number(String(alarm.alarmTime).split(":")[1]) || 0

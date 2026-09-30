@@ -42,10 +42,44 @@ Item {
         for (const e of extraPages) if (e.visible !== false) p.push(e);
         return p;
     }
-    property int currentIndex: 0
-    // Jump (don't slide) when the island opens on its default page.
+    // The current page is tracked by KEY, not by index: pages come and go
+    // (e.g. "Activities" appears when a stopwatch starts) and an index would
+    // then point at a different page.
+    property string currentKey: ""
+    readonly property var visibleKeys: pages.map(p => p.key)
+    property int lastIndex: 0
+    readonly property int currentIndex: {
+        const i = visibleKeys.indexOf(currentKey);
+        return i >= 0 ? i : Math.max(0, Math.min(lastIndex, visibleKeys.length - 1));
+    }
+    onCurrentIndexChanged: if (visibleKeys.indexOf(currentKey) >= 0) lastIndex = currentIndex
+    // The current page itself disappeared: settle on its neighbour.
+    onVisibleKeysChanged: if (currentKey !== "" && visibleKeys.length > 0 && visibleKeys.indexOf(currentKey) < 0) {
+        currentKey = visibleKeys[Math.max(0, Math.min(lastIndex, visibleKeys.length - 1))];
+    }
+    // Only user navigation slides; pages appearing/disappearing never animate.
     property bool slide: false
-    readonly property string currentKey: pages.length > 0 ? pages[Math.min(currentIndex, pages.length - 1)].key : ""
+
+    function showPage(key: string): void {
+        if (key === currentKey || visibleKeys.indexOf(key) < 0) return;
+        slide = true;
+        currentKey = key;
+    }
+
+    // All page keys that may exist. The page Repeater uses this list and it only
+    // changes when the SET of keys changes, so pages are not torn down (and
+    // lose their state) whenever visibility or provider data changes.
+    property var allKeys: []
+    readonly property string allKeysSignature: ["activities", "media", "control", "notifications"].concat(extraPages.map(e => e.key)).join(",")
+    onAllKeysSignatureChanged: allKeys = allKeysSignature.split(",")
+    Component.onCompleted: allKeys = allKeysSignature.split(",")
+
+    function componentFor(key: string): var {
+        const extra = extraPages.find(e => e.key === key);
+        if (extra) return extra.component;
+        return key === "media" ? mediaPage : key === "control" ? controlPage
+             : key === "activities" ? activitiesPage : notificationsPage;
+    }
 
     // Feed visibility back to the backend so hidden modules cost nothing.
     Binding { target: expanded.backend; property: "systemActive"; value: expanded.active && expanded.currentKey === "control" && expanded.showSystemModule }
@@ -53,21 +87,19 @@ Item {
 
     function selectDefaultPage(): void {
         slide = false;
-        const media = pages.findIndex(p => p.key === "media");
-        const acts = pages.findIndex(p => p.key === "activities");
+        const has = k => visibleKeys.indexOf(k) >= 0;
         // Open on what the pill was showing: a non-media primary activity → its list.
-        if (acts >= 0 && manager.primary && manager.primary.listed) {
-            currentIndex = acts;
-        } else if (backend.hasMedia && media >= 0) {
-            currentIndex = media;
-        } else if (currentKey === "media" && pages.length > 1) {
-            currentIndex = media === 0 ? 1 : 0;
+        if (has("activities") && manager.primary && manager.primary.listed) {
+            currentKey = "activities";
+        } else if (backend.hasMedia && has("media")) {
+            currentKey = "media";
+        } else if (!has(currentKey) || currentKey === "media") {
+            currentKey = visibleKeys.find(k => k !== "media" && k !== "activities") ?? visibleKeys[0] ?? "";
         }
-        currentIndex = Math.min(currentIndex, Math.max(0, pages.length - 1));
-        Qt.callLater(() => { slide = true; });
     }
     function go(delta: int): void {
-        currentIndex = Math.max(0, Math.min(pages.length - 1, currentIndex + delta));
+        const i = Math.max(0, Math.min(visibleKeys.length - 1, currentIndex + delta));
+        showPage(visibleKeys[i]);
     }
 
     ColumnLayout {
@@ -85,7 +117,7 @@ Item {
                     id: tab
                     required property int index
                     required property var modelData
-                    readonly property bool current: index === expanded.currentIndex
+                    readonly property bool current: modelData.key === expanded.currentKey
                     Layout.preferredHeight: 24
                     Layout.preferredWidth: current ? tabLabel.implicitWidth + 36 : 30
                     radius: 12
@@ -122,7 +154,7 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: expanded.currentIndex = tab.index
+                        onClicked: expanded.showPage(tab.modelData.key)
                     }
                 }
             }
@@ -156,31 +188,40 @@ Item {
 
             Item {
                 id: strip
-                width: viewport.width * expanded.pages.length
+                width: viewport.width * Math.max(1, expanded.visibleKeys.length)
                 height: parent.height
                 x: -expanded.currentIndex * viewport.width
                 Behavior on x {
                     enabled: expanded.slide
-                    NumberAnimation { id: stripAnim; duration: 320; easing.type: Easing.OutCubic }
+                    NumberAnimation {
+                        id: stripAnim
+                        duration: 320
+                        easing.type: Easing.OutCubic
+                        onRunningChanged: if (!running) expanded.slide = false
+                    }
                 }
 
                 Repeater {
-                    model: expanded.pages
+                    model: expanded.allKeys
                     delegate: Loader {
-                        required property int index
-                        required property var modelData
-                        x: index * viewport.width
+                        id: pageLoader
+                        required property string modelData
+                        readonly property int pos: expanded.visibleKeys.indexOf(modelData)
+                        readonly property bool near: pos >= 0 && Math.abs(pos - expanded.currentIndex) <= 1
+                        // Once loaded, a page keeps its state until the island collapses.
+                        property bool keep: false
+                        onNearChanged: if (near && expanded.active) keep = true
+                        Connections {
+                            target: expanded
+                            function onActiveChanged() { if (!expanded.active) pageLoader.keep = false; }
+                        }
+                        x: Math.max(0, pos) * viewport.width
                         width: viewport.width
                         height: viewport.height
-                        // Neighbouring pages stay loaded for a smooth slide, but are
-                        // only rendered while sliding.
-                        active: expanded.active && Math.abs(index - expanded.currentIndex) <= 1
-                        visible: index === expanded.currentIndex || stripAnim.running
-                        sourceComponent: modelData.component ? modelData.component
-                                       : modelData.key === "media" ? mediaPage
-                                       : modelData.key === "control" ? controlPage
-                                       : modelData.key === "activities" ? activitiesPage
-                                       : notificationsPage
+                        active: expanded.active && pos >= 0 && (near || keep)
+                        // Rendered only when current (or while sliding).
+                        visible: pos >= 0 && (pos === expanded.currentIndex || stripAnim.running)
+                        sourceComponent: expanded.componentFor(modelData)
                     }
                 }
             }
