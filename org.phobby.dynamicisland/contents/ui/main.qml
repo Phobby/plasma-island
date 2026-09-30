@@ -128,7 +128,37 @@ PlasmoidItem {
             enabled: root.cfg.showDndEvents
             missed: notificationProvider.missedWhileDnd
         }
+        RecordingProvider {
+            manager: activities
+            theme: theme
+            tasks: tasksBackend
+            core: root.core
+            enabled: root.cfg.showRecording
+        }
+        PrivacyProvider {
+            manager: activities
+            backend: backend
+            theme: theme
+            core: root.core
+            enabled: root.cfg.showPrivacy
+        }
+        UnlockProvider {
+            manager: activities
+            theme: theme
+            core: root.core
+            enabled: root.cfg.showUnlock
+        }
     }
+
+    // ---- native core (optional: native/core) ------------------------------------
+    Loader {
+        id: coreLoader
+        source: "NativeBridge.qml"
+        onStatusChanged: if (status === Loader.Error) {
+            console.info("org.phobby.dynamicisland: native core not installed; screen recording, privacy indicators, unlock, D-Bus API and updates are disabled");
+        }
+    }
+    readonly property var core: coreLoader.status === Loader.Ready ? coreLoader.item : null
 
     // Private-API backends (see PlasmaBackend.qml / backend/).
     PowerBackend { id: powerBackend }
@@ -137,6 +167,7 @@ PlasmoidItem {
     KeyboardBackend { id: keyboardBackend }
     NetworkBackend { id: networkBackend }
     DndBackend { id: dndBackend }
+    TasksBackend { id: tasksBackend }
 
     // Everything shown on the "Devices" page.
     readonly property var deviceList: {

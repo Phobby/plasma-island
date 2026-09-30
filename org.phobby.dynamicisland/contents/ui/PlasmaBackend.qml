@@ -131,6 +131,11 @@ Item {
     }
     function toggleMute(): void { if (hasSink) sink.muted = !sink.muted; }
 
+    // ---- default input (microphone) -------------------------------------------
+    readonly property var source: Vol.PreferredDevice.source
+    readonly property bool micMuted: source ? source.muted : false
+    function toggleMicMute(): void { if (source) source.muted = !source.muted; }
+
     // ---- battery / network / sensors ---------------------------------------
     readonly property bool hasBattery: batteryControl.hasInternalBatteries
     readonly property int batteryPercent: batteryControl.percent
