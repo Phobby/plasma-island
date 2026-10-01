@@ -13,6 +13,7 @@ Rectangle {
     property var metric: ({})
     property bool large: false
     readonly property alias hovered: hover.hovered
+    signal clicked()
 
     radius: 14
     color: large && metric.active ? theme.over(Qt.rgba(metric.color.r, metric.color.g, metric.color.b, 0.12), theme.over(theme.faint, theme.surface))
@@ -20,7 +21,8 @@ Rectangle {
          : theme.faint
     Behavior on color { ColorAnimation { duration: 250 } }
 
-    HoverHandler { id: hover }
+    HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
+    TapHandler { onTapped: card.clicked() }
 
     // small
     ColumnLayout {

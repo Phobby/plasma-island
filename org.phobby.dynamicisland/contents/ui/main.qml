@@ -459,6 +459,10 @@ PlasmoidItem {
                 showVolumeModule: root.cfg.showVolumeModule
                 showNotificationModule: root.cfg.showNotificationModule
                 systemView: root.cfg.systemView === 0 ? "fixed" : "dynamic"
+                // A System card was clicked: btop with only that metric's graph.
+                onSystemMetricClicked: key => {
+                    if (root.core) root.core.startDetached("sh", [String(Qt.resolvedUrl("../scripts/btop-view.sh")).replace(/^file:\/\//, ""), key]);
+                }
                 extraPages: [
                     { key: "quicksettings", icon: "configure", title: i18n("Controls"), component: quickSettingsPage, visible: root.cfg.showQuickSettings },
                     { key: "tools", icon: "chronometer", title: i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },

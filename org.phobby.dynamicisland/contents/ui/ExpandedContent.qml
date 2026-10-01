@@ -23,6 +23,7 @@ Item {
     property bool showNotificationModule: true
     property bool showClock: true
     property string systemView: "dynamic"
+    signal systemMetricClicked(string key)
 
     // True while the user types a reply: the island keeps keyboard focus
     // and does not collapse.
@@ -296,6 +297,7 @@ Item {
             theme: expanded.theme
             backend: expanded.backend
             mode: expanded.systemView
+            onMetricClicked: key => expanded.systemMetricClicked(key)
         }
     }
     Component {

@@ -54,6 +54,8 @@ Item {
 
     // Card under the pointer ("" = none).
     property string hoveredKey: ""
+    // A card was clicked: key is cpu, temp, gpu, ram, battery, net or disk.
+    signal metricClicked(string key)
 
     // Calm metrics kept large; sticky so two near-equal loads do not keep swapping.
     property var pinState: ({ keys: [] })
@@ -202,6 +204,7 @@ Item {
             metric: sys.metrics[modelData]
             large: p.large
             visible: p.shown
+            onClicked: sys.metricClicked(modelData)
             onHoveredChanged: {
                 if (hovered) sys.hoveredKey = modelData;
                 else if (sys.hoveredKey === modelData) sys.hoveredKey = "";
