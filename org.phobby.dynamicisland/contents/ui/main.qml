@@ -367,7 +367,7 @@ PlasmoidItem {
     Component {
         id: quickSettingsPage
         QuickSettingsPage {
-            theme: theme
+            theme: root.islandTheme
             dnd: root.dndBackend
             display: root.displayBackend
             power: root.powerBackend
@@ -382,7 +382,7 @@ PlasmoidItem {
     Component {
         id: toolsPage
         ToolsPage {
-            theme: theme
+            theme: root.islandTheme
             timer: timerProvider
             stopwatch: stopwatchProvider
             pomodoro: pomodoroProvider
@@ -394,7 +394,7 @@ PlasmoidItem {
     Component {
         id: devicesPage
         DevicesPage {
-            theme: theme
+            theme: root.islandTheme
             devices: root.deviceList
             lowBattery: root.cfg.deviceBatteryThreshold
         }
