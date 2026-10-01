@@ -20,10 +20,11 @@ Test edilen ortam: Kubuntu, Plasma 6.6.6, Qt 6.10.2, Wayland.
 | Gizlilik noktaları | Mikrofon / kamera kullanımda | Adanın sağında turuncu (mikrofon) / yeşil (kamera) nokta, her durumda görünür |
 
 Genişletilmiş sayfalar: **Etkinlikler** (tüm kalıcı etkinlikler, işlemler ve
-gizlilik ayrıntıları), **Medya**, **Sistem** (CPU, CPU sıcaklığı, GPU kullanımı +
-sıcaklığı, RAM, ağ ↓/↑ ve varsa pil halkaları; altında ses), **Bildirimler**
-(son 3, hızlı yanıt), **Denetim** (Rahatsız Etmeyin, Gece Işığı, güç profili,
-Bluetooth, Wi-Fi, güncellemeler), **Araçlar** (zamanlayıcı, kronometre,
+gizlilik ayrıntıları), **Medya**, **Sistem** (yalnızca bilgi: CPU, CPU
+sıcaklığı, GPU, RAM, pil, ağ ↓/↑ ve disk kartları; Sabit veya Dinamik görünüm),
+**Bildirimler** (son 3, geliş saati, hızlı yanıt, onaylı "tümünü sil"),
+**Denetim** (Rahatsız Etmeyin, Gece Işığı, güç profili, Bluetooth, Wi-Fi,
+güncellemeler; altında ses ve ekran parlaklığı kaydırıcıları), **Araçlar** (zamanlayıcı, kronometre,
 Pomodoro, alarm), **Cihazlar** (Bluetooth cihazları ve telefonlar, pilleriyle).
 
 ### Etkinlik yöneticisi ve öncelik
@@ -42,13 +43,16 @@ Her özellik bağımsız bir *sağlayıcıdır* (`contents/ui/providers/`). Sağ
   olayda birleştirilir.
 - Ada genişletilmişken olaylar bekler. Ses/parlaklık gibi anlık geri bildirimler
   ise beklemez, atlanır.
+- Bölünmüş adada en öncelikli iki kalıcı etkinlik gösterilir. Çalan medya ilk
+  ikiye giremiyorsa (ör. iki zamanlayıcı varken) sağdaki daireyi albüm kapağı
+  alır; "Çalan medyayı görünür tut" ayarıyla kapatılabilir.
 
 **Neden sayfalı yerleşim?** Dört modülü alt alta dizmek adayı ~360 px
 yüksekliğinde bir panele çevirir ve ekranın üstünü kapatır. Sayfalı yapıda ada
 her zaman aynı kompakt boyutta (~430×207) kalır; iOS'taki gibi tek bir "kart"
 hissi verir. Sayfalar sekmeyle, fare tekerleğiyle veya touchpad kaydırmasıyla değişir. Ada açıldığında medya çalıyorsa Medya sayfası, aksi
-halde Sistem sayfası gösterilir. Ses kontrolü tek başına bir sayfayı
-doldurmadığı için Sistem sayfasının altında yer alır.
+halde Sistem sayfası gösterilir. Sistem sayfası yalnızca durum gösterir;
+ayarlanabilir her şey (ses, parlaklık, düğmeler) Denetim sayfasındadır.
 
 ## Kurulum
 
@@ -103,9 +107,10 @@ Adanın kendisi ayrı bir üst pencere olduğundan, plasmoid'i **nereye eklediğ
 | Hover gecikmesi / ayrılınca kapanma | Varsayılan 120 ms / 400 ms |
 | Tercih edilen oynatıcı | Örn. `spotify`. Çalıyorsa (veya başka hiçbir şey çalmıyorsa) bu oynatıcı gösterilir; boşsa Plasma otomatik seçer. Kimlik/desktop dosyası adında büyük-küçük harf duyarsız eşleşir |
 | Modüller | Medya (canlı aktiviteyi de açar), Sistem, Ses, Son bildirimler |
+| Sistem görünümü | Sabit (5 kart, 2 satır) / Dinamik (varsayılan: o an etkin olan kartlar büyür, boşluk kalmaz) |
 
 **Etkinlikler** sekmesi: öncelik sıralaması (yukarı/aşağı), bölünmüş ada
-açık/kapalı, anlık olay süresi, her sistem olayı ve canlı etkinlik türü için
+açık/kapalı, çalan medyayı görünür tut, indirme klasörünü izle, anlık olay süresi, her sistem olayı ve canlı etkinlik türü için
 ayrı açma/kapama, genişletilmiş sayfalar.
 **Uyarılar** sekmesi: düşük/kritik pil eşiği, Bluetooth cihazı/telefon pil
 eşiği, CPU/GPU sıcaklık eşiği, takvim hatırlatma süresi.
@@ -145,7 +150,7 @@ normaldir). Bunları gerçek ortamda (widget plasmashell'de eklenmişken) deneyi
 | Rahatsız Etmeyin | Denetim sayfasındaki ay düğmesi veya sistem tepsisindeki bildirimler → Rahatsız Etmeyin; açıkken `notify-send` gösterilmez, kapatınca kaçırılan sayı yazar |
 | Medya | Spotify/Elisa/tarayıcıda bir şey çalın; `playerctl play-pause` |
 | Ses / çıkış cihazı | `wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+` · `wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle` · çıkış cihazını değiştirin |
-| Parlaklık | Parlaklık tuşları (dizüstü) veya DDC destekli monitör |
+| Parlaklık | Denetim sayfasındaki kaydırıcı; parlaklık tuşları (dizüstü) veya DDC destekli monitör |
 | Şarj / pil | Dizüstünde şarj kablosunu takıp çıkarın (masaüstünde bu modül gizlenir) |
 | Güç profili | `powerprofilesctl set performance` → `powerprofilesctl set balanced` |
 | Bluetooth | `bluetoothctl connect <MAC>` / `bluetoothctl disconnect <MAC>` |
@@ -155,7 +160,8 @@ normaldir). Bunları gerçek ortamda (widget plasmashell'de eklenmişken) deneyi
 | Mikrofon | `pw-record /tmp/test.wav` (Ctrl+C ile durdurun) |
 | Kamera | Kamera uygulaması (ör. Kamoso) veya tarayıcıda kamera testi |
 | Kilit açılışı | `loginctl lock-session`, ardından kilidi açın |
-| Dosya işi | Dolphin ile büyük bir dosya kopyalayın; `kioclient copy büyük.iso ~/Masaüstü/` |
+| Dosya işi | Dolphin ile büyük bir dosya kopyalayın veya `ark --batch` ile arşiv açın (`kioclient` iş izleyicisini kullanmaz, görünmez) |
+| İndirme | Tarayıcıdan büyük bir dosya indirin (Flatpak/Snap tarayıcılarda yalnızca boyut ve hız görünür) |
 | Zamanlayıcı vb. | Genişletilmiş → Araçlar sayfası (1 dk'lık zamanlayıcı en hızlı test) |
 | Takvim | PIM takvim eklentisi (KOrganizer/Akonadi) kuruluysa 15 dk içinde başlayacak bir etkinlik ekleyin |
 | KDE Connect | `kdeconnect-cli --list-devices` · `kdeconnect-cli -d <id> --ping` · telefondan dosya gönderin / telefonu arayın |
@@ -180,7 +186,9 @@ org.phobby.dynamicisland/
     ├── providers/*.qml        her özellik: Media, Notification, Power, Bluetooth, Osd,
     │                          Keyboard, Network, Dnd, Recording, Privacy, Jobs, Timer,
     │                          Stopwatch, Pomodoro, Alarm, Calendar, KdeConnect,
-    │                          Thermal, Updates, Dbus, Unlock
+    │                          Thermal, Updates, Dbus, Unlock; transferler için
+    │                          KdeConnectTransfer, RemovableTransfer, BrowserDownload
+    ├── TransferActivity.qml, TransferHub.qml, TransfersCard.qml   ortak transfer etkinliği
     ├── Theme.qml, IslandShape.qml, ActivityCompact/Minimal/Card.qml, EventBanner.qml,
     │   BatteryGlyph.qml, MiniRing.qml, …        ortak görsel dil
     ├── *Module.qml, *Page.qml                    genişletilmiş sayfalar
@@ -190,7 +198,8 @@ native/
 ├── windowblur.*               org.phobby.dynamicisland.effects (şekilli KWin blur)
 └── core/                      org.phobby.dynamicisland.core:
                                PipeWireWatcher, DBusSignalWatcher, Launcher,
-                               UpdatesChecker, IslandService (D-Bus API)
+                               UpdatesChecker, DownloadWatcher,
+                               IslandService (D-Bus API)
 tools/island-push, tools/notify-done.sh
 ```
 
@@ -345,10 +354,10 @@ OSD'si de görünmeye devam eder. İkisinden birini seçin:
   sistem popup'larını başka bir köşeye alabilirsiniz.
 - **Blur** native yardımcıyı, KWin'de "Bulanıklaştır" efektinin açık olmasını
   ve plasmashell'in `QML_IMPORT_PATH`'i görmesini gerektirir.
-  `install.sh --with-blur` bunu `~/.config/environment.d/` ve
+  `install.sh` bunu `~/.config/environment.d/` ve
   `systemctl --user set-environment` ile ayarlar; plasmashell'i yeniden
   başlatmak gerekir. Plasma güncellemelerinden sonra (Qt/KF6 ABI değişirse)
-  `./install.sh --with-blur` ile yeniden derleyin.
+  `./install.sh` ile yeniden derleyin.
 - **Wayland konumlandırma** plasmashell'e ayrıcalıklı olarak verilen
   plasma-shell protokolüne dayanır. Başka bir süreçte bu mümkün olmayabilir;
   bu makinede `plasmawindowed` ile de çalıştığı doğrulandı.
@@ -356,7 +365,7 @@ OSD'si de görünmeye devam eder. İkisinden birini seçin:
   videoların/oyunların üstünde kalabilir.
 - **Sensörler:** CPU sıcaklığı `cpu/all/maximumTemperature`, GPU `gpu/all/usage`
   ve ilk bulunan `gpu/gpuN/temperature` (N=0–2) ile okunur. Sürücü değer
-  vermiyorsa ilgili halka gizlenir. Ağ halkasının yayı, yakın zamandaki en
+  vermiyorsa ilgili kart gizlenir. Ağ kartındaki yay, yakın zamandaki en
   yüksek hıza göre anlık doluluğu gösterir.
 - **Çoklu monitör:** Ada, widget'ın eklendiği containment'ın ekranında durur.
 - Adanın küçük penceresi hapın biraz dışını (gölge payı) kapsar. Bu birkaç
