@@ -38,6 +38,9 @@ Item {
         implicitHeight: 22
         radius: 11
         color: chipMouse.pressed ? tools.theme.pressedFill : current ? tools.theme.faint : chipMouse.containsMouse ? tools.theme.hoverFill : "transparent"
+        scale: chipMouse.pressed ? 0.95 : chipMouse.containsMouse ? 1.05 : 1
+        Behavior on color { ColorAnimation { duration: 120 } }
+        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         Text {
             id: label
             anchors.centerIn: parent
@@ -65,6 +68,10 @@ Item {
         border.width: rbMouse.containsMouse ? 1 : 0
         border.color: ink
         opacity: enabled ? 1 : 0.4
+        // Hover: grows slightly and fades to the hover fill; press: shrinks.
+        scale: rbMouse.pressed ? 0.92 : rbMouse.containsMouse ? 1.08 : 1
+        Behavior on color { ColorAnimation { duration: 120 } }
+        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         Text {
             anchors.centerIn: parent
             visible: parent.icon.length === 0

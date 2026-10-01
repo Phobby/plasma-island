@@ -34,8 +34,8 @@ Item {
         source: button.iconName
         color: button.color
         isMask: true
-        scale: mouse.pressed ? 0.88 : 1
-        Behavior on scale { NumberAnimation { duration: 90 } }
+        scale: mouse.pressed ? 0.88 : mouse.containsMouse ? 1.12 : 1
+        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
     }
 
     MouseArea {

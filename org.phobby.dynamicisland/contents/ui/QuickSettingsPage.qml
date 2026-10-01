@@ -46,9 +46,9 @@ Item {
                  : base
             border.width: mouse.containsMouse ? 1.5 : 0
             border.color: page.theme.readable(toggle.checked ? toggle.tint : page.theme.text, page.theme.surface)
-            scale: mouse.pressed ? 0.92 : 1
+            scale: mouse.pressed ? 0.92 : mouse.containsMouse ? 1.08 : 1
             Behavior on color { ColorAnimation { duration: 150 } }
-            Behavior on scale { NumberAnimation { duration: 100 } }
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
             Kirigami.Icon {
                 anchors.centerIn: parent
                 width: 20
