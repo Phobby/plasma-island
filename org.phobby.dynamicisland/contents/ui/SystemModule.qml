@@ -9,6 +9,12 @@
                network traffic, charging, …) get large 2-unit cards, calm ones
                small 1-unit cards. Leftover space is handed to the active cards,
                so the rows are always full. Hysteresis keeps it from flapping.
+               When fewer than two are active, the busiest calm metrics are
+               kept large so two cards always show their details.
+
+    In both layouts the card under the pointer grows by one unit (and shows its
+    details); its row neighbours make room. Cards never change rows or order
+    on hover, so the hovered card always stays under the pointer.
 
     Sensor polling is gated by PlasmaBackend.systemActive, which the island
     sets only while this page is shown.
@@ -44,6 +50,20 @@ Item {
         const now = was ? value > off : value > on;
         activeState[key] = now;
         return now;
+    }
+
+    // Card under the pointer ("" = none).
+    property string hoveredKey: ""
+
+    // Calm metrics kept large; sticky so two near-equal loads do not keep swapping.
+    property var pinState: ({ keys: [] })
+    function pinned(calm: var, count: int): var {
+        const M = metrics, prev = pinState.keys;
+        const rank = k => M[k].score + (prev.includes(k) ? 10 : 0);
+        // CPU temperature repeats the CPU card and is always "high": never pinned.
+        const keys = calm.filter(k => k !== "temp").sort((a, b) => rank(b) - rank(a)).slice(0, Math.max(0, count));
+        pinState.keys = keys;
+        return keys;
     }
 
     // ---- metrics ----------------------------------------------------------------------
@@ -120,10 +140,19 @@ Item {
             });
         };
 
+        // The hovered card takes one more unit of its own row.
+        const grow = (rows) => {
+            for (const row of rows) {
+                const it = row.find(it => it.key === hoveredKey);
+                if (it) { it.span += 1; it.large = true; }
+            }
+            return rows;
+        };
+
         if (mode === "fixed") {
             const third = M.battery.available ? "battery" : "gpu";
-            place([[{ key: "cpu", span: 1, large: false }, { key: "ram", span: 1, large: false }, { key: third, span: 1, large: false }],
-                   [{ key: "net", span: 1, large: true }, { key: "disk", span: 1, large: true }]]);
+            place(grow([[{ key: "cpu", span: 1, large: false }, { key: "ram", span: 1, large: false }, { key: third, span: 1, large: false }],
+                        [{ key: "net", span: 1, large: true }, { key: "disk", span: 1, large: true }]]));
             return out;
         }
 
@@ -131,8 +160,10 @@ Item {
         const order = ["cpu", "gpu", "ram", "net", "disk", "battery", "temp"];
         const avail = order.filter(k => M[k].available !== false);
         const active = avail.filter(k => M[k].active).sort((a, b) => M[b].score - M[a].score);
-        const calm = avail.filter(k => !M[k].active);
-        const items = active.map(k => ({ key: k, span: 2, large: true })).concat(calm.map(k => ({ key: k, span: 1, large: false })));
+        // At least two large cards, as long as every card still fits in 8 units.
+        const pins = pinned(avail.filter(k => !M[k].active), Math.min(2 - active.length, 8 - avail.length - active.length));
+        const calm = avail.filter(k => !M[k].active && !pins.includes(k));
+        const items = active.concat(pins).map(k => ({ key: k, span: 2, large: true })).concat(calm.map(k => ({ key: k, span: 1, large: false })));
         const rows = [[], []], free = [4, 4];
         for (const it of items) {
             let r = free[0] >= it.span ? 0 : free[1] >= it.span ? 1 : -1;
@@ -157,7 +188,7 @@ Item {
                 ++i;
             }
         }
-        place(rows.filter(r => r.length > 0));
+        place(grow(rows.filter(r => r.length > 0)));
         return out;
     }
 
@@ -171,6 +202,10 @@ Item {
             metric: sys.metrics[modelData]
             large: p.large
             visible: p.shown
+            onHoveredChanged: {
+                if (hovered) sys.hoveredKey = modelData;
+                else if (sys.hoveredKey === modelData) sys.hoveredKey = "";
+            }
             x: p.x
             y: p.y
             width: p.w

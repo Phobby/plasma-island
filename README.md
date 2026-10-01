@@ -107,7 +107,7 @@ Adanın kendisi ayrı bir üst pencere olduğundan, plasmoid'i **nereye eklediğ
 | Hover gecikmesi / ayrılınca kapanma | Varsayılan 120 ms / 400 ms |
 | Tercih edilen oynatıcı | Örn. `spotify`. Çalıyorsa (veya başka hiçbir şey çalmıyorsa) bu oynatıcı gösterilir; boşsa Plasma otomatik seçer. Kimlik/desktop dosyası adında büyük-küçük harf duyarsız eşleşir |
 | Modüller | Medya (canlı aktiviteyi de açar), Sistem, Ses, Son bildirimler |
-| Sistem görünümü | Sabit (5 kart, 2 satır) / Dinamik (varsayılan: o an etkin olan kartlar büyür, boşluk kalmaz) |
+| Sistem görünümü | Sabit (5 kart, 2 satır) / Dinamik (varsayılan: o an etkin olan kartlar büyür, boşluk kalmaz; etkin kart azsa en yüklü iki kart büyük kalır). İki görünümde de fare altındaki kart büyüyüp ayrıntısını gösterir |
 
 **Etkinlikler** sekmesi: öncelik sıralaması (yukarı/aşağı), bölünmüş ada
 açık/kapalı, çalan medyayı görünür tut, indirme klasörünü izle, anlık olay süresi, her sistem olayı ve canlı etkinlik türü için

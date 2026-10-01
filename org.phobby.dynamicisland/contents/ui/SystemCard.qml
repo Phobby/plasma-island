@@ -12,10 +12,15 @@ Rectangle {
     required property Theme theme
     property var metric: ({})
     property bool large: false
+    readonly property alias hovered: hover.hovered
 
     radius: 14
-    color: large && metric.active ? theme.over(Qt.rgba(metric.color.r, metric.color.g, metric.color.b, 0.12), theme.over(theme.faint, theme.surface)) : theme.faint
+    color: large && metric.active ? theme.over(Qt.rgba(metric.color.r, metric.color.g, metric.color.b, 0.12), theme.over(theme.faint, theme.surface))
+         : hovered ? theme.over(theme.hoverFill, theme.over(theme.faint, theme.surface))
+         : theme.faint
     Behavior on color { ColorAnimation { duration: 250 } }
+
+    HoverHandler { id: hover }
 
     // small
     ColumnLayout {
