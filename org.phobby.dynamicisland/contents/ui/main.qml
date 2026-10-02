@@ -128,6 +128,8 @@ PlasmoidItem {
         target: root.cfg
         function onNotesSourcesChanged() { if (notesBackend.sourcesJson !== root.cfg.notesSources) notesBackend.sourcesJson = root.cfg.notesSources; }
     }
+    // Clipboard history: Plasma's own (Klipper), loaded only when the page is wanted.
+    OptionalBackend { id: clipboardLoader; source: root.cfg.showClipboard ? "backend/ClipboardBackend.qml" : "" }
     OptionalBackend { id: kdeconnectLoader; source: root.cfg.showKdeConnect ? "backend/KdeConnectBackend.qml" : "" }
 
     readonly property var powerBackend: powerLoader.item
@@ -139,6 +141,7 @@ PlasmoidItem {
     readonly property var tasksBackend: tasksLoader.item
     readonly property var jobsBackend: jobsLoader.item
     readonly property var calendarBackend: calendarLoader.item
+    readonly property var clipboardBackend: clipboardLoader.item
     readonly property var kdeconnectBackend: kdeconnectLoader.item
 
     // ---- native core (optional: native/core) ------------------------------------
@@ -459,6 +462,14 @@ PlasmoidItem {
     }
 
     Component {
+        id: clipboardPage
+        ClipboardPage {
+            theme: root.islandTheme
+            clipboard: root.clipboardBackend
+        }
+    }
+
+    Component {
         id: notesPage
         NotesPage {
             theme: root.islandTheme
@@ -549,6 +560,8 @@ PlasmoidItem {
                     { key: "calendar", icon: "view-calendar", title: i18n("Calendar"), component: calendarPage,
                       visible: root.cfg.showCalendar && calendarProviderLoader.item !== null },
                     { key: "notes", icon: "view-pim-notes", title: i18n("Notes"), component: notesPage, visible: root.cfg.showNotes },
+                    { key: "clipboard", icon: "edit-paste", title: i18n("Clipboard"), component: clipboardPage,
+                      visible: root.cfg.showClipboard && root.clipboardBackend !== null },
                     { key: "devices", icon: "network-bluetooth", title: i18n("Devices"), component: devicesPage,
                       visible: root.cfg.showDevicesModule && ((root.bluetoothBackend && root.bluetoothBackend.available) || root.deviceList.length > 0) }
                 ]

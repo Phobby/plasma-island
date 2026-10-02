@@ -129,6 +129,7 @@
     <!-- Notes: JSON list of { id, type (joplin|simplenote|memos), name, server, user }.
          Tokens are kept in KWallet, never here. -->
     <entry name="showNotes" type="Bool"><default>true</default></entry>
+    <entry name="showClipboard" type="Bool"><default>true</default></entry>
     <entry name="notesSources" type="String"><default>[]</default></entry>
     <entry name="notesDefault" type="String"><default></default></entry>
     <entry name="notesRefreshMinutes" type="Int"><default>2</default></entry>

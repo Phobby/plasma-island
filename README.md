@@ -28,7 +28,8 @@ Bluetooth, Wi-Fi, updates; volume and screen brightness sliders below),
 **Tools** (timer, stopwatch, Pomodoro, alarm), **Calendar** (month view, the
 events of the selected day and their details; calendars are connected right
 on this page), **Notes** (quick notes and the notes of Joplin, Simplenote and
-Memos), **Devices** (Bluetooth devices and phones, with their batteries).
+Memos), **Clipboard** (what was copied recently: texts, code, images, files),
+**Devices** (Bluetooth devices and phones, with their batteries).
 
 ### Activity manager and priority
 
@@ -176,6 +177,7 @@ Notification service on DBus` is normal). Try those in the real environment
 | File job | Copy a large file with Dolphin or extract an archive with `ark --batch` (`kioclient` does not use the job tracker and is not shown) |
 | Download | Download a large file in a browser (Flatpak/Snap browsers only show size and speed) |
 | Timer etc. | Expanded → Tools page (a 1-minute timer is the quickest test) |
+| Clipboard | Copy a text, a piece of code and an image (e.g. a Spectacle screenshot); they appear on the Clipboard page, a click copies one again |
 | Notes | Start Joplin, enable its Web Clipper service, paste the token on the island's Notes page; add a quick note and check that it appears in Joplin |
 | Calendar | Connect a calendar on the island's Calendar page (gear button), create an event 20 minutes from now; it is pinned to the island 15 minutes before |
 | KDE Connect | `kdeconnect-cli --list-devices` · `kdeconnect-cli -d <id> --ping` · send a file from the phone / call the phone |
@@ -208,6 +210,7 @@ org.phobby.dynamicisland/
     ├── *Module.qml, *Page.qml                    expanded pages
     ├── Calendar*.qml                             calendar page, connect wizard, accounts, new event
     ├── NotesPage.qml                             notes list, quick note, editor, connecting apps
+    ├── ClipboardPage.qml                         clipboard history: copy again, search, star, edit, QR
     ├── NativeBridge.qml, BlurBridge.qml          import the native modules
     └── config*.qml                                settings pages
 native/
@@ -268,7 +271,8 @@ model while visible.
 `org.kde.bluezqt`, `org.kde.plasma.private.brightnesscontrolplugin`,
 `org.kde.plasma.private.keyboardindicator`,
 `org.kde.plasma.workspace.keyboardlayout`, `org.kde.plasma.networkmanagement`,
-`org.kde.taskmanager`, `org.kde.plasma.workspace.calendar` and
+`org.kde.taskmanager`, `org.kde.plasma.workspace.calendar`,
+`org.kde.plasma.private.clipboard` and
 `org.kde.kdeconnect` only under `backend/`. Providers and views only see the
 normalised properties of these files. If a Plasma update changes an API, this
 is the place to fix.
@@ -389,6 +393,22 @@ Not supported: **Standard Notes** (its notes are end-to-end encrypted; reading
 them needs Argon2id and XChaCha20-Poly1305, i.e. libsodium, which the native
 module does not link yet) and **Obsidian** (only through the community "Local
 REST API" plugin; not done).
+
+## Clipboard
+
+A page with the history of Plasma's own clipboard (Klipper), so it shows the
+same entries as the clipboard popup of the system tray: texts, code (in a
+monospace font), images (as thumbnails) and copied files.
+
+- Click an entry to copy it again.
+- Search field, stars and the starred-only filter, clearing the history
+  (asks once more).
+- Under the mouse: star, show as a QR code, edit the text, run the actions
+  configured in Klipper, remove the entry.
+- History size and what is kept are Klipper's own settings (System Tray →
+  Clipboard → Configure Clipboard…).
+
+The page can be turned off in Settings → Activities.
 
 ## D-Bus API
 
