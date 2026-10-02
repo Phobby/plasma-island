@@ -25,8 +25,8 @@ sıcaklığı, GPU, RAM, pil, ağ ↓/↑ ve disk kartları; Sabit veya Dinamik 
 **Bildirimler** (son 3, geliş saati, hızlı yanıt, onaylı "tümünü sil"),
 **Denetim** (Rahatsız Etmeyin, Gece Işığı, güç profili, Bluetooth, Wi-Fi,
 güncellemeler; altında ses ve ekran parlaklığı kaydırıcıları), **Araçlar** (zamanlayıcı, kronometre,
-Pomodoro, alarm), **Takvim** (bugünün kalan etkinlikleri; yalnızca bir takvim
-bağlıyken), **Cihazlar** (Bluetooth cihazları ve telefonlar, pilleriyle).
+Pomodoro, alarm), **Takvim** (bugünün kalan etkinlikleri; takvim bağlı
+değilken ayarları açan "Connect a calendar…" düğmesi), **Cihazlar** (Bluetooth cihazları ve telefonlar, pilleriyle).
 
 ### Etkinlik yöneticisi ve öncelik
 

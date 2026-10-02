@@ -416,6 +416,7 @@ PlasmoidItem {
         CalendarPage {
             theme: root.islandTheme
             provider: calendarProviderLoader.item
+            onConfigureRequested: Plasmoid.internalAction("configure").trigger()
         }
     }
 
@@ -486,7 +487,7 @@ PlasmoidItem {
                     { key: "quicksettings", icon: "configure", title: i18n("Controls"), component: quickSettingsPage, visible: root.cfg.showQuickSettings },
                     { key: "tools", icon: "chronometer", title: i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },
                     { key: "calendar", icon: "view-calendar", title: i18n("Calendar"), component: calendarPage,
-                      visible: root.cfg.showCalendar && calendarProviderLoader.item !== null && root.calendarBackend !== null && root.calendarBackend.available },
+                      visible: root.cfg.showCalendar && calendarProviderLoader.item !== null },
                     { key: "devices", icon: "network-bluetooth", title: i18n("Devices"), component: devicesPage,
                       visible: root.cfg.showDevicesModule && ((root.bluetoothBackend && root.bluetoothBackend.available) || root.deviceList.length > 0) }
                 ]

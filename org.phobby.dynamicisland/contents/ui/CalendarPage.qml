@@ -2,6 +2,7 @@
     SPDX-License-Identifier: GPL-2.0-or-later
     "Calendar": the rest of today in chronological order, one row per event
     with the colour of its calendar. Clicking a row opens its meeting link.
+    While no calendar is connected the page offers to open the settings.
 */
 import QtQuick
 import QtQuick.Layouts
@@ -14,6 +15,8 @@ Item {
     property var provider: null            // CalendarProvider
     readonly property var events: provider ? provider.today : []
     readonly property var pinned: provider ? provider.pinned : null
+    readonly property bool connected: provider !== null && provider.calendar.available
+    signal configureRequested()
 
     ListView {
         id: list
@@ -133,9 +136,32 @@ Item {
         }
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: page.provider === null || !page.provider.calendar.loaded ? i18n("Loading calendar…") : i18n("Nothing else today")
+            text: !page.connected ? i18n("No calendar connected")
+                : !page.provider.calendar.loaded ? i18n("Loading calendar…") : i18n("Nothing else today")
             color: page.theme.subText
             font.pointSize: page.theme.fontNormal
+        }
+        Rectangle {
+            Layout.alignment: Qt.AlignHCenter
+            visible: !page.connected
+            implicitWidth: connectLabel.implicitWidth + 24
+            implicitHeight: 28
+            radius: 14
+            color: connectMouse.pressed ? page.theme.pressedFill
+                 : connectMouse.containsMouse ? page.theme.over(page.theme.hoverFill, page.theme.over(page.theme.faint, page.theme.surface))
+                 : page.theme.faint
+            scale: connectMouse.pressed ? 0.95 : connectMouse.containsMouse ? 1.05 : 1
+            Behavior on color { ColorAnimation { duration: 120 } }
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            Text {
+                id: connectLabel
+                anchors.centerIn: parent
+                text: i18nc("@action:button opens the calendar settings", "Connect a calendar…")
+                color: page.theme.text
+                font.pointSize: page.theme.fontSmall
+                font.weight: Font.DemiBold
+            }
+            MouseArea { id: connectMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.configureRequested() }
         }
     }
 }
