@@ -2,7 +2,7 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 
     Calendar: timing options and the list of connected calendars. Calendars are
-    iCalendar (.ics) subscription links; "+ Takvim Bağla" opens a small wizard
+    iCalendar (.ics) subscription links; "+ Connect a Calendar" opens a small wizard
     (Google Calendar / Apple iCloud) that explains where to find the link,
     downloads it once to make sure it really is a calendar, and adds it.
 
@@ -93,8 +93,8 @@ KCM.SimpleKCM {
         });
     }
     function finishWizard(name: string): bool {
-        if (name.trim().length === 0) { wizardError = i18n("Takvime kısa bir ad ver (ör. İş, Kişisel)."); return false; }
-        if (isConnected(wizardUrl)) { wizardError = i18n("Bu takvim zaten bağlı."); return false; }
+        if (name.trim().length === 0) { wizardError = i18n("Give the calendar a short name (e.g. Work, Personal)."); return false; }
+        if (isConnected(wizardUrl)) { wizardError = i18n("This calendar is already connected."); return false; }
         addSource(wizardType, wizardUrl, name, wizardColor);
         wizardError = "";
         return true;
@@ -108,12 +108,12 @@ KCM.SimpleKCM {
 
             QQC2.CheckBox {
                 id: enableCheck
-                Kirigami.FormData.label: i18n("Takvim:")
-                text: i18n("Yaklaşan etkinlikleri adada göster")
+                Kirigami.FormData.label: i18n("Calendar:")
+                text: i18n("Show upcoming events in the island")
             }
             QQC2.SpinBox {
                 id: leadSpin
-                Kirigami.FormData.label: i18n("Etkinlikten önce pinle:")
+                Kirigami.FormData.label: i18n("Pin before the event:")
                 enabled: enableCheck.checked
                 from: 1; to: 120
                 textFromValue: (v) => i18n("%1 dk kala", v)
@@ -121,7 +121,7 @@ KCM.SimpleKCM {
             }
             QQC2.SpinBox {
                 id: lingerSpin
-                Kirigami.FormData.label: i18n("Bittikten sonra kalsın:")
+                Kirigami.FormData.label: i18n("Keep after it ends:")
                 enabled: enableCheck.checked
                 from: 0; to: 120
                 textFromValue: (v) => i18n("%1 dk", v)
@@ -129,13 +129,13 @@ KCM.SimpleKCM {
             }
             QQC2.CheckBox {
                 id: allDayCheck
-                Kirigami.FormData.label: i18n("Takvim sayfası:")
+                Kirigami.FormData.label: i18n("Calendar page:")
                 enabled: enableCheck.checked
-                text: i18n("Tüm gün etkinliklerini listede göster")
+                text: i18n("Show all-day events in the list")
             }
             QQC2.SpinBox {
                 id: refreshSpin
-                Kirigami.FormData.label: i18n("Takvimleri güncelle:")
+                Kirigami.FormData.label: i18n("Update calendars:")
                 enabled: enableCheck.checked
                 from: 1; to: 60
                 textFromValue: (v) => i18n("%1 dakikada bir", v)
@@ -145,7 +145,7 @@ KCM.SimpleKCM {
 
         Kirigami.Heading {
             level: 4
-            text: i18n("Bağlı takvimler")
+            text: i18n("Connected calendars")
         }
 
         QQC2.Label {
@@ -153,7 +153,7 @@ KCM.SimpleKCM {
             visible: page.sources.length === 0
             wrapMode: Text.Wrap
             opacity: 0.7
-            text: i18n("Henüz takvim bağlanmadı. Google Takvim veya Apple iCloud takvimini bağlamak için aşağıdaki düğmeyi kullan.")
+            text: i18n("No calendar is connected yet. Use the button below to connect a Google Calendar or Apple iCloud calendar.")
         }
 
         Repeater {
@@ -170,7 +170,7 @@ KCM.SimpleKCM {
                 QQC2.CheckBox {
                     checked: sourceRow.modelData.enabled !== false
                     onToggled: page.setEnabled(sourceRow.index, checked)
-                    QQC2.ToolTip.text: i18n("Bu takvimi dahil et")
+                    QQC2.ToolTip.text: i18n("Include this calendar")
                     QQC2.ToolTip.visible: hovered
                 }
                 Rectangle {
@@ -184,7 +184,7 @@ KCM.SimpleKCM {
                     spacing: 0
                     QQC2.Label {
                         Layout.fillWidth: true
-                        text: sourceRow.modelData.name || i18n("Takvim")
+                        text: sourceRow.modelData.name || i18n("Calendar")
                         elide: Text.ElideRight
                     }
                     QQC2.Label {
@@ -196,15 +196,15 @@ KCM.SimpleKCM {
                         text: {
                             const kind = page.typeNames[sourceRow.modelData.type] || i18n(".ics linki");
                             const st = sourceRow.state;
-                            if (!st) return i18n("%1 · henüz güncellenmedi", kind);
+                            if (!st) return i18n("%1 · not updated yet", kind);
                             const at = Qt.formatDateTime(new Date(st.t), Qt.locale().dateTimeFormat(Locale.ShortFormat));
-                            return st.error ? i18n("%1 · güncellenemedi (%2): %3", kind, at, st.error) : i18n("%1 · son güncelleme: %2", kind, at);
+                            return st.error ? i18n("%1 · could not update (%2): %3", kind, at, st.error) : i18n("%1 · last updated: %2", kind, at);
                         }
                     }
                 }
                 QQC2.ToolButton {
                     icon.name: "edit-delete"
-                    text: i18n("Kaldır")
+                    text: i18n("Remove")
                     display: QQC2.AbstractButton.IconOnly
                     onClicked: page.removeSource(sourceRow.index)
                     QQC2.ToolTip.text: text
@@ -215,7 +215,7 @@ KCM.SimpleKCM {
 
         QQC2.Button {
             icon.name: "list-add"
-            text: i18n("Takvim Bağla")
+            text: i18n("Connect a Calendar")
             onClicked: { page.startWizard(); wizard.open(); }
         }
 
@@ -224,13 +224,13 @@ KCM.SimpleKCM {
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
             opacity: 0.7
-            text: i18n("Değişiklikler \"Uygula\"ya basınca geçerli olur. Takvim linkleri bu bilgisayardaki Plasma ayar dosyasında saklanır; dosyayı yalnızca senin kullanıcın okuyabilir.")
+            text: i18n("Changes take effect when you press \"Apply\". Calendar links are stored in the Plasma configuration file on this computer; only your user can read it.")
         }
     }
 
     Kirigami.Dialog {
         id: wizard
-        title: page.wizardStep === "pick" ? i18n("Takvim Bağla") : page.typeNames[page.wizardType]
+        title: page.wizardStep === "pick" ? i18n("Connect a Calendar") : page.typeNames[page.wizardType]
         preferredWidth: Kirigami.Units.gridUnit * 26
         padding: Kirigami.Units.largeSpacing
         standardButtons: Kirigami.Dialog.NoButton
@@ -309,12 +309,12 @@ KCM.SimpleKCM {
                 QQC2.Label {
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
-                    text: i18np("Takvim bulundu: %1 etkinlik içeriyor.", "Takvim bulundu: %1 etkinlik içeriyor.", page.wizardCount)
+                    text: i18np("Calendar found: it has %1 event.", "Calendar found: it has %1 events.", page.wizardCount)
                 }
                 QQC2.TextField {
                     id: nameField
                     Layout.fillWidth: true
-                    placeholderText: i18n("Takvimin adı (ör. İş, Kişisel)")
+                    placeholderText: i18n("Name of the calendar (e.g. Work, Personal)")
                     onAccepted: if (page.finishWizard(text)) wizard.close()
                     onTextEdited: page.wizardError = ""
                 }
@@ -363,14 +363,14 @@ KCM.SimpleKCM {
                 QQC2.Button {
                     visible: page.wizardStep === "link"
                     icon.name: "network-connect"
-                    text: i18n("Bağla")
+                    text: i18n("Connect")
                     enabled: !page.wizardBusy
                     onClicked: page.connectLink(linkField.text)
                 }
                 QQC2.Button {
                     visible: page.wizardStep === "name"
                     icon.name: "list-add"
-                    text: i18n("Ekle")
+                    text: i18n("Add")
                     onClicked: if (page.finishWizard(nameField.text)) wizard.close()
                 }
             }

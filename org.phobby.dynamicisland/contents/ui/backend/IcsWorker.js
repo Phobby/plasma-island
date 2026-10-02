@@ -4555,10 +4555,17 @@ ICAL.Binary = (function() {
             rrule.until.zone = ICAL.Timezone.localTimezone;
           }
 
-          var iterator = rrule.iterator(dtstart);
+          // Local change: a rule that cannot be expanded only loses its own
+          // transitions instead of failing every event in this time zone.
+          var iterator = null;
+          try {
+            iterator = rrule.iterator(dtstart);
+          } catch (e) {
+            iterator = null;
+          }
 
           var occ;
-          while ((occ = iterator.next())) {
+          while (iterator && (occ = iterator.next())) {
             change = init_changes();
             if (occ.year > aYear || !occ) {
               break;
@@ -7056,10 +7063,13 @@ ICAL.RecurIterator = (function() {
         this.sort_byday_rules(parts.BYDAY);
       }
 
-      // If the BYYEARDAY appares, no other date rule part may appear
+      // If the BYYEARDAY appares, no other date rule part may appear.
+      // Local change: BYDAY is allowed next to it (RFC 5545 limits the year
+      // days to those weekdays); iCloud writes the rules of some time zones
+      // that way, see expand_year_days.
       if ("BYYEARDAY" in parts) {
         if ("BYMONTH" in parts || "BYWEEKNO" in parts ||
-            "BYMONTHDAY" in parts || "BYDAY" in parts) {
+            "BYMONTHDAY" in parts) {
           throw new Error("Invalid BYYEARDAY rule");
         }
       }
@@ -8077,6 +8087,22 @@ ICAL.RecurIterator = (function() {
         // TODO unimplemted in libical
       } else if (partCount == 1 && "BYYEARDAY" in parts) {
         this.days = this.days.concat(this.by_data.BYYEARDAY);
+      } else if (partCount == 2 && "BYDAY" in parts && "BYYEARDAY" in parts) {
+        // Local change: the listed year days that fall on one of the weekdays.
+        var expandedDays = this.expand_by_day(aYear);
+        var daysInYear = ICAL.Time.isLeapYear(aYear) ? 366 : 365;
+
+        for (var daykey in expandedDays) {
+          /* istanbul ignore if */
+          if (!expandedDays.hasOwnProperty(daykey)) {
+            continue;
+          }
+          var day = expandedDays[daykey];
+          if (this.by_data.BYYEARDAY.indexOf(day) >= 0 ||
+              this.by_data.BYYEARDAY.indexOf(day - daysInYear - 1) >= 0) {
+            this.days.push(day);
+          }
+        }
       } else {
         this.days = [];
       }
@@ -9540,11 +9566,12 @@ ICAL.ComponentParser = (function() {
  * IcsWorker.LICENSE.ical.js). QML's WorkerScript cannot import a classic
  * script, so the library and this glue share one file.
  *
- * in : { seq, from, to, sources: [{ index, name, color, text }] }   (from/to: ms)
- * out: { seq, events: [...], errors: { index: message } }
+ * in : { seq, from, to, sources: [{ index, name, color, text }], ... }   (from/to: ms)
+ * out: the same message with `sources` replaced by
+ *      events: [...], errors: { index: message }
  *
- * Event: { key, uid, title, start, end (ms), allDay, todo, location, link,
- *          calendar, color, source }
+ * Event: { key, uid, title, start, end (ms), allDay, todo, recurring, location, notes,
+ *          link, calendar, color, source }
  * Recurring events (RRULE/RDATE/EXDATE, RECURRENCE-ID overrides) are expanded
  * by ICAL.Event; only occurrences touching [from, to) are returned.
  * ========================================================================== */
@@ -9552,6 +9579,7 @@ var MEETING_URL = /https?:\/\/(?:[\w-]+\.)*(?:meet\.google\.com|zoom\.us|teams\.
 var ANY_URL = /https?:\/\/[^\s<>"'\\)]+/i;
 var MAX_OCCURRENCES = 50000;
 var WEEK = 7 * 86400000;
+var MAX_NOTES = 600;
 
 function textOf(component, name) {
     var v = component.getFirstPropertyValue(name);
@@ -9581,13 +9609,14 @@ function expandSource(source, from, to, out) {
     vcal.getAllSubcomponents("vtimezone").forEach(function (tz) { ICAL.TimezoneService.register(tz); });
     var calendar = source.name || textOf(vcal, "x-wr-calname");
 
-    function add(component, uid, start, end, allDay, todo) {
-        var location = textOf(component, "location").split("\n")[0].trim();
+    function add(component, uid, start, end, allDay, todo, recurring) {
+        var location = textOf(component, "location").split("\n").map(function (l) { return l.trim(); })
+                                                     .filter(function (l) { return l.length > 0; }).join(", ");
         out.push({
             key: source.index + ":" + uid + "@" + start, uid: uid,
             title: textOf(component, "summary").trim(),
-            start: start, end: Math.max(start, end), allDay: allDay, todo: todo,
-            location: location, link: linkOf(component),
+            start: start, end: Math.max(start, end), allDay: allDay, todo: todo, recurring: recurring === true,
+            location: location, notes: textOf(component, "description").trim().slice(0, MAX_NOTES), link: linkOf(component),
             calendar: calendar, color: source.color, source: source.index
         });
     }
@@ -9610,12 +9639,19 @@ function expandSource(source, from, to, out) {
         order.push(id);
     });
 
-    order.forEach(function (id) {
+    // One event the library cannot expand is skipped; the rest still shows.
+    function each(list, fn) {
+        list.forEach(function (item) {
+            try { fn(item); } catch (e) { console.warn("IcsWorker: skipped an entry of", calendar, "-", e); }
+        });
+    }
+
+    each(order, function (id) {
         var e = masters[id];
         if (!e.startDate) return;
         if (!e.isRecurring() || e.isRecurrenceException()) {
             var s = ms(e.startDate), en = ms(e.endDate);
-            if (s < to && en >= from && !cancelled(e.component)) add(e.component, e.uid, s, en, e.startDate.isDate, false);
+            if (s < to && (en > from || s >= from) && !cancelled(e.component)) add(e.component, e.uid, s, en, e.startDate.isDate, false);
             return;
         }
         var it = e.iterator(), t, n = 0;
@@ -9626,13 +9662,13 @@ function expandSource(source, from, to, out) {
             if (original < from - WEEK) continue;
             var d = e.getOccurrenceDetails(t);
             var start = ms(d.startDate), end = ms(d.endDate);
-            if (start >= to || end < from || cancelled(d.item.component)) continue;
-            add(d.item.component, e.uid, start, end, d.startDate.isDate, false);
+            if (start >= to || (end <= from && start < from) || cancelled(d.item.component)) continue;
+            add(d.item.component, e.uid, start, end, d.startDate.isDate, false, true);
         }
     });
 
     // Reminders / to-dos: open items with a due date.
-    vcal.getAllSubcomponents("vtodo").forEach(function (c) {
+    each(vcal.getAllSubcomponents("vtodo"), function (c) {
         var status = textOf(c, "status").toUpperCase();
         if (status === "COMPLETED" || status === "CANCELLED" || c.hasProperty("completed")) return;
         var due = c.getFirstPropertyValue("due") || c.getFirstPropertyValue("dtstart");
@@ -9653,5 +9689,8 @@ WorkerScript.onMessage = function (message) {
         }
     });
     events.sort(function (a, b) { return a.start - b.start || a.end - b.end; });
-    WorkerScript.sendMessage({ seq: message.seq, events: events, errors: errors });
+    delete message.sources;
+    message.events = events;
+    message.errors = errors;
+    WorkerScript.sendMessage(message);
 };

@@ -91,10 +91,27 @@ PlasmoidItem {
     // older PIM-plugin source, kept for reference but no longer loaded.
     OptionalBackend { id: calendarLoader; source: root.cfg.showCalendar ? "backend/IcsCalendarBackend.qml" : "" }
     Binding { target: root.calendarBackend; property: "sourcesJson"; value: root.cfg.calendarSources; when: root.calendarBackend !== null }
+    Binding { target: root.calendarBackend; property: "client"; value: calendarClient; when: root.calendarBackend !== null }
+    Binding { target: root.calendarBackend; property: "google"; value: googleCalendar; when: root.calendarBackend !== null }
     Binding { target: root.calendarBackend; property: "refreshMinutes"; value: root.cfg.calendarRefreshMinutes; when: root.calendarBackend !== null }
     Connections {
         target: root.calendarBackend
         function onStatusJsonChanged() { root.cfg.calendarStatus = root.calendarBackend.statusJson; }
+    }
+    // Adding events needs the account itself (CalDAV); the links above are read-only.
+    CalDavClient {
+        id: calendarClient
+        core: root.core
+        accountJson: root.cfg.calendarAccount
+        onAccountJsonChanged: if (root.cfg.calendarAccount !== accountJson) root.cfg.calendarAccount = accountJson
+    }
+    GoogleCalendar {
+        id: googleCalendar
+        core: root.core
+        clientId: root.cfg.googleClientId
+        clientSecret: root.cfg.googleClientSecret
+        accountJson: root.cfg.googleAccount
+        onAccountJsonChanged: if (root.cfg.googleAccount !== accountJson) root.cfg.googleAccount = accountJson
     }
     OptionalBackend { id: kdeconnectLoader; source: root.cfg.showKdeConnect ? "backend/KdeConnectBackend.qml" : "" }
 
@@ -423,6 +440,9 @@ PlasmoidItem {
         CalendarPage {
             theme: root.islandTheme
             provider: calendarProviderLoader.item
+            client: calendarClient
+            google: googleCalendar
+            onGoogleClientSaved: (id, secret) => { root.cfg.googleClientId = id; root.cfg.googleClientSecret = secret; }
             sources: root.calendarSourceList
             onSourceAdded: source => { root.cfg.calendarSources = JSON.stringify(root.calendarSourceList.concat([source])); }
         }

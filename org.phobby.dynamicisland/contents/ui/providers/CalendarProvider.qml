@@ -9,6 +9,10 @@
                 event is flashed at the start
       ended     for `lingerMinutes` after the end, at a low priority, then gone
 
+    Besides the pinned activity, a short reminder is flashed 1 hour, 30 minutes
+    and 5 minutes before every timed event ("Starts in 1 hour"), and once more
+    when it starts.
+
     The soonest upcoming event wins, then the running one, then the one that
     just ended. All-day events and reminders without a future time are never
     pinned; they only appear in `today` (the Calendar page).
@@ -101,6 +105,7 @@ Item {
         triggeredOnStart: true
         onTriggered: {
             const t = Date.now();
+            provider.remind(t);
             provider.now = t;
             if (!provider.pinned || t - provider.coarseNow >= 20000 || provider.phaseOf(provider.pinned, t) !== provider.phaseOf(provider.pinned, provider.coarseNow)) {
                 provider.coarseNow = t;
@@ -108,6 +113,35 @@ Item {
         }
     }
     onEventsChanged: { now = Date.now(); coarseNow = now; }
+
+    // Reminders: a flash when one of these many minutes are left to the start.
+    readonly property var reminderMinutes: [60, 30, 5]
+    property real remindedUntil: Date.now()      // reminders due up to here are done
+    function remind(t: real): void {
+        const since = remindedUntil;
+        remindedUntil = t;
+        for (const e of events) {
+            if (e.allDay || e.todo) continue;
+            // After a pause (suspend) only the closest reminder is shown, and no stale ones.
+            let due = -1;
+            for (const m of reminderMinutes) {
+                const at = e.start - m * 60000;
+                if (at > since && at <= t && t - at < 120000 && (due < 0 || m < due)) due = m;
+            }
+            if (due < 0) continue;
+            manager.flash({
+                key: "calendar-reminder:" + e.key,
+                icon: "view-calendar",
+                color: e.color,
+                title: e.title || i18n("Event"),
+                subtitle: due >= 60 ? i18np("Starts in %1 hour", "Starts in %1 hours", Math.round(due / 60))
+                                    : i18np("Starts in %1 minute", "Starts in %1 minutes", due),
+                trailing: e.link ? { type: "button", text: i18nc("@action:button join a video meeting", "Join") } : { type: "text", text: clock(e.start), color: e.color },
+                activate: e.link ? (() => provider.open(e)) : undefined,
+                duration: 4000
+            });
+        }
+    }
 
     // "… started": once per occurrence, only when we actually saw it start.
     property string announced: ""

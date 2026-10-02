@@ -112,6 +112,14 @@
     <entry name="calendarSources" type="String"><default>[]</default></entry>
     <!-- Written by the widget: JSON { source id: { t: ms, error } } (shown in the settings) -->
     <entry name="calendarStatus" type="String"><default>{}</default></entry>
+    <!-- Account for adding events (CalDAV): JSON { server, user, calendars: [{ url, name, color }], defaultUrl }.
+         The password is kept in KWallet, never here. -->
+    <entry name="calendarAccount" type="String"><default>{}</default></entry>
+    <!-- Google account (OAuth): the desktop client registered in Google Cloud, and
+         JSON { user, calendars: [{ id, name, color, writable }] }. The refresh token is kept in KWallet. -->
+    <entry name="googleClientId" type="String"><default></default></entry>
+    <entry name="googleClientSecret" type="String"><default></default></entry>
+    <entry name="googleAccount" type="String"><default>{}</default></entry>
 
     <!-- Modules -->
     <entry name="showMediaModule" type="Bool">

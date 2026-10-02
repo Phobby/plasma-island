@@ -17,8 +17,8 @@ QtObject {
     readonly property var palette: ["#0a84ff", "#32d74b", "#ff9f0a", "#bf5af2", "#ff453a", "#64d2ff", "#ffd60a", "#ac8e68"]
     readonly property var typeNames: ({ google: "Google Calendar", apple: "Apple Calendar (iCloud)" })
     readonly property var typeIcons: ({ google: Qt.resolvedUrl("../icons/google.svg"), apple: Qt.resolvedUrl("../icons/apple.svg") })
-    readonly property string secretWarning: i18n("⚠️ Bu link takvimine erişim sağlar, kimseyle paylaşma.")
-    readonly property string notCalendarMessage: i18n("Bu link bir takvim dosyasına benzemiyor. Lütfen adımları tekrar kontrol et.")
+    readonly property string secretWarning: i18n("⚠️ This link gives access to your calendar; do not share it with anyone.")
+    readonly property string notCalendarMessage: i18n("This link does not look like a calendar file. Please check the steps again.")
 
     readonly property var instructions: ({
         google: "1. Open Google Calendar in a browser on a computer (not the phone app).\n"
@@ -52,11 +52,11 @@ QtObject {
     // "" when the text can be a calendar link; otherwise what is wrong with it.
     function formatProblem(url: string): string {
         const u = String(url).trim();
-        if (u.length === 0) return i18n("Önce takvim linkini yapıştır.");
-        if (!/^(https?|webcals?):\/\/[^\s]+$/i.test(u)) return i18n("Bu bir link değil. Link http://, https:// veya webcal:// ile başlamalı.");
+        if (u.length === 0) return i18n("Paste the calendar link first.");
+        if (!/^(https?|webcals?):\/\/[^\s]+$/i.test(u)) return i18n("This is not a link. A link starts with http://, https:// or webcal://.");
         if (/calendar\.google\.com\/calendar\/(embed|u\/\d+\/r|r)\b/i.test(u))
-            return i18n("Bu, Google Takvim sayfasının adresi. Gereken link \"Secret address in iCal format\" alanındaki, sonu basic.ics ile biten adres.");
-        if (isConnected(u)) return i18n("Bu takvim zaten bağlı.");
+            return i18n("This is the address of the Google Calendar page. The link needed is the one under \"Secret address in iCal format\", ending in basic.ics.");
+        if (isConnected(u)) return i18n("This calendar is already connected.");
         return "";
     }
 
@@ -72,9 +72,9 @@ QtObject {
                 done({ ok: true, name: name ? name[1].trim().replace(/\\([,;\\])/g, "$1") : "", count: (text.match(/^BEGIN:VEVENT/gim) || []).length });
                 return;
             }
-            const detail = xhr.status === 200 ? i18n("İndirilen dosya bir takvim (VCALENDAR) değil.")
-                         : xhr.status > 0 ? i18n("Sunucu %1 yanıtı verdi.", xhr.status)
-                         : i18n("Bağlantı kurulamadı.");
+            const detail = xhr.status === 200 ? i18n("The downloaded file is not a calendar (VCALENDAR).")
+                         : xhr.status > 0 ? i18n("The server answered %1.", xhr.status)
+                         : i18n("No connection.");
             done({ ok: false, error: links.notCalendarMessage + " " + detail });
         };
         xhr.open("GET", normalize(url));

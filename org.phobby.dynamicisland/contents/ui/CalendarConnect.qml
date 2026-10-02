@@ -2,7 +2,11 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 
     Connect a calendar without leaving the island: pick Google Calendar or
-    Apple iCloud, follow the short instructions, paste the link. The link is
+    Apple iCloud, then how: the whole account (every calendar, events can be
+    added; `accountRequested(type)` hands over to CalendarAccount or
+    CalendarGoogle) or, for those who only want to look, the link of one
+    shared calendar.
+    For a link: follow the short instructions and paste it. The link is
     downloaded once to make sure it really is a calendar, then `added(source)`
     is emitted. `interacting` asks the island for keyboard focus while a text
     field is shown.
@@ -18,8 +22,15 @@ Item {
     property var sources: []
     signal added(var source)
     signal cancelled()
+    signal accountRequested(string type)
+    // Whether an account can be connected here, and who is signed in ("" = nobody).
+    property bool accountAvailable: false           // Apple iCloud
+    property string accountUser: ""
+    property bool googleAvailable: false
+    property string googleUser: ""
+    readonly property string modeUser: type === "google" ? googleUser : accountUser
 
-    // "pick" → "link" → "name"
+    // "pick" → "mode" (Apple: account or link) → "link" → "name"
     property string step: "pick"
     property string type: "google"
     property string device: "iphone"          // which Apple instructions are shown
@@ -28,7 +39,8 @@ Item {
     property string url: ""
     property int count: 0
     property string color: links.palette[0]
-    readonly property bool interacting: step !== "pick"
+    readonly property bool interacting: step === "link" || step === "name"
+    readonly property bool hasModes: type === "apple" ? accountAvailable : googleAvailable
 
     CalendarLinks { id: links; sources: connect.sources }
 
@@ -52,8 +64,8 @@ Item {
         });
     }
     function finish(): void {
-        if (nameInput.text.trim().length === 0) { error = i18n("Takvime kısa bir ad ver (ör. İş, Kişisel)."); return; }
-        if (links.isConnected(url)) { error = i18n("Bu takvim zaten bağlı."); return; }
+        if (nameInput.text.trim().length === 0) { error = i18n("Give the calendar a short name (e.g. Work, Personal)."); return; }
+        if (links.isConnected(url)) { error = i18n("This calendar is already connected."); return; }
         added(links.makeSource(type, url, nameInput.text, color));
         reset();
     }
@@ -131,7 +143,7 @@ Item {
                 color: connect.theme.text
                 hoverColor: connect.theme.faint
                 enabled: !connect.busy
-                onClicked: { connect.error = ""; connect.step = connect.step === "name" ? "link" : "pick"; }
+                onClicked: { connect.error = ""; connect.step = connect.step === "name" ? "link" : connect.step === "link" && connect.hasModes ? "mode" : "pick"; }
             }
             Kirigami.Icon {
                 visible: connect.step !== "pick"
@@ -143,7 +155,7 @@ Item {
             }
             Text {
                 Layout.fillWidth: true
-                text: connect.step === "pick" ? i18n("Takvim Bağla") : links.typeNames[connect.type]
+                text: connect.step === "pick" ? i18n("Connect a Calendar") : links.typeNames[connect.type]
                 color: connect.theme.text
                 font.pointSize: connect.theme.fontSmall
                 font.weight: Font.DemiBold
@@ -222,7 +234,77 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: { connect.type = tile.modelData; connect.error = ""; connect.step = "link"; }
+                        onClicked: { connect.type = tile.modelData; connect.error = ""; connect.step = connect.hasModes ? "mode" : "link"; }
+                    }
+                }
+            }
+        }
+
+        // ---- step 2: the whole account, or one shared calendar ----
+        RowLayout {
+            visible: connect.step === "mode"
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 8
+            Repeater {
+                model: [
+                    { key: "account", icon: "user-identity-symbolic", title: connect.modeUser.length > 0 ? i18n("Account connected") : i18n("Connect the account"),
+                      text: connect.modeUser.length > 0 ? connect.modeUser
+                          : connect.type === "google" ? i18n("Every calendar is shown and events can be added here. You sign in with Google in the browser; your password never reaches the island.")
+                          : i18n("Every calendar is shown and events can be added here. Uses a revocable app-specific password, not your real one.") },
+                    { key: "link", icon: "insert-link-symbolic", title: i18n("View only"),
+                      text: connect.type === "google" ? i18n("No account is connected. You paste the secret link of the one calendar you choose.")
+                                                      : i18n("No account details are entered. You share the one calendar you choose on your phone as a link.") }
+                ]
+                delegate: Rectangle {
+                    id: modeTile
+                    required property var modelData
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.preferredWidth: 1
+                    radius: 14
+                    color: modeMouse.pressed ? connect.theme.pressedFill
+                         : modeMouse.containsMouse ? connect.theme.over(connect.theme.hoverFill, connect.theme.over(connect.theme.faint, connect.theme.surface))
+                         : connect.theme.faint
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        width: parent.width - 16
+                        spacing: 2
+                        RowLayout {
+                            Layout.alignment: Qt.AlignHCenter
+                            spacing: 5
+                            Kirigami.Icon {
+                                Layout.preferredWidth: 14
+                                Layout.preferredHeight: 14
+                                source: modeTile.modelData.icon
+                                color: connect.theme.text
+                                isMask: true
+                            }
+                            Text {
+                                text: modeTile.modelData.title
+                                color: connect.theme.text
+                                font.pointSize: connect.theme.fontSmall
+                                font.weight: Font.DemiBold
+                            }
+                        }
+                        Text {
+                            Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignHCenter
+                            text: modeTile.modelData.text
+                            color: connect.theme.subText
+                            font.pointSize: connect.theme.fontSmall * 0.8
+                            wrapMode: Text.Wrap
+                            maximumLineCount: 4
+                            elide: Text.ElideRight
+                        }
+                    }
+                    MouseArea {
+                        id: modeMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: { if (modeTile.modelData.key === "account") connect.accountRequested(connect.type); else { connect.error = ""; connect.step = "link"; } }
                     }
                 }
             }
@@ -266,7 +348,7 @@ Item {
             spacing: 6
             Text {
                 Layout.fillWidth: true
-                text: i18np("Takvim bulundu: %1 etkinlik içeriyor.", "Takvim bulundu: %1 etkinlik içeriyor.", connect.count)
+                text: i18np("Calendar found: it has %1 event.", "Calendar found: it has %1 events.", connect.count)
                 color: connect.theme.subText
                 font.pointSize: connect.theme.fontSmall
             }
@@ -300,7 +382,7 @@ Item {
 
         // ---- input row ----
         RowLayout {
-            visible: connect.step !== "pick"
+            visible: connect.step === "link" || connect.step === "name"
             Layout.fillWidth: true
             spacing: 6
             Field {
@@ -323,20 +405,20 @@ Item {
                 id: nameField
                 visible: connect.step === "name"
                 Layout.fillWidth: true
-                placeholder: i18n("Takvimin adı (ör. İş, Kişisel)")
+                placeholder: i18n("Name of the calendar (e.g. Work, Personal)")
                 onAccepted: connect.finish()
             }
             PillButton {
                 visible: connect.step === "link"
                 primary: true
-                text: connect.busy ? i18n("Kontrol ediliyor…") : i18n("Bağla")
+                text: connect.busy ? i18n("Checking…") : i18n("Connect")
                 enabled: !connect.busy
                 onClicked: connect.tryConnect()
             }
             PillButton {
                 visible: connect.step === "name"
                 primary: true
-                text: i18n("Ekle")
+                text: i18n("Add")
                 onClicked: connect.finish()
             }
         }

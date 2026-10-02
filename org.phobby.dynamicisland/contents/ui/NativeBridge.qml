@@ -70,6 +70,29 @@ Item {
         }
         onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old for download watching; run install.sh again")
     }
+    // Passwords in KWallet; callbacks get (ok, value). See native/core/secretstore.h
+    readonly property bool secretsAvailable: secrets.item !== null
+    function readSecret(key: string, callback: var): void {
+        if (secrets.item) secrets.item.read(key, callback); else callback(false, "");
+    }
+    function writeSecret(key: string, value: string, callback: var): void {
+        if (secrets.item) secrets.item.write(key, value, callback); else callback(false, "");
+    }
+    function removeSecret(key: string): void {
+        if (secrets.item) secrets.item.remove(key);
+    }
+    // OAuth sign-in in the browser: local redirect target, see native/core/loopbackserver.h
+    readonly property var loopback: loopbackLoader.item
+    Loader {
+        id: loopbackLoader
+        source: "LoopbackBridge.qml"
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old for account sign-in; run install.sh again")
+    }
+    Loader {
+        id: secrets
+        source: "SecretBridge.qml"
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old for the password store; run install.sh again")
+    }
     Connections {
         target: downloads.item
         ignoreUnknownSignals: true
