@@ -113,6 +113,21 @@ PlasmoidItem {
         accountJson: root.cfg.googleAccount
         onAccountJsonChanged: if (root.cfg.googleAccount !== accountJson) root.cfg.googleAccount = accountJson
     }
+    // Notes apps (Joplin, Simplenote, Memos); only a page, never a live activity.
+    NotesBackend {
+        id: notesBackend
+        core: root.core
+        enabled: root.cfg.showNotes
+        sourcesJson: root.cfg.notesSources
+        defaultId: root.cfg.notesDefault
+        refreshMinutes: root.cfg.notesRefreshMinutes
+        onSourcesJsonChanged: if (root.cfg.notesSources !== sourcesJson) root.cfg.notesSources = sourcesJson
+    }
+    // Changes made in the settings dialog reach the backend too.
+    Connections {
+        target: root.cfg
+        function onNotesSourcesChanged() { if (notesBackend.sourcesJson !== root.cfg.notesSources) notesBackend.sourcesJson = root.cfg.notesSources; }
+    }
     OptionalBackend { id: kdeconnectLoader; source: root.cfg.showKdeConnect ? "backend/KdeConnectBackend.qml" : "" }
 
     readonly property var powerBackend: powerLoader.item
@@ -440,6 +455,15 @@ PlasmoidItem {
     }
 
     Component {
+        id: notesPage
+        NotesPage {
+            theme: root.islandTheme
+            notes: notesBackend
+            onDefaultPicked: id => root.cfg.notesDefault = id
+        }
+    }
+
+    Component {
         id: calendarPage
         CalendarPage {
             theme: root.islandTheme
@@ -520,6 +544,7 @@ PlasmoidItem {
                     { key: "tools", icon: "chronometer", title: i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },
                     { key: "calendar", icon: "view-calendar", title: i18n("Calendar"), component: calendarPage,
                       visible: root.cfg.showCalendar && calendarProviderLoader.item !== null },
+                    { key: "notes", icon: "view-pim-notes", title: i18n("Notes"), component: notesPage, visible: root.cfg.showNotes },
                     { key: "devices", icon: "network-bluetooth", title: i18n("Devices"), component: devicesPage,
                       visible: root.cfg.showDevicesModule && ((root.bluetoothBackend && root.bluetoothBackend.available) || root.deviceList.length > 0) }
                 ]

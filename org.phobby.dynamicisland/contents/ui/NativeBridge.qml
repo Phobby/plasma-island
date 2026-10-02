@@ -44,6 +44,10 @@ Item {
     function startDetached(program: string, args: var): bool {
         return launcher.startDetached(program, args || []);
     }
+    // The given paths that exist ("~/" = home); [] with an older native module.
+    function existingPaths(paths: var): var {
+        return typeof launcher.existingPaths === "function" ? launcher.existingPaths(paths) : [];
+    }
     function call(systemBus: bool, service: string, path: string, iface: string, method: string, args: var, callback: var): void {
         launcher.call(systemBus, service, path, iface, method, args || [], callback);
     }

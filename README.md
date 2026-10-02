@@ -27,8 +27,8 @@ confirmation), **Controls** (Do Not Disturb, Night Light, power profile,
 Bluetooth, Wi-Fi, updates; volume and screen brightness sliders below),
 **Tools** (timer, stopwatch, Pomodoro, alarm), **Calendar** (month view, the
 events of the selected day and their details; calendars are connected right
-on this page), **Devices** (Bluetooth devices and phones, with their
-batteries).
+on this page), **Notes** (quick notes and the notes of Joplin, Simplenote and
+Memos), **Devices** (Bluetooth devices and phones, with their batteries).
 
 ### Activity manager and priority
 
@@ -75,7 +75,7 @@ Build packages for the native modules:
 Features that depend on the native modules: shaped blur, screen recording,
 microphone/camera indicators, unlock, KDE Connect calls, update count, the
 D-Bus API, and calendar accounts (password storage in KDE Wallet, Google
-sign-in). Without the native module these features hide themselves and
+sign-in) and the tokens of notes apps. Without the native module these features hide themselves and
 everything else works. Likewise, a missing KDE module (e.g. KDE Connect,
 bluez-qt, plasma-nm) only disables its own feature.
 
@@ -176,6 +176,7 @@ Notification service on DBus` is normal). Try those in the real environment
 | File job | Copy a large file with Dolphin or extract an archive with `ark --batch` (`kioclient` does not use the job tracker and is not shown) |
 | Download | Download a large file in a browser (Flatpak/Snap browsers only show size and speed) |
 | Timer etc. | Expanded → Tools page (a 1-minute timer is the quickest test) |
+| Notes | Start Joplin, enable its Web Clipper service, paste the token on the island's Notes page; add a quick note and check that it appears in Joplin |
 | Calendar | Connect a calendar on the island's Calendar page (gear button), create an event 20 minutes from now; it is pinned to the island 15 minutes before |
 | KDE Connect | `kdeconnect-cli --list-devices` · `kdeconnect-cli -d <id> --ping` · send a file from the phone / call the phone |
 | Updates | Controls page; compare with `pkcon get-updates` |
@@ -206,6 +207,7 @@ org.phobby.dynamicisland/
     │   BatteryGlyph.qml, MiniRing.qml, …        shared visual language
     ├── *Module.qml, *Page.qml                    expanded pages
     ├── Calendar*.qml                             calendar page, connect wizard, accounts, new event
+    ├── NotesPage.qml                             notes list, quick note, editor, connecting apps
     ├── NativeBridge.qml, BlurBridge.qml          import the native modules
     └── config*.qml                                settings pages
 native/
@@ -347,6 +349,37 @@ Common to both:
   "Dynamic Island").
 - The Google and Apple logos are from Simple Icons (CC0) (`contents/icons/`);
   they are only used to label the respective option.
+
+## Notes
+
+A page for jotting something down quickly and for looking up what was noted.
+It only appears in the expanded island (never as a live activity). Open-source
+notes apps are connected on the page itself; when nothing is connected the
+page looks for them on the computer (their data folders, and whether Joplin's
+local service answers) and offers the ones it finds first.
+
+| App | How it connects |
+|---|---|
+| **Joplin** | The desktop app's local Web Clipper API (`http://localhost:41184`). In Joplin: Tools → Options → Web Clipper → "Enable Web Clipper Service", then copy the token under "Advanced options" and paste it into the island. Joplin has to be running. |
+| **Simplenote** | Email and password of the account. The password is only used to sign in (through Simperium, the service behind Simplenote); the island keeps the access token it gets back. |
+| **Memos** | Address of your own server and an access token (Memos → Settings → My Account → Access Tokens). |
+
+- All connected apps are shown in one list, newest first, each note with the
+  logo of its app. Several apps can be connected at once.
+- The field at the top adds a quick note to the **default** app on Enter; the
+  magnifier turns it into a search over the text of all notes.
+- Clicking a note opens it for editing; changes are written back to the app
+  (saved shortly after you stop typing, on Ctrl+S and when you go back). For
+  Joplin the first line is the note's title.
+- Tokens are stored in KDE Wallet (folder "Dynamic Island"), never in the
+  configuration file, and are deleted when an app is disconnected.
+- Settings → Notes: connected apps (disconnect), the default app for quick
+  notes, how often notes are fetched (2 minutes by default).
+
+Not supported: **Standard Notes** (its notes are end-to-end encrypted; reading
+them needs Argon2id and XChaCha20-Poly1305, i.e. libsodium, which the native
+module does not link yet) and **Obsidian** (only through the community "Local
+REST API" plugin; not done).
 
 ## D-Bus API
 

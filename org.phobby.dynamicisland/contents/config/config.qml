@@ -23,6 +23,11 @@ ConfigModel {
         source: "configCalendar.qml"
     }
     ConfigCategory {
+        name: i18n("Notes")
+        icon: "view-pim-notes"
+        source: "configNotes.qml"
+    }
+    ConfigCategory {
         name: i18n("Tools")
         icon: "chronometer"
         source: "configTools.qml"
