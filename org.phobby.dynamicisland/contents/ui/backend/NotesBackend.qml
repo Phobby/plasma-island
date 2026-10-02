@@ -10,6 +10,11 @@
                   Simplenote); the password is only used to sign in, the
                   token it returns is what is kept
       memos       a self-hosted Memos server with an access token
+      betternotes BetterNotes on this computer: no account, nothing to sign in
+                  to. Its `betternotes` command lists, shows and creates
+                  notes; the change date, lock state and next reminder come
+                  from its SQLite database, which is only ever read. Notes
+                  are not edited here: BetterNotes has its own rich editor.
 
     `sourcesJson` is a JSON list of { id, type, name, server, user } and is
     stored in the widget configuration. Tokens live in KWallet (native core)
@@ -17,7 +22,9 @@
     restarts; they are removed when a source is disconnected.
 
     A note is { key, source (id), type, id, title, text, updated (ms), raw }.
-    For Joplin the first line of `text` is the title.
+    For Joplin the first line of `text` is the title. BetterNotes notes also
+    carry readOnly, priority, tags, reminder (ms, 0 = none), locked, and their
+    `text` is only the title until loadText() has fetched the content.
 */
 import QtQuick
 
@@ -33,8 +40,10 @@ QtObject {
     readonly property var types: ({
         joplin: { name: "Joplin", color: "#1071d3", icon: Qt.resolvedUrl("../../icons/joplin.svg") },
         simplenote: { name: "Simplenote", color: "#3361cc", icon: Qt.resolvedUrl("../../icons/simplenote.svg") },
-        memos: { name: "Memos", color: "#10b981", icon: "" }
+        memos: { name: "Memos", color: "#10b981", icon: "" },
+        betternotes: { name: "BetterNotes", color: "#2563eb", icon: Qt.resolvedUrl("../../icons/betternotes.svg"), local: true }
     })
+    readonly property string betterNotesInstall: "curl -fsSL https://raw.githubusercontent.com/thebanri/BetterNotes/main/install.sh | sh"
     readonly property string joplinServer: "http://localhost:41184"
     // Simplenote's own application on Simperium, as its open-source clients use it.
     property string simperiumAuth: "https://auth.simperium.com/1/chalk-bump-f49"
@@ -59,9 +68,83 @@ QtObject {
     property bool busy: false
     property int seq: 0
 
+    // ---- BetterNotes (local) -----------------------------------------------------
+    readonly property var local: core !== null ? core.local : null
+    // Its command: on the PATH or in ~/.local/bin, else the one its menu entry starts
+    // (an AppImage that was only added to the menu). "" = not installed.
+    function betterNotesCommand(): string {
+        if (!local) return "";
+        const found = local.findExecutable("betternotes");
+        if (found.length > 0) return found;
+        for (const dir of desktopDirs) {
+            const exec = /^Exec=("([^"]+)"|(\S+))/m.exec(local.readTextFile(dir + "/org.betternotes.BetterNotes.desktop"));
+            const program = exec ? (exec[2] || exec[3]) : "";
+            if (program.length === 0) continue;
+            if (program.indexOf("/") < 0) { const onPath = local.findExecutable(program); if (onPath.length > 0) return onPath; }
+            else if (core.existingPaths([program]).length > 0) return program;
+        }
+        return "";
+    }
+    property var desktopDirs: ["~/.local/share/applications", "/usr/local/share/applications", "/usr/share/applications"]
+    readonly property string betterNotesData: local ? local.dataHome() + "/betternotes" : ""
+    readonly property bool hasBetterNotes: sources.some(s => s.type === "betternotes")
+    // Its database changed (a note was edited in the app): list again, at once.
+    readonly property Binding watchBinding: Binding {
+        target: backend.local
+        property: "watchedPaths"
+        value: backend.enabled && backend.hasBetterNotes ? [backend.betterNotesData] : []
+        when: backend.local !== null
+    }
+    readonly property Connections watchEvents: Connections {
+        target: backend.local
+        function onPathChanged() { localChange.restart(); }
+    }
+    readonly property Timer localChange: Timer { interval: 700; onTriggered: backend.refreshSource("betternotes") }
+    // `betternotes list` prints a table: ID (6) PRIORITY (10) TAGS (20, "-" = none) TITLE.
+    function parseBetterNotesList(text: string): var {
+        const rows = [];
+        for (const line of text.split("\n")) {
+            const m = /^(\d+)\s+(Low|Normal|High|Urgent)\s+(.*)$/.exec(line);
+            if (!m) continue;
+            let rest = m[3], tags = [];
+            if (/^-(\s|$)/.test(rest)) rest = rest.slice(1);
+            else {
+                let t;
+                while ((t = /^(#\S+)\s+/.exec(rest)) !== null && rest.length > t[0].length) { tags.push(t[1].slice(1)); rest = rest.slice(t[0].length); }
+            }
+            const archived = /^\s*\[Archived\] /.test(rest);
+            rows.push({ id: m[1], priority: m[2], tags: tags, title: rest.replace(/^\s*(\[Archived\] )?/, "").trim(), archived: archived });
+        }
+        return rows;
+    }
+    // The content of a BetterNotes note (`betternotes show <id>`). done(error, text)
+    function loadText(item: var, done: var): void {
+        const command = betterNotesCommand();
+        if (!item || item.type !== "betternotes" || command.length === 0) { done(i18n("BetterNotes was not found."), ""); return; }
+        if (item.locked) { done("", i18n("This note is locked. Open it in BetterNotes to read it.")); return; }
+        local.run(command, ["show", item.id], (code, out, err) => {
+            if (code !== 0) { done((err || out).trim() || i18n("BetterNotes could not show the note."), ""); return; }
+            const at = out.indexOf("--- Content ---\n");
+            let text = at >= 0 ? out.slice(at + 16).replace(/\n$/, "") : out;
+            // Rich text is shown as plain text.
+            if (/<\/?(p|div|span|br|ul|ol|li|b|i|u|h[1-6]|html|body)\b[^>]*>/i.test(text))
+                text = text.replace(/<br\s*\/?>|<\/(p|div|li|h[1-6])>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\n{3,}/g, "\n\n").trim();
+            done("", text);
+        });
+    }
+    // Opens BetterNotes itself (it has no command to open one note).
+    function openBetterNotes(): void {
+        const command = betterNotesCommand();
+        if (command.length > 0) core.startDetached(command, []);
+    }
+
     // ---- tokens --------------------------------------------------------------------
     property var secrets: ({})              // id → token
     function secretKey(id: string): string { return "notes:" + id; }
+    function isLocal(id: string): bool {
+        const s = sources.find(x => x.id === id);
+        return s !== undefined && types[s.type].local === true;
+    }
     readonly property bool walletReady: core !== null && core.secretsAvailable
     property var knownIds: []
     readonly property string idSignature: sources.map(s => s.id).join("\n")
@@ -78,7 +161,7 @@ QtObject {
         knownIds = ids;
         let waiting = 0;
         for (const id of ids) {
-            if (secrets[id] || !walletReady) continue;
+            if (secrets[id] || !walletReady || isLocal(id)) continue;
             ++waiting;
             core.readSecret(secretKey(id), (ok, value) => {
                 if (ok && value) secrets[id] = value;
@@ -246,16 +329,65 @@ QtObject {
         }
     })
 
+    readonly property var localDrivers: ({
+        betternotes: {
+            verify: function (fields, done) {
+                if (backend.betterNotesCommand().length === 0) done(i18n("BetterNotes was not found on this computer.")); else done("", "local", { server: "", user: "" });
+            },
+            list: function (source, token, done) {
+                const command = backend.betterNotesCommand();
+                if (command.length === 0) { done("missing", []); return; }
+                backend.local.run(command, ["list"], (code, out, err) => {
+                    if (code !== 0) { done((err || out).trim() || i18n("BetterNotes could not list its notes."), []); return; }
+                    // What the command does not print: change date, lock, next reminder (read-only).
+                    const db = backend.betterNotesData + "/notes.sqlite3", extra = {};
+                    let rows = backend.local.sqliteQuery(db, "SELECT n.id AS id, n.updated_at AS updated, n.is_locked AS locked, "
+                        + "(SELECT MIN(r.remind_at) FROM reminders r WHERE r.note_id = n.id AND r.dismissed = 0) AS reminder FROM notes n");
+                    if (rows.length === 0) rows = backend.local.sqliteQuery(db, "SELECT id, updated_at AS updated FROM notes");
+                    for (const r of rows) extra[String(r.id)] = r;
+                    const old = {};
+                    for (const n of backend.bySource[source.id] || []) old[n.id] = n;
+                    done("", backend.parseBetterNotesList(out).map(row => {
+                        const x = extra[row.id] || {}, updated = Number(x.updated || 0), before = old[row.id];
+                        const item = backend.note(source, row.id, row.title, updated, null);
+                        item.title = row.title;
+                        item.readOnly = true; item.priority = row.priority; item.tags = row.tags;
+                        item.locked = Number(x.locked || 0) === 1;
+                        item.reminder = Number(x.reminder || 0) * 1000;
+                        // Content fetched earlier stays while the note has not changed.
+                        if (before && before.loaded && before.updated === updated) { item.text = before.text; item.loaded = true; }
+                        return item;
+                    }));
+                });
+            },
+            create: function (source, token, text, done) {
+                const command = backend.betterNotesCommand(), i = text.indexOf("\n");
+                if (command.length === 0) { done(i18n("BetterNotes was not found.")); return; }
+                const title = (i < 0 ? text : text.slice(0, i)).trim(), content = i < 0 ? "" : text.slice(i + 1);
+                backend.local.run(command, content.length > 0 ? ["new", title, content] : ["new", title], (code, out, err) => {
+                    const m = /Created note #(\d+)/.exec(out);
+                    if (code !== 0 || !m) { done((err || out).trim() || i18n("BetterNotes could not create the note.")); return; }
+                    const item = backend.note(source, m[1], text, Date.now(), null);
+                    item.title = title; item.readOnly = true; item.priority = "Normal"; item.tags = []; item.locked = false; item.reminder = 0; item.loaded = true;
+                    done("", item);
+                });
+            },
+            save: function (source, token, old, text, done) { done(i18n("BetterNotes notes are edited in BetterNotes itself.")); }
+        }
+    })
+    function driver(type: string): var { return drivers[type] || localDrivers[type]; }
+
     // ---- installed apps ------------------------------------------------------------
     readonly property var appPaths: ({
         joplin: ["~/.config/joplin-desktop", "~/.var/app/net.cozic.joplin_desktop", "~/snap/joplin-desktop"],
         simplenote: ["~/.config/Simplenote", "~/.var/app/com.simplenote.Simplenote", "~/snap/simplenote"]
     })
     // Which note apps are on this computer: only looks for their folders and
-    // asks Joplin's local service whether it is running. done({ joplin, joplinRunning, simplenote })
+    // asks Joplin's local service whether it is running.
+    // done({ joplin, joplinRunning, simplenote, betternotes })
     function detect(done: var): void {
         const has = type => core !== null && core.existingPaths(appPaths[type]).length > 0;
-        const found = { joplin: has("joplin"), joplinRunning: false, simplenote: has("simplenote") };
+        const found = { joplin: has("joplin"), joplinRunning: false, simplenote: has("simplenote"), betternotes: betterNotesCommand().length > 0 };
         request("GET", joplinServer + "/ping", {}, "", (status, text) => {
             found.joplinRunning = status === 200 && text.indexOf("JoplinClipperServer") >= 0;
             if (found.joplinRunning) found.joplin = true;
@@ -267,14 +399,16 @@ QtObject {
     function store(list: var): void {
         sourcesJson = JSON.stringify(list.map(s => ({ id: s.id, type: s.type, name: s.name, server: s.server, user: s.user })));
     }
-    // fields: { token } (joplin), { user, password } (simplenote), { server, token } (memos). done({ ok, error })
+    // fields: { token } (joplin), { user, password } (simplenote), { server, token } (memos),
+    // {} (betternotes: nothing to sign in to). done({ ok, error })
     function connect(type: string, fields: var, done: var): void {
-        drivers[type].verify(fields, (error, token, info) => {
+        const isLocalType = types[type].local === true;
+        driver(type).verify(fields, (error, token, info) => {
             if (error) { done({ ok: false, error: error }); return; }
             const same = sources.find(s => s.type === type && s.server === info.server && s.user === info.user);
             const id = same ? same.id : type + "-" + Date.now().toString(36);
             secrets[id] = token;
-            if (walletReady) core.writeSecret(secretKey(id), token, () => {});
+            if (walletReady && !isLocalType) core.writeSecret(secretKey(id), token, () => {});
             if (!same) {
                 knownIds = knownIds.concat([id]);
                 store(sources.concat([{ id: id, type: type, name: types[type].name, server: info.server, user: info.user }]));
@@ -309,10 +443,28 @@ QtObject {
                 bySource = fresh; errors = failed; loaded = true; busy = false;
                 publish();
             };
-            const token = secrets[s.id];
-            if (!token) finish(walletReady ? i18n("Not signed in; connect again.") : i18n("The sign-in is only kept until a restart; connect again."), []);
+            const token = types[s.type].local ? "local" : secrets[s.id];
+            if (types[s.type].local) localDrivers[s.type].list(s, token, (error, found) => {
+                // Uninstalled: the source goes away, its card says "Not found" again.
+                if (error === "missing") { Qt.callLater(() => backend.disconnect(s.id)); finish("", []); } else finish(error, found);
+            });
+            else if (!token) finish(walletReady ? i18n("Not signed in; connect again.") : i18n("The sign-in is only kept until a restart; connect again."), []);
             else drivers[s.type].list(s, token, finish);
         }
+    }
+    // One source only (its files changed).
+    function refreshSource(type: string): void {
+        const s = sources.find(x => x.type === type);
+        if (!s || !available || busy) return;
+        const run = seq;
+        driver(type).list(s, "local", (error, found) => {
+            if (run !== seq) return;
+            if (error === "missing") { disconnect(s.id); return; }
+            const failed = Object.assign({}, errors);
+            if (error) failed[s.id] = error; else { delete failed[s.id]; bySource[s.id] = found; }
+            errors = failed;
+            publish();
+        });
     }
     function replace(sourceId: string, item: var): void {
         const list = (bySource[sourceId] || []).filter(n => n.id !== item.id);
@@ -323,8 +475,8 @@ QtObject {
     // done({ ok, note, error })
     function create(text: string, sourceId: string, done: var): void {
         const s = sources.find(x => x.id === sourceId) || defaultSource;
-        if (!s || !secrets[s.id]) { done({ ok: false, note: null, error: i18n("Connect a notes app first.") }); return; }
-        drivers[s.type].create(s, secrets[s.id], text, (error, item) => {
+        if (!s || (!secrets[s.id] && !types[s.type].local)) { done({ ok: false, note: null, error: i18n("Connect a notes app first.") }); return; }
+        driver(s.type).create(s, secrets[s.id] || "local", text, (error, item) => {
             if (error) { done({ ok: false, note: null, error: error }); return; }
             replace(s.id, item);
             done({ ok: true, note: item, error: "" });
@@ -332,8 +484,8 @@ QtObject {
     }
     function save(old: var, text: string, done: var): void {
         const s = sources.find(x => x.id === old.source);
-        if (!s || !secrets[s.id]) { done({ ok: false, note: null, error: i18n("This notes app is no longer connected.") }); return; }
-        drivers[s.type].save(s, secrets[s.id], old, text, (error, item) => {
+        if (!s || (!secrets[s.id] && !types[s.type].local)) { done({ ok: false, note: null, error: i18n("This notes app is no longer connected.") }); return; }
+        driver(s.type).save(s, secrets[s.id] || "local", old, text, (error, item) => {
             if (error) { done({ ok: false, note: null, error: error }); return; }
             replace(s.id, item);
             done({ ok: true, note: item, error: "" });

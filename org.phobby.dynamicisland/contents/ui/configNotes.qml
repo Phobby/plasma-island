@@ -18,7 +18,7 @@ KCM.SimpleKCM {
     property string cfg_notesSources: "[]"
     property string cfg_notesDefault: ""
 
-    readonly property var typeNames: ({ joplin: "Joplin", simplenote: "Simplenote", memos: "Memos" })
+    readonly property var typeNames: ({ joplin: "Joplin", simplenote: "Simplenote", memos: "Memos", betternotes: "BetterNotes" })
     readonly property var sources: {
         try {
             const list = JSON.parse(cfg_notesSources || "[]");
@@ -26,7 +26,7 @@ KCM.SimpleKCM {
         } catch (e) { return []; }
     }
     function label(s: var): string {
-        return (s.name || typeNames[s.type] || s.type) + (s.user ? " · " + s.user : s.server ? " · " + s.server : "");
+        return (s.name || typeNames[s.type] || s.type) + (s.user ? " · " + s.user : s.server ? " · " + s.server : s.type === "betternotes" ? " · " + i18n("this computer only") : "");
     }
 
     ColumnLayout {
@@ -68,7 +68,7 @@ KCM.SimpleKCM {
             visible: page.sources.length === 0
             wrapMode: Text.Wrap
             opacity: 0.7
-            text: i18n("No notes app is connected yet. Open the Notes page in the island to connect Joplin, Simplenote or Memos.")
+            text: i18n("No notes app is connected yet. Open the Notes page in the island to connect Joplin, Simplenote, Memos or BetterNotes.")
         }
         Repeater {
             model: page.sources

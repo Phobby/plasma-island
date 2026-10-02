@@ -92,6 +92,13 @@ Item {
         source: "LoopbackBridge.qml"
         onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old for account sign-in; run install.sh again")
     }
+    // Local notes apps: run their command, read their files. See native/core/localtools.h
+    readonly property var local: localLoader.item
+    Loader {
+        id: localLoader
+        source: "LocalBridge.qml"
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old for local notes apps; run install.sh again")
+    }
     Loader {
         id: secrets
         source: "SecretBridge.qml"

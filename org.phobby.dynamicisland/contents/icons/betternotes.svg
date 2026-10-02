@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="noteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="100%" stop-color="#FDE047"/>
+    </linearGradient>
+    <linearGradient id="foldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EAB308"/>
+      <stop offset="100%" stop-color="#CA8A04"/>
+    </linearGradient>
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Base Rounded Container -->
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#bgGrad)" filter="url(#dropShadow)"/>
+
+  <!-- Note Paper with Folded Corner -->
+  <path d="M 32 30 L 78 30 L 96 48 L 96 96 C 96 99.3 93.3 102 90 102 L 32 102 C 28.7 102 26 99.3 26 96 L 26 36 C 26 32.7 28.7 30 32 30 Z" fill="url(#noteGrad)" filter="url(#dropShadow)"/>
+
+  <!-- Fold Triangle -->
+  <path d="M 78 30 L 78 48 C 78 50 80 50 82 50 L 96 48 Z" fill="url(#foldGrad)"/>
+
+  <!-- Horizontal Note Lines -->
+  <rect x="36" y="58" width="50" height="5" rx="2.5" fill="#854D0E" opacity="0.75"/>
+  <rect x="36" y="70" width="42" height="5" rx="2.5" fill="#854D0E" opacity="0.6"/>
+  <rect x="36" y="82" width="34" height="5" rx="2.5" fill="#854D0E" opacity="0.45"/>
+
+  <!-- Sparkle Accent Dot -->
+  <circle cx="86" cy="85" r="4" fill="#2563EB"/>
+</svg>

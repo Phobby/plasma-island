@@ -20,6 +20,7 @@ Item {
     signal defaultPicked(string id)
 
     // "list" | "note" (editor) | "sources" (connected apps, add one) | "form" (connect `formType`)
+    // | "install" (how to get BetterNotes)
     property string view: "list"
     property bool searching: false
     // The top field has keyboard focus (the island only takes the keyboard on request).
@@ -75,15 +76,29 @@ Item {
     property string savedText: ""
     property bool saving: false
     property string saveError: ""
+    // A note of an app with its own editor (BetterNotes) is only shown here.
+    readonly property bool readOnly: current !== null && current.readOnly === true
     function open(n: var): void {
         current = n; savedText = n ? n.text : ""; saveError = "";
         editor.text = savedText;
         view = "note";
+        if (n && n.readOnly) {
+            if (n.loaded) { editor.text = savedText = n.text.indexOf(n.title + "\n") === 0 ? n.text.slice(n.title.length + 1) : ""; return; }
+            editor.text = savedText = i18n("Loading…");
+            notes.loadText(n, (error, text) => {
+                if (page.current !== n) return;
+                if (error) { page.saveError = error; editor.text = savedText = ""; return; }
+                n.text = n.title + "\n" + text; n.loaded = true;        // also found by the search from now on
+                editor.text = savedText = text;
+            });
+            return;
+        }
         Qt.callLater(() => { editor.forceActiveFocus(); editor.cursorPosition = editor.length; });
     }
     function saveNote(then: var): void {
         const text = editor.text;
         if (saving) return;
+        if (readOnly) { if (then) then(); return; }
         if (text === savedText || (current === null && text.trim().length === 0)) { if (then) then(); return; }
         saving = true; saveError = "";
         const finished = result => {
@@ -101,7 +116,7 @@ Item {
     Timer { id: autoSave; interval: 1500; onTriggered: page.saveNote(null) }
 
     // ---- connecting ----------------------------------------------------------------
-    property var found: ({ joplin: false, joplinRunning: false, simplenote: false })
+    property var found: ({ joplin: false, joplinRunning: false, simplenote: false, betternotes: false })
     property bool detected: false
     property string formType: "joplin"
     property string formError: ""
@@ -113,7 +128,18 @@ Item {
         view = "sources"; typing = false;
         detect();
     }
+    readonly property string localOnly: i18n("BetterNotes keeps your notes on this computer; they do not appear on other devices.")
     function showForm(type: string): void {
+        // BetterNotes: no account, so no form. Installed → its notes; otherwise how to install it.
+        if (type === "betternotes") {
+            if (!found.betternotes) { view = "install"; return; }
+            notes.connect("betternotes", {}, result => {
+                if (!result.ok) { view = "install"; return; }
+                view = "list";
+                say(localOnly, false);
+            });
+            return;
+        }
         formType = type; formError = ""; formBusy = false;
         firstField.text = type === "memos" ? "" : ""; secondField.text = "";
         view = "form";
@@ -262,7 +288,11 @@ Item {
                         }
                         Text {
                             Layout.fillWidth: true
-                            readonly property string rest: row.modelData.text.replace(/^\s*\S[^\n]*\n?/, "").replace(/\s+/g, " ").trim()
+                            // BetterNotes: tags and priority; others: the text after the title.
+                            readonly property string rest: row.modelData.readOnly
+                                ? (row.modelData.tags || []).map(t => "#" + t).concat(row.modelData.priority && row.modelData.priority !== "Normal" ? [row.modelData.priority] : [])
+                                                              .concat(row.modelData.locked ? [i18n("Locked")] : []).join(" · ")
+                                : row.modelData.text.replace(/^\s*\S[^\n]*\n?/, "").replace(/\s+/g, " ").trim()
                             visible: rest.length > 0
                             text: rest.slice(0, 120)
                             color: page.theme.subText
@@ -270,9 +300,18 @@ Item {
                             elide: Text.ElideRight
                         }
                     }
+                    // A reminder set in BetterNotes (only a badge; the app itself notifies)
+                    Kirigami.Icon {
+                        visible: (row.modelData.reminder || 0) > 0
+                        Layout.preferredWidth: 12
+                        Layout.preferredHeight: 12
+                        source: "alarm-symbolic"
+                        color: page.theme.readable(page.theme.orange, page.theme.surface)
+                        isMask: true
+                    }
                     Text {
-                        text: page.when(row.modelData.updated)
-                        color: page.theme.subText
+                        text: (row.modelData.reminder || 0) > 0 ? page.when(row.modelData.reminder) : page.when(row.modelData.updated)
+                        color: (row.modelData.reminder || 0) > 0 ? page.theme.readable(page.theme.orange, page.theme.surface) : page.theme.subText
                         font.pointSize: page.theme.fontSmall * 0.85
                         font.features: { "tnum": 1 }
                     }
@@ -300,7 +339,7 @@ Item {
         Text {
             Layout.fillWidth: true
             text: !page.detected ? i18n("Looking for notes apps…")
-                : page.found.joplin || page.found.simplenote ? i18n("Notes apps found on this computer:")
+                : page.found.joplin || page.found.simplenote || page.found.betternotes ? i18n("Notes apps found on this computer:")
                 : i18n("No notes app was found. Connect one:")
             color: page.theme.text
             font.pointSize: page.theme.fontSmall
@@ -315,7 +354,9 @@ Item {
         RowLayout {
             spacing: 6
             Repeater {
-                model: ["joplin", "simplenote", "memos"].slice().sort((a, b) => (page.found[b] ? 1 : 0) - (page.found[a] ? 1 : 0))
+                readonly property var order: ["joplin", "simplenote", "memos", "betternotes"]
+                model: order.filter(t => t !== "betternotes" || !page.notes.hasBetterNotes)
+                            .sort((a, b) => (page.found[b] ? 1 : 0) - (page.found[a] ? 1 : 0) || order.indexOf(a) - order.indexOf(b))
                 delegate: Rectangle {
                     id: card
                     required property string modelData
@@ -346,9 +387,12 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                             text: card.modelData === "joplin" ? (page.found.joplinRunning ? i18n("Found, running · Connect") : card.here ? i18n("Found · Connect") : i18n("Desktop app"))
                                 : card.modelData === "simplenote" ? (card.here ? i18n("Found · Sign in") : i18n("Account"))
+                                : card.modelData === "betternotes" ? (card.here ? i18n("On this device, no account") : page.detected ? i18n("Not found · Install") : i18n("On this device"))
                                 : i18n("Your own server")
                             color: card.here ? page.theme.readable(page.theme.live, page.theme.surface) : page.theme.subText
                             font.pointSize: page.theme.fontSmall * 0.85
+                            wrapMode: Text.Wrap
+                            maximumLineCount: 2
                             elide: Text.ElideRight
                         }
                     }
@@ -402,7 +446,8 @@ Item {
                         SourceBadge { type: sourceRow.modelData.type }
                         Text {
                             Layout.fillWidth: true
-                            text: sourceRow.modelData.name + (sourceRow.modelData.user ? " · " + sourceRow.modelData.user : sourceRow.modelData.server ? " · " + sourceRow.modelData.server : "")
+                            text: sourceRow.modelData.name + (sourceRow.modelData.user ? " · " + sourceRow.modelData.user : sourceRow.modelData.server ? " · " + sourceRow.modelData.server
+                                                               : sourceRow.modelData.type === "betternotes" ? " · " + i18n("this computer only") : "")
                             color: page.theme.text
                             font.pointSize: page.theme.fontSmall
                             elide: Text.ElideMiddle
@@ -418,7 +463,7 @@ Item {
                         PillButton {
                             theme: page.theme
                             implicitHeight: 20
-                            text: i18n("Disconnect")
+                            text: sourceRow.modelData.type === "betternotes" ? i18n("Hide") : i18n("Disconnect")
                             onClicked: page.notes.disconnect(sourceRow.modelData.id)
                         }
                     }
@@ -515,6 +560,79 @@ Item {
         }
     }
 
+    // ---- BetterNotes is not installed: how to get it (never run from here) ----------
+    ColumnLayout {
+        anchors.fill: parent
+        visible: page.view === "install"
+        spacing: 5
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            IconButton {
+                iconName: "go-previous-symbolic"
+                iconSize: 12
+                implicitWidth: 20; implicitHeight: 20
+                color: page.theme.text
+                hoverColor: page.theme.faint
+                onClicked: { if (page.notes.available) page.showSources(); else page.view = "list"; }
+            }
+            SourceBadge { type: "betternotes" }
+            Text {
+                Layout.fillWidth: true
+                text: i18n("BetterNotes was not found")
+                color: page.theme.text
+                font.pointSize: page.theme.fontSmall
+                font.weight: Font.DemiBold
+            }
+        }
+        Text {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            wrapMode: Text.Wrap
+            text: i18n("A notes app without an account. To install it, run this command in your own terminal, then come back and choose BetterNotes again.") + " " + page.localOnly
+            color: page.theme.text
+            font.pointSize: page.theme.fontSmall * 0.9
+            elide: Text.ElideRight
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 28
+                radius: 14
+                color: page.theme.faint
+                clip: true
+                TextEdit {
+                    id: installCommand
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    verticalAlignment: TextEdit.AlignVCenter
+                    readOnly: true
+                    selectByMouse: true
+                    text: page.notes.betterNotesInstall
+                    color: page.theme.text
+                    selectionColor: page.theme.blue
+                    font.family: "monospace"
+                    font.pointSize: page.theme.fontSmall * 0.85
+                }
+            }
+            PillButton {
+                theme: page.theme
+                primary: true
+                text: copied.running ? i18n("Copied") : i18n("Copy")
+                onClicked: { installCommand.selectAll(); installCommand.copy(); installCommand.deselect(); copied.restart(); }
+                Timer { id: copied; interval: 2000 }
+            }
+            PillButton {
+                theme: page.theme
+                text: i18n("Check again")
+                onClicked: page.notes.detect(result => { page.found = result; page.detected = true; if (result.betternotes) page.showForm("betternotes"); })
+            }
+        }
+    }
+
     // ---- editor ----------------------------------------------------------------------
     ColumnLayout {
         anchors.fill: parent
@@ -538,6 +656,7 @@ Item {
             Text {
                 Layout.fillWidth: true
                 text: page.saveError.length > 0 ? page.saveError
+                    : page.readOnly ? page.current.title
                     : page.current ? page.notes.types[page.current.type].name
                     : page.notes.defaultSource ? i18n("New note in %1", page.notes.defaultSource.name) : ""
                 color: page.saveError.length > 0 ? page.theme.readable(page.theme.danger, page.theme.surface) : page.theme.subText
@@ -545,9 +664,18 @@ Item {
                 elide: Text.ElideRight
             }
             Text {
+                visible: !page.readOnly
                 text: page.saving ? i18n("Saving…") : editor.text !== page.savedText ? i18n("Edited") : page.current ? i18n("Saved") : ""
                 color: page.theme.subText
                 font.pointSize: page.theme.fontSmall * 0.9
+            }
+            // BetterNotes has its own editor (rich text, images, checklists): edit there.
+            PillButton {
+                visible: page.readOnly
+                theme: page.theme
+                implicitHeight: 20
+                text: i18n("Edit in BetterNotes")
+                onClicked: page.notes.openBetterNotes()
             }
         }
         Flickable {
@@ -571,8 +699,9 @@ Item {
                 selectionColor: page.theme.blue
                 font.pointSize: page.theme.fontSmall
                 selectByMouse: true
+                readOnly: page.readOnly
                 onCursorRectangleChanged: editorView.follow(cursorRectangle)
-                onTextChanged: if (page.view === "note" && text !== page.savedText) autoSave.restart()
+                onTextChanged: if (page.view === "note" && !page.readOnly && text !== page.savedText) autoSave.restart()
                 Keys.onEscapePressed: page.closeNote()
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_S && (event.modifiers & Qt.ControlModifier)) { page.saveNote(null); event.accepted = true; }

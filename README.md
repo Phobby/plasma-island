@@ -215,7 +215,7 @@ native/
 └── core/                      org.phobby.dynamicisland.core:
                                PipeWireWatcher, DBusSignalWatcher, Launcher,
                                UpdatesChecker, DownloadWatcher, SecretStore,
-                               LoopbackServer, IslandService (D-Bus API)
+                               LoopbackServer, LocalTools, IslandService (D-Bus API)
 tools/island-push, tools/notify-done.sh
 ```
 
@@ -353,7 +353,8 @@ Common to both:
 ## Notes
 
 A page for jotting something down quickly and for looking up what was noted.
-It only appears in the expanded island (never as a live activity). Open-source
+It only appears in the expanded island (never as a live activity; reminders
+set in BetterNotes are only a badge in the list). Open-source
 notes apps are connected on the page itself; when nothing is connected the
 page looks for them on the computer (their data folders, and whether Joplin's
 local service answers) and offers the ones it finds first.
@@ -363,6 +364,7 @@ local service answers) and offers the ones it finds first.
 | **Joplin** | The desktop app's local Web Clipper API (`http://localhost:41184`). In Joplin: Tools → Options → Web Clipper → "Enable Web Clipper Service", then copy the token under "Advanced options" and paste it into the island. Joplin has to be running. |
 | **Simplenote** | Email and password of the account. The password is only used to sign in (through Simperium, the service behind Simplenote); the island keeps the access token it gets back. |
 | **Memos** | Address of your own server and an access token (Memos → Settings → My Account → Access Tokens). |
+| **BetterNotes** | Nothing to connect: an account-less notes app on this computer. If its `betternotes` command is found (on the PATH, in `~/.local/bin`, or through its menu entry) one click shows its notes; if not, the page shows the install command to copy (it never runs it). |
 
 - All connected apps are shown in one list, newest first, each note with the
   logo of its app. Several apps can be connected at once.
@@ -371,6 +373,13 @@ local service answers) and offers the ones it finds first.
 - Clicking a note opens it for editing; changes are written back to the app
   (saved shortly after you stop typing, on Ctrl+S and when you go back). For
   Joplin the first line is the note's title.
+- BetterNotes: notes are listed with `betternotes list`, read with
+  `betternotes show <id>` and quick notes are added with `betternotes new`.
+  The change date, lock state and next reminder (an orange badge) come from
+  its SQLite database, which is opened read-only and never written. Notes are
+  shown read-only; "Edit in BetterNotes" starts the app, which has its own
+  rich editor. The list follows changes at once (the data folder is watched).
+  These notes stay on this computer and do not appear on other devices.
 - Tokens are stored in KDE Wallet (folder "Dynamic Island"), never in the
   configuration file, and are deleted when an app is disconnected.
 - Settings → Notes: connected apps (disconnect), the default app for quick
