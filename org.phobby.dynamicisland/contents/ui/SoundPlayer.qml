@@ -16,6 +16,7 @@ Item {
         player.play();
     }
     function stop(): void { player.stop(); }
+    readonly property bool playing: player.playbackState === MediaPlayer.PlayingState
 
     MediaPlayer {
         id: player

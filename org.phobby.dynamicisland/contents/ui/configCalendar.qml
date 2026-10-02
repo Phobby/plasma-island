@@ -23,6 +23,7 @@ KCM.SimpleKCM {
     property alias cfg_calendarLeadMinutes: leadSpin.value
     property alias cfg_calendarLingerMinutes: lingerSpin.value
     property alias cfg_calendarShowAllDay: allDayCheck.checked
+    property alias cfg_calendarSound: soundCheck.checked
     property alias cfg_calendarRefreshMinutes: refreshSpin.value
     property string cfg_calendarSources: "[]"
     // Written by the widget after every download: { id: { t: ms, error } }
@@ -126,6 +127,12 @@ KCM.SimpleKCM {
                 from: 0; to: 120
                 textFromValue: (v) => i18n("%1 dk", v)
                 valueFromText: (t) => parseInt(t)
+            }
+            QQC2.CheckBox {
+                id: soundCheck
+                Kirigami.FormData.label: i18n("When an event starts:")
+                enabled: enableCheck.checked
+                text: i18n("Play the alarm sound (chosen in the Tools tab)")
             }
             QQC2.CheckBox {
                 id: allDayCheck

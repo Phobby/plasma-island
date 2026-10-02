@@ -151,6 +151,8 @@ PlasmoidItem {
             soundLoader.active = true;
             if (soundLoader.item) soundLoader.item.play(source);
         }
+        function stop() { if (soundLoader.item) soundLoader.item.stop(); }
+        readonly property bool playing: soundLoader.item !== null && soundLoader.item.playing
     }
     readonly property var sound: soundProxy
 
@@ -331,6 +333,8 @@ PlasmoidItem {
                 manager: activities
                 calendar: root.calendarBackend
                 theme: root.islandTheme
+                sound: root.sound
+                soundSource: root.cfg.calendarSound && root.cfg.timerSoundEnabled ? root.cfg.timerSound : ""
                 leadMinutes: root.cfg.calendarLeadMinutes
                 lingerMinutes: root.cfg.calendarLingerMinutes
                 showAllDay: root.cfg.calendarShowAllDay

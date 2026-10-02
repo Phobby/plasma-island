@@ -108,6 +108,8 @@
     <entry name="calendarLingerMinutes" type="Int"><default>10</default></entry>
     <entry name="calendarShowAllDay" type="Bool"><default>true</default></entry>
     <entry name="calendarRefreshMinutes" type="Int"><default>5</default></entry>
+    <!-- Play the timer/alarm sound (Tools tab) when an event starts -->
+    <entry name="calendarSound" type="Bool"><default>true</default></entry>
     <!-- JSON list of { id, type, url, name, color, enabled }: iCalendar (.ics) links -->
     <entry name="calendarSources" type="String"><default>[]</default></entry>
     <!-- Written by the widget: JSON { source id: { t: ms, error } } (shown in the settings) -->

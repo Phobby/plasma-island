@@ -11,7 +11,9 @@
 
     Besides the pinned activity, a short reminder is flashed 1 hour, 30 minutes
     and 5 minutes before every timed event ("Starts in 1 hour"), and once more
-    when it starts.
+    when it starts, together with a short alarm sound that a click on the
+    event or the stop button silences. The cross on the activity dismisses the
+    pinned event (it is over, or was skipped) so that it does not stay around.
 
     The soonest upcoming event wins, then the running one, then the one that
     just ended. All-day events and reminders without a future time are never
@@ -30,6 +32,25 @@ Item {
     property real lingerMinutes: 10
     property bool showAllDay: true
     property bool enabled: true
+    property var sound: null                // main.qml's sound proxy
+    property string soundSource: ""         // "" = no sound when an event starts
+
+    // Events the user closed: never pinned again (until the shell restarts).
+    property var dismissed: ({})
+    function dismiss(e: var): void {
+        if (!e) return;
+        stopSound();
+        const all = Object.assign({}, dismissed);
+        all[e.key] = true;
+        dismissed = all;
+    }
+    // The start alarm is ours to stop only while it is the one playing.
+    property bool ringing: false
+    readonly property bool soundPlaying: ringing && sound !== null && sound.playing
+    function stopSound(): void {
+        if (ringing && sound) sound.stop();
+        ringing = false;
+    }
 
     readonly property bool usable: enabled && calendar.available
     readonly property var events: usable ? calendar.events : []
@@ -51,7 +72,7 @@ Item {
         let best = null, bestRank = 99;
         for (const e of events) {
             const phase = phaseOf(e, t);
-            if (phase === "") continue;
+            if (phase === "" || dismissed[e.key]) continue;
             const rank = phase === "upcoming" ? 0 : phase === "ongoing" ? 1 : 2;
             // upcoming: soonest start; ongoing: most recently started; ended: most recently ended
             const better = rank < bestRank
@@ -149,16 +170,20 @@ Item {
         const e = pinned;
         if (phase !== "ongoing" || !e || announced === e.key || now - e.start > 60000) return;
         announced = e.key;
+        const ring = sound !== null && soundSource.length > 0;
         manager.flash({
             key: "calendar-start",
             icon: e.todo ? "view-task" : "view-calendar",
             color: e.color,
             title: i18nc("@info calendar event has begun", "%1 started", e.title || i18n("Event")),
             subtitle: e.location && e.location !== e.link ? e.location : timeRange(e),
-            trailing: e.link ? { type: "button", text: i18nc("@action:button join a video meeting", "Join") } : { type: "text", text: clock(e.start), color: e.color },
-            activate: e.link ? (() => provider.open(e)) : undefined,
-            duration: 3000
+            trailing: e.link ? { type: "button", text: i18nc("@action:button join a video meeting", "Join") }
+                    : ring ? { type: "button", text: i18nc("@action:button silence the alarm of a calendar event", "Stop") }
+                           : { type: "text", text: clock(e.start), color: e.color },
+            activate: () => { provider.stopSound(); provider.open(e); },
+            duration: ring ? 6000 : 3000
         });
+        if (ring) { ringing = true; sound.play(soundSource); }
     }
 
     Activity {
@@ -185,8 +210,14 @@ Item {
                     : provider.phase === "ongoing" ? i18nc("@info time left in a running event", "%1 left", provider.span(e.end - provider.now))
                     : i18nc("@info calendar event is over", "Ended")
         progress: e && provider.phase === "ongoing" && e.end > e.start ? (provider.now - e.start) / (e.end - e.start) : -1
-        actions: e && e.link ? [{ icon: "camera-video-symbolic", text: i18nc("@action:button join a video meeting", "Join"), trigger: () => provider.open(activity.e) }] : []
-        onClicked: provider.open(e)
+        actions: {
+            const list = [];
+            if (e && e.link) list.push({ icon: "camera-video-symbolic", text: i18nc("@action:button join a video meeting", "Join"), trigger: () => provider.open(activity.e) });
+            if (provider.soundPlaying) list.push({ icon: "media-playback-stop-symbolic", text: i18nc("@action:button silence the alarm of a calendar event", "Stop the sound"), trigger: () => provider.stopSound() });
+            if (e) list.push({ icon: "window-close-symbolic", text: i18nc("@action:button remove a calendar event from the island", "Dismiss"), trigger: () => provider.dismiss(activity.e) });
+            return list;
+        }
+        onClicked: { provider.stopSound(); provider.open(e); }
         Component.onCompleted: provider.manager.register(this)
     }
 }
