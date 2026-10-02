@@ -348,6 +348,8 @@ PlasmoidItem {
                 manager: activities
                 calendar: root.calendarBackend
                 theme: root.islandTheme
+                dismissedJson: root.cfg.calendarDismissed
+                onDismissedEdited: json => root.cfg.calendarDismissed = json
                 sound: root.sound
                 soundSource: root.cfg.calendarSound && root.cfg.timerSoundEnabled ? root.cfg.timerSound : ""
                 leadMinutes: root.cfg.calendarLeadMinutes
@@ -378,6 +380,8 @@ PlasmoidItem {
             theme: theme
             core: root.core
             enabled: root.cfg.showUpdates
+            announced: root.cfg.updatesAnnounced
+            onAnnouncedEdited: value => root.cfg.updatesAnnounced = value
         }
         DbusProvider {
             manager: activities

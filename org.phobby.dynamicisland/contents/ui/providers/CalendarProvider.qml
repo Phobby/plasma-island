@@ -13,7 +13,7 @@
     and 5 minutes before every timed event ("Starts in 1 hour"), and once more
     when it starts, together with a short alarm sound that a click on the
     event or the stop button silences. The cross on the activity dismisses the
-    pinned event (it is over, or was skipped) so that it does not stay around.
+    pinned event (it is over, or was skipped) for good.
 
     The soonest upcoming event wins, then the running one, then the one that
     just ended. All-day events and reminders without a future time are never
@@ -35,14 +35,22 @@ Item {
     property var sound: null                // main.qml's sound proxy
     property string soundSource: ""         // "" = no sound when an event starts
 
-    // Events the user closed: never pinned again (until the shell restarts).
-    property var dismissed: ({})
+    // Events the user closed are never pinned again: JSON { "uid@start": end (ms) },
+    // stored in the configuration so that a restart of the shell keeps them closed.
+    property string dismissedJson: "{}"
+    signal dismissedEdited(string json)
+    readonly property var dismissed: {
+        try { return JSON.parse(dismissedJson || "{}") || {}; } catch (e) { return {}; }
+    }
+    function dismissKey(e: var): string { return e.uid + "@" + e.start; }
     function dismiss(e: var): void {
         if (!e) return;
         stopSound();
-        const all = Object.assign({}, dismissed);
-        all[e.key] = true;
-        dismissed = all;
+        const all = {}, now = Date.now();
+        // Entries of events that ended more than a day ago are dropped.
+        for (const k in dismissed) if (dismissed[k] > now - 86400000) all[k] = dismissed[k];
+        all[dismissKey(e)] = e.end;
+        dismissedEdited(JSON.stringify(all));
     }
     // The start alarm is ours to stop only while it is the one playing.
     property bool ringing: false
@@ -72,7 +80,7 @@ Item {
         let best = null, bestRank = 99;
         for (const e of events) {
             const phase = phaseOf(e, t);
-            if (phase === "" || dismissed[e.key]) continue;
+            if (phase === "" || dismissed[dismissKey(e)] !== undefined) continue;
             const rank = phase === "upcoming" ? 0 : phase === "ongoing" ? 1 : 2;
             // upcoming: soonest start; ongoing: most recently started; ended: most recently ended
             const better = rank < bestRank

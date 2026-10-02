@@ -78,6 +78,8 @@
     <entry name="showKdeConnect" type="Bool"><default>true</default></entry>
     <entry name="showQuickSettings" type="Bool"><default>true</default></entry>
     <entry name="showUpdates" type="Bool"><default>true</default></entry>
+    <!-- Written by the widget: the number of updates already announced -->
+    <entry name="updatesAnnounced" type="Int"><default>0</default></entry>
     <entry name="showThermalWarning" type="Bool"><default>true</default></entry>
     <entry name="enableDbusApi" type="Bool"><default>true</default></entry>
     <entry name="cpuTempThreshold" type="Int"><default>90</default></entry>
@@ -110,6 +112,8 @@
     <entry name="calendarRefreshMinutes" type="Int"><default>5</default></entry>
     <!-- Play the timer/alarm sound (Tools tab) when an event starts -->
     <entry name="calendarSound" type="Bool"><default>true</default></entry>
+    <!-- Written by the widget: JSON { "uid@start": end (ms) } of events dismissed from the island -->
+    <entry name="calendarDismissed" type="String"><default>{}</default></entry>
     <!-- JSON list of { id, type, url, name, color, enabled }: iCalendar (.ics) links -->
     <entry name="calendarSources" type="String"><default>[]</default></entry>
     <!-- Written by the widget: JSON { source id: { t: ms, error } } (shown in the settings) -->

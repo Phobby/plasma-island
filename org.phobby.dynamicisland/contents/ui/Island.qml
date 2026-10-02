@@ -267,6 +267,7 @@ Item {
                 theme: island.theme
                 event: island.mode === "event" ? island.currentEvent : null
                 onActivated: island.manager.activateEvent()
+                onDismissed: island.manager.dismissEvent()
             }
         }
 

@@ -1,7 +1,9 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
     System updates (PackageKit, via the native core). A transient event when
-    new updates appear; clicking it opens Discover's update page.
+    new updates appear; clicking it opens Discover's update page. The same
+    updates are announced only once: `announced` (stored in the configuration)
+    survives a restart of the shell and a check that briefly reports nothing.
 */
 import QtQuick
 import ".."
@@ -15,14 +17,21 @@ Item {
     property bool enabled: true
 
     readonly property int count: core ? core.updateCount : 0
-    property int lastAnnounced: 0
+    // How many updates the user has already been told about.
+    property int announced: 0
+    signal announcedEdited(int value)
 
     function openDiscover(): void {
         if (core) core.startDetached("plasma-discover", ["--mode", "update"]);
     }
 
     onCountChanged: {
-        if (enabled && count > lastAnnounced) {
+        // Fewer than announced: believed only once it has stayed that way
+        // (the count is 0 right after a start and while a check fails).
+        settle.restart();
+        if (count <= announced) return;
+        announcedEdited(count);
+        if (enabled) {
             manager.flash({
                 key: "updates",
                 icon: "system-software-update",
@@ -34,6 +43,10 @@ Item {
                 duration: 6000
             });
         }
-        lastAnnounced = count;
+    }
+    Timer {
+        id: settle
+        interval: 30 * 60000
+        onTriggered: if (provider.count < provider.announced) provider.announcedEdited(provider.count)
     }
 }

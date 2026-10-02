@@ -17,6 +17,7 @@ Item {
     readonly property color accent: event?.color ?? theme.text
 
     signal activated()
+    signal dismissed()
 
     // Soft "appear" for every new event, like iOS.
     onEventChanged: if (event) appear.restart()
@@ -128,8 +129,26 @@ Item {
     }
 
     MouseArea {
+        id: bannerMouse
         anchors.fill: parent
+        hoverEnabled: true
+        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
         cursorShape: typeof banner.event?.activate === "function" ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onClicked: banner.activated()
+        onClicked: mouse => mouse.button === Qt.MiddleButton ? banner.dismissed() : banner.activated()
+    }
+    // Close without acting on it (also: middle click). Shown under the mouse.
+    IconButton {
+        anchors.right: parent.right
+        anchors.rightMargin: 2
+        anchors.top: parent.top
+        anchors.topMargin: 2
+        visible: banner.event !== null && (bannerMouse.containsMouse || closeHover.hovered)
+        iconName: "window-close-symbolic"
+        iconSize: 10
+        implicitWidth: 18; implicitHeight: 18
+        color: banner.theme.subText
+        hoverColor: banner.theme.faint
+        onClicked: banner.dismissed()
+        HoverHandler { id: closeHover }
     }
 }
