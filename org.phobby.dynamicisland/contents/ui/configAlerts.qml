@@ -14,7 +14,6 @@ KCM.SimpleKCM {
     property alias cfg_deviceBatteryThreshold: deviceSpin.value
     property alias cfg_cpuTempThreshold: cpuSpin.value
     property alias cfg_gpuTempThreshold: gpuSpin.value
-    property alias cfg_calendarLeadMinutes: calendarSpin.value
 
     Kirigami.FormLayout {
         Kirigami.Separator {
@@ -59,18 +58,6 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18n("Warn when the GPU reaches:")
             from: 60; to: 110
             textFromValue: (v) => v + " °C"
-            valueFromText: (t) => parseInt(t)
-        }
-
-        Kirigami.Separator {
-            Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: i18n("Calendar")
-        }
-        QQC2.SpinBox {
-            id: calendarSpin
-            Kirigami.FormData.label: i18n("Count down to the next event:")
-            from: 1; to: 120
-            textFromValue: (v) => i18n("%1 min before", v)
             valueFromText: (t) => parseInt(t)
         }
     }

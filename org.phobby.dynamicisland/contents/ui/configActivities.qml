@@ -33,7 +33,6 @@ KCM.SimpleKCM {
     property alias cfg_showDevicesModule: devicesCheck.checked
     property alias cfg_showQuickSettings: quickCheck.checked
     property alias cfg_showTools: toolsCheck.checked
-    property alias cfg_showCalendar: calendarCheck.checked
 
     readonly property var categoryNames: ({
         privacy: i18n("Privacy indicators"),
@@ -151,7 +150,6 @@ KCM.SimpleKCM {
         QQC2.CheckBox { id: devicesCheck; Kirigami.FormData.label: i18n("Show:"); text: i18n("Devices") }
         QQC2.CheckBox { id: quickCheck; text: i18n("Controls (Control Center)") }
         QQC2.CheckBox { id: toolsCheck; text: i18n("Tools (timer, stopwatch, Pomodoro, alarm)") }
-        QQC2.CheckBox { id: calendarCheck; text: i18n("Upcoming calendar event") }
 
         QQC2.Label {
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22

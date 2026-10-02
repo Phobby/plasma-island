@@ -25,7 +25,8 @@ sıcaklığı, GPU, RAM, pil, ağ ↓/↑ ve disk kartları; Sabit veya Dinamik 
 **Bildirimler** (son 3, geliş saati, hızlı yanıt, onaylı "tümünü sil"),
 **Denetim** (Rahatsız Etmeyin, Gece Işığı, güç profili, Bluetooth, Wi-Fi,
 güncellemeler; altında ses ve ekran parlaklığı kaydırıcıları), **Araçlar** (zamanlayıcı, kronometre,
-Pomodoro, alarm), **Cihazlar** (Bluetooth cihazları ve telefonlar, pilleriyle).
+Pomodoro, alarm), **Takvim** (bugünün kalan etkinlikleri; yalnızca bir takvim
+bağlıyken), **Cihazlar** (Bluetooth cihazları ve telefonlar, pilleriyle).
 
 ### Etkinlik yöneticisi ve öncelik
 
@@ -113,7 +114,10 @@ Adanın kendisi ayrı bir üst pencere olduğundan, plasmoid'i **nereye eklediğ
 açık/kapalı, çalan medyayı görünür tut, indirme klasörünü izle, anlık olay süresi, her sistem olayı ve canlı etkinlik türü için
 ayrı açma/kapama, genişletilmiş sayfalar.
 **Uyarılar** sekmesi: düşük/kritik pil eşiği, Bluetooth cihazı/telefon pil
-eşiği, CPU/GPU sıcaklık eşiği, takvim hatırlatma süresi.
+eşiği, CPU/GPU sıcaklık eşiği.
+**Takvim** sekmesi: aç/kapat, kaç dakika kala pinlensin (15), bitişten kaç
+dakika sonra kaybolsun (10), tüm gün etkinlikleri, güncelleme aralığı (5 dk) ve
+bağlı takvimler ("Takvim Bağla" sihirbazı; aşağıya bakın).
 **Araçlar** sekmesi: zamanlayıcı/alarm bitiş sesi (dosya seçilebilir), Pomodoro
 süreleri ve tur sayısı.
 
@@ -163,7 +167,7 @@ normaldir). Bunları gerçek ortamda (widget plasmashell'de eklenmişken) deneyi
 | Dosya işi | Dolphin ile büyük bir dosya kopyalayın veya `ark --batch` ile arşiv açın (`kioclient` iş izleyicisini kullanmaz, görünmez) |
 | İndirme | Tarayıcıdan büyük bir dosya indirin (Flatpak/Snap tarayıcılarda yalnızca boyut ve hız görünür) |
 | Zamanlayıcı vb. | Genişletilmiş → Araçlar sayfası (1 dk'lık zamanlayıcı en hızlı test) |
-| Takvim | PIM takvim eklentisi (KOrganizer/Akonadi) kuruluysa 15 dk içinde başlayacak bir etkinlik ekleyin |
+| Takvim | Ayarlar → Takvim → "Takvim Bağla" ile bir .ics linki bağlayın, takvimde 20 dk sonrasına bir etkinlik oluşturun; 15 dk kala adaya pinlenir |
 | KDE Connect | `kdeconnect-cli --list-devices` · `kdeconnect-cli -d <id> --ping` · telefondan dosya gönderin / telefonu arayın |
 | Güncellemeler | Denetim sayfası; `pkcon get-updates` ile karşılaştırın |
 | Sıcaklık | Ayarlar → Uyarılar'da eşiği düşürün (ör. 50 °C) |
@@ -253,6 +257,35 @@ modele sadece görünürken bağlanır.
 `org.kde.kdeconnect` yalnızca `backend/` altında kullanılır. Sağlayıcılar ve
 görünümler sadece bu dosyaların normalize edilmiş özelliklerini görür. Bir
 Plasma güncellemesi API'yi değiştirirse düzeltilecek yer burasıdır.
+
+## Takvim (.ics linkleri)
+
+Takvim, Akonadi/KDE PIM gerektirmez. Her takvim bir iCalendar (.ics) abonelik
+linkidir; widget linki periyodik olarak indirir ve arayüz iş parçacığının
+dışında ayrıştırır.
+
+- **Bağlama:** Ayarlar → Takvim → "Takvim Bağla" → Google Calendar veya Apple
+  Calendar (iCloud). Sihirbaz linkin nerede bulunacağını anlatır, linki bir kez
+  indirip gerçekten bir takvim (VCALENDAR) olduğunu doğrular, adını dosyadaki
+  `X-WR-CALNAME` alanından önerir. `webcal://` otomatik olarak `https://` olur.
+  Aynı link ikinci kez eklenemez ("Bu takvim zaten bağlı").
+- **Pinleme:** başlamasına 15 dk kala adaya pinlenir (başlık + geri sayım,
+  yaklaştıkça önceliği artar), başlayınca kısa bir "… started" olayı gösterilir,
+  sürerken kalan süre ve ilerleme, bitince 10 dk daha düşük öncelikle kalır.
+  Aynı anda bir etkinlik pinlenir (en yakın başlayacak olan); diğerleri Takvim
+  sayfasındadır. Tüm gün etkinlikleri ve saati geçmiş hatırlatıcılar pinlenmez.
+- **Toplantı linki:** Google'ın konferans alanı, konum ya da açıklamadaki
+  Meet/Zoom/Teams/Webex/Jitsi adresi. Varsa "Join" düğmesi ve satıra tıklama
+  linki varsayılan tarayıcıda açar.
+- **Tekrarlayan etkinlikler** (RRULE, EXDATE, tek seferlik değişiklikler) ve
+  saat dilimleri [ical.js](https://github.com/kewisch/ical.js) 1.5.0 ile açılır
+  (MPL-2.0; `backend/IcsWorker.js` içinde değiştirilmeden gömülü, lisansı
+  `backend/IcsWorker.LICENSE.ical.js`). 2.x sürümü Qt'nin JS motorunda
+  çalışmadığı için 1.5.0 kullanılıyor; yüklenirken günlüğe düşen
+  `usedbeforedeclared` uyarıları zararsızdır.
+- **Gizlilik:** linkler takvime erişim sağlar. Plasma ayar dosyasında
+  (`~/.config/plasma-org.kde.plasma.desktop-appletsrc`, izinleri 600) düz metin
+  olarak saklanır ve günlüğe yazılmaz.
 
 ## D-Bus API
 
@@ -383,8 +416,11 @@ OSD'si de görünmeye devam eder. İkisinden birini seçin:
   etkinliği, KDE Connect'in arama bildirimini kapatmasıyla (veya güvenlik
   zaman aşımıyla) biter. SMS/mesaj hızlı yanıtı yalnızca yanıt destekleyen
   bildirimlerde görünür.
-- **Takvim** yalnızca Plasma'nın PIM takvim eklentisi (`pimevents`,
-  KOrganizer/Akonadi) kuruluysa çalışır; yoksa modül gizlenir.
+- **Takvim** salt okunurdur ve yoklamayla çalışır: yeni eklenen bir etkinlik en
+  geç bir güncelleme aralığı sonra görünür (Google, .ics dosyasını kendi
+  tarafında da gecikmeyle güncelleyebilir). Telefon takvimi KDE Connect ile
+  gelmez (takvim eklentisi yok); telefon Google/iCloud'a senkronluyorsa oradan
+  gelir. Bir etkinlik, başlamasına 20 sn'ye kadar gecikmeyle pinlenebilir.
 - **Güncellemeler** PackageKit önbelleğinden okunur (apt/dnf paketleri).
   Flatpak güncellemeleri sayılmaz.
 - **D-Bus API** aynı anda yalnızca bir ada örneğine bağlanır (ilk kayıt olan).

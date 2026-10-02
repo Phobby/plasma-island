@@ -18,6 +18,11 @@ ConfigModel {
         source: "configAlerts.qml"
     }
     ConfigCategory {
+        name: i18n("Calendar")
+        icon: "view-calendar"
+        source: "configCalendar.qml"
+    }
+    ConfigCategory {
         name: i18n("Tools")
         icon: "chronometer"
         source: "configTools.qml"
