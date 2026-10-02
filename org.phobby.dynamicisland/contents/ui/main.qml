@@ -87,7 +87,15 @@ PlasmoidItem {
     OptionalBackend { id: dndLoader; source: "backend/DndBackend.qml" }
     OptionalBackend { id: tasksLoader; source: "backend/TasksBackend.qml" }
     OptionalBackend { id: jobsLoader; source: "backend/JobsBackend.qml" }
-    OptionalBackend { id: calendarLoader; source: root.cfg.showCalendar ? "backend/CalendarBackend.qml" : "" }
+    // Calendar: .ics links (no Akonadi). backend/CalendarBackend.qml is the
+    // older PIM-plugin source, kept for reference but no longer loaded.
+    OptionalBackend { id: calendarLoader; source: root.cfg.showCalendar ? "backend/IcsCalendarBackend.qml" : "" }
+    Binding { target: root.calendarBackend; property: "sourcesJson"; value: root.cfg.calendarSources; when: root.calendarBackend !== null }
+    Binding { target: root.calendarBackend; property: "refreshMinutes"; value: root.cfg.calendarRefreshMinutes; when: root.calendarBackend !== null }
+    Connections {
+        target: root.calendarBackend
+        function onStatusJsonChanged() { root.cfg.calendarStatus = root.calendarBackend.statusJson; }
+    }
     OptionalBackend { id: kdeconnectLoader; source: root.cfg.showKdeConnect ? "backend/KdeConnectBackend.qml" : "" }
 
     readonly property var powerBackend: powerLoader.item
@@ -300,12 +308,15 @@ PlasmoidItem {
             enabled: root.cfg.showTools
         }
         WhenAvailable {
+            id: calendarProviderLoader
             dependency: root.calendarBackend
             sourceComponent: CalendarProvider {
                 manager: activities
                 calendar: root.calendarBackend
                 theme: root.islandTheme
                 leadMinutes: root.cfg.calendarLeadMinutes
+                lingerMinutes: root.cfg.calendarLingerMinutes
+                showAllDay: root.cfg.calendarShowAllDay
                 enabled: root.cfg.showCalendar
             }
         }
@@ -400,6 +411,14 @@ PlasmoidItem {
         }
     }
 
+    Component {
+        id: calendarPage
+        CalendarPage {
+            theme: root.islandTheme
+            provider: calendarProviderLoader.item
+        }
+    }
+
     // ---- placement --------------------------------------------------------------
     readonly property rect screenRect: {
         const c = Plasmoid.containment;
@@ -466,6 +485,8 @@ PlasmoidItem {
                 extraPages: [
                     { key: "quicksettings", icon: "configure", title: i18n("Controls"), component: quickSettingsPage, visible: root.cfg.showQuickSettings },
                     { key: "tools", icon: "chronometer", title: i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },
+                    { key: "calendar", icon: "view-calendar", title: i18n("Calendar"), component: calendarPage,
+                      visible: root.cfg.showCalendar && calendarProviderLoader.item !== null && root.calendarBackend !== null && root.calendarBackend.available },
                     { key: "devices", icon: "network-bluetooth", title: i18n("Devices"), component: devicesPage,
                       visible: root.cfg.showDevicesModule && ((root.bluetoothBackend && root.bluetoothBackend.available) || root.deviceList.length > 0) }
                 ]

@@ -105,6 +105,13 @@
     <entry name="timerSound" type="String"><default>/usr/share/sounds/ocean/stereo/alarm-clock-elapsed.oga</default></entry>
     <entry name="showCalendar" type="Bool"><default>true</default></entry>
     <entry name="calendarLeadMinutes" type="Int"><default>15</default></entry>
+    <entry name="calendarLingerMinutes" type="Int"><default>10</default></entry>
+    <entry name="calendarShowAllDay" type="Bool"><default>true</default></entry>
+    <entry name="calendarRefreshMinutes" type="Int"><default>5</default></entry>
+    <!-- JSON list of { id, type, url, name, color, enabled }: iCalendar (.ics) links -->
+    <entry name="calendarSources" type="String"><default>[]</default></entry>
+    <!-- Written by the widget: JSON { source id: { t: ms, error } } (shown in the settings) -->
+    <entry name="calendarStatus" type="String"><default>{}</default></entry>
 
     <!-- Modules -->
     <entry name="showMediaModule" type="Bool">
