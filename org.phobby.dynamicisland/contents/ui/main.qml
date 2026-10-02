@@ -411,12 +411,20 @@ PlasmoidItem {
         }
     }
 
+    readonly property var calendarSourceList: {
+        try {
+            const list = JSON.parse(root.cfg.calendarSources || "[]");
+            return Array.isArray(list) ? list.filter(s => s && typeof s.url === "string") : [];
+        } catch (e) { return []; }
+    }
+
     Component {
         id: calendarPage
         CalendarPage {
             theme: root.islandTheme
             provider: calendarProviderLoader.item
-            onConfigureRequested: Plasmoid.internalAction("configure").trigger()
+            sources: root.calendarSourceList
+            onSourceAdded: source => { root.cfg.calendarSources = JSON.stringify(root.calendarSourceList.concat([source])); }
         }
     }
 

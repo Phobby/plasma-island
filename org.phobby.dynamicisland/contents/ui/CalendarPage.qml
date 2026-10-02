@@ -2,7 +2,8 @@
     SPDX-License-Identifier: GPL-2.0-or-later
     "Calendar": the rest of today in chronological order, one row per event
     with the colour of its calendar. Clicking a row opens its meeting link.
-    While no calendar is connected the page offers to open the settings.
+    Calendars are connected right here (CalendarConnect): the page offers it
+    while nothing is connected, and through the "+" button afterwards.
 */
 import QtQuick
 import QtQuick.Layouts
@@ -16,11 +17,29 @@ Item {
     readonly property var events: provider ? provider.today : []
     readonly property var pinned: provider ? provider.pinned : null
     readonly property bool connected: provider !== null && provider.calendar.available
-    signal configureRequested()
+    // Stored calendar links (also the disabled ones), for the duplicate check.
+    property var sources: []
+    signal sourceAdded(var source)
+
+    property bool connecting: false
+    // Keyboard focus for the island while a link or name is typed.
+    readonly property bool interacting: connecting && wizard.interacting
+
+    CalendarConnect {
+        id: wizard
+        anchors.fill: parent
+        visible: page.connecting
+        theme: page.theme
+        sources: page.sources
+        onAdded: source => { page.connecting = false; page.sourceAdded(source); }
+        onCancelled: page.connecting = false
+    }
+    onConnectingChanged: if (connecting) wizard.reset()
 
     ListView {
         id: list
         anchors.fill: parent
+        visible: !page.connecting
         clip: true
         spacing: 4
         boundsBehavior: Flickable.StopAtBounds
@@ -122,9 +141,20 @@ Item {
         }
     }
 
+    // Connect another calendar
+    IconButton {
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        visible: page.connected && !page.connecting
+        iconName: "list-add-symbolic"
+        color: page.theme.text
+        hoverColor: page.theme.faint
+        onClicked: page.connecting = true
+    }
+
     ColumnLayout {
         anchors.centerIn: parent
-        visible: page.events.length === 0
+        visible: page.events.length === 0 && !page.connecting
         spacing: 6
         Kirigami.Icon {
             Layout.alignment: Qt.AlignHCenter
@@ -156,12 +186,12 @@ Item {
             Text {
                 id: connectLabel
                 anchors.centerIn: parent
-                text: i18nc("@action:button opens the calendar settings", "Connect a calendar…")
+                text: i18nc("@action:button starts connecting a calendar link", "Connect a calendar…")
                 color: page.theme.text
                 font.pointSize: page.theme.fontSmall
                 font.weight: Font.DemiBold
             }
-            MouseArea { id: connectMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.configureRequested() }
+            MouseArea { id: connectMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.connecting = true }
         }
     }
 }

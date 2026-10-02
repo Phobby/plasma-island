@@ -243,6 +243,9 @@ Item {
                         // Rendered only when current (or while sliding).
                         visible: pos >= 0 && (pos === expanded.currentIndex || stripAnim.running)
                         sourceComponent: expanded.componentFor(modelData)
+                        // A page typing text (e.g. a calendar link) keeps the island focused and open.
+                        readonly property bool pageInteracting: item !== null && item.interacting === true
+                        onPageInteractingChanged: expanded.interacting = pageInteracting
                     }
                 }
             }

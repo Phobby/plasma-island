@@ -37,58 +37,21 @@ KCM.SimpleKCM {
     readonly property var status: {
         try { return JSON.parse(cfg_calendarStatus || "{}") || {}; } catch (e) { return {}; }
     }
-    readonly property var palette: ["#0a84ff", "#32d74b", "#ff9f0a", "#bf5af2", "#ff453a", "#64d2ff", "#ffd60a", "#ac8e68"]
+    CalendarLinks { id: links; sources: page.sources }
+    readonly property var palette: links.palette
+    readonly property var typeNames: links.typeNames
 
     function store(list: var): void {
         cfg_calendarSources = JSON.stringify(list);
     }
-
-    // ---- link checks ----------------------------------------------------------------
-    // webcal:// is only a hint for calendar apps; the file is served over https.
-    function normalize(url: string): string {
-        return String(url).trim().replace(/^webcals?:\/\//i, "https://");
-    }
-    function isConnected(url: string): bool {
-        const u = normalize(url);
-        return sources.some(s => normalize(s.url) === u);
-    }
-    // "" when the text can be a calendar link; otherwise what is wrong with it.
-    function formatProblem(url: string): string {
-        const u = String(url).trim();
-        if (u.length === 0) return i18n("Önce takvim linkini yapıştır.");
-        if (!/^(https?|webcals?):\/\/[^\s]+$/i.test(u)) return i18n("Bu bir link değil. Link http://, https:// veya webcal:// ile başlamalı.");
-        if (/calendar\.google\.com\/calendar\/(embed|u\/\d+\/r|r)\b/i.test(u))
-            return i18n("Bu, Google Takvim sayfasının adresi. Gereken link \"Secret address in iCal format\" alanındaki, sonu basic.ics ile biten adres.");
-        if (isConnected(u)) return i18n("Bu takvim zaten bağlı.");
-        return "";
-    }
-    readonly property string notCalendarMessage: i18n("Bu link bir takvim dosyasına benzemiyor. Lütfen adımları tekrar kontrol et.")
-
-    // Downloads the link once. done({ ok, name, count, error })
-    function check(url: string, done: var): void {
-        const xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState !== XMLHttpRequest.DONE) return;
-            const text = xhr.responseText || "";
-            if (xhr.status === 200 && /^\s*BEGIN:VCALENDAR/i.test(text)) {
-                const name = /^X-WR-CALNAME[^:\r\n]*:(.*)$/im.exec(text);
-                done({ ok: true, name: name ? name[1].trim().replace(/\\([,;\\])/g, "$1") : "", count: (text.match(/^BEGIN:VEVENT/gim) || []).length });
-                return;
-            }
-            const detail = xhr.status === 200 ? i18n("İndirilen dosya bir takvim (VCALENDAR) değil.")
-                         : xhr.status > 0 ? i18n("Sunucu %1 yanıtı verdi.", xhr.status)
-                         : i18n("Bağlantı kurulamadı.");
-            done({ ok: false, error: page.notCalendarMessage + " " + detail });
-        };
-        xhr.open("GET", normalize(url));
-        xhr.send();
-    }
+    function normalize(url: string): string { return links.normalize(url); }
+    function isConnected(url: string): bool { return links.isConnected(url); }
+    function formatProblem(url: string): string { return links.formatProblem(url); }
+    function check(url: string, done: var): void { links.check(url, done); }
+    function freeColor(): string { return links.freeColor(); }
 
     function addSource(type: string, url: string, name: string, color: string): void {
-        const list = sources.slice();
-        list.push({ id: Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36), type: type,
-                    url: normalize(url), name: name.trim(), color: color, enabled: true });
-        store(list);
+        store(sources.concat([links.makeSource(type, url, name, color)]));
     }
     function removeSource(index: int): void {
         const list = sources.slice();
@@ -99,12 +62,6 @@ KCM.SimpleKCM {
         const list = sources.slice();
         list[index] = Object.assign({}, list[index], { enabled: on });
         store(list);
-    }
-    function freeColor(): string {
-        const used = sources.map(s => s.color);
-        const free = palette.filter(c => used.indexOf(c) < 0);
-        const pool = free.length > 0 ? free : palette;
-        return pool[Math.floor(Math.random() * pool.length)];
     }
 
     // ---- wizard state ---------------------------------------------------------------
@@ -142,29 +99,6 @@ KCM.SimpleKCM {
         wizardError = "";
         return true;
     }
-
-    readonly property var instructions: ({
-        google: "1. Open Google Calendar in a browser on a computer (not the phone app).\n"
-              + "2. Click the Settings gear at the top right, then \"Settings\".\n"
-              + "3. On the left, under \"Settings for my calendars\", click the calendar you want.\n"
-              + "4. Click \"Integrate calendar\" (or scroll down to that section).\n"
-              + "5. Copy the link under \"Secret address in iCal format\".\n"
-              + "6. Paste it below.\n\n"
-              + "Work or school account and no secret address? Your administrator has turned it off.",
-        apple: "On iPhone / iPad:\n"
-             + "1. Open the Calendar app.\n"
-             + "2. Tap \"Calendars\" at the bottom, then tap the (i) icon next to the calendar.\n"
-             + "3. Turn on \"Public Calendar\".\n"
-             + "4. Tap \"Share Link\" and copy it.\n"
-             + "5. Paste it below.\n\n"
-             + "On Mac:\n"
-             + "1. Open the Calendar app.\n"
-             + "2. Right-click the calendar in the sidebar and choose \"Share Calendar…\".\n"
-             + "3. Check \"Public Calendar\" and click \"Done\".\n"
-             + "4. Click the sharing icon next to the calendar again and copy the link.\n"
-             + "5. Paste it below."
-    })
-    readonly property var typeNames: ({ google: "Google Calendar", apple: "Apple Calendar (iCloud)" })
 
     ColumnLayout {
         spacing: Kirigami.Units.largeSpacing
@@ -311,8 +245,7 @@ KCM.SimpleKCM {
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.largeSpacing
                 Repeater {
-                    model: [{ type: "google", icon: "im-google", fallback: "view-calendar-month" },
-                            { type: "apple", icon: "phone-apple-iphone", fallback: "view-calendar-day" }]
+                    model: [{ type: "google" }, { type: "apple" }]
                     delegate: QQC2.Button {
                         id: pickButton
                         required property var modelData
@@ -326,8 +259,9 @@ KCM.SimpleKCM {
                                 Layout.alignment: Qt.AlignHCenter
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.large
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.large
-                                source: pickButton.modelData.icon
-                                fallback: pickButton.modelData.fallback
+                                source: links.typeIcons[pickButton.modelData.type]
+                                color: Kirigami.Theme.textColor
+                                isMask: true
                             }
                             QQC2.Label {
                                 Layout.fillWidth: true
@@ -349,13 +283,13 @@ KCM.SimpleKCM {
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
                     textFormat: Text.PlainText
-                    text: page.instructions[page.wizardType]
+                    text: page.wizardType === "google" ? links.instructions.google : links.appleInstructions
                 }
                 QQC2.Label {
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
                     font: Kirigami.Theme.smallFont
-                    text: i18n("⚠️ Bu link takvimine erişim sağlar, kimseyle paylaşma.")
+                    text: links.secretWarning
                 }
                 QQC2.TextField {
                     id: linkField
