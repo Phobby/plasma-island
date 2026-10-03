@@ -55,6 +55,17 @@ QString LocalTools::readTextFile(const QString &path, int maxBytes) const
 
 void LocalTools::run(const QString &program, const QStringList &arguments, const QJSValue &callback)
 {
+    start(program, arguments, nullptr, callback);
+}
+
+void LocalTools::runWithInput(const QString &program, const QStringList &arguments, const QString &input, const QJSValue &callback)
+{
+    const QByteArray bytes = input.toUtf8();
+    start(program, arguments, &bytes, callback);
+}
+
+void LocalTools::start(const QString &program, const QStringList &arguments, const QByteArray *input, const QJSValue &callback)
+{
     auto *process = new QProcess(this);
     auto *answered = new bool(false);
     const auto answer = [process, answered, callback](int code) {
@@ -85,7 +96,15 @@ void LocalTools::run(const QString &program, const QStringList &arguments, const
     });
     process->setProgram(program);
     process->setArguments(arguments);
-    process->setStandardInputFile(QProcess::nullDevice());
+    if (input) {
+        const QByteArray bytes = *input;
+        connect(process, &QProcess::started, process, [process, bytes] {
+            process->write(bytes);
+            process->closeWriteChannel();
+        });
+    } else {
+        process->setStandardInputFile(QProcess::nullDevice());
+    }
     process->start();
 }
 

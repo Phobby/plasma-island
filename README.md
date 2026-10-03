@@ -378,12 +378,24 @@ local service answers) and offers the ones it finds first.
   (saved shortly after you stop typing, on Ctrl+S and when you go back). For
   Joplin the first line is the note's title.
 - BetterNotes: notes are listed with `betternotes list`, read with
-  `betternotes show <id>` and quick notes are added with `betternotes new`.
-  The change date, lock state and next reminder (an orange badge) come from
-  its SQLite database, which is opened read-only and never written. Notes are
-  shown read-only; "Edit in BetterNotes" starts the app, which has its own
-  rich editor. The list follows changes at once (the data folder is watched).
-  These notes stay on this computer and do not appear on other devices.
+  `betternotes show <id>`, created with `betternotes new <title> --id-only
+  --no-open` and saved with `betternotes update <id> [--title …] [--body -]`
+  (BetterNotes 0.1.13 or newer; the content goes on standard input, so line
+  breaks stay as they are). The change date, lock state and next reminder (an
+  orange badge) come from its SQLite database, which is opened read-only and
+  never written; all writing is done by the `betternotes` command.
+  - The new-note button asks only for a **title**: the note is created empty
+    and appears in the list at once; click it to write in it later.
+  - In the editor the title is a field above the plain-text content; both
+    are saved 1.5 s after typing stops, when the field loses focus, or on
+    Ctrl+S. Rich formatting is not rebuilt here: a note with rich text, and
+    a locked note, is only shown ("Edit in BetterNotes" starts the app).
+  - If saving fails (an older BetterNotes is running, the note was deleted…)
+    the reason is shown with "Try again"; the text stays in the editor and,
+    until the shell restarts, also after leaving the note or closing the
+    island ("Not saved" in the list).
+  - The list follows changes at once (the data folder is watched). These
+    notes stay on this computer and do not appear on other devices.
 - Tokens are stored in KDE Wallet (folder "Dynamic Island"), never in the
   configuration file, and are deleted when an app is disconnected.
 - Settings → Notes: connected apps (disconnect), the default app for quick

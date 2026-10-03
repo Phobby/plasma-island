@@ -12,7 +12,8 @@
  * What a local, account-less notes app (BetterNotes) needs and QML cannot do:
  * find its command, run it and read what it prints, read a small text file
  * (a .desktop entry), read its SQLite database (strictly read-only) and
- * notice when its files change.
+ * notice when its files change. Its own command writes the notes
+ * (`betternotes update … --body -` reads the content from standard input).
  */
 class LocalTools : public QObject
 {
@@ -32,6 +33,8 @@ public:
     Q_INVOKABLE QString readTextFile(const QString &path, int maxBytes = 65536) const;
     // Runs a program without a shell; callback(exitCode, stdout, stderr), exitCode -1 = could not run / timed out.
     Q_INVOKABLE void run(const QString &program, const QStringList &arguments, const QJSValue &callback);
+    // The same, with `input` (UTF-8) on the program's standard input.
+    Q_INVOKABLE void runWithInput(const QString &program, const QStringList &arguments, const QString &input, const QJSValue &callback);
     // Rows of a SELECT on an SQLite file opened read-only, as a list of { column: value }.
     // An empty list also means "could not be read".
     Q_INVOKABLE QVariantList sqliteQuery(const QString &databasePath, const QString &sql) const;
@@ -44,6 +47,8 @@ Q_SIGNALS:
     void pathChanged();
 
 private:
+    void start(const QString &program, const QStringList &arguments, const QByteArray *input, const QJSValue &callback);
+
     QFileSystemWatcher m_watcher;
     QStringList m_paths;
 };

@@ -11,10 +11,13 @@
                   token it returns is what is kept
       memos       a self-hosted Memos server with an access token
       betternotes BetterNotes on this computer: no account, nothing to sign in
-                  to. Its `betternotes` command lists, shows and creates
-                  notes; the change date, lock state and next reminder come
-                  from its SQLite database, which is only ever read. Notes
-                  are not edited here: BetterNotes has its own rich editor.
+                  to. Its `betternotes` command lists, shows, creates and
+                  updates notes (`update <id> --title … --body -`, 0.1.13+,
+                  the content on standard input); the change date, lock state
+                  and next reminder come from its SQLite database, which is
+                  only ever read. A note is edited here as plain text; locked
+                  notes and notes with rich text stay read-only (BetterNotes
+                  has its own editor for those).
 
     `sourcesJson` is a JSON list of { id, type, name, server, user } and is
     stored in the widget configuration. Tokens live in KWallet (native core)
@@ -24,7 +27,12 @@
     A note is { key, source (id), type, id, title, text, updated (ms), raw }.
     For Joplin the first line of `text` is the title. BetterNotes notes also
     carry readOnly, priority, tags, reminder (ms, 0 = none), locked, and their
-    `text` is only the title until loadText() has fetched the content.
+    `text` is only the title until loadText() has fetched the content; after
+    that it is "title\ncontent", which is also what save() takes for them.
+
+    `drafts` keeps, per note key ("new:<source>" for a note not created yet),
+    text that could not be saved, so that nothing typed is lost when saving
+    fails or the island closes; it lives as long as the shell.
 */
 import QtQuick
 
@@ -67,6 +75,12 @@ QtObject {
     property bool loaded: false
     property bool busy: false
     property int seq: 0
+    property var drafts: ({})               // key → unsaved text
+    function setDraft(key: string, text: string): void {
+        const d = Object.assign({}, drafts);
+        if (text === null || text === undefined) delete d[key]; else d[key] = text;
+        drafts = d;
+    }
 
     // ---- BetterNotes (local) -----------------------------------------------------
     readonly property var local: core !== null ? core.local : null
@@ -117,7 +131,8 @@ QtObject {
         }
         return rows;
     }
-    // The content of a BetterNotes note (`betternotes show <id>`). done(error, text)
+    // The content of a BetterNotes note (`betternotes show <id>`). done(error, text, rich):
+    // rich = it has formatting that plain text would lose, so it is only shown here.
     function loadText(item: var, done: var): void {
         const command = betterNotesCommand();
         if (!item || item.type !== "betternotes" || command.length === 0) { done(i18n("BetterNotes was not found."), ""); return; }
@@ -127,10 +142,33 @@ QtObject {
             const at = out.indexOf("--- Content ---\n");
             let text = at >= 0 ? out.slice(at + 16).replace(/\n$/, "") : out;
             // Rich text is shown as plain text.
-            if (/<\/?(p|div|span|br|ul|ol|li|b|i|u|h[1-6]|html|body)\b[^>]*>/i.test(text))
+            const rich = /<\/?(p|div|span|br|ul|ol|li|b|i|u|h[1-6]|html|body|img|font)\b[^>]*>/i.test(text);
+            if (rich)
                 text = text.replace(/<br\s*\/?>|<\/(p|div|li|h[1-6])>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\n{3,}/g, "\n\n").trim();
-            done("", text);
+            done("", text, rich);
         });
+    }
+    // Runs `betternotes` with `input` on its standard input where args hold "--body", "-".
+    // An older native module cannot write to standard input: the content then goes
+    // as one argument instead (no shell is involved, line breaks stay as they are).
+    function runBetterNotes(args: var, input: var, done: var): void {
+        const command = betterNotesCommand();
+        if (command.length === 0) { done(-1, "", i18n("BetterNotes was not found.")); return; }
+        if (input === null || input === undefined) local.run(command, args, done);
+        else if (typeof local.runWithInput === "function") local.runWithInput(command, args, input, done);
+        else {
+            const at = args.indexOf("-");
+            local.run(command, args.slice(0, at).concat([input]).concat(args.slice(at + 1)), done);
+        }
+    }
+    // What went wrong, in words a user can act on.
+    function betterNotesError(code: int, out: string, err: string, fallback: string): string {
+        const text = ((err || "") + "\n" + (out || "")).trim();
+        if (/unknown variant `?UpdateNote/.test(text))
+            return i18n("The BetterNotes that is running is too old to save from here. Quit it and start it again (0.1.13 or newer).");
+        if (/does not exist/.test(text)) return i18n("This note no longer exists in BetterNotes.");
+        if (code === -1 && text.length === 0) return i18n("BetterNotes did not answer.");
+        return text.replace(/^(Error|BetterNotes):\s*/, "").split("\n")[0] || fallback;
     }
     // Opens BetterNotes itself (it has no command to open one note).
     function openBetterNotes(): void {
@@ -351,8 +389,10 @@ QtObject {
                         const x = extra[row.id] || {}, updated = Number(x.updated || 0), before = old[row.id];
                         const item = backend.note(source, row.id, row.title, updated, null);
                         item.title = row.title;
-                        item.readOnly = true; item.priority = row.priority; item.tags = row.tags;
                         item.locked = Number(x.locked || 0) === 1;
+                        item.readOnly = item.locked || (before !== undefined && before.rich === true);
+                        item.rich = before !== undefined && before.rich === true;
+                        item.priority = row.priority; item.tags = row.tags;
                         item.reminder = Number(x.reminder || 0) * 1000;
                         // Content fetched earlier stays while the note has not changed.
                         if (before && before.loaded && before.updated === updated) { item.text = before.text; item.loaded = true; }
@@ -360,19 +400,50 @@ QtObject {
                     }));
                 });
             },
+            // The first line is the title; a title alone makes an empty note.
             create: function (source, token, text, done) {
-                const command = backend.betterNotesCommand(), i = text.indexOf("\n");
-                if (command.length === 0) { done(i18n("BetterNotes was not found.")); return; }
+                const i = text.indexOf("\n");
                 const title = (i < 0 ? text : text.slice(0, i)).trim(), content = i < 0 ? "" : text.slice(i + 1);
-                backend.local.run(command, content.length > 0 ? ["new", title, content] : ["new", title], (code, out, err) => {
-                    const m = /Created note #(\d+)/.exec(out);
-                    if (code !== 0 || !m) { done((err || out).trim() || i18n("BetterNotes could not create the note.")); return; }
-                    const item = backend.note(source, m[1], text, Date.now(), null);
-                    item.title = title; item.readOnly = true; item.priority = "Normal"; item.tags = []; item.locked = false; item.reminder = 0; item.loaded = true;
-                    done("", item);
+                const args = ["new", title].concat(content.length > 0 ? ["--body", "-"] : []).concat(["--id-only", "--no-open"]);
+                backend.runBetterNotes(args, content.length > 0 ? content : null, (code, out, err) => {
+                    if (code !== 0) { done(backend.betterNotesError(code, out, err, i18n("BetterNotes could not create the note."))); return; }
+                    const made = item => {
+                        item.title = title; item.text = title + "\n" + content;
+                        item.readOnly = false; item.rich = false; item.priority = "Normal"; item.tags = []; item.locked = false; item.reminder = 0; item.loaded = true;
+                        done("", item);
+                    };
+                    // "12" with --id-only; an older BetterNotes answers "Created note #12 …".
+                    const m = /^\s*(\d+)\s*$/.exec(out) || /Created note #(\d+)/.exec(out);
+                    if (m) { made(backend.note(source, m[1], title, Date.now(), null)); return; }
+                    // No id printed: the newest note with this title.
+                    backend.local.run(backend.betterNotesCommand(), ["list"], (code2, out2) => {
+                        const rows = code2 === 0 ? backend.parseBetterNotesList(out2).filter(r => r.title === title) : [];
+                        if (rows.length === 0) { done(i18n("BetterNotes created the note but did not say which one; it appears with the next refresh.")); return; }
+                        const id = rows.map(r => Number(r.id)).reduce((a, b) => Math.max(a, b));
+                        made(backend.note(source, String(id), title, Date.now(), null));
+                    });
                 });
             },
-            save: function (source, token, old, text, done) { done(i18n("BetterNotes notes are edited in BetterNotes itself.")); }
+            // `text` is "title\ncontent"; only what changed is sent.
+            save: function (source, token, old, text, done) {
+                const i = text.indexOf("\n");
+                const title = (i < 0 ? text : text.slice(0, i)).trim(), content = i < 0 ? "" : text.slice(i + 1);
+                const oldContent = old.loaded && old.text.indexOf(old.title + "\n") === 0 ? old.text.slice(old.title.length + 1) : old.loaded ? "" : null;
+                const args = ["update", old.id];
+                if (title.length > 0 && title !== old.title) args.push("--title", title);
+                if (content !== oldContent) args.push("--body", "-");
+                const saved = () => {
+                    const item = Object.assign({}, old);
+                    item.title = title.length > 0 ? title : old.title;
+                    item.text = item.title + "\n" + content; item.loaded = true; item.updated = Date.now();
+                    done("", item);
+                };
+                if (args.length === 2) { saved(); return; }
+                backend.runBetterNotes(args, args.indexOf("-") >= 0 ? content : null, (code, out, err) => {
+                    if (code !== 0) { done(backend.betterNotesError(code, out, err, i18n("BetterNotes could not save the note."))); return; }
+                    saved();
+                });
+            }
         }
     })
     function driver(type: string): var { return drivers[type] || localDrivers[type]; }
@@ -466,27 +537,35 @@ QtObject {
             publish();
         });
     }
+    // Adds what was fetched later (e.g. a note's content) to a listed note.
+    function remember(key: string, fields: var): void {
+        for (const id in bySource)
+            for (const n of bySource[id]) if (n.key === key) Object.assign(n, fields);
+    }
     function replace(sourceId: string, item: var): void {
         const list = (bySource[sourceId] || []).filter(n => n.id !== item.id);
         list.unshift(item);
         bySource[sourceId] = list;
         publish();
     }
-    // done({ ok, note, error })
+    // done({ ok, note, error }). Text that could not be saved is kept in `drafts`.
     function create(text: string, sourceId: string, done: var): void {
         const s = sources.find(x => x.id === sourceId) || defaultSource;
         if (!s || (!secrets[s.id] && !types[s.type].local)) { done({ ok: false, note: null, error: i18n("Connect a notes app first.") }); return; }
+        const key = "new:" + s.id;
         driver(s.type).create(s, secrets[s.id] || "local", text, (error, item) => {
-            if (error) { done({ ok: false, note: null, error: error }); return; }
+            if (error) { setDraft(key, text); done({ ok: false, note: null, error: error }); return; }
+            setDraft(key, null);
             replace(s.id, item);
             done({ ok: true, note: item, error: "" });
         });
     }
     function save(old: var, text: string, done: var): void {
         const s = sources.find(x => x.id === old.source);
-        if (!s || (!secrets[s.id] && !types[s.type].local)) { done({ ok: false, note: null, error: i18n("This notes app is no longer connected.") }); return; }
+        if (!s || (!secrets[s.id] && !types[s.type].local)) { setDraft(old.key, text); done({ ok: false, note: null, error: i18n("This notes app is no longer connected.") }); return; }
         driver(s.type).save(s, secrets[s.id] || "local", old, text, (error, item) => {
-            if (error) { done({ ok: false, note: null, error: error }); return; }
+            if (error) { setDraft(old.key, text); done({ ok: false, note: null, error: error }); return; }
+            if (drafts[old.key] === text) setDraft(old.key, null);
             replace(s.id, item);
             done({ ok: true, note: item, error: "" });
         });
