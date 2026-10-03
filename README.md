@@ -115,12 +115,24 @@ the screen it was added to.
 | Notifications, display time | Behaviour when a notification arrives |
 | Hover delay / close on leave | Default 120 ms / 400 ms |
 | Preferred player | E.g. `spotify`. This player is shown if it is playing (or nothing else is); if empty Plasma chooses. Matches the identity/desktop file name case-insensitively. A player that says "Playing" while its position stands still for ~9 s (Spotify after a Spotify Connect session was stopped on the phone) counts as not playing |
-| Modules | Media (also enables the live activity), System, Volume, Recent notifications |
+| Volume | The volume slider in Controls |
 | System view | Fixed (5 cards, 2 rows) / Dynamic (default: the cards that are active right now grow, no gaps; with few active cards the two busiest stay large). In both views the card under the mouse grows and shows its details. Clicking a card opens `btop` in the default terminal with only that metric's graph (needs the native module and btop ≥ 1.4; btop's own configuration file is not touched) |
 
+**Layout** tab: the pages of the expanded island in one list. Drag a page by
+its handle to move its tab (the row lifts while it is dragged, the others make
+room); the switch next to it shows or hides it (these are the same settings
+as before: showMediaModule, showTools…; Media also turns the media live
+activity on or off, Calendar also the upcoming-event activity). Activities has
+no switch: it appears while something is going on. "Restore default order"
+goes back to Activities, Media, System, Notifications, Controls, Tools,
+Calendar, Notes, Clipboard, Devices. The order is stored as `pageOrder`
+(comma-separated page keys) and applies as soon as the settings are applied.
+This order only places the tabs; which live activity the small island shows
+first is the priority list of the Activities tab, so privacy indicators,
+calls and screen recording still come first whatever the page order is.
 **Activities** tab: priority order (up/down), split island on/off, keep
 playing media visible, watch the download folder, momentary event duration, a
-separate switch for every system event and live activity type, expanded pages.
+separate switch for every system event and live activity type.
 **Alerts** tab: low/critical battery threshold, Bluetooth device/phone battery
 threshold, CPU/GPU temperature threshold.
 **Calendar** tab: on/off, how many minutes before the start to pin (15), how
@@ -129,9 +141,34 @@ many minutes after the end to disappear (10), all-day events, update interval
 below).
 **Tools** tab: timer/alarm sound (a file can be chosen), Pomodoro durations
 and number of rounds.
+**Language** tab: Automatic (Turkish when the system is Turkish, English
+otherwise), Türkçe or English. Applies at once, to the island and the
+settings, without restarting Plasma; see "Translations" below.
 
 The end times of the timer, stopwatch, Pomodoro and alarm are stored in the
 settings; they carry on where they were even if plasmashell restarts.
+
+### Translations
+
+Every visible text is an English source string passed to `Lang.i18n()`,
+`Lang.i18nc()` or `Lang.i18np()` (same arguments as KDE's i18n functions) and
+looked up in `contents/ui/translations/<language>.js`, a key-value table
+(`tr.js`: Turkish). `Lang.qml` is a QML singleton; the language is the
+widget's `language` setting, and bindings that call `Lang` are re-evaluated
+when it changes. Month and day names, date/time formats and percentages
+(`Lang.locale`, `Lang.percent()`) follow it too.
+
+KDE's own i18n (gettext `.po`/`.mo`) or Qt's `qsTr()` with `.ts`/`.qm` files
+were not used: both choose the language for the whole plasmashell process,
+so this widget could not have a language of its own nor switch it without a
+restart, and a `QTranslator` installed in plasmashell would also translate
+other widgets' strings that happen to be the same.
+
+`tools/i18n-check` lists texts missing from a table, entries no longer used,
+and multi-word string literals outside `Lang` calls (possibly forgotten
+text); `--strict` makes it fail when something is missing. To add a
+language, copy `tr.js`, translate the values and add it to `tables` in
+`Lang.qml`.
 
 ## Testing and debugging
 
@@ -212,14 +249,17 @@ org.phobby.dynamicisland/
     ├── NotesPage.qml                             notes list, quick note, editor, connecting apps
     ├── ClipboardPage.qml                         clipboard history: copy again, search, star, edit, QR
     ├── NativeBridge.qml, BlurBridge.qml          import the native modules
-    └── config*.qml                                settings pages
+    ├── Lang.qml, translations/tr.js, qmldir      the widget's own translations (singleton)
+    ├── PageCatalog.qml                           the expanded pages and their default order
+    └── config*.qml                                settings pages (configLayout: page order)
 native/
 ├── windowblur.*               org.phobby.dynamicisland.effects (shaped KWin blur)
 └── core/                      org.phobby.dynamicisland.core:
                                PipeWireWatcher, DBusSignalWatcher, Launcher,
                                UpdatesChecker, DownloadWatcher, SecretStore,
-                               LoopbackServer, LocalTools, IslandService (D-Bus API)
-tools/island-push, tools/notify-done.sh
+                               LoopbackServer, LocalTools, PopupWatcher,
+                               IslandService (D-Bus API)
+tools/island-push, tools/notify-done.sh, tools/i18n-check
 ```
 
 **Adding a new feature:** write a file under `providers/`. Define an
@@ -425,7 +465,7 @@ monospace font), images (as thumbnails) and copied files.
 - History size and what is kept are Klipper's own settings (System Tray →
   Clipboard → Configure Clipboard…).
 
-The page can be turned off in Settings → Activities.
+The page can be turned off in Settings → Layout.
 
 ## D-Bus API
 

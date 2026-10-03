@@ -59,8 +59,8 @@ Rectangle {
                             text: [row.t.detail,
                                    row.t.speed > 0 ? Fmt.bytes(row.t.speed) + "/s" : "",
                                    row.t.percent < 0 && row.t.processedBytes > 0 ? Fmt.bytes(row.t.processedBytes) : "",
-                                   row.t.remaining > 0 ? i18nc("@info remaining time m:ss", "%1 left", Fmt.eta(row.t.remaining)) : "",
-                                   row.t.suspended ? i18n("Paused") : ""].filter(s => s).join(" · ")
+                                   row.t.remaining > 0 ? Lang.i18nc("@info remaining time m:ss", "%1 left", Fmt.eta(row.t.remaining)) : "",
+                                   row.t.suspended ? Lang.i18n("Paused") : ""].filter(s => s).join(" · ")
                             color: card.theme.subText
                             font.pointSize: card.theme.fontSmall
                             elide: Text.ElideRight
@@ -68,7 +68,7 @@ Rectangle {
                     }
                     Text {
                         visible: row.t.percent >= 0
-                        text: Math.round(row.t.percent) + "%"
+                        text: Lang.percent(Math.round(row.t.percent))
                         color: card.theme.text
                         font.pointSize: card.theme.fontSmall
                         font.weight: Font.DemiBold

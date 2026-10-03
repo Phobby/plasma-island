@@ -41,9 +41,9 @@ Item {
                 key: "transfer-" + t.transferId,
                 icon: sent ? "document-send-symbolic" : "dialog-ok-apply-symbolic",
                 color: theme.live,
-                title: sent ? i18n("Sent") : i18n("Completed"),
+                title: sent ? Lang.i18n("Sent") : Lang.i18n("Completed"),
                 subtitle: t.headline,
-                trailing: t.openUrl ? { type: "button", text: i18n("Open") } : null,
+                trailing: t.openUrl ? { type: "button", text: Lang.i18n("Open") } : null,
                 activate: t.openUrl ? (() => Qt.openUrlExternally(t.openUrl)) : undefined
             });
         } else {
@@ -51,8 +51,8 @@ Item {
                 key: "transfer-" + t.transferId,
                 icon: "dialog-error-symbolic",
                 color: theme.red,
-                title: i18n("Failed"),
-                subtitle: t.state === "cancelled" ? i18n("Cancelled · %1", t.headline)
+                title: Lang.i18n("Failed"),
+                subtitle: t.state === "cancelled" ? Lang.i18n("Cancelled · %1", t.headline)
                         : t.errorText ? t.headline + " · " + t.errorText : t.headline,
                 duration: 5000
             });
@@ -70,7 +70,7 @@ Item {
         active: hub.enabled && hub.count > 0
         icon: first ? first.icon : "view-refresh-symbolic"
         color: hub.theme.blue
-        title: hub.count > 1 ? i18np("%1 transfer", "%1 transfers", hub.count) : (first ? first.headline : "")
+        title: hub.count > 1 ? Lang.i18np("%1 transfer", "%1 transfers", hub.count) : (first ? first.headline : "")
         subtitle: first ? first.detail : ""
         trailingText: hub.count > 1 ? String(hub.count) : ""
         progress: hub.indeterminate ? -2 : hub.totalProgress

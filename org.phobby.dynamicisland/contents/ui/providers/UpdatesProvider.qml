@@ -36,9 +36,9 @@ Item {
                 key: "updates",
                 icon: "system-software-update",
                 color: core.securityUpdateCount > 0 ? theme.red : theme.blue,
-                title: i18np("%1 update available", "%1 updates available", count),
-                subtitle: core.securityUpdateCount > 0 ? i18np("%1 security update", "%1 security updates", core.securityUpdateCount) : i18n("Click to open Discover"),
-                trailing: { type: "button", text: i18n("Update") },
+                title: Lang.i18np("%1 update available", "%1 updates available", count),
+                subtitle: core.securityUpdateCount > 0 ? Lang.i18np("%1 security update", "%1 security updates", core.securityUpdateCount) : Lang.i18n("Click to open Discover"),
+                trailing: { type: "button", text: Lang.i18n("Update") },
                 activate: () => provider.openDiscover(),
                 duration: 6000
             });

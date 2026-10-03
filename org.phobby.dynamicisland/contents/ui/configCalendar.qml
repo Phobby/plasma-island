@@ -19,6 +19,9 @@ import org.kde.kcmutils as KCM
 KCM.SimpleKCM {
     id: page
 
+    property string cfg_language
+    Binding { target: Lang; property: "setting"; value: cfg_language; restoreMode: Binding.RestoreNone }
+
     property alias cfg_showCalendar: enableCheck.checked
     property alias cfg_calendarLeadMinutes: leadSpin.value
     property alias cfg_calendarLingerMinutes: lingerSpin.value
@@ -94,8 +97,8 @@ KCM.SimpleKCM {
         });
     }
     function finishWizard(name: string): bool {
-        if (name.trim().length === 0) { wizardError = i18n("Give the calendar a short name (e.g. Work, Personal)."); return false; }
-        if (isConnected(wizardUrl)) { wizardError = i18n("This calendar is already connected."); return false; }
+        if (name.trim().length === 0) { wizardError = Lang.i18n("Give the calendar a short name (e.g. Work, Personal)."); return false; }
+        if (isConnected(wizardUrl)) { wizardError = Lang.i18n("This calendar is already connected."); return false; }
         addSource(wizardType, wizardUrl, name, wizardColor);
         wizardError = "";
         return true;
@@ -109,50 +112,50 @@ KCM.SimpleKCM {
 
             QQC2.CheckBox {
                 id: enableCheck
-                Kirigami.FormData.label: i18n("Calendar:")
-                text: i18n("Show upcoming events in the island")
+                Kirigami.FormData.label: Lang.i18n("Calendar:")
+                text: Lang.i18n("Show upcoming events in the island")
             }
             QQC2.SpinBox {
                 id: leadSpin
-                Kirigami.FormData.label: i18n("Pin before the event:")
+                Kirigami.FormData.label: Lang.i18n("Pin before the event:")
                 enabled: enableCheck.checked
                 from: 1; to: 120
-                textFromValue: (v) => i18n("%1 dk kala", v)
+                textFromValue: (v) => Lang.i18n("%1 min before", v)
                 valueFromText: (t) => parseInt(t)
             }
             QQC2.SpinBox {
                 id: lingerSpin
-                Kirigami.FormData.label: i18n("Keep after it ends:")
+                Kirigami.FormData.label: Lang.i18n("Keep after it ends:")
                 enabled: enableCheck.checked
                 from: 0; to: 120
-                textFromValue: (v) => i18n("%1 dk", v)
+                textFromValue: (v) => Lang.i18n("%1 min", v)
                 valueFromText: (t) => parseInt(t)
             }
             QQC2.CheckBox {
                 id: soundCheck
-                Kirigami.FormData.label: i18n("When an event starts:")
+                Kirigami.FormData.label: Lang.i18n("When an event starts:")
                 enabled: enableCheck.checked
-                text: i18n("Play the alarm sound (chosen in the Tools tab)")
+                text: Lang.i18n("Play the alarm sound (chosen in the Tools tab)")
             }
             QQC2.CheckBox {
                 id: allDayCheck
-                Kirigami.FormData.label: i18n("Calendar page:")
+                Kirigami.FormData.label: Lang.i18n("Calendar page:")
                 enabled: enableCheck.checked
-                text: i18n("Show all-day events in the list")
+                text: Lang.i18n("Show all-day events in the list")
             }
             QQC2.SpinBox {
                 id: refreshSpin
-                Kirigami.FormData.label: i18n("Update calendars:")
+                Kirigami.FormData.label: Lang.i18n("Update calendars:")
                 enabled: enableCheck.checked
                 from: 1; to: 60
-                textFromValue: (v) => i18n("%1 dakikada bir", v)
+                textFromValue: (v) => Lang.i18n("every %1 min", v)
                 valueFromText: (t) => parseInt(t)
             }
         }
 
         Kirigami.Heading {
             level: 4
-            text: i18n("Connected calendars")
+            text: Lang.i18n("Connected calendars")
         }
 
         QQC2.Label {
@@ -160,7 +163,7 @@ KCM.SimpleKCM {
             visible: page.sources.length === 0
             wrapMode: Text.Wrap
             opacity: 0.7
-            text: i18n("No calendar is connected yet. Use the button below to connect a Google Calendar or Apple iCloud calendar.")
+            text: Lang.i18n("No calendar is connected yet. Use the button below to connect a Google Calendar or Apple iCloud calendar.")
         }
 
         Repeater {
@@ -177,7 +180,7 @@ KCM.SimpleKCM {
                 QQC2.CheckBox {
                     checked: sourceRow.modelData.enabled !== false
                     onToggled: page.setEnabled(sourceRow.index, checked)
-                    QQC2.ToolTip.text: i18n("Include this calendar")
+                    QQC2.ToolTip.text: Lang.i18n("Include this calendar")
                     QQC2.ToolTip.visible: hovered
                 }
                 Rectangle {
@@ -191,7 +194,7 @@ KCM.SimpleKCM {
                     spacing: 0
                     QQC2.Label {
                         Layout.fillWidth: true
-                        text: sourceRow.modelData.name || i18n("Calendar")
+                        text: sourceRow.modelData.name || Lang.i18n("Calendar")
                         elide: Text.ElideRight
                     }
                     QQC2.Label {
@@ -201,17 +204,17 @@ KCM.SimpleKCM {
                         color: sourceRow.state && sourceRow.state.error ? Kirigami.Theme.negativeTextColor : Kirigami.Theme.textColor
                         opacity: sourceRow.state && sourceRow.state.error ? 1 : 0.7
                         text: {
-                            const kind = page.typeNames[sourceRow.modelData.type] || i18n(".ics linki");
+                            const kind = page.typeNames[sourceRow.modelData.type] || Lang.i18n(".ics link");
                             const st = sourceRow.state;
-                            if (!st) return i18n("%1 · not updated yet", kind);
-                            const at = Qt.formatDateTime(new Date(st.t), Qt.locale().dateTimeFormat(Locale.ShortFormat));
-                            return st.error ? i18n("%1 · could not update (%2): %3", kind, at, st.error) : i18n("%1 · last updated: %2", kind, at);
+                            if (!st) return Lang.i18n("%1 · not updated yet", kind);
+                            const at = Qt.formatDateTime(new Date(st.t), Lang.locale.dateTimeFormat(Locale.ShortFormat));
+                            return st.error ? Lang.i18n("%1 · could not update (%2): %3", kind, at, st.error) : Lang.i18n("%1 · last updated: %2", kind, at);
                         }
                     }
                 }
                 QQC2.ToolButton {
                     icon.name: "edit-delete"
-                    text: i18n("Remove")
+                    text: Lang.i18n("Remove")
                     display: QQC2.AbstractButton.IconOnly
                     onClicked: page.removeSource(sourceRow.index)
                     QQC2.ToolTip.text: text
@@ -222,7 +225,7 @@ KCM.SimpleKCM {
 
         QQC2.Button {
             icon.name: "list-add"
-            text: i18n("Connect a Calendar")
+            text: Lang.i18n("Connect a Calendar")
             onClicked: { page.startWizard(); wizard.open(); }
         }
 
@@ -231,13 +234,13 @@ KCM.SimpleKCM {
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
             opacity: 0.7
-            text: i18n("Changes take effect when you press \"Apply\". Calendar links are stored in the Plasma configuration file on this computer; only your user can read it.")
+            text: Lang.i18n("Changes take effect when you press \"Apply\". Calendar links are stored in the Plasma configuration file on this computer; only your user can read it.")
         }
     }
 
     Kirigami.Dialog {
         id: wizard
-        title: page.wizardStep === "pick" ? i18n("Connect a Calendar") : page.typeNames[page.wizardType]
+        title: page.wizardStep === "pick" ? Lang.i18n("Connect a Calendar") : page.typeNames[page.wizardType]
         preferredWidth: Kirigami.Units.gridUnit * 26
         padding: Kirigami.Units.largeSpacing
         standardButtons: Kirigami.Dialog.NoButton
@@ -301,7 +304,7 @@ KCM.SimpleKCM {
                 QQC2.TextField {
                     id: linkField
                     Layout.fillWidth: true
-                    placeholderText: "Paste your calendar link here"
+                    placeholderText: Lang.i18n("Paste your calendar link here")
                     enabled: !page.wizardBusy
                     onAccepted: page.connectLink(text)
                     onTextEdited: page.wizardError = ""
@@ -316,18 +319,18 @@ KCM.SimpleKCM {
                 QQC2.Label {
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
-                    text: i18np("Calendar found: it has %1 event.", "Calendar found: it has %1 events.", page.wizardCount)
+                    text: Lang.i18np("Calendar found: it has %1 event.", "Calendar found: it has %1 events.", page.wizardCount)
                 }
                 QQC2.TextField {
                     id: nameField
                     Layout.fillWidth: true
-                    placeholderText: i18n("Name of the calendar (e.g. Work, Personal)")
+                    placeholderText: Lang.i18n("Name of the calendar (e.g. Work, Personal)")
                     onAccepted: if (page.finishWizard(text)) wizard.close()
                     onTextEdited: page.wizardError = ""
                 }
                 RowLayout {
                     spacing: Kirigami.Units.smallSpacing
-                    QQC2.Label { text: i18n("Renk:") }
+                    QQC2.Label { text: Lang.i18n("Color:") }
                     Repeater {
                         model: page.palette
                         delegate: Rectangle {
@@ -356,7 +359,7 @@ KCM.SimpleKCM {
                 Layout.fillWidth: true
                 QQC2.Button {
                     icon.name: "go-previous"
-                    text: i18n("Geri")
+                    text: Lang.i18n("Back")
                     enabled: !page.wizardBusy
                     onClicked: { page.wizardError = ""; page.wizardStep = page.wizardStep === "name" ? "link" : "pick"; }
                 }
@@ -370,14 +373,14 @@ KCM.SimpleKCM {
                 QQC2.Button {
                     visible: page.wizardStep === "link"
                     icon.name: "network-connect"
-                    text: i18n("Connect")
+                    text: Lang.i18n("Connect")
                     enabled: !page.wizardBusy
                     onClicked: page.connectLink(linkField.text)
                 }
                 QQC2.Button {
                     visible: page.wizardStep === "name"
                     icon.name: "list-add"
-                    text: i18n("Add")
+                    text: Lang.i18n("Add")
                     onClicked: if (page.finishWizard(nameField.text)) wizard.close()
                 }
             }

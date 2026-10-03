@@ -35,8 +35,10 @@ Item {
     property bool showNotificationModule: true
     property string systemView: "dynamic"
     signal systemMetricClicked(string key)
+    signal settingsRequested()
     // Provider pages for the expanded view: [{ key, icon, title, component, visible }]
     property var extraPages: []
+    property string pageOrder: ""
 
     // ---- state ----------------------------------------------------------------
     property bool expanded: false
@@ -317,8 +319,10 @@ Item {
                 showNotificationModule: island.showNotificationModule
                 showClock: island.showClock
                 extraPages: island.extraPages
+                pageOrder: island.pageOrder
                 systemView: island.systemView
                 onSystemMetricClicked: key => island.systemMetricClicked(key)
+                onSettingsRequested: island.settingsRequested()
             }
         }
     }

@@ -64,8 +64,8 @@ Item {
         });
     }
     function finish(): void {
-        if (nameInput.text.trim().length === 0) { error = i18n("Give the calendar a short name (e.g. Work, Personal)."); return; }
-        if (links.isConnected(url)) { error = i18n("This calendar is already connected."); return; }
+        if (nameInput.text.trim().length === 0) { error = Lang.i18n("Give the calendar a short name (e.g. Work, Personal)."); return; }
+        if (links.isConnected(url)) { error = Lang.i18n("This calendar is already connected."); return; }
         added(links.makeSource(type, url, nameInput.text, color));
         reset();
     }
@@ -155,7 +155,7 @@ Item {
             }
             Text {
                 Layout.fillWidth: true
-                text: connect.step === "pick" ? i18n("Connect a Calendar") : links.typeNames[connect.type]
+                text: connect.step === "pick" ? Lang.i18n("Connect a Calendar") : links.typeNames[connect.type]
                 color: connect.theme.text
                 font.pointSize: connect.theme.fontSmall
                 font.weight: Font.DemiBold
@@ -248,13 +248,13 @@ Item {
             spacing: 8
             Repeater {
                 model: [
-                    { key: "account", icon: "user-identity-symbolic", title: connect.modeUser.length > 0 ? i18n("Account connected") : i18n("Connect the account"),
+                    { key: "account", icon: "user-identity-symbolic", title: connect.modeUser.length > 0 ? Lang.i18n("Account connected") : Lang.i18n("Connect the account"),
                       text: connect.modeUser.length > 0 ? connect.modeUser
-                          : connect.type === "google" ? i18n("Every calendar is shown and events can be added here. You sign in with Google in the browser; your password never reaches the island.")
-                          : i18n("Every calendar is shown and events can be added here. Uses a revocable app-specific password, not your real one.") },
-                    { key: "link", icon: "insert-link-symbolic", title: i18n("View only"),
-                      text: connect.type === "google" ? i18n("No account is connected. You paste the secret link of the one calendar you choose.")
-                                                      : i18n("No account details are entered. You share the one calendar you choose on your phone as a link.") }
+                          : connect.type === "google" ? Lang.i18n("Every calendar is shown and events can be added here. You sign in with Google in the browser; your password never reaches the island.")
+                          : Lang.i18n("Every calendar is shown and events can be added here. Uses a revocable app-specific password, not your real one.") },
+                    { key: "link", icon: "insert-link-symbolic", title: Lang.i18n("View only"),
+                      text: connect.type === "google" ? Lang.i18n("No account is connected. You paste the secret link of the one calendar you choose.")
+                                                      : Lang.i18n("No account details are entered. You share the one calendar you choose on your phone as a link.") }
                 ]
                 delegate: Rectangle {
                     id: modeTile
@@ -348,7 +348,7 @@ Item {
             spacing: 6
             Text {
                 Layout.fillWidth: true
-                text: i18np("Calendar found: it has %1 event.", "Calendar found: it has %1 events.", connect.count)
+                text: Lang.i18np("Calendar found: it has %1 event.", "Calendar found: it has %1 events.", connect.count)
                 color: connect.theme.subText
                 font.pointSize: connect.theme.fontSmall
             }
@@ -389,7 +389,7 @@ Item {
                 id: linkField
                 visible: connect.step === "link"
                 Layout.fillWidth: true
-                placeholder: "Paste your calendar link here"
+                placeholder: Lang.i18n("Paste your calendar link here")
                 enabled: !connect.busy
                 onAccepted: connect.tryConnect()
             }
@@ -405,20 +405,20 @@ Item {
                 id: nameField
                 visible: connect.step === "name"
                 Layout.fillWidth: true
-                placeholder: i18n("Name of the calendar (e.g. Work, Personal)")
+                placeholder: Lang.i18n("Name of the calendar (e.g. Work, Personal)")
                 onAccepted: connect.finish()
             }
             PillButton {
                 visible: connect.step === "link"
                 primary: true
-                text: connect.busy ? i18n("Checking…") : i18n("Connect")
+                text: connect.busy ? Lang.i18n("Checking…") : Lang.i18n("Connect")
                 enabled: !connect.busy
                 onClicked: connect.tryConnect()
             }
             PillButton {
                 visible: connect.step === "name"
                 primary: true
-                text: i18n("Add")
+                text: Lang.i18n("Add")
                 onClicked: connect.finish()
             }
         }

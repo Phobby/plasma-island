@@ -20,7 +20,7 @@ Item {
             icon: icon,
             color: on ? theme.blue : theme.subText,
             title: name,
-            trailing: { type: "text", text: on ? i18nc("@info key lock state", "On") : i18nc("@info key lock state", "Off"), color: on ? theme.blue : theme.subText },
+            trailing: { type: "text", text: on ? Lang.i18nc("@info key lock state", "On") : Lang.i18nc("@info key lock state", "Off"), color: on ? theme.blue : theme.subText },
             duration: 1500
         });
     }
@@ -28,8 +28,8 @@ Item {
     Connections {
         target: provider.keyboard
         enabled: provider.enabled
-        function onCapsLockChanged() { provider.lockEvent(i18n("Caps Lock"), provider.keyboard.capsLock, "input-caps-on"); }
-        function onNumLockChanged() { provider.lockEvent(i18n("Num Lock"), provider.keyboard.numLock, "input-num-on"); }
+        function onCapsLockChanged() { provider.lockEvent(Lang.i18n("Caps Lock"), provider.keyboard.capsLock, "input-caps-on"); }
+        function onNumLockChanged() { provider.lockEvent(Lang.i18n("Num Lock"), provider.keyboard.numLock, "input-num-on"); }
         function onLayoutShortNameChanged() {
             if (!provider.keyboard.layoutShortName) return;
             provider.manager.flash({
@@ -37,7 +37,7 @@ Item {
                 icon: "input-keyboard-symbolic",
                 color: provider.theme.blue,
                 title: provider.keyboard.layoutName,
-                subtitle: i18n("Keyboard layout"),
+                subtitle: Lang.i18n("Keyboard layout"),
                 trailing: { type: "text", text: provider.keyboard.layoutShortName.toUpperCase(), color: provider.theme.text },
                 duration: 1800
             });

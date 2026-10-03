@@ -25,7 +25,7 @@ Item {
     readonly property real remaining: running ? Math.max(0, (endsAt - now) / 1000) : cfg.pomodoroWork * 60
 
     function phaseName(p: string): string {
-        return p === "work" ? i18n("Focus") : p === "long" ? i18n("Long break") : i18n("Break");
+        return p === "work" ? Lang.i18n("Focus") : p === "long" ? Lang.i18n("Long break") : Lang.i18n("Break");
     }
     function enter(p: string): void {
         const minutes = p === "work" ? cfg.pomodoroWork : p === "long" ? cfg.pomodoroLongBreak : cfg.pomodoroShortBreak;
@@ -60,8 +60,8 @@ Item {
                 shake: true,
                 icon: next === "work" ? "view-task" : "kteatime",
                 color: next === "work" ? theme.red : theme.live,
-                title: next === "work" ? i18n("Time to focus") : i18n("Time for a break"),
-                subtitle: i18n("Round %1 of %2", Math.min(rounds, next === "work" ? round + 1 : round), rounds),
+                title: next === "work" ? Lang.i18n("Time to focus") : Lang.i18n("Time for a break"),
+                subtitle: Lang.i18n("Round %1 of %2", Math.min(rounds, next === "work" ? round + 1 : round), rounds),
                 trailing: { type: "text", text: TimeFormat.clock(remaining), color: theme.text }
             });
             if (sound) sound.play(cfg.timerSoundEnabled ? cfg.timerSound : "");
@@ -87,11 +87,11 @@ Item {
         icon: provider.phase === "work" ? "view-task" : "kteatime"
         color: provider.phase === "work" ? provider.theme.red : provider.theme.live
         title: provider.phaseName(provider.phase)
-        subtitle: i18n("Round %1 of %2", Math.min(provider.rounds, provider.round + (provider.phase === "work" ? 1 : 0)), provider.rounds)
+        subtitle: Lang.i18n("Round %1 of %2", Math.min(provider.rounds, provider.round + (provider.phase === "work" ? 1 : 0)), provider.rounds)
         trailingText: TimeFormat.clock(provider.remaining)
         actions: [
-            { icon: "media-skip-forward-symbolic", text: i18n("Skip"), trigger: () => provider.skip() },
-            { icon: "media-playback-stop-symbolic", text: i18n("Stop"), trigger: () => provider.stop() }
+            { icon: "media-skip-forward-symbolic", text: Lang.i18n("Skip"), trigger: () => provider.skip() },
+            { icon: "media-playback-stop-symbolic", text: Lang.i18n("Stop"), trigger: () => provider.stop() }
         ]
         Component.onCompleted: provider.manager.register(this)
     }

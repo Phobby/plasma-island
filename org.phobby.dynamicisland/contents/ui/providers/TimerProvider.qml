@@ -53,7 +53,7 @@ Item {
             shake: true,
             icon: "chronometer",
             color: theme.orange,
-            title: i18n("Timer done"),
+            title: Lang.i18n("Timer done"),
             trailing: { type: "text", text: TimeFormat.clock(total), color: theme.orange },
             duration: 8000
         });
@@ -77,14 +77,14 @@ Item {
         active: provider.enabled && (provider.running || provider.paused)
         icon: "chronometer"
         color: provider.theme.orange
-        title: provider.paused ? i18n("Timer paused") : i18n("Timer")
+        title: provider.paused ? Lang.i18n("Timer paused") : Lang.i18n("Timer")
         trailingText: TimeFormat.clock(provider.remaining)
         progress: -1
         actions: [
             { icon: provider.paused ? "media-playback-start-symbolic" : "media-playback-pause-symbolic",
-              text: provider.paused ? i18n("Resume") : i18n("Pause"),
+              text: provider.paused ? Lang.i18n("Resume") : Lang.i18n("Pause"),
               trigger: () => provider.paused ? provider.resume() : provider.pause() },
-            { icon: "dialog-cancel-symbolic", text: i18n("Cancel"), trigger: () => provider.cancel() }
+            { icon: "dialog-cancel-symbolic", text: Lang.i18n("Cancel"), trigger: () => provider.cancel() }
         ]
         Component.onCompleted: provider.manager.register(this)
     }

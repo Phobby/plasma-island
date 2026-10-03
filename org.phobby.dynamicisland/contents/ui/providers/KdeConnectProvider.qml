@@ -43,7 +43,7 @@ Item {
         enabled: provider.enabled
         ignoreUnknownSignals: true
         function onCallEvent(event, number, contactName, path) {
-            const who = contactName || number || i18n("Unknown caller");
+            const who = contactName || number || Lang.i18n("Unknown caller");
             provider.devicePath = path;
             if (event === "ringing") {
                 provider.caller = who;
@@ -57,8 +57,8 @@ Item {
                     pulse: true,
                     color: provider.theme.live,
                     title: who,
-                    subtitle: number && contactName ? number : i18n("Incoming call"),
-                    trailing: { type: "button", text: i18n("Mute") },
+                    subtitle: number && contactName ? number : Lang.i18n("Incoming call"),
+                    trailing: { type: "button", text: Lang.i18n("Mute") },
                     activate: () => provider.muteRingtone(),
                     width: provider.theme.notificationWidth,
                     duration: 10000
@@ -79,7 +79,7 @@ Item {
                     icon: "call-incoming-symbolic",
                     color: provider.theme.red,
                     title: who,
-                    subtitle: i18n("Missed call"),
+                    subtitle: Lang.i18n("Missed call"),
                     duration: 5000
                 });
             }
@@ -124,11 +124,11 @@ Item {
         pulse: provider.callState === "ringing"
         color: provider.theme.live
         title: provider.caller
-        subtitle: provider.callState === "ringing" ? i18n("Incoming call") : i18n("On a call")
+        subtitle: provider.callState === "ringing" ? Lang.i18n("Incoming call") : Lang.i18n("On a call")
         trailingText: provider.callState === "talking" ? provider.format(Math.round((provider.now - provider.callStartedAt) / 1000)) : ""
         compactWidth: provider.theme.eventWidth
         actions: provider.callState === "ringing" ? [
-            { icon: "audio-volume-muted-symbolic", text: i18n("Mute ringtone"), trigger: () => provider.muteRingtone() }
+            { icon: "audio-volume-muted-symbolic", text: Lang.i18n("Mute ringtone"), trigger: () => provider.muteRingtone() }
         ] : []
         Component.onCompleted: provider.manager.register(this)
     }
@@ -148,7 +148,7 @@ Item {
                         icon: p.icon,
                         color: provider.theme.red,
                         title: p.name,
-                        subtitle: i18n("Phone battery low"),
+                        subtitle: Lang.i18n("Phone battery low"),
                         trailing: { type: "ring", value: p.charge / 100, color: provider.theme.red, text: String(p.charge) },
                         duration: 5000
                     });

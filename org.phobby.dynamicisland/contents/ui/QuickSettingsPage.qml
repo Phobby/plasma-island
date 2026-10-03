@@ -106,7 +106,7 @@ Item {
             Toggle {
                 visible: page.dnd !== null
                 icon: "weather-clear-night-symbolic"
-                label: i18nc("@action:button short for Do Not Disturb", "Focus")
+                label: Lang.i18nc("@action:button short for Do Not Disturb", "Focus")
                 checked: page.dnd ? page.dnd.active : false
                 tint: page.theme.purple
                 onClicked: page.dnd.setActive(!page.dnd.active)
@@ -114,7 +114,7 @@ Item {
             Toggle {
                 visible: page.display !== null
                 icon: "redshift-status-on"
-                label: i18n("Night Light")
+                label: Lang.i18n("Night Light")
                 checked: page.display ? !page.display.nightLightInhibited : false
                 tint: page.theme.orange
                 onClicked: page.display.toggleNightLight()
@@ -134,7 +134,7 @@ Item {
             Toggle {
                 visible: page.bluetooth !== null && page.bluetooth.available
                 icon: page.bluetooth && page.bluetooth.enabled ? "network-bluetooth-activated" : "network-bluetooth-inactive"
-                label: i18n("Bluetooth")
+                label: Lang.i18n("Bluetooth")
                 badge: page.bluetooth && page.bluetooth.connectedDevices.length > 0 ? String(page.bluetooth.connectedDevices.length) : ""
                 checked: page.bluetooth ? page.bluetooth.enabled : false
                 onClicked: page.bluetooth.setEnabled(!page.bluetooth.enabled)
@@ -142,7 +142,7 @@ Item {
             Toggle {
                 visible: page.core !== null && page.core.updatesAvailable
                 icon: "system-software-update"
-                label: i18nc("@action:button short", "Updates")
+                label: Lang.i18nc("@action:button short", "Updates")
                 badge: page.core && page.core.updateCount > 0 ? String(page.core.updateCount) : ""
                 checked: page.core ? page.core.securityUpdateCount > 0 : false
                 tint: page.theme.red
@@ -151,7 +151,7 @@ Item {
             Toggle {
                 visible: page.network !== null && page.network.wirelessAvailable
                 icon: page.network && page.network.wirelessEnabled ? "network-wireless" : "network-wireless-off"
-                label: i18n("Wi-Fi")
+                label: Lang.i18n("Wi-Fi")
                 checked: page.network ? page.network.wirelessEnabled : false
                 onClicked: page.network.setWireless(!page.network.wirelessEnabled)
             }

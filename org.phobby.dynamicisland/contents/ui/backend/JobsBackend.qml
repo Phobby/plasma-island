@@ -5,6 +5,7 @@
 */
 import QtQuick
 import org.kde.notificationmanager as NotificationManager
+import ".."
 
 Item {
     id: jobsBackend
@@ -30,9 +31,9 @@ Item {
     }
     function formatEta(seconds: real): string {
         if (!(seconds > 0) || !isFinite(seconds)) return "";
-        if (seconds < 60) return i18nc("@info remaining time", "%1 s left", Math.round(seconds));
-        if (seconds < 3600) return i18nc("@info remaining time", "%1 min left", Math.round(seconds / 60));
-        return i18nc("@info remaining time", "%1 h left", (seconds / 3600).toFixed(1));
+        if (seconds < 60) return Lang.i18nc("@info remaining time", "%1 s left", Math.round(seconds));
+        if (seconds < 3600) return Lang.i18nc("@info remaining time", "%1 min left", Math.round(seconds / 60));
+        return Lang.i18nc("@info remaining time", "%1 h left", (seconds / 3600).toFixed(1));
     }
 
     NotificationManager.Notifications {

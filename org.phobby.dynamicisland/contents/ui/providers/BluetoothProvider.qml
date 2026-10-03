@@ -37,7 +37,7 @@ Item {
                     icon: bluetooth.iconFor(d),
                     color: theme.blue,
                     title: d.name,
-                    subtitle: i18n("Connected"),
+                    subtitle: Lang.i18n("Connected"),
                     trailing: batteryTrailing(bluetooth.batteryOf(d))
                 });
             }
@@ -49,7 +49,7 @@ Item {
                     icon: "network-bluetooth-symbolic",
                     color: theme.subText,
                     title: known[addr],
-                    subtitle: i18n("Disconnected")
+                    subtitle: Lang.i18n("Disconnected")
                 });
             }
         }
@@ -71,7 +71,7 @@ Item {
                         icon: provider.bluetooth.iconFor(modelData),
                         color: provider.theme.red,
                         title: modelData.name,
-                        subtitle: i18n("Battery low"),
+                        subtitle: Lang.i18n("Battery low"),
                         trailing: provider.batteryTrailing(pct),
                         duration: 5000
                     });

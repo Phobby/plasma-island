@@ -22,8 +22,8 @@ Item {
                 icon: provider.network.signalIcon(strength),
                 color: provider.theme.blue,
                 title: ssid,
-                subtitle: i18n("Wi-Fi connected"),
-                trailing: { type: "text", text: strength + "%", color: provider.theme.subText }
+                subtitle: Lang.i18n("Wi-Fi connected"),
+                trailing: { type: "text", text: Lang.percent(strength), color: provider.theme.subText }
             });
         }
         function onWifiDisconnected(ssid) {
@@ -32,7 +32,7 @@ Item {
                 icon: "network-wireless-disconnected",
                 color: provider.theme.subText,
                 title: ssid,
-                subtitle: i18n("Wi-Fi disconnected")
+                subtitle: Lang.i18n("Wi-Fi disconnected")
             });
         }
         function onVpnChanged(name, connected) {
@@ -41,7 +41,7 @@ Item {
                 icon: "network-vpn-symbolic",
                 color: connected ? provider.theme.live : provider.theme.subText,
                 title: name,
-                subtitle: connected ? i18n("VPN connected") : i18n("VPN disconnected")
+                subtitle: connected ? Lang.i18n("VPN connected") : Lang.i18n("VPN disconnected")
             });
         }
     }
@@ -53,8 +53,8 @@ Item {
         active: provider.enabled && provider.network.hotspotActive
         icon: "network-wireless-hotspot-symbolic"
         color: provider.theme.live
-        title: i18n("Hotspot on")
-        subtitle: i18n("Sharing this computer's connection")
+        title: Lang.i18n("Hotspot on")
+        subtitle: Lang.i18n("Sharing this computer's connection")
         Component.onCompleted: provider.manager.register(this)
     }
 }

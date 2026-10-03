@@ -13,6 +13,9 @@ import org.kde.kcmutils as KCM
 KCM.SimpleKCM {
     id: page
 
+    property string cfg_language
+    Binding { target: Lang; property: "setting"; value: cfg_language; restoreMode: Binding.RestoreNone }
+
     property alias cfg_showNotes: enableCheck.checked
     property alias cfg_notesRefreshMinutes: refreshSpin.value
     property string cfg_notesSources: "[]"
@@ -26,7 +29,7 @@ KCM.SimpleKCM {
         } catch (e) { return []; }
     }
     function label(s: var): string {
-        return (s.name || typeNames[s.type] || s.type) + (s.user ? " · " + s.user : s.server ? " · " + s.server : s.type === "betternotes" ? " · " + i18n("this computer only") : "");
+        return (s.name || typeNames[s.type] || s.type) + (s.user ? " · " + s.user : s.server ? " · " + s.server : s.type === "betternotes" ? " · " + Lang.i18n("this computer only") : "");
     }
 
     ColumnLayout {
@@ -36,12 +39,12 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             QQC2.CheckBox {
                 id: enableCheck
-                Kirigami.FormData.label: i18n("Notes:")
-                text: i18n("Show the Notes page in the island")
+                Kirigami.FormData.label: Lang.i18n("Notes:")
+                text: Lang.i18n("Show the Notes page in the island")
             }
             QQC2.ComboBox {
                 id: defaultCombo
-                Kirigami.FormData.label: i18n("Quick notes go to:")
+                Kirigami.FormData.label: Lang.i18n("Quick notes go to:")
                 enabled: enableCheck.checked && page.sources.length > 0
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 16
                 model: page.sources.map(s => page.label(s))
@@ -50,25 +53,25 @@ KCM.SimpleKCM {
             }
             QQC2.SpinBox {
                 id: refreshSpin
-                Kirigami.FormData.label: i18n("Fetch notes:")
+                Kirigami.FormData.label: Lang.i18n("Fetch notes:")
                 enabled: enableCheck.checked
                 from: 1
                 to: 60
-                textFromValue: value => i18np("every minute", "every %1 minutes", value)
+                textFromValue: value => Lang.i18np("every minute", "every %1 minutes", value)
                 valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 1
             }
         }
 
         Kirigami.Heading {
             level: 4
-            text: i18n("Connected notes apps")
+            text: Lang.i18n("Connected notes apps")
         }
         QQC2.Label {
             Layout.fillWidth: true
             visible: page.sources.length === 0
             wrapMode: Text.Wrap
             opacity: 0.7
-            text: i18n("No notes app is connected yet. Open the Notes page in the island to connect Joplin, Simplenote, Memos or BetterNotes.")
+            text: Lang.i18n("No notes app is connected yet. Open the Notes page in the island to connect Joplin, Simplenote, Memos or BetterNotes.")
         }
         Repeater {
             model: page.sources
@@ -83,7 +86,7 @@ KCM.SimpleKCM {
                 }
                 QQC2.Button {
                     icon.name: "list-remove"
-                    text: i18n("Disconnect")
+                    text: Lang.i18n("Disconnect")
                     onClicked: {
                         page.cfg_notesSources = JSON.stringify(page.sources.filter(s => s.id !== row.modelData.id));
                         if (page.cfg_notesDefault === row.modelData.id) page.cfg_notesDefault = "";
@@ -95,7 +98,7 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             opacity: 0.7
-            text: i18n("Changes take effect when you press \"Apply\". Disconnecting an app also deletes its sign-in from KDE Wallet.")
+            text: Lang.i18n("Changes take effect when you press \"Apply\". Disconnecting an app also deletes its sign-in from KDE Wallet.")
         }
     }
 }

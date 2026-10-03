@@ -27,7 +27,7 @@ Item {
     }
     function submit(): void {
         if (busy) return;
-        if (userField.text.trim().length === 0 || passwordField.text.trim().length === 0) { error = i18n("Enter your Apple ID and the app-specific password."); return; }
+        if (userField.text.trim().length === 0 || passwordField.text.trim().length === 0) { error = Lang.i18n("Enter your Apple ID and the app-specific password."); return; }
         busy = true; error = "";
         client.connect(userField.text, passwordField.text, result => {
             busy = false;
@@ -46,7 +46,7 @@ Item {
             spacing: 6
             Text {
                 Layout.fillWidth: true
-                text: i18n("iCloud account")
+                text: Lang.i18n("iCloud account")
                 color: accountPage.theme.text
                 font.pointSize: accountPage.theme.fontSmall
                 font.weight: Font.DemiBold
@@ -76,12 +76,12 @@ Item {
                 font.pointSize: accountPage.theme.fontSmall * 0.9
                 text: accountPage.error.length > 0 ? accountPage.error
                     : accountPage.client.ready
-                        ? i18n("Connected: %1 · %2 calendars.", accountPage.client.account.user, accountPage.client.account.calendars.length) + " "
-                          + (accountPage.client.core && accountPage.client.core.secretsAvailable ? i18n("The password is kept in KDE Wallet.")
-                                                                                                  : i18n("The password is only kept for this session; it is asked for again after a restart."))
+                        ? Lang.i18n("Connected: %1 · %2 calendars.", accountPage.client.account.user, accountPage.client.account.calendars.length) + " "
+                          + (accountPage.client.core && accountPage.client.core.secretsAvailable ? Lang.i18n("The password is kept in KDE Wallet.")
+                                                                                                  : Lang.i18n("The password is only kept for this session; it is asked for again after a restart."))
                     : accountPage.client.connected
-                        ? i18n("The password of %1 was not found. Enter the app-specific password again.", accountPage.client.account.user)
-                    : i18n("With your account all your calendars are shown and you can add events. Create a password at <a href=\"%1\">account.apple.com</a> → Sign-In and Security → App-Specific Passwords and enter it here. Your normal Apple password does not work.", accountPage.passwordsUrl)
+                        ? Lang.i18n("The password of %1 was not found. Enter the app-specific password again.", accountPage.client.account.user)
+                    : Lang.i18n("With your account all your calendars are shown and you can add events. Create a password at <a href=\"%1\">account.apple.com</a> → Sign-In and Security → App-Specific Passwords and enter it here. Your normal Apple password does not work.", accountPage.passwordsUrl)
                 onLinkActivated: link => Qt.openUrlExternally(link)
                 MouseArea { anchors.fill: parent; acceptedButtons: Qt.NoButton; cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor }
             }
@@ -96,7 +96,7 @@ Item {
                 theme: accountPage.theme
                 Layout.fillWidth: true
                 Layout.preferredWidth: 3
-                placeholder: i18n("Apple ID (email)")
+                placeholder: Lang.i18n("Apple ID (email)")
                 enabled: !accountPage.busy
                 onEdited: accountPage.error = ""
                 onAccepted: passwordField.input.forceActiveFocus()
@@ -109,7 +109,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 3
                 secret: true
-                placeholder: i18n("App-specific password")
+                placeholder: Lang.i18n("App-specific password")
                 enabled: !accountPage.busy
                 onEdited: accountPage.error = ""
                 onAccepted: accountPage.submit()
@@ -119,7 +119,7 @@ Item {
                 visible: !accountPage.client.ready
                 theme: accountPage.theme
                 primary: true
-                text: accountPage.busy ? i18n("Connecting…") : i18n("Connect")
+                text: accountPage.busy ? Lang.i18n("Connecting…") : Lang.i18n("Connect")
                 enabled: !accountPage.busy
                 onClicked: accountPage.submit()
             }
@@ -127,7 +127,7 @@ Item {
             PillButton {
                 visible: accountPage.client.ready
                 theme: accountPage.theme
-                text: i18n("Remove account")
+                text: Lang.i18n("Remove account")
                 onClicked: { accountPage.client.disconnect(); accountPage.reset(); }
             }
         }

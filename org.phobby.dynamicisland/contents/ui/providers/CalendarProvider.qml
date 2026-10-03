@@ -105,22 +105,22 @@ Item {
     }
     readonly property var errorNames: {
         const names = [];
-        for (const s of calendar.sources) if (calendar.errors[s.url] !== undefined) names.push(s.name || i18n("Calendar"));
+        for (const s of calendar.sources) if (calendar.errors[s.url] !== undefined) names.push(s.name || Lang.i18n("Calendar"));
         return names;
     }
 
     function span(msLeft: real): string {
         const s = Math.max(0, Math.ceil(msLeft / 1000));
-        if (s < 60) return i18nc("@info seconds, short", "%1 s", s);
+        if (s < 60) return Lang.i18nc("@info seconds, short", "%1 s", s);
         const m = Math.ceil(s / 60);
-        if (m < 60) return i18nc("@info minutes, short", "%1 min", m);
-        return i18nc("@info hours and minutes, short", "%1 h %2 min", Math.floor(m / 60), m % 60);
+        if (m < 60) return Lang.i18nc("@info minutes, short", "%1 min", m);
+        return Lang.i18nc("@info hours and minutes, short", "%1 h %2 min", Math.floor(m / 60), m % 60);
     }
     function clock(t: real): string {
-        return Qt.formatTime(new Date(t), Qt.locale().timeFormat(Locale.ShortFormat));
+        return Qt.formatTime(new Date(t), Lang.locale.timeFormat(Locale.ShortFormat));
     }
     function timeRange(e: var): string {
-        if (e.allDay) return i18n("All day");
+        if (e.allDay) return Lang.i18n("All day");
         return e.end > e.start ? clock(e.start) + " – " + clock(e.end) : clock(e.start);
     }
     function open(e: var): void {
@@ -162,10 +162,10 @@ Item {
                 key: "calendar-reminder:" + e.key,
                 icon: "view-calendar",
                 color: e.color,
-                title: e.title || i18n("Event"),
-                subtitle: due >= 60 ? i18np("Starts in %1 hour", "Starts in %1 hours", Math.round(due / 60))
-                                    : i18np("Starts in %1 minute", "Starts in %1 minutes", due),
-                trailing: e.link ? { type: "button", text: i18nc("@action:button join a video meeting", "Join") } : { type: "text", text: clock(e.start), color: e.color },
+                title: e.title || Lang.i18n("Event"),
+                subtitle: due >= 60 ? Lang.i18np("Starts in %1 hour", "Starts in %1 hours", Math.round(due / 60))
+                                    : Lang.i18np("Starts in %1 minute", "Starts in %1 minutes", due),
+                trailing: e.link ? { type: "button", text: Lang.i18nc("@action:button join a video meeting", "Join") } : { type: "text", text: clock(e.start), color: e.color },
                 activate: e.link ? (() => provider.open(e)) : undefined,
                 duration: 4000
             });
@@ -183,10 +183,10 @@ Item {
             key: "calendar-start",
             icon: e.todo ? "view-task" : "view-calendar",
             color: e.color,
-            title: i18nc("@info calendar event has begun", "%1 started", e.title || i18n("Event")),
+            title: Lang.i18nc("@info calendar event has begun", "%1 started", e.title || Lang.i18n("Event")),
             subtitle: e.location && e.location !== e.link ? e.location : timeRange(e),
-            trailing: e.link ? { type: "button", text: i18nc("@action:button join a video meeting", "Join") }
-                    : ring ? { type: "button", text: i18nc("@action:button silence the alarm of a calendar event", "Stop") }
+            trailing: e.link ? { type: "button", text: Lang.i18nc("@action:button join a video meeting", "Join") }
+                    : ring ? { type: "button", text: Lang.i18nc("@action:button silence the alarm of a calendar event", "Stop") }
                            : { type: "text", text: clock(e.start), color: e.color },
             activate: () => { provider.stopSound(); provider.open(e); },
             duration: ring ? 6000 : 3000
@@ -207,7 +207,7 @@ Item {
         active: provider.usable && e !== null && provider.phase !== ""
         icon: e && e.todo ? "view-task" : "view-calendar"
         color: !e ? provider.theme.red : provider.phase === "ended" ? provider.theme.subText : e.color
-        title: e ? (e.title || i18n("Event")) : ""
+        title: e ? (e.title || Lang.i18n("Event")) : ""
         subtitle: {
             if (!e) return "";
             const where = e.location && e.location !== e.link ? " · " + e.location : "";
@@ -215,14 +215,14 @@ Item {
         }
         trailingText: !e ? ""
                     : provider.phase === "upcoming" ? provider.span(e.start - provider.now)
-                    : provider.phase === "ongoing" ? i18nc("@info time left in a running event", "%1 left", provider.span(e.end - provider.now))
-                    : i18nc("@info calendar event is over", "Ended")
+                    : provider.phase === "ongoing" ? Lang.i18nc("@info time left in a running event", "%1 left", provider.span(e.end - provider.now))
+                    : Lang.i18nc("@info calendar event is over", "Ended")
         progress: e && provider.phase === "ongoing" && e.end > e.start ? (provider.now - e.start) / (e.end - e.start) : -1
         actions: {
             const list = [];
-            if (e && e.link) list.push({ icon: "camera-video-symbolic", text: i18nc("@action:button join a video meeting", "Join"), trigger: () => provider.open(activity.e) });
-            if (provider.soundPlaying) list.push({ icon: "media-playback-stop-symbolic", text: i18nc("@action:button silence the alarm of a calendar event", "Stop the sound"), trigger: () => provider.stopSound() });
-            if (e) list.push({ icon: "window-close-symbolic", text: i18nc("@action:button remove a calendar event from the island", "Dismiss"), trigger: () => provider.dismiss(activity.e) });
+            if (e && e.link) list.push({ icon: "camera-video-symbolic", text: Lang.i18nc("@action:button join a video meeting", "Join"), trigger: () => provider.open(activity.e) });
+            if (provider.soundPlaying) list.push({ icon: "media-playback-stop-symbolic", text: Lang.i18nc("@action:button silence the alarm of a calendar event", "Stop the sound"), trigger: () => provider.stopSound() });
+            if (e) list.push({ icon: "window-close-symbolic", text: Lang.i18nc("@action:button remove a calendar event from the island", "Dismiss"), trigger: () => provider.dismiss(activity.e) });
             return list;
         }
         onClicked: { provider.stopSound(); provider.open(e); }

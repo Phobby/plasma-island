@@ -34,7 +34,7 @@ Item {
     function arrivalTime(d: date): string {
         const now = new Date();
         const today = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-        return today ? Qt.formatTime(d, "HH:mm") : Qt.locale().toString(d, "d MMM HH:mm");
+        return today ? Qt.formatTime(d, "HH:mm") : Lang.locale.toString(d, "d MMM HH:mm");
     }
 
     // Header: count + clear-all
@@ -46,7 +46,7 @@ Item {
         Text {
             Layout.fillWidth: true
             leftPadding: 6
-            text: i18np("%1 notification", "%1 notifications", notif.count)
+            text: Lang.i18np("%1 notification", "%1 notifications", notif.count)
             color: notif.theme.subText
             font.pointSize: notif.theme.fontSmall
         }
@@ -54,7 +54,7 @@ Item {
             id: clearButton
             iconName: "window-close-symbolic"
             iconSize: 12
-            toolTip: i18n("Clear all notifications")
+            toolTip: Lang.i18n("Clear all notifications")
             color: notif.theme.text
             hoverColor: notif.theme.hoverFill
             onClicked: notif.requestClear()
@@ -152,7 +152,7 @@ Item {
                         iconName: "mail-reply-sender-symbolic"
                         iconSize: 12
                         implicitWidth: 24; implicitHeight: 24
-                        toolTip: i18n("Reply")
+                        toolTip: Lang.i18n("Reply")
                         color: notif.theme.text
                         hoverColor: notif.theme.hoverFill
                         onClicked: notif.replyTarget = { id: row.model.notificationId, summary: row.model.summary || row.model.applicationName }
@@ -161,7 +161,7 @@ Item {
                         iconName: "window-close-symbolic"
                         iconSize: 12
                         implicitWidth: 24; implicitHeight: 24
-                        toolTip: i18n("Dismiss")
+                        toolTip: Lang.i18n("Dismiss")
                         color: notif.theme.text
                         hoverColor: notif.theme.hoverFill
                         onClicked: notif.backend.closeNotification(row.model.notificationId)
@@ -185,7 +185,7 @@ Item {
         }
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: i18n("No notifications")
+            text: Lang.i18n("No notifications")
             color: notif.theme.subText
             font.pointSize: notif.theme.fontNormal
         }
@@ -204,7 +204,7 @@ Item {
             spacing: 6
             Text {
                 Layout.fillWidth: true
-                text: i18n("Reply to %1", notif.replyTarget?.summary ?? "")
+                text: Lang.i18n("Reply to %1", notif.replyTarget?.summary ?? "")
                 color: notif.theme.subText
                 font.pointSize: notif.theme.fontSmall
                 elide: Text.ElideRight
@@ -277,7 +277,7 @@ Item {
             anchors.centerIn: parent
             spacing: 8
             Text {
-                text: i18n("Clear all notifications?")
+                text: Lang.i18n("Clear all notifications?")
                 color: notif.theme.text
                 font.pointSize: notif.theme.fontSmall
                 font.weight: Font.DemiBold
@@ -287,7 +287,7 @@ Item {
                 implicitHeight: 24
                 radius: 12
                 color: cancelMouse.pressed ? notif.theme.pressedFill : cancelMouse.containsMouse ? notif.theme.hoverFill : notif.theme.faint
-                Text { id: cancelLabel; anchors.centerIn: parent; text: i18n("Cancel"); color: notif.theme.text; font.pointSize: notif.theme.fontSmall }
+                Text { id: cancelLabel; anchors.centerIn: parent; text: Lang.i18n("Cancel"); color: notif.theme.text; font.pointSize: notif.theme.fontSmall }
                 MouseArea { id: cancelMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: notif.confirmingClear = false }
             }
             Rectangle {
@@ -295,7 +295,7 @@ Item {
                 implicitHeight: 24
                 radius: 12
                 color: deleteMouse.pressed ? Qt.darker(notif.theme.red, 1.25) : deleteMouse.containsMouse ? Qt.lighter(notif.theme.red, 1.1) : notif.theme.red
-                Text { id: deleteLabel; anchors.centerIn: parent; text: i18n("Clear"); color: notif.theme.onColor(notif.theme.red); font.pointSize: notif.theme.fontSmall; font.weight: Font.DemiBold }
+                Text { id: deleteLabel; anchors.centerIn: parent; text: Lang.i18n("Clear"); color: notif.theme.onColor(notif.theme.red); font.pointSize: notif.theme.fontSmall; font.weight: Font.DemiBold }
                 MouseArea {
                     id: deleteMouse
                     anchors.fill: parent

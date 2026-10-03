@@ -183,7 +183,7 @@ Item {
         return '<a href="https://www.google.com/maps/search/?api=1&amp;query=' + encodeURIComponent(place) + '">' + escapeHtml(place) + "</a>";
     }
 
-    readonly property int firstWeekDay: Qt.locale().firstDayOfWeek       // 0 = Sunday
+    readonly property int firstWeekDay: Lang.locale.firstDayOfWeek       // 0 = Sunday
     readonly property int leadingDays: (new Date(monthStart).getDay() - firstWeekDay + 7) % 7
     readonly property int weekCount: {
         const d = new Date(monthStart);
@@ -235,11 +235,11 @@ Item {
         return out;
     }
     function dateRange(e: var): string {
-        const locale = Qt.locale();
+        const locale = Lang.locale;
         const first = new Date(e.start), last = new Date(e.allDay ? Math.max(e.start, e.end - 1) : e.end);
         const sameDay = dayStart(first) === dayStart(last);
         const day = d => d.toLocaleDateString(locale, "d MMMM");
-        if (e.allDay) return sameDay ? i18n("All day") : day(first) + " – " + day(last);
+        if (e.allDay) return sameDay ? Lang.i18n("All day") : day(first) + " – " + day(last);
         if (sameDay) return page.provider.timeRange(e);
         return day(first) + " " + page.provider.clock(e.start) + " – " + day(last) + " " + page.provider.clock(e.end);
     }
@@ -280,7 +280,7 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
-                    text: new Date(page.monthStart).toLocaleDateString(Qt.locale(), "MMMM yyyy")
+                    text: new Date(page.monthStart).toLocaleDateString(Lang.locale, "MMMM yyyy")
                     color: page.theme.text
                     font.pointSize: page.theme.fontSmall
                     font.weight: Font.DemiBold
@@ -307,7 +307,7 @@ Item {
                         height: 12
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-                        text: Qt.locale().dayName((page.firstWeekDay + index) % 7, Locale.ShortFormat)
+                        text: Lang.locale.dayName((page.firstWeekDay + index) % 7, Locale.ShortFormat)
                         color: page.theme.subText
                         font.pointSize: page.theme.fontSmall * 0.75
                     }
@@ -403,8 +403,8 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     text: page.selectedDay === page.todayStart
-                        ? i18nc("@title today's date", "Today · %1", new Date(page.selectedDay).toLocaleDateString(Qt.locale(), "d MMMM"))
-                        : new Date(page.selectedDay).toLocaleDateString(Qt.locale(), "d MMMM, dddd")
+                        ? Lang.i18nc("@title today's date", "Today · %1", new Date(page.selectedDay).toLocaleDateString(Lang.locale, "d MMMM"))
+                        : new Date(page.selectedDay).toLocaleDateString(Lang.locale, "d MMMM, dddd")
                     color: page.theme.text
                     font.pointSize: page.theme.fontSmall
                     font.weight: Font.DemiBold
@@ -437,7 +437,7 @@ Item {
                     primary: true
                     tint: page.theme.danger
                     enabled: !page.deleting
-                    text: page.deleting ? i18n("Deleting…") : page.detail && page.detail.recurring ? i18n("Delete whole series") : i18n("Delete")
+                    text: page.deleting ? Lang.i18n("Deleting…") : page.detail && page.detail.recurring ? Lang.i18n("Delete whole series") : Lang.i18n("Delete")
                     onClicked: page.deleteDetail()
                 }
                 // Calendars: connect an account or a link
@@ -454,7 +454,7 @@ Item {
             Text {
                 Layout.fillWidth: true
                 visible: page.provider !== null && page.provider.errorNames.length > 0
-                text: visible ? i18n("Could not update: %1", page.provider.errorNames.join(", ")) : ""
+                text: visible ? Lang.i18n("Could not update: %1", page.provider.errorNames.join(", ")) : ""
                 color: page.theme.readable(page.theme.warning, page.theme.surface)
                 font.pointSize: page.theme.fontSmall * 0.9
                 elide: Text.ElideRight
@@ -504,7 +504,7 @@ Item {
                             spacing: 0
                             Text {
                                 Layout.fillWidth: true
-                                text: (row.modelData.todo ? "☐ " : "") + (row.modelData.title || i18n("Event"))
+                                text: (row.modelData.todo ? "☐ " : "") + (row.modelData.title || Lang.i18n("Event"))
                                 color: page.theme.text
                                 font.pointSize: page.theme.fontSmall
                                 font.weight: Font.DemiBold
@@ -512,7 +512,7 @@ Item {
                             }
                             Text {
                                 Layout.fillWidth: true
-                                text: [row.modelData.allDay ? i18n("All day") : page.provider.timeRange(row.modelData), row.modelData.calendar].filter(s => s.length > 0).join(" · ")
+                                text: [row.modelData.allDay ? Lang.i18n("All day") : page.provider.timeRange(row.modelData), row.modelData.calendar].filter(s => s.length > 0).join(" · ")
                                 color: row.running ? page.theme.text : page.theme.subText
                                 font.pointSize: page.theme.fontSmall * 0.85
                                 font.features: { "tnum": 1 }
@@ -543,7 +543,7 @@ Item {
                     visible: list.count === 0
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.WordWrap
-                    text: !page.provider.calendar.loaded ? i18n("Loading calendar…") : i18n("No events on this day")
+                    text: !page.provider.calendar.loaded ? Lang.i18n("Loading calendar…") : Lang.i18n("No events on this day")
                     color: page.theme.subText
                     font.pointSize: page.theme.fontSmall
                 }
@@ -580,7 +580,7 @@ Item {
                             spacing: 0
                             Text {
                                 Layout.fillWidth: true
-                                text: details.e ? (details.e.todo ? "☐ " : "") + (details.e.title || i18n("Event")) : ""
+                                text: details.e ? (details.e.todo ? "☐ " : "") + (details.e.title || Lang.i18n("Event")) : ""
                                 color: page.theme.text
                                 font.pointSize: page.theme.fontNormal
                                 font.weight: Font.DemiBold
@@ -652,7 +652,7 @@ Item {
                         Text {
                             id: linkLabel
                             anchors.centerIn: parent
-                            text: i18nc("@action:button opens the link of a calendar event", "Open link")
+                            text: Lang.i18nc("@action:button opens the link of a calendar event", "Open link")
                             color: page.theme.text
                             font.pointSize: page.theme.fontSmall
                             font.weight: Font.DemiBold
@@ -678,7 +678,7 @@ Item {
         }
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: i18n("No calendar connected")
+            text: Lang.i18n("No calendar connected")
             color: page.theme.subText
             font.pointSize: page.theme.fontNormal
         }
@@ -697,7 +697,7 @@ Item {
             Text {
                 id: connectLabel
                 anchors.centerIn: parent
-                text: i18nc("@action:button starts connecting a calendar link", "Connect a calendar…")
+                text: Lang.i18nc("@action:button starts connecting a calendar link", "Connect a calendar…")
                 color: page.theme.text
                 font.pointSize: page.theme.fontSmall
                 font.weight: Font.DemiBold

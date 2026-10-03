@@ -11,6 +11,7 @@
     (native core) and, without it, only in memory until the shell restarts.
 */
 import QtQuick
+import ".."
 
 QtObject {
     id: client
@@ -63,9 +64,9 @@ QtObject {
         request("PROPFIND", url, user, pass, { "Depth": depth, "Content-Type": "application/xml; charset=utf-8" }, body, done);
     }
     function problem(status: int): string {
-        return status === 401 || status === 403 ? i18n("The Apple ID or app-specific password was not accepted.")
-             : status === 0 ? i18n("No connection.")
-             : i18n("The server answered %1.", status);
+        return status === 401 || status === 403 ? Lang.i18n("The Apple ID or app-specific password was not accepted.")
+             : status === 0 ? Lang.i18n("No connection.")
+             : Lang.i18n("The server answered %1.", status);
     }
 
     // Tolerant of any namespace prefix: <href>, <d:href>, <D:href>…
@@ -107,10 +108,10 @@ QtObject {
                         const href = unescapeXml(element(r, "href"));
                         if (href.length === 0) continue;
                         const color = /#[0-9a-f]{6}/i.exec(element(r, "calendar-color"));
-                        calendars.push({ url: resolve(homeUrl, href).replace(/\/*$/, "/"), name: unescapeXml(element(r, "displayname")) || i18n("Calendar"),
+                        calendars.push({ url: resolve(homeUrl, href).replace(/\/*$/, "/"), name: unescapeXml(element(r, "displayname")) || Lang.i18n("Calendar"),
                                          color: color ? color[0].toLowerCase() : "#0a84ff" });
                     }
-                    if (calendars.length === 0) done({ ok: false, calendars: [], error: i18n("No calendar that takes events was found in this account.") });
+                    if (calendars.length === 0) done({ ok: false, calendars: [], error: Lang.i18n("No calendar that takes events was found in this account.") });
                     else done({ ok: true, calendars: calendars, error: "" });
                 });
             });
@@ -211,7 +212,7 @@ QtObject {
         const calendars = account.calendars.slice();
         const next = () => {
             const c = calendars.shift();
-            if (!c) { done({ ok: false, error: i18n("The event was not found in the calendars of the account; delete it on your phone.") }); return; }
+            if (!c) { done({ ok: false, error: Lang.i18n("The event was not found in the calendars of the account; delete it on your phone.") }); return; }
             request("DELETE", c.url + encodeURIComponent(uid) + ".ics", account.user, password, {}, "", status => {
                 if (status === 200 || status === 204) done({ ok: true, error: "" });
                 else if (status === 404 || status === 412) next();

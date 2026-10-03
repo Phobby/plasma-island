@@ -83,7 +83,7 @@ Item {
                 icon: status === "success" ? "dialog-ok-apply-symbolic" : status === "error" ? "dialog-error-symbolic" : "dialog-cancel-symbolic",
                 color: status === "success" ? theme.live : status === "error" ? theme.red : theme.subText,
                 title: title,
-                subtitle: status === "success" ? i18n("Done") : status === "error" ? i18n("Failed") : i18n("Cancelled"),
+                subtitle: status === "success" ? Lang.i18n("Done") : status === "error" ? Lang.i18n("Failed") : Lang.i18n("Cancelled"),
                 activate: () => { if (provider.core) provider.core.activityClicked(id); }
             });
         }

@@ -26,11 +26,11 @@ Item {
         active: provider.enabled && provider.micApps.length > 0
         icon: "audio-input-microphone-symbolic"
         color: provider.theme.orange
-        title: provider.backend.micMuted ? i18n("Microphone (muted)") : i18n("Microphone in use")
+        title: provider.backend.micMuted ? Lang.i18n("Microphone (muted)") : Lang.i18n("Microphone in use")
         subtitle: provider.micApps.join(", ")
         actions: [
             { icon: provider.backend.micMuted ? "microphone-sensitivity-muted-symbolic" : "audio-input-microphone-symbolic",
-              text: provider.backend.micMuted ? i18n("Unmute microphone") : i18n("Mute microphone"),
+              text: provider.backend.micMuted ? Lang.i18n("Unmute microphone") : Lang.i18n("Mute microphone"),
               trigger: () => provider.backend.toggleMicMute() }
         ]
         Component.onCompleted: provider.manager.register(this)
@@ -43,7 +43,7 @@ Item {
         active: provider.enabled && provider.cameraApps.length > 0
         icon: "camera-web-symbolic"
         color: provider.theme.live
-        title: i18n("Camera in use")
+        title: Lang.i18n("Camera in use")
         subtitle: provider.cameraApps.join(", ")
         Component.onCompleted: provider.manager.register(this)
     }

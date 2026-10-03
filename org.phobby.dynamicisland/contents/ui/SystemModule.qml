@@ -72,48 +72,48 @@ Item {
     readonly property var metrics: {
         const b = backend, m = {};
         m.cpu = {
-            key: "cpu", caption: i18nc("@label short for processor", "CPU"),
-            value: b.cpuUsage / 100, ringText: Math.round(b.cpuUsage) + "%", color: levelColor(b.cpuUsage / 100),
-            detail: b.cpuTemp > 0 ? i18n("%1% · %2 °C", Math.round(b.cpuUsage), Math.round(b.cpuTemp)) : i18n("%1% in use", Math.round(b.cpuUsage)),
+            key: "cpu", caption: Lang.i18nc("@label short for processor", "CPU"),
+            value: b.cpuUsage / 100, ringText: Lang.percent(Math.round(b.cpuUsage)), color: levelColor(b.cpuUsage / 100),
+            detail: b.cpuTemp > 0 ? Lang.i18n("%1% · %2 °C", Math.round(b.cpuUsage), Math.round(b.cpuTemp)) : Lang.i18n("%1% in use", Math.round(b.cpuUsage)),
             detail2: "", active: hysteresis("cpu", b.cpuUsage, 50, 40), score: b.cpuUsage
         };
         m.temp = {
-            key: "temp", caption: i18nc("@label processor temperature, short", "CPU °C"), available: b.cpuTemp > 0,
+            key: "temp", caption: Lang.i18nc("@label processor temperature, short", "CPU °C"), available: b.cpuTemp > 0,
             value: b.cpuTemp / 100, ringText: Math.round(b.cpuTemp) + "°", color: tempColor(b.cpuTemp),
-            detail: i18n("%1 °C", Math.round(b.cpuTemp)), detail2: "", active: hysteresis("temp", b.cpuTemp, 80, 74), score: b.cpuTemp
+            detail: Lang.i18n("%1 °C", Math.round(b.cpuTemp)), detail2: "", active: hysteresis("temp", b.cpuTemp, 80, 74), score: b.cpuTemp
         };
         m.gpu = {
-            key: "gpu", caption: i18nc("@label short for graphics card", "GPU"), available: b.hasGpu,
-            value: b.gpuUsage / 100, ringText: Math.round(b.gpuUsage) + "%",
+            key: "gpu", caption: Lang.i18nc("@label short for graphics card", "GPU"), available: b.hasGpu,
+            value: b.gpuUsage / 100, ringText: Lang.percent(Math.round(b.gpuUsage)),
             color: b.gpuTemp >= 85 ? theme.danger : levelColor(b.gpuUsage / 100),
-            detail: b.gpuTemp > 0 ? i18n("%1% · %2 °C", Math.round(b.gpuUsage), Math.round(b.gpuTemp)) : i18n("%1% in use", Math.round(b.gpuUsage)),
+            detail: b.gpuTemp > 0 ? Lang.i18n("%1% · %2 °C", Math.round(b.gpuUsage), Math.round(b.gpuTemp)) : Lang.i18n("%1% in use", Math.round(b.gpuUsage)),
             detail2: "", active: hysteresis("gpu", b.gpuUsage, 50, 40), score: b.gpuUsage
         };
         m.ram = {
-            key: "ram", caption: i18nc("@label short for memory", "RAM"),
-            value: b.memUsage / 100, ringText: Math.round(b.memUsage) + "%", color: levelColor(b.memUsage / 100),
-            detail: b.memTotalBytes > 0 ? b.formatBytes(b.memUsedBytes) + " / " + b.formatBytes(b.memTotalBytes) : i18n("%1% in use", Math.round(b.memUsage)),
+            key: "ram", caption: Lang.i18nc("@label short for memory", "RAM"),
+            value: b.memUsage / 100, ringText: Lang.percent(Math.round(b.memUsage)), color: levelColor(b.memUsage / 100),
+            detail: b.memTotalBytes > 0 ? b.formatBytes(b.memUsedBytes) + " / " + b.formatBytes(b.memTotalBytes) : Lang.i18n("%1% in use", Math.round(b.memUsage)),
             detail2: "", active: hysteresis("ram", b.memUsage, 80, 75), score: b.memUsage
         };
         m.battery = {
-            key: "battery", caption: b.batteryCharging ? i18n("Charging") : i18n("Battery"), available: b.hasBattery,
-            value: b.batteryPercent / 100, ringText: b.batteryPercent + "%",
+            key: "battery", caption: b.batteryCharging ? Lang.i18n("Charging") : Lang.i18n("Battery"), available: b.hasBattery,
+            value: b.batteryPercent / 100, ringText: Lang.percent(b.batteryPercent),
             color: b.batteryCharging ? theme.live : b.batteryPercent <= 20 ? theme.danger : theme.text,
-            detail: b.batteryPercent + "%", detail2: b.batteryCharging ? i18n("Charging") : b.batteryPluggedIn ? i18n("Plugged in") : i18n("On battery"),
+            detail: Lang.percent(b.batteryPercent), detail2: b.batteryCharging ? Lang.i18n("Charging") : b.batteryPluggedIn ? Lang.i18n("Plugged in") : Lang.i18n("On battery"),
             active: b.hasBattery && (b.batteryCharging || b.batteryPercent <= 20), score: b.batteryCharging ? 60 : 100 - b.batteryPercent
         };
         m.net = {
-            key: "net", caption: i18nc("@label network", "Network"),
+            key: "net", caption: Lang.i18nc("@label network", "Network"),
             value: netTotal / netPeak, ringText: "", color: theme.network,
             detail: "↓ " + b.formatBytes(b.netDownRate) + "/s", detail2: "↑ " + b.formatBytes(b.netUpRate) + "/s",
             smallText: "↓" + b.compactRate(b.netDownRate),
             active: hysteresis("net", netTotal, 100 * 1024, 40 * 1024), score: Math.min(100, netTotal / 10240)
         };
         m.disk = {
-            key: "disk", caption: i18nc("@label storage", "Disk"),
-            value: b.diskUsage / 100, ringText: Math.round(b.diskUsage) + "%", color: levelColor(b.diskUsage / 100),
-            detail: i18n("%1 free", b.formatBytes(b.diskFreeBytes)),
-            detail2: b.diskIoRate > 1024 * 1024 ? i18n("I/O %1/s", b.formatBytes(b.diskIoRate)) : "",
+            key: "disk", caption: Lang.i18nc("@label storage", "Disk"),
+            value: b.diskUsage / 100, ringText: Lang.percent(Math.round(b.diskUsage)), color: levelColor(b.diskUsage / 100),
+            detail: Lang.i18n("%1 free", b.formatBytes(b.diskFreeBytes)),
+            detail2: b.diskIoRate > 1024 * 1024 ? Lang.i18n("I/O %1/s", b.formatBytes(b.diskIoRate)) : "",
             active: b.diskUsage > 90 || hysteresis("disk", b.diskIoRate, 20 * 1048576, 8 * 1048576), score: Math.min(100, b.diskIoRate / 1048576)
         };
         // The network ring shows the rate instead of a percentage.

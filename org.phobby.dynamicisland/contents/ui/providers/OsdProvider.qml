@@ -28,7 +28,7 @@ Item {
                 icon: provider.backend.volumeIcon,
                 color: provider.theme.blue,
                 title: provider.backend.sinkName,
-                subtitle: i18n("Audio output")
+                subtitle: Lang.i18n("Audio output")
             });
         }
     }
@@ -39,7 +39,7 @@ Item {
             live: true,
             icon: b.volumeIcon,
             color: b.muted ? theme.subText : theme.text,
-            title: b.muted ? i18n("Muted") : i18n("Volume"),
+            title: b.muted ? Lang.i18n("Muted") : Lang.i18n("Volume"),
             trailing: { type: "slider", value: b.muted ? 0 : b.volume, color: b.muted ? theme.subText : theme.text },
             duration: 1500
         });
@@ -54,7 +54,7 @@ Item {
                 live: true,
                 icon: "video-display-brightness-symbolic",
                 color: provider.theme.text,
-                title: i18n("Brightness"),
+                title: Lang.i18n("Brightness"),
                 trailing: { type: "slider", value: value, color: provider.theme.text },
                 duration: 1500
             });

@@ -5,6 +5,7 @@
 */
 import QtQuick
 import org.kde.plasma.private.batterymonitor as BatteryMonitor
+import ".."
 
 Item {
     id: power
@@ -21,9 +22,9 @@ Item {
              : "battery-profile-balanced-symbolic";
     }
     function nameFor(p: string): string {
-        return p === "power-saver" ? i18n("Power Save")
-             : p === "performance" ? i18n("Performance")
-             : i18n("Balanced");
+        return p === "power-saver" ? Lang.i18n("Power Save")
+             : p === "performance" ? Lang.i18n("Performance")
+             : Lang.i18n("Balanced");
     }
 
     BatteryMonitor.PowerProfilesControl {

@@ -203,7 +203,7 @@ Item {
         }
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: i18n("Nothing is playing")
+            text: Lang.i18n("Nothing is playing")
             color: media.theme.subText
             font.pointSize: media.theme.fontNormal
         }

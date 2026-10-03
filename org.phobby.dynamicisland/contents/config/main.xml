@@ -151,5 +151,13 @@
     <entry name="showNotificationModule" type="Bool">
       <default>true</default>
     </entry>
+    <!-- Order of the expanded pages (Settings → Layout), comma-separated keys; see PageCatalog.qml -->
+    <entry name="pageOrder" type="String">
+      <default>activities,media,control,notifications,quicksettings,tools,calendar,notes,clipboard,devices</default>
+    </entry>
+    <!-- Language of the widget: auto (the system's), tr or en; see Lang.qml -->
+    <entry name="language" type="String">
+      <default>auto</default>
+    </entry>
   </group>
 </kcfg>

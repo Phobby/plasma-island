@@ -55,16 +55,16 @@ Item {
     function submit(): void {
         if (busy || !calendar) return;
         const title = titleField.text.trim();
-        if (title.length === 0) { error = i18n("Give the event a title."); return; }
+        if (title.length === 0) { error = Lang.i18n("Give the event a title."); return; }
         const dm = /^\s*(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})\s*$/.exec(dateField.text);
         const date = dm ? new Date(Number(dm[3]), Number(dm[2]) - 1, Number(dm[1])) : null;
-        if (!date || date.getMonth() !== Number(dm[2]) - 1 || date.getDate() !== Number(dm[1])) { error = i18n("Write the date as dd.mm.yyyy."); return; }
+        if (!date || date.getMonth() !== Number(dm[2]) - 1 || date.getDate() !== Number(dm[1])) { error = Lang.i18n("Write the date as dd.mm.yyyy."); return; }
         const day = date.getTime();
         let start = day, end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).getTime();
         if (!allDay) {
             const from = minutes(startField.text), to = minutes(endField.text);
-            if (from < 0 || to < 0) { error = i18n("Write the time as hh:mm (e.g. 14:30)."); return; }
-            if (to <= from) { error = i18n("The end time must be after the start."); return; }
+            if (from < 0 || to < 0) { error = Lang.i18n("Write the time as hh:mm (e.g. 14:30)."); return; }
+            if (to <= from) { error = Lang.i18n("The end time must be after the start."); return; }
             start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), Math.floor(from / 60), from % 60).getTime();
             end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), Math.floor(to / 60), to % 60).getTime();
         }
@@ -87,7 +87,7 @@ Item {
             spacing: 6
             Text {
                 Layout.fillWidth: true
-                text: form.error.length > 0 ? form.error : i18n("New event")
+                text: form.error.length > 0 ? form.error : Lang.i18n("New event")
                 color: form.error.length > 0 ? form.theme.readable(form.theme.danger, form.theme.surface) : form.theme.text
                 font.pointSize: form.theme.fontSmall
                 font.weight: Font.DemiBold
@@ -128,7 +128,7 @@ Item {
             id: titleField
             theme: form.theme
             Layout.fillWidth: true
-            placeholder: i18n("Title")
+            placeholder: Lang.i18n("Title")
             enabled: !form.busy
             onEdited: form.error = ""
             onAccepted: form.submit()
@@ -141,7 +141,7 @@ Item {
                 id: dateField
                 theme: form.theme
                 Layout.preferredWidth: 104
-                placeholder: i18n("dd.mm.yyyy")
+                placeholder: Lang.i18n("dd.mm.yyyy")
                 enabled: !form.busy
                 onEdited: form.error = ""
                 onAccepted: form.submit()
@@ -151,7 +151,7 @@ Item {
                 theme: form.theme
                 implicitHeight: 28
                 primary: form.allDay
-                text: i18n("All day")
+                text: Lang.i18n("All day")
                 onClicked: form.allDay = !form.allDay
             }
             PillField {
@@ -187,7 +187,7 @@ Item {
                 id: placeField
                 theme: form.theme
                 Layout.fillWidth: true
-                placeholder: i18n("Place or link (optional)")
+                placeholder: Lang.i18n("Place or link (optional)")
                 enabled: !form.busy
                 onEdited: form.error = ""
                 onAccepted: form.submit()
@@ -197,7 +197,7 @@ Item {
                 theme: form.theme
                 implicitHeight: 28
                 primary: true
-                text: form.busy ? i18n("Adding…") : i18n("Add")
+                text: form.busy ? Lang.i18n("Adding…") : Lang.i18n("Add")
                 enabled: !form.busy
                 onClicked: form.submit()
             }

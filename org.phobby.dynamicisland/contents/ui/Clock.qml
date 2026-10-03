@@ -10,7 +10,7 @@ Text {
     property bool running: true
     property date now: new Date()
 
-    text: Qt.formatTime(now, Qt.locale().timeFormat(Locale.ShortFormat))
+    text: Qt.formatTime(now, Lang.locale.timeFormat(Locale.ShortFormat))
     font.features: { "tnum": 1 }
 
     function tick(): void {

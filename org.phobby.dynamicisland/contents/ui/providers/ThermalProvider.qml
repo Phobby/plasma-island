@@ -27,8 +27,8 @@ Item {
             icon: "temperature-warm",
             pulse: true,
             color: theme.red,
-            title: i18n("%1 is running hot", name),
-            subtitle: i18n("Check cooling and heavy applications"),
+            title: Lang.i18n("%1 is running hot", name),
+            subtitle: Lang.i18n("Check cooling and heavy applications"),
             trailing: { type: "text", text: Math.round(temp) + "°", color: theme.red },
             duration: 6000
         });
@@ -41,7 +41,7 @@ Item {
             const t = provider.backend.cpuTemp;
             if (t >= provider.cpuThreshold && !provider.cpuWarned) {
                 provider.cpuWarned = true;
-                provider.warn(i18nc("@label processor", "CPU"), t);
+                provider.warn(Lang.i18nc("@label processor", "CPU"), t);
             } else if (t > 0 && t < provider.cpuThreshold - 5) {
                 provider.cpuWarned = false;
             }
@@ -50,7 +50,7 @@ Item {
             const t = provider.backend.gpuTemp;
             if (t >= provider.gpuThreshold && !provider.gpuWarned) {
                 provider.gpuWarned = true;
-                provider.warn(i18nc("@label graphics card", "GPU"), t);
+                provider.warn(Lang.i18nc("@label graphics card", "GPU"), t);
             } else if (t > 0 && t < provider.gpuThreshold - 5) {
                 provider.gpuWarned = false;
             }

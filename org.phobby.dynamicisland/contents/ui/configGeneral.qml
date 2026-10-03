@@ -10,6 +10,9 @@ import org.kde.kcmutils as KCM
 KCM.SimpleKCM {
     id: page
 
+    property string cfg_language
+    Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
+
     property alias cfg_surfaceOpacity: opacitySlider.value
     property alias cfg_blurEnabled: blurCheck.checked
     property alias cfg_themeMode: themeCombo.currentIndex
@@ -21,26 +24,23 @@ KCM.SimpleKCM {
     property alias cfg_hoverDelay: hoverSpin.value
     property alias cfg_collapseDelay: collapseSpin.value
     property alias cfg_preferredPlayer: playerField.text
-    property alias cfg_showMediaModule: mediaCheck.checked
-    property alias cfg_showSystemModule: systemCheck.checked
     property alias cfg_systemView: systemViewCombo.currentIndex
     property alias cfg_showVolumeModule: volumeCheck.checked
-    property alias cfg_showNotificationModule: notifModuleCheck.checked
 
     Kirigami.FormLayout {
         Kirigami.Separator {
             Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: i18n("Appearance")
+            Kirigami.FormData.label: Lang.i18n("Appearance")
         }
 
         QQC2.ComboBox {
             id: themeCombo
-            Kirigami.FormData.label: i18n("Style:")
-            model: [i18n("Follow color scheme"), i18n("Always dark (graphite)"), i18n("Always light (aluminium)")]
+            Kirigami.FormData.label: Lang.i18n("Style:")
+            model: [Lang.i18n("Follow color scheme"), Lang.i18n("Always dark (graphite)"), Lang.i18n("Always light (aluminium)")]
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("Opacity:")
+            Kirigami.FormData.label: Lang.i18n("Opacity:")
             QQC2.Slider {
                 id: opacitySlider
                 from: 30
@@ -49,14 +49,14 @@ KCM.SimpleKCM {
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 10
             }
             QQC2.Label {
-                text: Math.round(opacitySlider.value) + "%"
+                text: Lang.percent(Math.round(opacitySlider.value))
             }
         }
 
         QQC2.CheckBox {
             id: blurCheck
-            Kirigami.FormData.label: i18n("Background:")
-            text: i18n("Blur what is behind the island")
+            Kirigami.FormData.label: Lang.i18n("Background:")
+            text: Lang.i18n("Blur what is behind the island")
         }
         QQC2.Label {
             Layout.fillWidth: true
@@ -64,99 +64,92 @@ KCM.SimpleKCM {
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
             opacity: 0.7
-            text: i18n("Needs the optional native helper (install.sh --with-blur) and the KWin Blur effect. Without it the surface stays opaque.")
+            text: Lang.i18n("Needs the optional native helper (install.sh --with-blur) and the KWin Blur effect. Without it the surface stays opaque.")
         }
 
         QQC2.CheckBox {
             id: clockCheck
-            Kirigami.FormData.label: i18n("Idle:")
-            text: i18n("Show clock")
+            Kirigami.FormData.label: Lang.i18n("Idle:")
+            text: Lang.i18n("Show clock")
         }
 
         QQC2.SpinBox {
             id: topMarginSpin
-            Kirigami.FormData.label: i18n("Distance from top:")
+            Kirigami.FormData.label: Lang.i18n("Distance from top:")
             from: 0
             to: 200
-            textFromValue: (v) => i18n("%1 px", v)
+            textFromValue: (v) => Lang.i18n("%1 px", v)
             valueFromText: (t) => parseInt(t)
         }
         QQC2.CheckBox {
             id: avoidPanelsCheck
-            text: i18n("Place below top panels")
+            text: Lang.i18n("Place below top panels")
         }
 
         Kirigami.Separator {
             Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: i18n("Behavior")
+            Kirigami.FormData.label: Lang.i18n("Behavior")
         }
 
         QQC2.CheckBox {
             id: notificationsCheck
-            Kirigami.FormData.label: i18n("Notifications:")
-            text: i18n("Show incoming notifications in the island")
+            Kirigami.FormData.label: Lang.i18n("Notifications:")
+            text: Lang.i18n("Show incoming notifications in the island")
         }
         QQC2.SpinBox {
             id: durationSpin
-            Kirigami.FormData.label: i18n("Show for:")
+            Kirigami.FormData.label: Lang.i18n("Show for:")
             enabled: notificationsCheck.checked
             from: 1000
             to: 20000
             stepSize: 500
-            textFromValue: (v) => i18n("%1 s", (v / 1000).toLocaleString(Qt.locale(), 'f', 1))
-            valueFromText: (t) => Math.round(Number.fromLocaleString(Qt.locale(), t.replace(/[^\d.,]/g, "")) * 1000)
+            textFromValue: (v) => Lang.i18n("%1 s", (v / 1000).toLocaleString(Lang.locale, 'f', 1))
+            valueFromText: (t) => Math.round(Number.fromLocaleString(Lang.locale, t.replace(/[^\d.,]/g, "")) * 1000)
         }
         QQC2.SpinBox {
             id: hoverSpin
-            Kirigami.FormData.label: i18n("Expand after hovering:")
+            Kirigami.FormData.label: Lang.i18n("Expand after hovering:")
             from: 0
             to: 2000
             stepSize: 50
-            textFromValue: (v) => i18n("%1 ms", v)
+            textFromValue: (v) => Lang.i18n("%1 ms", v)
             valueFromText: (t) => parseInt(t)
         }
         QQC2.SpinBox {
             id: collapseSpin
-            Kirigami.FormData.label: i18n("Collapse after leaving:")
+            Kirigami.FormData.label: Lang.i18n("Collapse after leaving:")
             from: 0
             to: 3000
             stepSize: 50
-            textFromValue: (v) => i18n("%1 ms", v)
+            textFromValue: (v) => Lang.i18n("%1 ms", v)
             valueFromText: (t) => parseInt(t)
         }
         QQC2.TextField {
             id: playerField
-            Kirigami.FormData.label: i18n("Preferred player:")
-            placeholderText: i18n("e.g. spotify, elisa, firefox (empty = automatic)")
+            Kirigami.FormData.label: Lang.i18n("Preferred player:")
+            placeholderText: Lang.i18n("e.g. spotify, elisa, firefox (empty = automatic)")
         }
 
         Kirigami.Separator {
             Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: i18n("Modules")
+            Kirigami.FormData.label: Lang.i18n("Modules")
         }
 
-        QQC2.CheckBox {
-            id: mediaCheck
-            Kirigami.FormData.label: i18n("Show:")
-            text: i18n("Media (also enables the live activity)")
-        }
-        QQC2.CheckBox {
-            id: systemCheck
-            text: i18n("System status (CPU, RAM, battery, network)")
+        QQC2.Label {
+            Kirigami.FormData.label: Lang.i18n("Pages:")
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
+            wrapMode: Text.Wrap
+            text: Lang.i18n("Which pages are shown, and in what order, is set in Layout.")
         }
         QQC2.ComboBox {
             id: systemViewCombo
-            Kirigami.FormData.label: i18n("System view:")
-            enabled: systemCheck.checked
-            model: [i18n("Fixed (5 cards)"), i18n("Dynamic (active metrics grow)")]
+            Kirigami.FormData.label: Lang.i18n("System view:")
+            model: [Lang.i18n("Fixed (5 cards)"), Lang.i18n("Dynamic (active metrics grow)")]
         }
         QQC2.CheckBox {
             id: volumeCheck
-            text: i18n("Volume (in Controls)")
-        }
-        QQC2.CheckBox {
-            id: notifModuleCheck
-            text: i18n("Recent notifications")
+            Kirigami.FormData.label: Lang.i18n("Show:")
+            text: Lang.i18n("Volume (in Controls)")
         }
     }
 }

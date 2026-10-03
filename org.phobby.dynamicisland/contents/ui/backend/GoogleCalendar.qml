@@ -14,6 +14,7 @@
     and, without it, only in memory until the shell restarts.
 */
 import QtQuick
+import ".."
 
 QtObject {
     id: google
@@ -72,15 +73,15 @@ QtObject {
         if (body.length > 0) xhr.send(body); else xhr.send();
     }
     function problem(status: int, data: var): string {
-        if (status === 0) return i18n("No connection.");
+        if (status === 0) return Lang.i18n("No connection.");
         const detail = data && data.error ? (typeof data.error === "string" ? (data.error_description || data.error) : (data.error.message || "")) : "";
-        if (status === 401 || detail === "invalid_grant") return i18n("The Google sign-in is no longer valid; connect the account again.");
-        return detail.length > 0 ? i18n("Google: %1", detail) : i18n("The server answered %1.", status);
+        if (status === 401 || detail === "invalid_grant") return Lang.i18n("The Google sign-in is no longer valid; connect the account again.");
+        return detail.length > 0 ? Lang.i18n("Google: %1", detail) : Lang.i18n("The server answered %1.", status);
     }
     // A valid access token, renewed with the refresh token when needed. done(token, error)
     function withToken(done: var): void {
         if (accessToken.length > 0 && Date.now() < expiresAt - 60000) { done(accessToken, ""); return; }
-        if (refreshToken.length === 0) { done("", i18n("No Google account is connected.")); return; }
+        if (refreshToken.length === 0) { done("", Lang.i18n("No Google account is connected.")); return; }
         send("POST", tokenUrl, { "Content-Type": "application/x-www-form-urlencoded" },
              form({ grant_type: "refresh_token", refresh_token: refreshToken, client_id: clientId.trim(), client_secret: clientSecret.trim() }), (status, data) => {
             if (status === 200 && data.access_token) {
@@ -126,9 +127,9 @@ QtObject {
     }
     // Opens the browser on Google's consent page. done({ ok, error })
     function signIn(done: var): void {
-        if (!canSignIn) { done({ ok: false, error: i18n("Cannot sign in to Google: the client ID or the native module is missing.") }); return; }
+        if (!canSignIn) { done({ ok: false, error: Lang.i18n("Cannot sign in to Google: the client ID or the native module is missing.") }); return; }
         if (loopbackPort <= 0) loopbackPort = core.loopback.start();
-        if (loopbackPort <= 0) { done({ ok: false, error: i18n("Could not open the local return address.") }); return; }
+        if (loopbackPort <= 0) { done({ ok: false, error: Lang.i18n("Could not open the local return address.") }); return; }
         const verifier = randomText(64), state = randomText(24), redirect = "http://127.0.0.1:" + loopbackPort;
         pendingSignIns[state] = { verifier: verifier, redirect: redirect };
         signInDone = done;
@@ -171,12 +172,12 @@ QtObject {
         signingIn = false;
         const finished = signInDone || (() => {});
         const fail = error => finished({ ok: false, error: error });
-        if (!args.code) { fail(args.error === "access_denied" ? i18n("Access was not granted.") : i18n("Google did not send a sign-in code.")); return; }
+        if (!args.code) { fail(args.error === "access_denied" ? Lang.i18n("Access was not granted.") : Lang.i18n("Google did not send a sign-in code.")); return; }
         send("POST", tokenUrl, { "Content-Type": "application/x-www-form-urlencoded" },
              form({ grant_type: "authorization_code", code: args.code, code_verifier: p.verifier, redirect_uri: p.redirect,
                     client_id: clientId.trim(), client_secret: clientSecret.trim() }), (status, data) => {
             if (status !== 200 || !data.access_token) { fail(problem(status, data)); return; }
-            if (!data.refresh_token) { fail(i18n("Google did not grant lasting access; try again.")); return; }
+            if (!data.refresh_token) { fail(Lang.i18n("Google did not grant lasting access; try again.")); return; }
             const token = data.access_token, refresh = data.refresh_token;
             send("GET", userUrl, { "Authorization": "Bearer " + token }, "", (s2, user) => {
                 if (s2 !== 200 || !user.email) { fail(problem(s2, user)); return; }
@@ -206,11 +207,11 @@ QtObject {
         api("GET", "/users/me/calendarList?maxResults=250", null, (status, data, error) => {
             if (error.length > 0) { done({ ok: false, calendars: [], error: error }); return; }
             const calendars = (data.items || []).filter(c => c.selected !== false && !c.deleted).map(c => ({
-                id: String(c.id), name: String(c.summaryOverride || c.summary || i18n("Calendar")),
+                id: String(c.id), name: String(c.summaryOverride || c.summary || Lang.i18n("Calendar")),
                 color: /^#[0-9a-f]{6}$/i.test(c.backgroundColor || "") ? c.backgroundColor.toLowerCase() : "#0a84ff",
                 writable: c.accessRole === "owner" || c.accessRole === "writer"
             }));
-            if (calendars.length === 0) done({ ok: false, calendars: [], error: i18n("No calendar was found in this account.") });
+            if (calendars.length === 0) done({ ok: false, calendars: [], error: Lang.i18n("No calendar was found in this account.") });
             else done({ ok: true, calendars: calendars, error: "" });
         });
     }

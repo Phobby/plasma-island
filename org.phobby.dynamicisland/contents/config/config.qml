@@ -1,35 +1,46 @@
 import QtQuick
+import "../ui"
 import org.kde.plasma.configuration
 
 ConfigModel {
     ConfigCategory {
-        name: i18n("General")
+        name: Lang.i18n("General")
         icon: "preferences-desktop-plasma"
         source: "configGeneral.qml"
     }
     ConfigCategory {
-        name: i18n("Activities")
+        name: Lang.i18n("Layout")
+        icon: "view-sort"
+        source: "configLayout.qml"
+    }
+    ConfigCategory {
+        name: Lang.i18n("Activities")
         icon: "view-list-details"
         source: "configActivities.qml"
     }
     ConfigCategory {
-        name: i18n("Alerts")
+        name: Lang.i18n("Alerts")
         icon: "dialog-warning"
         source: "configAlerts.qml"
     }
     ConfigCategory {
-        name: i18n("Calendar")
+        name: Lang.i18n("Calendar")
         icon: "view-calendar"
         source: "configCalendar.qml"
     }
     ConfigCategory {
-        name: i18n("Notes")
+        name: Lang.i18n("Notes")
         icon: "view-pim-notes"
         source: "configNotes.qml"
     }
     ConfigCategory {
-        name: i18n("Tools")
+        name: Lang.i18n("Tools")
         icon: "chronometer"
         source: "configTools.qml"
+    }
+    ConfigCategory {
+        name: Lang.i18n("Language")
+        icon: "preferences-desktop-locale"
+        source: "configLanguage.qml"
     }
 }

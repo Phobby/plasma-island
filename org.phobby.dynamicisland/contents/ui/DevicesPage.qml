@@ -55,7 +55,7 @@ Item {
                     Text {
                         width: parent.width
                         horizontalAlignment: Text.AlignHCenter
-                        text: modelData.battery >= 0 ? modelData.battery + "%" + (modelData.charging ? " ⚡" : "") : (modelData.detail || "")
+                        text: modelData.battery >= 0 ? Lang.percent(modelData.battery) + (modelData.charging ? " ⚡" : "") : (modelData.detail || "")
                         color: page.theme.subText
                         font.pointSize: page.theme.fontSmall * 0.95
                         font.features: { "tnum": 1 }
@@ -79,7 +79,7 @@ Item {
         }
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: i18n("No connected devices")
+            text: Lang.i18n("No connected devices")
             color: page.theme.subText
             font.pointSize: page.theme.fontNormal
         }

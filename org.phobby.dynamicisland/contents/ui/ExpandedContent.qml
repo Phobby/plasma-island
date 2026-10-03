@@ -24,6 +24,8 @@ Item {
     property bool showClock: true
     property string systemView: "dynamic"
     signal systemMetricClicked(string key)
+    // The gear in the header: the widget's settings.
+    signal settingsRequested()
 
     // True while the user types a reply: the island keeps keyboard focus
     // and does not collapse.
@@ -36,16 +38,21 @@ Item {
     readonly property var listedActivities: manager.live.concat(manager.indicators).filter(a => a.listed)
     // Extra pages contributed by providers: [{ key, icon, title, component, visible }]
     property var extraPages: []
+    // The user's order of the pages (Settings → Layout): comma-separated keys.
+    property string pageOrder: ""
+    PageCatalog { id: catalog }
+    readonly property var order: catalog.normalize(pageOrder)
 
     readonly property var pages: {
         const p = [];
-        if (listedActivities.length > 0) p.push({ key: "activities", icon: "view-list-details", title: i18n("Activities") });
-        if (showMediaModule) p.push({ key: "media", icon: "view-media-track", title: i18n("Media") });
+        if (listedActivities.length > 0) p.push({ key: "activities", icon: "view-list-details", title: Lang.i18n("Activities") });
+        if (showMediaModule) p.push({ key: "media", icon: "view-media-track", title: Lang.i18n("Media") });
         // System = information only; the volume slider lives in Controls.
-        if (showSystemModule) p.push({ key: "control", icon: "speedometer", title: i18n("System") });
-        if (showNotificationModule) p.push({ key: "notifications", icon: "notifications", title: i18n("Notifications"), badge: backend.notificationCount });
+        if (showSystemModule) p.push({ key: "control", icon: "speedometer", title: Lang.i18n("System") });
+        if (showNotificationModule) p.push({ key: "notifications", icon: "notifications", title: Lang.i18n("Notifications"), badge: backend.notificationCount });
         for (const e of extraPages) if (e.visible !== false) p.push(e);
-        return p;
+        const rank = k => { const i = order.indexOf(k); return i >= 0 ? i : order.length; };
+        return p.sort((a, b) => rank(a.key) - rank(b.key));
     }
     // The current page is tracked by KEY, not by index: pages come and go
     // (e.g. "Activities" appears when a stopwatch starts) and an index would
@@ -228,6 +235,15 @@ Item {
                 color: expanded.theme.subText
                 font.pointSize: expanded.theme.fontSmall
                 font.weight: Font.DemiBold
+            }
+            IconButton {
+                iconName: "configure-symbolic"
+                iconSize: 12
+                implicitWidth: 22; implicitHeight: 22
+                toolTip: Lang.i18n("Settings")
+                color: expanded.theme.subText
+                hoverColor: expanded.theme.faint
+                onClicked: expanded.settingsRequested()
             }
         }
 

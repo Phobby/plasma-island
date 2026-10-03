@@ -24,9 +24,9 @@ Item {
                 key: "dnd",
                 icon: on ? "weather-clear-night-symbolic" : "notifications-symbolic",
                 color: on ? provider.theme.purple : provider.theme.subText,
-                title: on ? i18n("Do Not Disturb") : i18n("Do Not Disturb off"),
-                subtitle: !on && provider.missed > 0 ? i18np("%1 notification while silenced", "%1 notifications while silenced", provider.missed) : "",
-                trailing: { type: "text", text: on ? i18nc("@info DND state", "On") : i18nc("@info DND state", "Off"), color: on ? provider.theme.purple : provider.theme.subText }
+                title: on ? Lang.i18n("Do Not Disturb") : Lang.i18n("Do Not Disturb off"),
+                subtitle: !on && provider.missed > 0 ? Lang.i18np("%1 notification while silenced", "%1 notifications while silenced", provider.missed) : "",
+                trailing: { type: "text", text: on ? Lang.i18nc("@info DND state", "On") : Lang.i18nc("@info DND state", "Off"), color: on ? provider.theme.purple : provider.theme.subText }
             });
         }
     }

@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+# i18n-check — compare the island's texts with its translation tables.
+#
+#   tools/i18n-check            every table: missing and unused strings
+#   tools/i18n-check --strict   also fail (exit 1) when something is missing
+#
+# Texts are the strings passed to Lang.i18n / i18nc / i18np in the QML files
+# (see contents/ui/Lang.qml); tables are contents/ui/translations/<lang>.js.
+# Also reports calls whose text is not a plain string literal (cannot be
+# looked up), and multi-word string literals outside any call, which may be
+# visible text that was forgotten.
+import json
+import os
+import re
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+CONTENTS = os.path.join(HERE, "..", "org.phobby.dynamicisland", "contents")
+TABLES = os.path.join(CONTENTS, "ui", "translations")
+CALL = re.compile(r"\bLang\.(i18nc?p?)\s*\(")
+ARGS = {"i18n": 1, "i18nc": 2, "i18np": 2}
+
+
+def read_string(s, i):
+    """The JS string literal at s[i]: (value, end) or None."""
+    if i >= len(s) or s[i] not in "\"'":
+        return None
+    quote, out, j = s[i], [], i + 1
+    while j < len(s):
+        c = s[j]
+        if c == "\\":
+            n = s[j + 1]
+            out.append({"n": "\n", "t": "\t", "u": None}.get(n, n))
+            if n == "u":
+                out[-1] = chr(int(s[j + 2:j + 6], 16))
+                j += 6
+                continue
+            j += 2
+            continue
+        if c == quote:
+            return "".join(out), j + 1
+        out.append(c)
+        j += 1
+    return None
+
+
+def skip_space(s, i):
+    while i < len(s) and s[i] in " \t\r\n":
+        i += 1
+    return i
+
+
+def texts():
+    found, problems = {}, []
+    for root, _, files in os.walk(CONTENTS):
+        for name in sorted(files):
+            if not name.endswith(".qml") or name == "Lang.qml":
+                continue
+            path = os.path.join(root, name)
+            rel = os.path.relpath(path, CONTENTS)
+            s = open(path, encoding="utf-8").read()
+            for m in CALL.finditer(s):
+                fn, i, args = m.group(1), skip_space(s, m.end()), []
+                for k in range(ARGS[fn]):
+                    r = read_string(s, i)
+                    if r is None:
+                        break
+                    args.append(r[0])
+                    i = skip_space(s, r[1])
+                    if k < ARGS[fn] - 1:
+                        if s[i:i + 1] != ",":
+                            break
+                        i = skip_space(s, i + 1)
+                line = s.count("\n", 0, m.start()) + 1
+                if len(args) < ARGS[fn]:
+                    problems.append(f"{rel}:{line}: not a string literal")
+                    continue
+                key = args[0] if fn == "i18n" else args[0] + ("\u0004" if fn == "i18nc" else "\u0005") + args[1]
+                found.setdefault(key, f"{rel}:{line}")
+    return found, problems
+
+
+def forgotten():
+    """Multi-word literals outside Lang calls (visible text that is not translated?)."""
+    literal = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
+    out = []
+    for root, _, files in os.walk(CONTENTS):
+        for name in sorted(files):
+            if not name.endswith(".qml") or name == "Lang.qml":
+                continue
+            path = os.path.join(root, name)
+            for n, line in enumerate(open(path, encoding="utf-8"), 1):
+                code = line.split("//")[0]
+                if code.strip().startswith("*") or re.search(r"console\.|SELECT |https?://|Exec=", code):
+                    continue
+                for m in literal.finditer(code):
+                    text = m.group(1)
+                    if len(text.split()) < 3 or not re.match(r"[A-Za-zÇĞİÖŞÜçğıöşü]", text):
+                        continue
+                    if re.search(r"Lang\.i18n[cp]?\(\s*(\"[^\"]*\"\s*,\s*)?$", code[:m.start()]):
+                        continue
+                    out.append(f"{os.path.relpath(path, CONTENTS)}:{n}: {text[:90]}")
+    return out
+
+
+def load_table(path):
+    s = open(path, encoding="utf-8").read()
+    return json.loads(s[s.index("{"):s.rindex("}") + 1])
+
+
+def main():
+    strict = "--strict" in sys.argv
+    found, problems = texts()
+    print(f"{len(found)} texts in the QML files")
+    failed = bool(problems)
+    for p in problems:
+        print("  cannot look up:", p)
+    for name in sorted(os.listdir(TABLES)):
+        if not name.endswith(".js"):
+            continue
+        table = load_table(os.path.join(TABLES, name))
+        missing = [k for k in found if k not in table]
+        unused = [k for k in table if k not in found]
+        print(f"{name}: {len(table)} entries, {len(missing)} missing, {len(unused)} unused")
+        for k in missing:
+            print("  missing:", json.dumps(k, ensure_ascii=False), "←", found[k])
+        for k in unused:
+            print("  unused: ", json.dumps(k, ensure_ascii=False))
+        failed = failed or bool(missing)
+    loose = forgotten()
+    if loose:
+        print(f"{len(loose)} multi-word literals outside Lang calls (check they are not visible text):")
+        for item in loose:
+            print("  ", item)
+    sys.exit(1 if strict and failed else 0)
+
+
+if __name__ == "__main__":
+    main()

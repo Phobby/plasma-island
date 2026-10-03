@@ -51,7 +51,7 @@ Item {
                 Text {
                     Layout.preferredWidth: 36
                     horizontalAlignment: Text.AlignRight
-                    text: Math.round(row.maxBrightness > 0 ? row.brightness * 100 / row.maxBrightness : 0) + "%"
+                    text: Lang.percent(Math.round(row.maxBrightness > 0 ? row.brightness * 100 / row.maxBrightness : 0))
                     color: module.theme.subText
                     font.pointSize: module.theme.fontSmall
                     font.features: { "tnum": 1 }

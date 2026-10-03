@@ -90,7 +90,7 @@ Item {
                 theme: page.theme
                 Layout.fillWidth: true
                 implicitHeight: 26
-                placeholder: page.status.length > 0 ? page.status : i18n("Search the clipboard…")
+                placeholder: page.status.length > 0 ? page.status : Lang.i18n("Search the clipboard…")
                 onEdited: page.clipboard.filter = text
                 onEscaped: { text = ""; page.clipboard.filter = ""; page.typing = false; }
                 // The first click asks the island for the keyboard.
@@ -127,7 +127,7 @@ Item {
                 implicitHeight: 24
                 primary: true
                 tint: page.theme.danger
-                text: i18n("Clear all")
+                text: Lang.i18n("Clear all")
                 onClicked: { page.clipboard.clear(); page.confirmClear = false; }
             }
         }
@@ -172,7 +172,7 @@ Item {
                             page.view = "image";
                             return;
                         }
-                        page.clipboard.copy(row.uuid); page.say(i18n("Copied")); list.positionViewAtBeginning();
+                        page.clipboard.copy(row.uuid); page.say(Lang.i18n("Copied")); list.positionViewAtBeginning();
                     }
                 }
                 RowLayout {
@@ -205,7 +205,7 @@ Item {
                     }
                     Text {
                         Layout.fillWidth: true
-                        text: row.kind === "image" ? i18n("Image · %1 × %2", row.imageSize.width, row.imageSize.height)
+                        text: row.kind === "image" ? Lang.i18n("Image · %1 × %2", row.imageSize.width, row.imageSize.height)
                             : row.kind === "files" ? page.fileNames(row.text)
                             : row.text.slice(0, 400).replace(/^\s+/, "").replace(/\t/g, "  ")
                         textFormat: Text.PlainText
@@ -256,7 +256,7 @@ Item {
                 width: parent.width
                 visible: list.count === 0
                 horizontalAlignment: Text.AlignHCenter
-                text: page.clipboard.filter.length > 0 ? i18n("Nothing matches") : page.clipboard.starredOnly ? i18n("No starred entries") : i18n("The clipboard is empty")
+                text: page.clipboard.filter.length > 0 ? Lang.i18n("Nothing matches") : page.clipboard.starredOnly ? Lang.i18n("No starred entries") : Lang.i18n("The clipboard is empty")
                 color: page.theme.subText
                 font.pointSize: page.theme.fontSmall
             }
@@ -276,7 +276,7 @@ Item {
         if (target && target.model) {
             target.model.display = editor.text;
             clipboard.copy(target.uuid);
-            say(i18n("Saved and copied"));
+            say(Lang.i18n("Saved and copied"));
         }
         view = "list"; target = null;
     }
@@ -297,7 +297,7 @@ Item {
             }
             Text {
                 Layout.fillWidth: true
-                text: i18n("Edit the copied text")
+                text: Lang.i18n("Edit the copied text")
                 color: page.theme.subText
                 font.pointSize: page.theme.fontSmall * 0.9
             }
@@ -305,7 +305,7 @@ Item {
                 theme: page.theme
                 implicitHeight: 20
                 primary: true
-                text: i18n("Save")
+                text: Lang.i18n("Save")
                 onClicked: page.saveEdit()
             }
         }
@@ -386,7 +386,7 @@ Item {
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: page.target && page.target.size ? i18n("Image · %1 × %2", page.target.size.width, page.target.size.height) : ""
+                    text: page.target && page.target.size ? Lang.i18n("Image · %1 × %2", page.target.size.width, page.target.size.height) : ""
                     color: page.theme.subText
                     font.pointSize: page.theme.fontSmall * 0.9
                     elide: Text.ElideRight
@@ -395,11 +395,11 @@ Item {
                     theme: page.theme
                     implicitHeight: 22
                     primary: true
-                    text: i18n("Copy")
+                    text: Lang.i18n("Copy")
                     onClicked: {
                         page.clipboard.copy(page.target.uuid);
                         page.back();
-                        page.say(i18n("Copied"));
+                        page.say(Lang.i18n("Copied"));
                         list.positionViewAtBeginning();
                     }
                 }

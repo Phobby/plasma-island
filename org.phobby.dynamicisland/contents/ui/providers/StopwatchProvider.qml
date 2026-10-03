@@ -61,11 +61,11 @@ Item {
         active: provider.enabled && provider.running
         icon: "chronometer"
         color: provider.theme.text
-        title: i18n("Stopwatch")
+        title: Lang.i18n("Stopwatch")
         trailingText: TimeFormat.clock(provider.elapsed / 1000)
         actions: [
-            { icon: "flag", text: i18n("Lap"), trigger: () => provider.lap() },
-            { icon: "media-playback-stop-symbolic", text: i18n("Stop"), trigger: () => provider.stop() }
+            { icon: "flag", text: Lang.i18n("Lap"), trigger: () => provider.lap() },
+            { icon: "media-playback-stop-symbolic", text: Lang.i18n("Stop"), trigger: () => provider.stop() }
         ]
         Component.onCompleted: provider.manager.register(this)
     }

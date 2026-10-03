@@ -51,7 +51,7 @@ Item {
             shake: true,
             icon: "alarm-symbolic",
             color: theme.orange,
-            title: i18n("Alarm"),
+            title: Lang.i18n("Alarm"),
             subtitle: cfg.alarmLabel || "",
             trailing: { type: "text", text: alarmTime, color: theme.orange },
             duration: 12000

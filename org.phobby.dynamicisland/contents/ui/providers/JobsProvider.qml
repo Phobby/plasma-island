@@ -32,11 +32,11 @@ JobTransferSource {
         const src = Fmt.field(info, "source"), dst = Fmt.field(info, "destination") || info.destUrl;
         t.kind = kindOf(info.summary);
         t.icon = iconFor(t.kind);
-        t.source = info.app || i18n("Files");
+        t.source = info.app || Lang.i18n("Files");
         t.fileName = Fmt.baseName(src) || Fmt.baseName(dst);
         // Remote destinations (sftp, smb, mtp, kdeconnect…) are uploads.
         if (/^(sftp|smb|ftp|ftps|webdav|webdavs|mtp|fish|nfs):/.test(String(dst))) t.kind = "upload";
-        t.detail = dst ? i18nc("@info operation → folder", "%1 → %2", info.summary, Fmt.folderName(dst)) : info.summary;
+        t.detail = dst ? Lang.i18nc("@info operation → folder", "%1 → %2", info.summary, Fmt.folderName(dst)) : info.summary;
         t.openUrl = dst && t.kind !== "delete" ? String(dst).replace(/\/[^\/]*$/, "") : "";
     }
 }

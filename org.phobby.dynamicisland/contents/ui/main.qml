@@ -31,11 +31,13 @@ PlasmoidItem {
     id: root
 
     readonly property var cfg: Plasmoid.configuration
+    // The widget's language (Settings → Language), for every text of the island.
+    Binding { target: Lang; property: "setting"; value: root.cfg.language }
 
     Plasmoid.icon: "view-media-track"
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
     preferredRepresentation: compactRepresentation
-    toolTipMainText: i18n("Dynamic Island")
+    toolTipMainText: Lang.i18n("Dynamic Island")
     toolTipSubText: backend.hasMedia ? backend.track : ""
 
     compactRepresentation: Kirigami.Icon {
@@ -406,13 +408,13 @@ PlasmoidItem {
         const bt = root.bluetoothBackend;
         if (bt) {
             for (const d of bt.connectedDevices) {
-                list.push({ icon: bt.iconFor(d), name: d.name, battery: bt.batteryOf(d), charging: false, detail: i18n("Bluetooth") });
+                list.push({ icon: bt.iconFor(d), name: d.name, battery: bt.batteryOf(d), charging: false, detail: Lang.i18n("Bluetooth") });
             }
         }
         const kc = root.kdeconnectBackend;
         if (kc) {
             for (const p of kc.phones) {
-                list.push({ icon: p.icon, name: p.name, battery: p.charge, charging: p.charging, detail: i18n("KDE Connect") });
+                list.push({ icon: p.icon, name: p.name, battery: p.charge, charging: p.charging, detail: Lang.i18n("KDE Connect") });
             }
         }
         return list;
@@ -549,20 +551,26 @@ PlasmoidItem {
                 showSystemModule: root.cfg.showSystemModule
                 showVolumeModule: root.cfg.showVolumeModule
                 showNotificationModule: root.cfg.showNotificationModule
+                pageOrder: root.cfg.pageOrder
                 systemView: root.cfg.systemView === 0 ? "fixed" : "dynamic"
+                // The gear in the expanded header: Plasma's settings window of this widget.
+                onSettingsRequested: {
+                    island.expanded = false;
+                    Plasmoid.internalAction("configure").trigger();
+                }
                 // A System card was clicked: btop with only that metric's graph.
                 onSystemMetricClicked: key => {
                     if (root.core) root.core.startDetached("sh", [String(Qt.resolvedUrl("../scripts/btop-view.sh")).replace(/^file:\/\//, ""), key]);
                 }
                 extraPages: [
-                    { key: "quicksettings", icon: "configure", title: i18n("Controls"), component: quickSettingsPage, visible: root.cfg.showQuickSettings },
-                    { key: "tools", icon: "chronometer", title: i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },
-                    { key: "calendar", icon: "view-calendar", title: i18n("Calendar"), component: calendarPage,
+                    { key: "quicksettings", icon: "configure", title: Lang.i18n("Controls"), component: quickSettingsPage, visible: root.cfg.showQuickSettings },
+                    { key: "tools", icon: "chronometer", title: Lang.i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },
+                    { key: "calendar", icon: "view-calendar", title: Lang.i18n("Calendar"), component: calendarPage,
                       visible: root.cfg.showCalendar && calendarProviderLoader.item !== null },
-                    { key: "notes", icon: "view-pim-notes", title: i18n("Notes"), component: notesPage, visible: root.cfg.showNotes },
-                    { key: "clipboard", icon: "edit-paste", title: i18n("Clipboard"), component: clipboardPage,
+                    { key: "notes", icon: "view-pim-notes", title: Lang.i18n("Notes"), component: notesPage, visible: root.cfg.showNotes },
+                    { key: "clipboard", icon: "edit-paste", title: Lang.i18n("Clipboard"), component: clipboardPage,
                       visible: root.cfg.showClipboard && root.clipboardBackend !== null },
-                    { key: "devices", icon: "network-bluetooth", title: i18n("Devices"), component: devicesPage,
+                    { key: "devices", icon: "network-bluetooth", title: Lang.i18n("Devices"), component: devicesPage,
                       visible: root.cfg.showDevicesModule && ((root.bluetoothBackend && root.bluetoothBackend.available) || root.deviceList.length > 0) }
                 ]
             }
@@ -590,7 +598,7 @@ PlasmoidItem {
 
     Plasmoid.contextualActions: [
         PlasmaCore.Action {
-            text: island.expanded ? i18n("Collapse Island") : i18n("Expand Island")
+            text: island.expanded ? Lang.i18n("Collapse Island") : Lang.i18n("Expand Island")
             icon.name: island.expanded ? "collapse" : "expand"
             onTriggered: island.expanded = !island.expanded
         }

@@ -19,6 +19,7 @@
     showing its last good copy.
 */
 import QtQuick
+import ".."
 
 Item {
     id: calendar
@@ -96,7 +97,7 @@ Item {
                     }
                 }
                 cache[url] = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\n" + blocks.map(b => b + "\r\n").join("") + "END:VCALENDAR\r\n";
-                done(failed > 0 ? i18n("%1 events could not be downloaded", failed) : "");
+                done(failed > 0 ? Lang.i18n("%1 events could not be downloaded", failed) : "");
             };
             const pump = () => {
                 if (wanted.length === 0 && running === 0) { finish(); return; }
@@ -181,8 +182,8 @@ Item {
                 if (xhr.readyState !== XMLHttpRequest.DONE) return;
                 const text = xhr.responseText || "";
                 if (xhr.status === 200 && text.indexOf("BEGIN:VCALENDAR") >= 0) cache[s.url] = text;
-                else failed[s.url] = xhr.status === 200 ? i18n("Not an iCalendar file")
-                                   : xhr.status > 0 ? i18n("Server answered %1", xhr.status) : i18n("No connection");
+                else failed[s.url] = xhr.status === 200 ? Lang.i18n("Not an iCalendar file")
+                                   : xhr.status > 0 ? Lang.i18n("Server answered %1", xhr.status) : Lang.i18n("No connection");
                 done();
             };
             xhr.open("GET", s.url);

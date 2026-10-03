@@ -125,10 +125,10 @@ Item {
 
         RowLayout {
             spacing: 2
-            Chip { text: i18n("Timer"); current: tools.section === 0; tint: tools.theme.orange; onClicked: tools.section = 0 }
-            Chip { text: i18n("Stopwatch"); current: tools.section === 1; onClicked: tools.section = 1 }
-            Chip { text: i18n("Pomodoro"); current: tools.section === 2; tint: tools.theme.red; onClicked: tools.section = 2 }
-            Chip { text: i18n("Alarm"); current: tools.section === 3; tint: tools.theme.orange; onClicked: tools.section = 3 }
+            Chip { text: Lang.i18n("Timer"); current: tools.section === 0; tint: tools.theme.orange; onClicked: tools.section = 0 }
+            Chip { text: Lang.i18n("Stopwatch"); current: tools.section === 1; onClicked: tools.section = 1 }
+            Chip { text: Lang.i18n("Pomodoro"); current: tools.section === 2; tint: tools.theme.red; onClicked: tools.section = 2 }
+            Chip { text: Lang.i18n("Alarm"); current: tools.section === 3; tint: tools.theme.orange; onClicked: tools.section = 3 }
         }
 
         StackLayout {
@@ -146,7 +146,7 @@ Item {
                         model: [1, 5, 10, 25]
                         delegate: RoundButton {
                             required property int modelData
-                            text: i18nc("@action minutes, short", "%1m", modelData)
+                            text: Lang.i18nc("@action minutes, short", "%1m", modelData)
                             tint: tools.theme.orange
                             onClicked: tools.timer.start(modelData * 60)
                         }
@@ -205,12 +205,12 @@ Item {
                     font.features: { "tnum": 1 }
                 }
                 RoundButton {
-                    text: tools.stopwatch.running ? i18n("Lap") : i18n("Reset")
+                    text: tools.stopwatch.running ? Lang.i18n("Lap") : Lang.i18n("Reset")
                     enabled: tools.stopwatch.running || tools.stopwatch.elapsed > 0
                     onClicked: tools.stopwatch.running ? tools.stopwatch.lap() : tools.stopwatch.reset()
                 }
                 RoundButton {
-                    text: tools.stopwatch.running ? i18n("Stop") : i18n("Start")
+                    text: tools.stopwatch.running ? Lang.i18n("Stop") : Lang.i18n("Start")
                     tint: tools.stopwatch.running ? tools.theme.red : tools.theme.live
                     fill: Qt.rgba(tint.r, tint.g, tint.b, 0.18)
                     onClicked: tools.stopwatch.running ? tools.stopwatch.stop() : tools.stopwatch.start()
@@ -223,7 +223,7 @@ Item {
                         delegate: Text {
                             required property int index
                             required property var modelData
-                            text: i18nc("@info lap number and time", "Lap %1  %2", tools.stopwatch.laps.length - index, TimeFormat.stopwatch(modelData))
+                            text: Lang.i18nc("@info lap number and time", "Lap %1  %2", tools.stopwatch.laps.length - index, TimeFormat.stopwatch(modelData))
                             color: tools.theme.subText
                             font.pointSize: tools.theme.fontSmall
                             font.features: { "tnum": 1 }
@@ -250,7 +250,7 @@ Item {
                 ColumnLayout {
                     spacing: 0
                     Text {
-                        text: tools.pomodoro.running ? tools.pomodoro.phaseName(tools.pomodoro.phase) : i18n("Pomodoro")
+                        text: tools.pomodoro.running ? tools.pomodoro.phaseName(tools.pomodoro.phase) : Lang.i18n("Pomodoro")
                         color: tools.theme.subText
                         font.pointSize: tools.theme.fontSmall
                     }
@@ -313,7 +313,7 @@ Item {
                     spacing: 2
                     Text {
                         Layout.alignment: Qt.AlignRight
-                        text: tools.alarm.armed ? i18n("Rings at %1", tools.alarm.alarmTime) : i18n("Off")
+                        text: tools.alarm.armed ? Lang.i18n("Rings at %1", tools.alarm.alarmTime) : Lang.i18n("Off")
                         color: tools.alarm.armed ? tools.theme.readable(tools.theme.orange, tools.theme.surface) : tools.theme.subText
                         font.pointSize: tools.theme.fontSmall
                     }
@@ -322,7 +322,7 @@ Item {
                         implicitWidth: 64
                         implicitHeight: 28
                         radius: 14
-                        text: tools.alarm.armed ? i18n("Clear") : i18n("Set")
+                        text: tools.alarm.armed ? Lang.i18n("Clear") : Lang.i18n("Set")
                         tint: tools.alarm.armed ? tools.theme.text : tools.theme.orange
                         onClicked: {
                             const two = n => (n < 10 ? "0" : "") + n;

@@ -40,11 +40,11 @@ Item {
         icon: "dot"
         pulse: true
         color: provider.theme.red
-        title: i18n("Screen recording")
+        title: Lang.i18n("Screen recording")
         subtitle: provider.apps.join(", ")
         trailingText: provider.format(provider.elapsed)
         actions: [
-            { icon: "window-new-symbolic", text: i18n("Switch to application"), trigger: () => provider.tasks.activate(provider.apps[0]) }
+            { icon: "window-new-symbolic", text: Lang.i18n("Switch to application"), trigger: () => provider.tasks.activate(provider.apps[0]) }
         ]
         onClicked: provider.tasks.activate(provider.apps[0])
         Component.onCompleted: provider.manager.register(this)

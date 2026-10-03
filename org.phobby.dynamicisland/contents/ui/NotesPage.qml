@@ -49,8 +49,8 @@ Item {
     function when(t: real): string {
         if (t <= 0) return "";
         const d = new Date(t), now = new Date();
-        if (d.toDateString() === now.toDateString()) return Qt.formatTime(d, Qt.locale().timeFormat(Locale.ShortFormat));
-        return d.toLocaleDateString(Qt.locale(), d.getFullYear() === now.getFullYear() ? "d MMM" : "d MMM yyyy");
+        if (d.toDateString() === now.toDateString()) return Qt.formatTime(d, Lang.locale.timeFormat(Locale.ShortFormat));
+        return d.toLocaleDateString(Lang.locale, d.getFullYear() === now.getFullYear() ? "d MMM" : "d MMM yyyy");
     }
     function say(text: string, error: bool): void {
         status = text; statusIsError = error;
@@ -70,7 +70,7 @@ Item {
             adding = false;
             if (!result.ok) { say(result.error, true); return; }
             topField.text = "";
-            say(i18n("Saved to %1", notes.types[result.note.type].name), false);
+            say(Lang.i18n("Saved to %1", notes.types[result.note.type].name), false);
         });
     }
     property bool adding: false
@@ -104,13 +104,13 @@ Item {
         const resume = () => {
             if (draft !== undefined && !readOnly) {
                 show(draft);
-                saveError = i18n("Not saved yet.");
+                saveError = Lang.i18n("Not saved yet.");
             }
             if (!readOnly) Qt.callLater(() => { editor.forceActiveFocus(); editor.cursorPosition = editor.length; });
         };
         if (n && n.type === "betternotes" && !n.loaded) {
             loading = true;
-            titleField.text = n.title; editor.text = i18n("Loading…"); savedText = "";
+            titleField.text = n.title; editor.text = Lang.i18n("Loading…"); savedText = "";
             notes.loadText(n, (error, text, rich) => {
                 // The list may have been refreshed meanwhile: the same note is another object then.
                 if (!page.current || page.current.key !== n.key) return;
@@ -136,7 +136,7 @@ Item {
         const text = composed();
         if (readOnly) { if (then) then(); return; }
         if (text === savedText || (current === null && text.trim().length === 0)) { if (then) then(); return; }
-        if (titled && titleField.text.trim().length === 0) { saveError = i18n("Give the note a title."); return; }
+        if (titled && titleField.text.trim().length === 0) { saveError = Lang.i18n("Give the note a title."); return; }
         autoSave.stop();
         saving = true; saveError = "";
         const finished = result => {
@@ -179,7 +179,7 @@ Item {
         view = "sources"; typing = false;
         detect();
     }
-    readonly property string localOnly: i18n("BetterNotes keeps your notes on this computer; they do not appear on other devices.")
+    readonly property string localOnly: Lang.i18n("BetterNotes keeps your notes on this computer; they do not appear on other devices.")
     function showForm(type: string): void {
         // BetterNotes: no account, so no form. Installed → its notes; otherwise how to install it.
         if (type === "betternotes") {
@@ -200,7 +200,7 @@ Item {
         if (formBusy) return;
         const a = firstField.text.trim(), b = secondField.text.trim();
         const fields = formType === "joplin" ? { token: a } : formType === "simplenote" ? { user: a, password: secondField.text } : { server: a, token: b };
-        if (a.length === 0 || (formType !== "joplin" && b.length === 0)) { formError = i18n("Fill in the fields first."); return; }
+        if (a.length === 0 || (formType !== "joplin" && b.length === 0)) { formError = Lang.i18n("Fill in the fields first."); return; }
         formBusy = true; formError = "";
         notes.connect(formType, fields, result => {
             formBusy = false;
@@ -210,9 +210,9 @@ Item {
         });
     }
     readonly property var guidance: ({
-        joplin: i18n("1. Open Joplin on this computer.<br>2. Tools → Options → Web Clipper.<br>3. Press \"Enable Web Clipper Service\".<br>4. Copy the token under \"Advanced options\" and paste it below."),
-        simplenote: i18n("Sign in with the email and password of your Simplenote account. The password is only used to sign in; the island keeps the access token it gets back, in KDE Wallet."),
-        memos: i18n("1. Open your Memos server in a browser.<br>2. Settings → My Account → Access Tokens → Create.<br>3. Paste the server address and the token below.")
+        joplin: Lang.i18n("1. Open Joplin on this computer.<br>2. Tools → Options → Web Clipper.<br>3. Press \"Enable Web Clipper Service\".<br>4. Copy the token under \"Advanced options\" and paste it below."),
+        simplenote: Lang.i18n("Sign in with the email and password of your Simplenote account. The password is only used to sign in; the island keeps the access token it gets back, in KDE Wallet."),
+        memos: Lang.i18n("1. Open your Memos server in a browser.<br>2. Settings → My Account → Access Tokens → Create.<br>3. Paste the server address and the token below.")
     })
 
     Connections {
@@ -258,7 +258,7 @@ Item {
                 theme: page.theme
                 Layout.fillWidth: true
                 implicitHeight: 26
-                placeholder: page.searching ? i18n("Search notes…") : i18n("Quick note…")
+                placeholder: page.searching ? Lang.i18n("Search notes…") : Lang.i18n("Quick note…")
                 enabled: !page.adding
                 onEdited: { if (page.searching) page.query = text; }
                 onAccepted: { if (!page.searching) page.addQuick(); }
@@ -287,7 +287,7 @@ Item {
             Layout.fillWidth: true
             readonly property var failed: page.notes.sources.filter(s => page.notes.errors[s.id] !== undefined)
             readonly property string message: page.status.length > 0 ? page.status
-                : failed.length > 0 ? i18n("%1: %2", failed[0].name, page.notes.errors[failed[0].id]) : ""
+                : failed.length > 0 ? Lang.i18n("%1: %2", failed[0].name, page.notes.errors[failed[0].id]) : ""
             visible: message.length > 0
             text: message
             color: page.status.length > 0 && !page.statusIsError ? page.theme.subText : page.theme.readable(page.theme.warning, page.theme.surface)
@@ -323,7 +323,7 @@ Item {
                         spacing: 0
                         Text {
                             Layout.fillWidth: true
-                            text: row.modelData.title || i18n("Untitled note")
+                            text: row.modelData.title || Lang.i18n("Untitled note")
                             color: page.theme.text
                             font.pointSize: page.theme.fontSmall
                             font.weight: Font.DemiBold
@@ -334,8 +334,8 @@ Item {
                             // BetterNotes: tags and priority; others: the text after the title.
                             readonly property string rest: row.modelData.type === "betternotes"
                                 ? (row.modelData.tags || []).map(t => "#" + t).concat(row.modelData.priority && row.modelData.priority !== "Normal" ? [row.modelData.priority] : [])
-                                                              .concat(row.modelData.locked ? [i18n("Locked")] : [])
-                                                              .concat(page.notes.drafts[row.modelData.key] !== undefined ? [i18n("Not saved")] : []).join(" · ")
+                                                              .concat(row.modelData.locked ? [Lang.i18n("Locked")] : [])
+                                                              .concat(page.notes.drafts[row.modelData.key] !== undefined ? [Lang.i18n("Not saved")] : []).join(" · ")
                                 : row.modelData.text.replace(/^\s*\S[^\n]*\n?/, "").replace(/\s+/g, " ").trim()
                             visible: rest.length > 0
                             text: rest.slice(0, 120)
@@ -368,7 +368,7 @@ Item {
                 width: parent.width
                 visible: list.count === 0
                 horizontalAlignment: Text.AlignHCenter
-                text: !page.notes.loaded ? i18n("Loading notes…") : page.searching && page.query.trim().length > 0 ? i18n("No note matches") : i18n("No notes yet")
+                text: !page.notes.loaded ? Lang.i18n("Loading notes…") : page.searching && page.query.trim().length > 0 ? Lang.i18n("No note matches") : Lang.i18n("No notes yet")
                 color: page.theme.subText
                 font.pointSize: page.theme.fontSmall
             }
@@ -382,9 +382,9 @@ Item {
         spacing: 6
         Text {
             Layout.fillWidth: true
-            text: !page.detected ? i18n("Looking for notes apps…")
-                : page.found.joplin || page.found.simplenote || page.found.betternotes ? i18n("Notes apps found on this computer:")
-                : i18n("No notes app was found. Connect one:")
+            text: !page.detected ? Lang.i18n("Looking for notes apps…")
+                : page.found.joplin || page.found.simplenote || page.found.betternotes ? Lang.i18n("Notes apps found on this computer:")
+                : Lang.i18n("No notes app was found. Connect one:")
             color: page.theme.text
             font.pointSize: page.theme.fontSmall
             font.weight: Font.DemiBold
@@ -429,10 +429,10 @@ Item {
                         Text {
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
-                            text: card.modelData === "joplin" ? (page.found.joplinRunning ? i18n("Found, running · Connect") : card.here ? i18n("Found · Connect") : i18n("Desktop app"))
-                                : card.modelData === "simplenote" ? (card.here ? i18n("Found · Sign in") : i18n("Account"))
-                                : card.modelData === "betternotes" ? (card.here ? i18n("On this device, no account") : page.detected ? i18n("Not found · Install") : i18n("On this device"))
-                                : i18n("Your own server")
+                            text: card.modelData === "joplin" ? (page.found.joplinRunning ? Lang.i18n("Found, running · Connect") : card.here ? Lang.i18n("Found · Connect") : Lang.i18n("Desktop app"))
+                                : card.modelData === "simplenote" ? (card.here ? Lang.i18n("Found · Sign in") : Lang.i18n("Account"))
+                                : card.modelData === "betternotes" ? (card.here ? Lang.i18n("On this device, no account") : page.detected ? Lang.i18n("Not found · Install") : Lang.i18n("On this device"))
+                                : Lang.i18n("Your own server")
                             color: card.here ? page.theme.readable(page.theme.live, page.theme.surface) : page.theme.subText
                             font.pointSize: page.theme.fontSmall * 0.85
                             wrapMode: Text.Wrap
@@ -463,7 +463,7 @@ Item {
             }
             Text {
                 Layout.fillWidth: true
-                text: i18n("Notes apps")
+                text: Lang.i18n("Notes apps")
                 color: page.theme.text
                 font.pointSize: page.theme.fontSmall
                 font.weight: Font.DemiBold
@@ -491,7 +491,7 @@ Item {
                         Text {
                             Layout.fillWidth: true
                             text: sourceRow.modelData.name + (sourceRow.modelData.user ? " · " + sourceRow.modelData.user : sourceRow.modelData.server ? " · " + sourceRow.modelData.server
-                                                               : sourceRow.modelData.type === "betternotes" ? " · " + i18n("this computer only") : "")
+                                                               : sourceRow.modelData.type === "betternotes" ? " · " + Lang.i18n("this computer only") : "")
                             color: page.theme.text
                             font.pointSize: page.theme.fontSmall
                             elide: Text.ElideMiddle
@@ -501,13 +501,13 @@ Item {
                             theme: page.theme
                             implicitHeight: 20
                             primary: sourceRow.isDefault
-                            text: sourceRow.isDefault ? i18n("Default") : i18n("Make default")
+                            text: sourceRow.isDefault ? Lang.i18n("Default") : Lang.i18n("Make default")
                             onClicked: page.defaultPicked(sourceRow.modelData.id)
                         }
                         PillButton {
                             theme: page.theme
                             implicitHeight: 20
-                            text: sourceRow.modelData.type === "betternotes" ? i18n("Hide") : i18n("Disconnect")
+                            text: sourceRow.modelData.type === "betternotes" ? Lang.i18n("Hide") : Lang.i18n("Disconnect")
                             onClicked: page.notes.disconnect(sourceRow.modelData.id)
                         }
                     }
@@ -515,7 +515,7 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     Layout.topMargin: 2
-                    text: i18n("Connect another:")
+                    text: Lang.i18n("Connect another:")
                     color: page.theme.subText
                     font.pointSize: page.theme.fontSmall * 0.9
                 }
@@ -575,7 +575,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 3
                 secret: page.formType === "joplin"
-                placeholder: page.formType === "joplin" ? i18n("API token") : page.formType === "simplenote" ? i18n("Email") : i18n("Server address (https://…)")
+                placeholder: page.formType === "joplin" ? Lang.i18n("API token") : page.formType === "simplenote" ? Lang.i18n("Email") : Lang.i18n("Server address (https://…)")
                 enabled: !page.formBusy
                 onEdited: page.formError = ""
                 onAccepted: { if (page.formType === "joplin") page.submitForm(); else secondField.input.forceActiveFocus(); }
@@ -588,7 +588,7 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 2
                 secret: true
-                placeholder: page.formType === "simplenote" ? i18n("Password") : i18n("Access token")
+                placeholder: page.formType === "simplenote" ? Lang.i18n("Password") : Lang.i18n("Access token")
                 enabled: !page.formBusy
                 onEdited: page.formError = ""
                 onAccepted: page.submitForm()
@@ -598,7 +598,7 @@ Item {
                 theme: page.theme
                 primary: true
                 enabled: !page.formBusy
-                text: page.formBusy ? i18n("Connecting…") : i18n("Connect")
+                text: page.formBusy ? Lang.i18n("Connecting…") : Lang.i18n("Connect")
                 onClicked: page.submitForm()
             }
         }
@@ -623,7 +623,7 @@ Item {
             SourceBadge { type: "betternotes" }
             Text {
                 Layout.fillWidth: true
-                text: i18n("BetterNotes was not found")
+                text: Lang.i18n("BetterNotes was not found")
                 color: page.theme.text
                 font.pointSize: page.theme.fontSmall
                 font.weight: Font.DemiBold
@@ -633,7 +633,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             wrapMode: Text.Wrap
-            text: i18n("A notes app without an account. To install it, run this command in your own terminal, then come back and choose BetterNotes again.") + " " + page.localOnly
+            text: Lang.i18n("A notes app without an account. To install it, run this command in your own terminal, then come back and choose BetterNotes again.") + " " + page.localOnly
             color: page.theme.text
             font.pointSize: page.theme.fontSmall * 0.9
             elide: Text.ElideRight
@@ -665,13 +665,13 @@ Item {
             PillButton {
                 theme: page.theme
                 primary: true
-                text: copied.running ? i18n("Copied") : i18n("Copy")
+                text: copied.running ? Lang.i18n("Copied") : Lang.i18n("Copy")
                 onClicked: { installCommand.selectAll(); installCommand.copy(); installCommand.deselect(); copied.restart(); }
                 Timer { id: copied; interval: 2000 }
             }
             PillButton {
                 theme: page.theme
-                text: i18n("Check again")
+                text: Lang.i18n("Check again")
                 onClicked: page.notes.detect(result => { page.found = result; page.detected = true; if (result.betternotes) page.showForm("betternotes"); })
             }
         }
@@ -704,7 +704,7 @@ Item {
                 theme: page.theme
                 Layout.fillWidth: true
                 implicitHeight: 22
-                placeholder: i18n("Title")
+                placeholder: Lang.i18n("Title")
                 onEdited: { if (!page.loading) autoSave.restart(); }
                 onAccepted: { editor.forceActiveFocus(); editor.cursorPosition = editor.length; }
                 onEscaped: page.closeNote()
@@ -719,14 +719,14 @@ Item {
                 text: page.saveError.length > 0 && !page.titled ? page.saveError
                     : page.readOnly ? page.current.title
                     : page.current ? page.notes.types[page.current.type].name
-                    : page.notes.defaultSource ? i18n("New note in %1", page.notes.defaultSource.name) : ""
+                    : page.notes.defaultSource ? Lang.i18n("New note in %1", page.notes.defaultSource.name) : ""
                 color: page.saveError.length > 0 ? page.theme.readable(page.theme.danger, page.theme.surface) : page.theme.subText
                 font.pointSize: page.theme.fontSmall * 0.9
                 elide: Text.ElideRight
             }
             Text {
                 visible: !page.readOnly
-                text: page.loading ? "" : page.saving ? i18n("Saving…") : page.dirty ? i18n("Edited") : page.current ? i18n("Saved") : ""
+                text: page.loading ? "" : page.saving ? Lang.i18n("Saving…") : page.dirty ? Lang.i18n("Edited") : page.current ? Lang.i18n("Saved") : ""
                 color: page.theme.subText
                 font.pointSize: page.theme.fontSmall * 0.9
             }
@@ -735,7 +735,7 @@ Item {
                 visible: page.readOnly
                 theme: page.theme
                 implicitHeight: 20
-                text: i18n("Edit in BetterNotes")
+                text: Lang.i18n("Edit in BetterNotes")
                 onClicked: page.notes.openBetterNotes()
             }
         }
@@ -766,7 +766,7 @@ Item {
                     theme: page.theme
                     implicitHeight: 20
                     primary: true
-                    text: page.saving ? i18n("Saving…") : i18n("Try again")
+                    text: page.saving ? Lang.i18n("Saving…") : Lang.i18n("Try again")
                     onClicked: page.saveNote(null)
                 }
             }

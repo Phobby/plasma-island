@@ -36,7 +36,7 @@ Item {
                 t.icon = "download";
                 t.source = info.app;
                 t.fileName = Fmt.baseName(dst) || Fmt.baseName(Fmt.field(info, "source"));
-                t.detail = i18n("Downloading");
+                t.detail = Lang.i18n("Downloading");
                 t.openUrl = dst ? String(dst).replace(/\/[^\/]*$/, "") : "";
             }
         }
@@ -55,14 +55,14 @@ Item {
             if (!provider.enabled || provider.watched[id]) return;
             // Browser Integration already reports this one as a job?
             if (provider.hub.transfers.some(t => t.kind === "download" && t.fileName === fileName)) return;
-            const name = application ? application.charAt(0).toUpperCase() + application.slice(1) : i18n("Browser");
+            const name = application ? application.charAt(0).toUpperCase() + application.slice(1) : Lang.i18n("Browser");
             const t = transferComponent.createObject(provider, {
                 transferId: "dl-" + id,
                 kind: "download",
                 icon: "download",
                 source: name,
                 fileName: fileName,
-                detail: i18n("Downloading")
+                detail: Lang.i18n("Downloading")
             });
             provider.watched[id] = t;
             provider.hub.add(t);

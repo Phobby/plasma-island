@@ -6,6 +6,7 @@
 */
 import QtQuick
 import org.kde.plasma.workspace.calendar as PlasmaCalendar
+import ".."
 
 Item {
     id: calendar
@@ -33,7 +34,7 @@ Item {
         id: monthCalendar
         days: 7
         weeks: 6
-        firstDayOfWeek: Qt.locale().firstDayOfWeek
+        firstDayOfWeek: Lang.locale.firstDayOfWeek
         today: new Date()
     }
 

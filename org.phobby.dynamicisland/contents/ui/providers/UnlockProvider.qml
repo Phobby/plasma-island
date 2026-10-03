@@ -22,7 +22,7 @@ Item {
                 key: "unlock",
                 icon: "object-unlocked-symbolic",
                 color: provider.theme.live,
-                title: i18n("Unlocked"),
+                title: Lang.i18n("Unlocked"),
                 duration: 1600
             });
         }

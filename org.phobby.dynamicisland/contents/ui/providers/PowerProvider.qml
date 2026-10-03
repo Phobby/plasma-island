@@ -28,7 +28,7 @@ Item {
             icon: charging ? "battery-100-charging-symbolic" : "battery-060-symbolic",
             color: color,
             title: title,
-            trailing: { type: "battery", value: percent / 100, charging: charging, color: color, text: percent + "%" }
+            trailing: { type: "battery", value: percent / 100, charging: charging, color: color, text: Lang.percent(percent) }
         }, extra || {}));
     }
 
@@ -37,14 +37,14 @@ Item {
         enabled: provider.enabled && provider.hasBattery
         function onBatteryPluggedInChanged() {
             if (provider.backend.batteryPluggedIn) {
-                provider.batteryEvent(i18n("Charging"), provider.theme.live, true);
+                provider.batteryEvent(Lang.i18n("Charging"), provider.theme.live, true);
                 provider.lastWarned = 101;
             } else {
-                provider.batteryEvent(i18n("Charger disconnected"), provider.percent <= provider.lowThreshold ? provider.theme.red : provider.theme.text, false);
+                provider.batteryEvent(Lang.i18n("Charger disconnected"), provider.percent <= provider.lowThreshold ? provider.theme.red : provider.theme.text, false);
             }
         }
         function onBatteryFullChanged() {
-            if (provider.backend.batteryFull) provider.batteryEvent(i18n("Fully charged"), provider.theme.live, false);
+            if (provider.backend.batteryFull) provider.batteryEvent(Lang.i18n("Fully charged"), provider.theme.live, false);
         }
         function onBatteryPercentChanged() {
             const p = provider.percent;
@@ -52,8 +52,8 @@ Item {
             for (const t of [provider.criticalThreshold, provider.lowThreshold]) {
                 if (p <= t && provider.lastWarned > t) {
                     provider.lastWarned = t;
-                    provider.batteryEvent(i18n("Low battery"), provider.theme.red, false,
-                                          { icon: "battery-010-symbolic", pulse: true, subtitle: i18n("%1% remaining", p), duration: 5000 });
+                    provider.batteryEvent(Lang.i18n("Low battery"), provider.theme.red, false,
+                                          { icon: "battery-010-symbolic", pulse: true, subtitle: Lang.i18n("%1% remaining", p), duration: 5000 });
                     return;
                 }
             }
@@ -71,7 +71,7 @@ Item {
                 icon: provider.power.iconFor(p),
                 color: p === "performance" ? provider.theme.red : p === "power-saver" ? provider.theme.live : provider.theme.blue,
                 title: provider.power.nameFor(p),
-                subtitle: i18n("Power profile")
+                subtitle: Lang.i18n("Power profile")
             });
         }
     }

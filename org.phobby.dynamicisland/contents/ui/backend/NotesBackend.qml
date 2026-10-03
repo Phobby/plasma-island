@@ -35,6 +35,7 @@
     fails or the island closes; it lives as long as the shell.
 */
 import QtQuick
+import ".."
 
 QtObject {
     id: backend
@@ -135,10 +136,10 @@ QtObject {
     // rich = it has formatting that plain text would lose, so it is only shown here.
     function loadText(item: var, done: var): void {
         const command = betterNotesCommand();
-        if (!item || item.type !== "betternotes" || command.length === 0) { done(i18n("BetterNotes was not found."), ""); return; }
-        if (item.locked) { done("", i18n("This note is locked. Open it in BetterNotes to read it.")); return; }
+        if (!item || item.type !== "betternotes" || command.length === 0) { done(Lang.i18n("BetterNotes was not found."), ""); return; }
+        if (item.locked) { done("", Lang.i18n("This note is locked. Open it in BetterNotes to read it.")); return; }
         local.run(command, ["show", item.id], (code, out, err) => {
-            if (code !== 0) { done((err || out).trim() || i18n("BetterNotes could not show the note."), ""); return; }
+            if (code !== 0) { done((err || out).trim() || Lang.i18n("BetterNotes could not show the note."), ""); return; }
             const at = out.indexOf("--- Content ---\n");
             let text = at >= 0 ? out.slice(at + 16).replace(/\n$/, "") : out;
             // Rich text is shown as plain text.
@@ -153,7 +154,7 @@ QtObject {
     // as one argument instead (no shell is involved, line breaks stay as they are).
     function runBetterNotes(args: var, input: var, done: var): void {
         const command = betterNotesCommand();
-        if (command.length === 0) { done(-1, "", i18n("BetterNotes was not found.")); return; }
+        if (command.length === 0) { done(-1, "", Lang.i18n("BetterNotes was not found.")); return; }
         if (input === null || input === undefined) local.run(command, args, done);
         else if (typeof local.runWithInput === "function") local.runWithInput(command, args, input, done);
         else {
@@ -165,9 +166,9 @@ QtObject {
     function betterNotesError(code: int, out: string, err: string, fallback: string): string {
         const text = ((err || "") + "\n" + (out || "")).trim();
         if (/unknown variant `?UpdateNote/.test(text))
-            return i18n("The BetterNotes that is running is too old to save from here. Quit it and start it again (0.1.13 or newer).");
-        if (/does not exist/.test(text)) return i18n("This note no longer exists in BetterNotes.");
-        if (code === -1 && text.length === 0) return i18n("BetterNotes did not answer.");
+            return Lang.i18n("The BetterNotes that is running is too old to save from here. Quit it and start it again (0.1.13 or newer).");
+        if (/does not exist/.test(text)) return Lang.i18n("This note no longer exists in BetterNotes.");
+        if (code === -1 && text.length === 0) return Lang.i18n("BetterNotes did not answer.");
         return text.replace(/^(Error|BetterNotes):\s*/, "").split("\n")[0] || fallback;
     }
     // Opens BetterNotes itself (it has no command to open one note).
@@ -240,9 +241,9 @@ QtObject {
                 return i < 0 ? { title: text.trim(), body: "" } : { title: text.slice(0, i).trim(), body: text.slice(i + 1) };
             },
             join: item => String(item.title || "") + (item.body ? "\n" + item.body : ""),
-            problem: status => status === 0 ? i18n("Joplin is not running, or its Web Clipper service is turned off.")
-                             : status === 403 || status === 401 ? i18n("Joplin did not accept the token.")
-                             : i18n("Joplin answered %1.", status),
+            problem: status => status === 0 ? Lang.i18n("Joplin is not running, or its Web Clipper service is turned off.")
+                             : status === 403 || status === 401 ? Lang.i18n("Joplin did not accept the token.")
+                             : Lang.i18n("Joplin answered %1.", status),
             verify: function (fields, done) {
                 const base = (fields.server || backend.joplinServer).replace(/\/+$/, ""), self = this;
                 backend.request("GET", base + "/ping", {}, "", (status, text) => {
@@ -282,15 +283,15 @@ QtObject {
             }
         },
         simplenote: {
-            problem: status => status === 0 ? i18n("No connection.")
-                             : status === 401 ? i18n("The Simplenote sign-in is no longer valid; connect again.")
-                             : i18n("Simplenote answered %1.", status),
+            problem: status => status === 0 ? Lang.i18n("No connection.")
+                             : status === 401 ? Lang.i18n("The Simplenote sign-in is no longer valid; connect again.")
+                             : Lang.i18n("Simplenote answered %1.", status),
             verify: function (fields, done) {
                 backend.request("POST", backend.simperiumAuth + "/authorize/", { "X-Simperium-API-Key": backend.simperiumKey, "Content-Type": "application/json" },
                               JSON.stringify({ username: fields.user, password: fields.password }), (status, text) => {
                     const token = backend.parse(text).access_token;
                     if (status === 200 && token) done("", String(token), { server: "", user: fields.user });
-                    else done(status === 401 || status === 400 ? i18n("The email or password was not accepted.") : status === 0 ? i18n("No connection.") : i18n("Simplenote answered %1.", status));
+                    else done(status === 401 || status === 400 ? Lang.i18n("The email or password was not accepted.") : status === 0 ? Lang.i18n("No connection.") : Lang.i18n("Simplenote answered %1.", status));
                 });
             },
             list: function (source, token, done) {
@@ -329,15 +330,15 @@ QtObject {
         },
         memos: {
             base: source => source.server.replace(/\/+$/, ""),
-            problem: status => status === 0 ? i18n("The Memos server could not be reached.")
-                             : status === 401 || status === 403 ? i18n("Memos did not accept the access token.")
-                             : i18n("Memos answered %1.", status),
+            problem: status => status === 0 ? Lang.i18n("The Memos server could not be reached.")
+                             : status === 401 || status === 403 ? Lang.i18n("Memos did not accept the access token.")
+                             : Lang.i18n("Memos answered %1.", status),
             from: (source, memo) => backend.note(source, String(memo.name), String(memo.content || ""), Date.parse(memo.updateTime || memo.createTime || "") || 0, null),
             verify: function (fields, done) {
                 const server = String(fields.server || "").trim().replace(/\/+$/, ""), self = this;
-                if (!/^https?:\/\/[^\s]+$/i.test(server)) { done(i18n("Enter the address of your Memos server, starting with http:// or https://.")); return; }
+                if (!/^https?:\/\/[^\s]+$/i.test(server)) { done(Lang.i18n("Enter the address of your Memos server, starting with http:// or https://.")); return; }
                 backend.request("GET", server + "/api/v1/memos?pageSize=1", { "Authorization": "Bearer " + fields.token }, "", (status, text) => {
-                    if (status !== 200 || backend.parse(text).memos === undefined) done(status === 200 ? i18n("This address does not look like a Memos server.") : self.problem(status));
+                    if (status !== 200 || backend.parse(text).memos === undefined) done(status === 200 ? Lang.i18n("This address does not look like a Memos server.") : self.problem(status));
                     else done("", fields.token, { server: server, user: "" });
                 });
             },
@@ -370,13 +371,13 @@ QtObject {
     readonly property var localDrivers: ({
         betternotes: {
             verify: function (fields, done) {
-                if (backend.betterNotesCommand().length === 0) done(i18n("BetterNotes was not found on this computer.")); else done("", "local", { server: "", user: "" });
+                if (backend.betterNotesCommand().length === 0) done(Lang.i18n("BetterNotes was not found on this computer.")); else done("", "local", { server: "", user: "" });
             },
             list: function (source, token, done) {
                 const command = backend.betterNotesCommand();
                 if (command.length === 0) { done("missing", []); return; }
                 backend.local.run(command, ["list"], (code, out, err) => {
-                    if (code !== 0) { done((err || out).trim() || i18n("BetterNotes could not list its notes."), []); return; }
+                    if (code !== 0) { done((err || out).trim() || Lang.i18n("BetterNotes could not list its notes."), []); return; }
                     // What the command does not print: change date, lock, next reminder (read-only).
                     const db = backend.betterNotesData + "/notes.sqlite3", extra = {};
                     let rows = backend.local.sqliteQuery(db, "SELECT n.id AS id, n.updated_at AS updated, n.is_locked AS locked, "
@@ -406,7 +407,7 @@ QtObject {
                 const title = (i < 0 ? text : text.slice(0, i)).trim(), content = i < 0 ? "" : text.slice(i + 1);
                 const args = ["new", title].concat(content.length > 0 ? ["--body", "-"] : []).concat(["--id-only", "--no-open"]);
                 backend.runBetterNotes(args, content.length > 0 ? content : null, (code, out, err) => {
-                    if (code !== 0) { done(backend.betterNotesError(code, out, err, i18n("BetterNotes could not create the note."))); return; }
+                    if (code !== 0) { done(backend.betterNotesError(code, out, err, Lang.i18n("BetterNotes could not create the note."))); return; }
                     const made = item => {
                         item.title = title; item.text = title + "\n" + content;
                         item.readOnly = false; item.rich = false; item.priority = "Normal"; item.tags = []; item.locked = false; item.reminder = 0; item.loaded = true;
@@ -418,7 +419,7 @@ QtObject {
                     // No id printed: the newest note with this title.
                     backend.local.run(backend.betterNotesCommand(), ["list"], (code2, out2) => {
                         const rows = code2 === 0 ? backend.parseBetterNotesList(out2).filter(r => r.title === title) : [];
-                        if (rows.length === 0) { done(i18n("BetterNotes created the note but did not say which one; it appears with the next refresh.")); return; }
+                        if (rows.length === 0) { done(Lang.i18n("BetterNotes created the note but did not say which one; it appears with the next refresh.")); return; }
                         const id = rows.map(r => Number(r.id)).reduce((a, b) => Math.max(a, b));
                         made(backend.note(source, String(id), title, Date.now(), null));
                     });
@@ -440,7 +441,7 @@ QtObject {
                 };
                 if (args.length === 2) { saved(); return; }
                 backend.runBetterNotes(args, args.indexOf("-") >= 0 ? content : null, (code, out, err) => {
-                    if (code !== 0) { done(backend.betterNotesError(code, out, err, i18n("BetterNotes could not save the note."))); return; }
+                    if (code !== 0) { done(backend.betterNotesError(code, out, err, Lang.i18n("BetterNotes could not save the note."))); return; }
                     saved();
                 });
             }
@@ -519,7 +520,7 @@ QtObject {
                 // Uninstalled: the source goes away, its card says "Not found" again.
                 if (error === "missing") { Qt.callLater(() => backend.disconnect(s.id)); finish("", []); } else finish(error, found);
             });
-            else if (!token) finish(walletReady ? i18n("Not signed in; connect again.") : i18n("The sign-in is only kept until a restart; connect again."), []);
+            else if (!token) finish(walletReady ? Lang.i18n("Not signed in; connect again.") : Lang.i18n("The sign-in is only kept until a restart; connect again."), []);
             else drivers[s.type].list(s, token, finish);
         }
     }
@@ -551,7 +552,7 @@ QtObject {
     // done({ ok, note, error }). Text that could not be saved is kept in `drafts`.
     function create(text: string, sourceId: string, done: var): void {
         const s = sources.find(x => x.id === sourceId) || defaultSource;
-        if (!s || (!secrets[s.id] && !types[s.type].local)) { done({ ok: false, note: null, error: i18n("Connect a notes app first.") }); return; }
+        if (!s || (!secrets[s.id] && !types[s.type].local)) { done({ ok: false, note: null, error: Lang.i18n("Connect a notes app first.") }); return; }
         const key = "new:" + s.id;
         driver(s.type).create(s, secrets[s.id] || "local", text, (error, item) => {
             if (error) { setDraft(key, text); done({ ok: false, note: null, error: error }); return; }
@@ -562,7 +563,7 @@ QtObject {
     }
     function save(old: var, text: string, done: var): void {
         const s = sources.find(x => x.id === old.source);
-        if (!s || (!secrets[s.id] && !types[s.type].local)) { setDraft(old.key, text); done({ ok: false, note: null, error: i18n("This notes app is no longer connected.") }); return; }
+        if (!s || (!secrets[s.id] && !types[s.type].local)) { setDraft(old.key, text); done({ ok: false, note: null, error: Lang.i18n("This notes app is no longer connected.") }); return; }
         driver(s.type).save(s, secrets[s.id] || "local", old, text, (error, item) => {
             if (error) { setDraft(old.key, text); done({ ok: false, note: null, error: error }); return; }
             if (drafts[old.key] === text) setDraft(old.key, null);

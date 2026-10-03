@@ -23,7 +23,7 @@ Item {
             iconName: vol.backend.volumeIcon
             color: vol.backend.muted ? vol.theme.subText : vol.theme.text
             hoverColor: vol.theme.faint
-            toolTip: vol.backend.muted ? i18n("Unmute") : i18n("Mute")
+            toolTip: vol.backend.muted ? Lang.i18n("Unmute") : Lang.i18n("Mute")
             onClicked: vol.backend.toggleMute()
         }
         GlassSlider {
@@ -36,7 +36,7 @@ Item {
         Text {
             Layout.preferredWidth: 36
             horizontalAlignment: Text.AlignRight
-            text: vol.backend.muted ? i18nc("@label volume muted", "Muted") : Math.round(vol.backend.volume * 100) + "%"
+            text: vol.backend.muted ? Lang.i18nc("@label volume muted", "Muted") : Lang.percent(Math.round(vol.backend.volume * 100))
             color: vol.theme.subText
             font.pointSize: vol.theme.fontSmall
             font.features: { "tnum": 1 }
