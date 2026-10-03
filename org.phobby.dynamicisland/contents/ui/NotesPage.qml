@@ -85,6 +85,18 @@ Item {
     readonly property bool readOnly: current !== null && current.readOnly === true
     // BetterNotes notes have a title of their own: edited in a field above the text.
     readonly property bool titled: current !== null && current.type === "betternotes"
+    // BetterNotes shows a note as a sticky window on the desktop (0.1.14+). What was
+    // typed here is saved first, so the window shows it. An older BetterNotes can
+    // only be started.
+    property bool opening: false
+    function showInWindow(): void {
+        if (!current || opening) return;
+        if (!notes.betterNotesOpens) { notes.openBetterNotes(); return; }
+        saveNote(() => {
+            opening = true;
+            notes.openNote(page.current, error => { opening = false; if (error.length > 0) page.saveError = error; });
+        });
+    }
     readonly property string draftKey: current ? current.key : "new:" + (notes.defaultSource ? notes.defaultSource.id : "")
     // What would be saved: "title\ncontent" for a titled note, the text otherwise.
     function composed(): string { return titled ? titleField.text.trim() + "\n" + editor.text : editor.text; }
@@ -730,13 +742,26 @@ Item {
                 color: page.theme.subText
                 font.pointSize: page.theme.fontSmall * 0.9
             }
+            // The note as its sticky window on the desktop.
+            IconButton {
+                visible: page.titled && !page.readOnly && page.notes.betterNotesOpens
+                enabled: !page.loading && !page.saving && !page.opening
+                iconName: "window-new-symbolic"
+                iconSize: 12
+                implicitWidth: 20; implicitHeight: 20
+                color: page.theme.text
+                hoverColor: page.theme.faint
+                toolTip: Lang.i18n("Open in a window")
+                onClicked: page.showInWindow()
+            }
             // BetterNotes has its own editor (rich text, images, checklists): edit there.
             PillButton {
                 visible: page.readOnly
+                enabled: !page.loading && !page.opening
                 theme: page.theme
                 implicitHeight: 20
                 text: Lang.i18n("Edit in BetterNotes")
-                onClicked: page.notes.openBetterNotes()
+                onClicked: page.showInWindow()
             }
         }
         // Saving failed: say why, keep the text, offer to try again.

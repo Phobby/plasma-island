@@ -490,7 +490,12 @@ local service answers) and offers the ones it finds first.
   - In the editor the title is a field above the plain-text content; both
     are saved 1.5 s after typing stops, when the field loses focus, or on
     Ctrl+S. Rich formatting is not rebuilt here: a note with rich text, and
-    a locked note, is only shown ("Edit in BetterNotes" starts the app).
+    a locked note, is only shown.
+  - "Edit in BetterNotes" there, and the window button beside the title of
+    any other note, show the note as its sticky window on the desktop with
+    `betternotes open <id>` (BetterNotes 0.1.14 or newer, started in the
+    background if it is not running; a locked note asks for its password).
+    With an older BetterNotes the button only starts the app.
   - If saving fails (an older BetterNotes is running, the note was deleted…)
     the reason is shown with "Try again"; the text stays in the editor and,
     until the shell restarts, also after leaving the note or closing the

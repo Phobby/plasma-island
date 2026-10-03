@@ -13,7 +13,8 @@
       betternotes BetterNotes on this computer: no account, nothing to sign in
                   to. Its `betternotes` command lists, shows, creates and
                   updates notes (`update <id> --title … --body -`, 0.1.13+,
-                  the content on standard input); the change date, lock state
+                  the content on standard input) and shows a note as its
+                  sticky window (`open <id>`, 0.1.14+); the change date, lock state
                   and next reminder come from its SQLite database, which is
                   only ever read. A note is edited here as plain text; locked
                   notes and notes with rich text stay read-only (BetterNotes
@@ -167,14 +168,37 @@ QtObject {
         const text = ((err || "") + "\n" + (out || "")).trim();
         if (/unknown variant `?UpdateNote/.test(text))
             return Lang.i18n("The BetterNotes that is running is too old to save from here. Quit it and start it again (0.1.13 or newer).");
+        if (/unknown variant `?OpenNote/.test(text))
+            return Lang.i18n("The BetterNotes that is running is too old to open a note from here. Quit it and start it again (0.1.14 or newer).");
+        if (/is in the trash/.test(text)) return Lang.i18n("This note is in the trash of BetterNotes. Restore it there first.");
         if (/does not exist/.test(text)) return Lang.i18n("This note no longer exists in BetterNotes.");
         if (code === -1 && text.length === 0) return Lang.i18n("BetterNotes did not answer.");
         return text.replace(/^(Error|BetterNotes):\s*/, "").split("\n")[0] || fallback;
     }
-    // Opens BetterNotes itself (it has no command to open one note).
+    // Opens BetterNotes itself (what an older one can do instead of openNote()).
     function openBetterNotes(): void {
         const command = betterNotesCommand();
         if (command.length > 0) core.startDetached(command, []);
+    }
+    // "BetterNotes 0.1.14", asked with every listing until it is new enough for
+    // `open <id>`: an older command takes `open` as a plain launch.
+    property string betterNotesVersion: ""
+    readonly property bool betterNotesOpens: {
+        const m = /(\d+)\.(\d+)\.(\d+)/.exec(betterNotesVersion);
+        return m !== null && (Number(m[1]) * 1e6 + Number(m[2]) * 1e3 + Number(m[3])) >= 1014;
+    }
+    function checkBetterNotes(): void {
+        const command = betterNotesCommand();
+        if (command.length === 0) { betterNotesVersion = ""; return; }
+        local.run(command, ["--version"], (code, out) => { betterNotesVersion = code === 0 ? out.trim() : ""; });
+    }
+    // Shows the note's sticky window, or brings it forward; BetterNotes is started in
+    // the background when it is not running, and a locked note asks for its password
+    // there. done(error)
+    function openNote(item: var, done: var): void {
+        runBetterNotes(["open", item.id], null, (code, out, err) => {
+            done(code === 0 ? "" : betterNotesError(code, out, err, Lang.i18n("BetterNotes could not open the note.")));
+        });
     }
 
     // ---- tokens --------------------------------------------------------------------
@@ -376,6 +400,7 @@ QtObject {
             list: function (source, token, done) {
                 const command = backend.betterNotesCommand();
                 if (command.length === 0) { done("missing", []); return; }
+                if (!backend.betterNotesOpens) backend.checkBetterNotes();
                 backend.local.run(command, ["list"], (code, out, err) => {
                     if (code !== 0) { done((err || out).trim() || Lang.i18n("BetterNotes could not list its notes."), []); return; }
                     // What the command does not print: change date, lock, next reminder (read-only).
