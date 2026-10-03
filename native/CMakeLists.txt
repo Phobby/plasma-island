@@ -3,7 +3,7 @@
 #   org.phobby.dynamicisland.core     PipeWire usage, D-Bus signals/calls,
 #                                     D-Bus API service, update counter,
 #                                     passwords in KWallet, OAuth loopback,
-#                                     local notes app helpers
+#                                     local notes app helpers, open popup menus
 cmake_minimum_required(VERSION 3.16)
 project(dynamicisland-effects LANGUAGES CXX)
 
@@ -55,10 +55,11 @@ qt_add_qml_module(dynamicislandcore
         core/secretstore.h core/secretstore.cpp
         core/loopbackserver.h core/loopbackserver.cpp
         core/localtools.h core/localtools.cpp
+        core/popupwatcher.h core/popupwatcher.cpp
     OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml/org/phobby/dynamicisland/core
 )
 target_include_directories(dynamicislandcore PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)
-target_link_libraries(dynamicislandcore PRIVATE Qt6::Core Qt6::Qml Qt6::DBus Qt6::Network Qt6::Sql)
+target_link_libraries(dynamicislandcore PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::DBus Qt6::Network Qt6::Sql)
 install(TARGETS dynamicislandcore DESTINATION ${QML_INSTALL_DIR}/org/phobby/dynamicisland/core)
 install(FILES
     ${CMAKE_BINARY_DIR}/qml/org/phobby/dynamicisland/core/qmldir

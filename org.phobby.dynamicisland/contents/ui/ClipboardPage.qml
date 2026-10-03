@@ -5,7 +5,8 @@
     from Plasma's clipboard history (ClipboardBackend). A click copies an
     entry again. Like Plasma's own clipboard popup: search, stars and the
     starred-only filter, edit a text, show it as a QR code, run the configured
-    actions, remove one entry, clear the history.
+    actions, remove one entry, clear the history. An image opens larger on
+    the page itself, without leaving the island.
 */
 import QtQuick
 import QtQuick.Layouts
@@ -17,14 +18,43 @@ Item {
     required property Theme theme
     required property var clipboard         // ClipboardBackend
 
-    // "list" | "edit" | "qr"
+    // "list" | "edit" | "qr" | "image"
     property string view: "list"
     property bool typing: false             // the search field has the keyboard
     property bool confirmClear: false
     property string status: ""
-    property var target: null               // the row being edited or shown as a QR code
+    property var target: null               // the row being edited, shown as a QR code or as an image
     readonly property bool interacting: visible && (typing || view === "edit")
+    // Klipper's actions menu ("open with…") is open: the island stays open
+    // until something is chosen in it or it is closed.
+    readonly property bool holdOpen: visible && awaitingMenu
+    property bool awaitingMenu: false
+    property bool menuSeen: false
+    function runAction(uuid: string): void {
+        menuSeen = false;
+        awaitingMenu = popups.item !== null;
+        clipboard.runAction(uuid);
+        if (awaitingMenu) menuWait.restart();
+    }
+    Loader {
+        id: popups
+        source: "PopupBridge.qml"
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old to keep the island open over clipboard menus; run install.sh again")
+    }
+    Binding { target: popups.item; property: "active"; value: page.awaitingMenu; when: popups.item !== null }
+    Connections {
+        target: popups.item
+        function onOpenChanged() {
+            if (popups.item.open) { page.menuSeen = true; menuWait.stop(); }
+            else if (page.menuSeen) page.awaitingMenu = false;
+        }
+    }
+    // No actions for this entry: Klipper shows no menu at all.
+    Timer { id: menuWait; interval: 1500; onTriggered: if (!page.menuSeen) page.awaitingMenu = false }
+    // Never held forever (e.g. some other popup stays open).
+    Timer { interval: 60000; running: page.awaitingMenu; onTriggered: page.awaitingMenu = false }
     onVisibleChanged: if (!visible) { typing = false; confirmClear = false; }
+    function back(): void { view = "list"; target = null; }
 
     function say(text: string): void { status = text; statusTimer.restart(); }
     Timer { id: statusTimer; interval: 2500; onTriggered: page.status = "" }
@@ -136,7 +166,14 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: { page.clipboard.copy(row.uuid); page.say(i18n("Copied")); list.positionViewAtBeginning(); }
+                    onClicked: {
+                        if (row.kind === "image") {
+                            page.target = { uuid: row.uuid, image: row.decoration, size: row.imageSize };
+                            page.view = "image";
+                            return;
+                        }
+                        page.clipboard.copy(row.uuid); page.say(i18n("Copied")); list.positionViewAtBeginning();
+                    }
                 }
                 RowLayout {
                     anchors.fill: parent
@@ -197,7 +234,7 @@ Item {
                                 { icon: row.starred ? "starred-symbolic" : "non-starred-symbolic", show: true, run: () => row.model.starred = !row.starred },
                                 { icon: "view-barcode-qr-symbolic", show: row.type === 2 && qrProbe.status === Loader.Ready, run: () => { page.target = { text: row.text }; page.view = "qr"; } },
                                 { icon: "document-edit-symbolic", show: row.type === 2, run: () => page.edit(row.model, row.uuid, row.text) },
-                                { icon: "system-run-symbolic", show: row.type === 2, run: () => page.clipboard.runAction(row.uuid) },
+                                { icon: "system-run-symbolic", show: row.type === 2, run: () => page.runAction(row.uuid) },
                                 { icon: "edit-delete-symbolic", show: true, run: () => page.clipboard.remove(row.uuid) }
                             ].filter(b => b.show)
                             delegate: IconButton {
@@ -256,7 +293,7 @@ Item {
                 implicitWidth: 20; implicitHeight: 20
                 color: page.theme.text
                 hoverColor: page.theme.faint
-                onClicked: { page.view = "list"; page.target = null; }
+                onClicked: page.back()
             }
             Text {
                 Layout.fillWidth: true
@@ -302,6 +339,82 @@ Item {
         }
     }
 
+    // ---- an image, as large as the page ----------------------------------------------
+    Item {
+        anchors.fill: parent
+        visible: page.view === "image"
+
+        Image {
+            id: bigImage
+            anchors.fill: parent
+            anchors.topMargin: imageBar.height + 4
+            source: page.view === "image" && page.target ? page.target.image : ""
+            sourceSize.width: Math.round(width * Screen.devicePixelRatio)
+            sourceSize.height: Math.round(height * Screen.devicePixelRatio)
+            cache: false
+            smooth: true
+            mipmap: true
+            fillMode: Image.PreserveAspectFit
+        }
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton | Qt.BackButton
+            onClicked: page.back()
+        }
+
+        // Back, size, copy, remove
+        Rectangle {
+            id: imageBar
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 28
+            radius: 14
+            color: page.theme.faint
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 4
+                anchors.rightMargin: 4
+                spacing: 4
+                IconButton {
+                    iconName: "go-previous-symbolic"
+                    iconSize: 12
+                    implicitWidth: 22; implicitHeight: 22
+                    color: page.theme.text
+                    hoverColor: page.theme.faint
+                    onClicked: page.back()
+                }
+                Text {
+                    Layout.fillWidth: true
+                    text: page.target && page.target.size ? i18n("Image · %1 × %2", page.target.size.width, page.target.size.height) : ""
+                    color: page.theme.subText
+                    font.pointSize: page.theme.fontSmall * 0.9
+                    elide: Text.ElideRight
+                }
+                PillButton {
+                    theme: page.theme
+                    implicitHeight: 22
+                    primary: true
+                    text: i18n("Copy")
+                    onClicked: {
+                        page.clipboard.copy(page.target.uuid);
+                        page.back();
+                        page.say(i18n("Copied"));
+                        list.positionViewAtBeginning();
+                    }
+                }
+                IconButton {
+                    iconName: "edit-delete-symbolic"
+                    iconSize: 12
+                    implicitWidth: 22; implicitHeight: 22
+                    color: page.theme.text
+                    hoverColor: page.theme.faint
+                    onClicked: { page.clipboard.remove(page.target.uuid); page.back(); }
+                }
+            }
+        }
+    }
+
     // ---- QR code -------------------------------------------------------------------
     RowLayout {
         anchors.fill: parent
@@ -317,7 +430,7 @@ Item {
                 implicitWidth: 20; implicitHeight: 20
                 color: page.theme.text
                 hoverColor: page.theme.faint
-                onClicked: { page.view = "list"; page.target = null; }
+                onClicked: page.back()
             }
             Text {
                 Layout.fillWidth: true

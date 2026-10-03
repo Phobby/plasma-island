@@ -108,7 +108,14 @@ Item {
     Timer {
         id: collapseTimer
         interval: island.collapseDelay
-        onTriggered: if (!island.hovered && !expandedContent.interacting) island.expanded = false
+        onTriggered: if (!island.hovered && !expandedContent.interacting && !expandedContent.holding) island.expanded = false
+    }
+    // A menu the page opened has closed: close like after the pointer left.
+    Connections {
+        target: expandedContent
+        function onHoldingChanged() {
+            if (!expandedContent.holding && island.expanded && !island.hovered) collapseTimer.restart();
+        }
     }
     onHoveredChanged: {
         if (hovered) {
@@ -123,7 +130,7 @@ Item {
     Timer {
         id: unattendedCollapseTimer
         interval: 3000
-        onTriggered: if (!island.hovered) island.expanded = false
+        onTriggered: if (!island.hovered && !expandedContent.holding) island.expanded = false
     }
     onExpandedChanged: {
         if (expanded) {

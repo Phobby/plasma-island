@@ -77,12 +77,21 @@ Item {
             width: ListView.view.width
             height: notif.rowHeight
             radius: 12
-            color: rowMouse.containsMouse ? notif.theme.faint : "transparent"
+            color: rowHover.hovered ? notif.theme.faint : "transparent"
+
+            // Hovered even while the pointer is on one of the buttons.
+            HoverHandler { id: rowHover }
+            MouseArea {
+                id: rowMouse
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: notif.backend.activateNotification(row.model.notificationId)
+            }
 
             RowLayout {
                 anchors.fill: parent
                 anchors.leftMargin: 6
-                anchors.rightMargin: 8
+                anchors.rightMargin: 4
                 spacing: 8
 
                 Kirigami.Icon {
@@ -102,6 +111,7 @@ Item {
                 }
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     spacing: 0
                     Text {
                         Layout.fillWidth: true
@@ -122,34 +132,41 @@ Item {
                         maximumLineCount: 1
                     }
                 }
+                // Arrival time; under the mouse its place goes to reply and dismiss.
                 Text {
                     Layout.alignment: Qt.AlignTop
                     Layout.topMargin: 3
+                    Layout.rightMargin: 4
+                    visible: !rowHover.hovered
                     text: row.model.created ? notif.arrivalTime(row.model.created) : ""
                     font.features: { "tnum": 1 }
                     color: notif.theme.subText
                     font.pointSize: notif.theme.fontSmall * 0.95
                 }
-            }
-
-            MouseArea {
-                id: rowMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: notif.backend.activateNotification(row.model.notificationId)
-            }
-            // Quick reply (SMS / messengers via KDE Connect or apps that support it)
-            IconButton {
-                anchors.right: parent.right
-                anchors.rightMargin: 40
-                anchors.verticalCenter: parent.verticalCenter
-                visible: row.model.hasReplyAction === true && rowMouse.containsMouse
-                iconName: "mail-reply-sender-symbolic"
-                toolTip: i18n("Reply")
-                color: notif.theme.text
-                hoverColor: notif.theme.faint
-                onClicked: notif.replyTarget = { id: row.model.notificationId, summary: row.model.summary || row.model.applicationName }
+                Row {
+                    visible: rowHover.hovered
+                    spacing: 0
+                    // Quick reply (SMS / messengers via KDE Connect or apps that support it)
+                    IconButton {
+                        visible: row.model.hasReplyAction === true
+                        iconName: "mail-reply-sender-symbolic"
+                        iconSize: 12
+                        implicitWidth: 24; implicitHeight: 24
+                        toolTip: i18n("Reply")
+                        color: notif.theme.text
+                        hoverColor: notif.theme.hoverFill
+                        onClicked: notif.replyTarget = { id: row.model.notificationId, summary: row.model.summary || row.model.applicationName }
+                    }
+                    IconButton {
+                        iconName: "window-close-symbolic"
+                        iconSize: 12
+                        implicitWidth: 24; implicitHeight: 24
+                        toolTip: i18n("Dismiss")
+                        color: notif.theme.text
+                        hoverColor: notif.theme.hoverFill
+                        onClicked: notif.backend.closeNotification(row.model.notificationId)
+                    }
+                }
             }
         }
     }

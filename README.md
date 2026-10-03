@@ -22,8 +22,8 @@ Tested on: Kubuntu, Plasma 6.6.6, Qt 6.10.2, Wayland.
 Expanded pages: **Activities** (all ongoing activities, actions and privacy
 details), **Media**, **System** (information only: CPU, CPU temperature, GPU,
 RAM, battery, network ↓/↑ and disk cards; Fixed or Dynamic view),
-**Notifications** (last 3, arrival time, quick reply, "clear all" with
-confirmation), **Controls** (Do Not Disturb, Night Light, power profile,
+**Notifications** (last 3, arrival time; under the mouse quick reply and
+dismiss; "clear all" with confirmation), **Controls** (Do Not Disturb, Night Light, power profile,
 Bluetooth, Wi-Fi, updates; volume and screen brightness sliders below),
 **Tools** (timer, stopwatch, Pomodoro, alarm), **Calendar** (month view, the
 events of the selected day and their details; calendars are connected right
@@ -114,7 +114,7 @@ the screen it was added to.
 | Distance from top / below panels | Position |
 | Notifications, display time | Behaviour when a notification arrives |
 | Hover delay / close on leave | Default 120 ms / 400 ms |
-| Preferred player | E.g. `spotify`. This player is shown if it is playing (or nothing else is); if empty Plasma chooses. Matches the identity/desktop file name case-insensitively |
+| Preferred player | E.g. `spotify`. This player is shown if it is playing (or nothing else is); if empty Plasma chooses. Matches the identity/desktop file name case-insensitively. A player that says "Playing" while its position stands still for ~9 s (Spotify after a Spotify Connect session was stopped on the phone) counts as not playing |
 | Modules | Media (also enables the live activity), System, Volume, Recent notifications |
 | System view | Fixed (5 cards, 2 rows) / Dynamic (default: the cards that are active right now grow, no gaps; with few active cards the two busiest stay large). In both views the card under the mouse grows and shows its details. Clicking a card opens `btop` in the default terminal with only that metric's graph (needs the native module and btop ≥ 1.4; btop's own configuration file is not touched) |
 
@@ -400,11 +400,15 @@ A page with the history of Plasma's own clipboard (Klipper), so it shows the
 same entries as the clipboard popup of the system tray: texts, code (in a
 monospace font), images (as thumbnails) and copied files.
 
-- Click an entry to copy it again.
+- Click an entry to copy it again. Clicking an image opens it large on the
+  page itself (back, copy, remove); the island stays open.
 - Search field, stars and the starred-only filter, clearing the history
   (asks once more).
 - Under the mouse: star, show as a QR code, edit the text, run the actions
-  configured in Klipper, remove the entry.
+  configured in Klipper ("open with…"), remove the entry. While that actions
+  menu is open the island stays open, even with the pointer away from it; it
+  closes once something is chosen or the menu is dismissed (needs the native
+  module).
 - History size and what is kept are Klipper's own settings (System Tray →
   Clipboard → Configure Clipboard…).
 

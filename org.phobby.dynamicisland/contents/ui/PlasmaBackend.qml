@@ -47,9 +47,11 @@ Item {
     readonly property string playerName: player?.identity ?? ""
     readonly property string playerIcon: player?.iconName ?? ""
     readonly property int playbackStatus: player?.playbackStatus ?? 0
-    readonly property bool isPlaying: playbackStatus === Mpris.PlaybackStatus.Playing
+    // The player says "Playing" but its position no longer moves (see `stalled` below).
+    property bool playerStalled: false
+    readonly property bool isPlaying: playbackStatus === Mpris.PlaybackStatus.Playing && !playerStalled
     readonly property bool isPaused: playbackStatus === Mpris.PlaybackStatus.Paused
-    readonly property bool hasMedia: track.length > 0 && playbackStatus > Mpris.PlaybackStatus.Stopped
+    readonly property bool hasMedia: track.length > 0 && playbackStatus > Mpris.PlaybackStatus.Stopped && !playerStalled
     readonly property bool canControl: player?.canControl ?? false
     readonly property bool canGoNext: player?.canGoNext ?? false
     readonly property bool canGoPrevious: player?.canGoPrevious ?? false
@@ -61,7 +63,8 @@ Item {
     // 0..1
     readonly property real playerVolume: player?.volume ?? 0
 
-    function playPause(): void { player?.PlayPause(); }
+    // A stalled player still believes it plays: PlayPause would pause it.
+    function playPause(): void { if (playerStalled) player?.Play(); else player?.PlayPause(); }
     function next(): void { player?.Next(); }
     function previous(): void { player?.Previous(); }
     function raisePlayer(): void { player?.Raise(); }
@@ -79,13 +82,41 @@ Item {
         id: players
         model: mpris
         delegate: QtObject {
+            id: entry
             required property int index
             required property var model
             readonly property var container: model.container ?? null
             readonly property int status: container?.playbackStatus ?? 0
             readonly property string key: ((model.identity ?? "") + " " + (model.desktopEntry ?? "")).toLowerCase()
             readonly property bool multiplexer: model.isMultiplexer ?? false
-            onStatusChanged: Qt.callLater(backend.choosePlayer)
+            readonly property string identity: container?.identity ?? ""
+            readonly property bool playing: status === Mpris.PlaybackStatus.Playing && !stalled
+            onStatusChanged: { stalls = 0; Qt.callLater(backend.choosePlayer); }
+
+            // Spotify keeps saying "Playing" after playback started from the
+            // phone (Spotify Connect) was stopped there: the position then
+            // stands still, often at the end of the track. A player whose
+            // position has not moved for a few seconds is treated as stopped.
+            // Only for players that report a length: some (e.g. browsers) never
+            // report a position at all.
+            property int stalls: 0
+            property real lastPosition: -1
+            readonly property bool stalled: stalls >= 2
+            onStalledChanged: Qt.callLater(backend.choosePlayer)
+            readonly property string trackKey: (container?.track ?? "") + "|" + (container?.length ?? 0)
+            onTrackKeyChanged: stalls = 0
+            readonly property Timer stallWatch: Timer {
+                interval: 3000
+                repeat: true
+                running: !entry.multiplexer && entry.status === Mpris.PlaybackStatus.Playing && (entry.container?.length ?? 0) > 0
+                onRunningChanged: { entry.stalls = 0; entry.lastPosition = -1; }
+                onTriggered: {
+                    const pos = entry.container.position;
+                    if (pos === entry.lastPosition) ++entry.stalls; else entry.stalls = 0;
+                    entry.lastPosition = pos;
+                    entry.container.updatePosition();
+                }
+            }
         }
         onObjectAdded: Qt.callLater(backend.choosePlayer)
         onObjectRemoved: Qt.callLater(backend.choosePlayer)
@@ -94,12 +125,14 @@ Item {
 
     function choosePlayer(): void {
         const pref = preferredPlayer.trim().toLowerCase();
-        let multiplexerIdx = -1, prefIdx = -1, prefPlaying = false, otherPlaying = false;
+        let multiplexerIdx = -1, prefIdx = -1, prefPlaying = false, otherPlaying = false, stalledIdx = -1, firstPlayingIdx = -1;
         for (let i = 0; i < players.count; ++i) {
             const p = players.objectAt(i);
             if (!p) continue;
             if (p.multiplexer) { multiplexerIdx = i; continue; }
-            const playing = p.status === Mpris.PlaybackStatus.Playing;
+            if (p.stalled && stalledIdx < 0) stalledIdx = i;
+            if (p.playing && firstPlayingIdx < 0) firstPlayingIdx = i;
+            const playing = p.playing;
             if (pref.length > 0 && prefIdx < 0 && p.key.indexOf(pref) >= 0) {
                 prefIdx = i;
                 prefPlaying = playing;
@@ -109,8 +142,22 @@ Item {
         }
         let target = multiplexerIdx;
         if (prefIdx >= 0 && (prefPlaying || !otherPlaying)) target = prefIdx;
+        // The multiplexer may stick to a stalled player while another one really plays.
+        else if (stalledIdx >= 0 && firstPlayingIdx >= 0) target = firstPlayingIdx;
         if (target >= 0 && mpris.currentIndex !== target) mpris.currentIndex = target;
+        updatePlayerStalled();
     }
+    // Whether the shown player is a stalled one (the multiplexer shows another player's data).
+    function updatePlayerStalled(): void {
+        const name = player?.identity ?? "";
+        let stalled = false;
+        for (let i = 0; i < players.count; ++i) {
+            const p = players.objectAt(i);
+            if (p && !p.multiplexer && p.stalled && p.identity === name) { stalled = true; break; }
+        }
+        playerStalled = stalled;
+    }
+    onPlayerChanged: Qt.callLater(updatePlayerStalled)
 
     Timer {
         interval: 1000

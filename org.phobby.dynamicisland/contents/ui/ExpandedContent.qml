@@ -28,7 +28,9 @@ Item {
     // True while the user types a reply: the island keeps keyboard focus
     // and does not collapse.
     property bool interacting: false
-    onActiveChanged: if (!active) interacting = false
+    onActiveChanged: if (!active) { interacting = false; holding = false; }
+    // A page keeps the island open without the keyboard (e.g. while a menu it opened is shown).
+    property bool holding: false
 
     // Live activities that have no page of their own (media has one).
     readonly property var listedActivities: manager.live.concat(manager.indicators).filter(a => a.listed)
@@ -114,73 +116,102 @@ Item {
             Layout.fillWidth: true
             spacing: 4
 
-            Repeater {
-                model: expanded.pages
-                delegate: Rectangle {
-                    id: tab
-                    required property int index
-                    required property var modelData
-                    readonly property bool current: modelData.key === expanded.currentKey
-                    Layout.preferredHeight: 24
-                    Layout.preferredWidth: current ? tabLabel.implicitWidth + 36 : 30
-                    radius: 12
-                    color: current ? expanded.theme.faint : tabMouse.containsMouse ? Qt.rgba(expanded.theme.faint.r, expanded.theme.faint.g, expanded.theme.faint.b, expanded.theme.faint.a / 2) : "transparent"
-                    clip: true
-                    Behavior on Layout.preferredWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+            // Tabs shrink to fit: a row wider than the island would widen
+            // every page with it (pages spill over the right edge).
+            Item {
+                id: tabsArea
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.preferredHeight: 24
+                clip: true
 
-                    Row {
-                        anchors.verticalCenter: parent.verticalCenter
-                        x: tab.current ? 10 : (tab.width - 14) / 2
-                        spacing: 6
-                        Kirigami.Icon {
-                            width: 14
-                            height: 14
-                            anchors.verticalCenter: parent.verticalCenter
-                            source: tab.modelData.icon + "-symbolic"
-                            fallback: tab.modelData.icon
-                            color: tab.current ? expanded.theme.text : expanded.theme.subText
-                            isMask: true
+                readonly property int count: expanded.pages.length
+                readonly property real gap: 4
+                readonly property real currentFull: currentTitle.width + 36
+                readonly property real fullFit: (count - 1) * (30 + gap) + currentFull
+                // The current tab keeps its title while the others can stay at least 22 px.
+                readonly property bool showTitle: count <= 1 || width >= (count - 1) * (22 + gap) + currentFull
+                readonly property real otherWidth: width >= fullFit ? 30
+                    : showTitle ? Math.floor((width - currentFull - (count - 1) * gap) / (count - 1))
+                    : Math.max(16, Math.floor((width - (count - 1) * gap) / Math.max(1, count)))
+                readonly property real currentWidth: showTitle ? currentFull : otherWidth
+
+                TextMetrics {
+                    id: currentTitle
+                    text: expanded.pages[expanded.currentIndex]?.title ?? ""
+                    font.pointSize: expanded.theme.fontSmall
+                    font.weight: Font.DemiBold
+                }
+
+                Row {
+                    spacing: tabsArea.gap
+                    Repeater {
+                        model: expanded.pages
+                        delegate: Rectangle {
+                            id: tab
+                            required property int index
+                            required property var modelData
+                            readonly property bool current: modelData.key === expanded.currentKey
+                            readonly property bool titled: current && tabsArea.showTitle
+                            height: 24
+                            width: current ? tabsArea.currentWidth : tabsArea.otherWidth
+                            radius: 12
+                            color: current ? expanded.theme.faint : tabMouse.containsMouse ? Qt.rgba(expanded.theme.faint.r, expanded.theme.faint.g, expanded.theme.faint.b, expanded.theme.faint.a / 2) : "transparent"
+                            clip: true
+                            Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+
+                            Row {
+                                anchors.verticalCenter: parent.verticalCenter
+                                x: tab.titled ? 10 : (tab.width - 14) / 2
+                                spacing: 6
+                                Kirigami.Icon {
+                                    width: 14
+                                    height: 14
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    source: tab.modelData.icon + "-symbolic"
+                                    fallback: tab.modelData.icon
+                                    color: tab.current ? expanded.theme.text : expanded.theme.subText
+                                    isMask: true
+                                }
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: tab.modelData.title
+                                    color: expanded.theme.text
+                                    font.pointSize: expanded.theme.fontSmall
+                                    font.weight: Font.DemiBold
+                                    opacity: tab.titled ? 1 : 0
+                                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                                }
+                            }
+                            // Count badge (e.g. notifications)
+                            Rectangle {
+                                visible: (tab.modelData.badge ?? 0) > 0 && !tab.current
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                width: Math.max(12, badgeLabel.implicitWidth + 6)
+                                height: 12
+                                radius: 6
+                                color: expanded.theme.red
+                                Text {
+                                    id: badgeLabel
+                                    anchors.centerIn: parent
+                                    text: (tab.modelData.badge ?? 0) > 99 ? "99+" : String(tab.modelData.badge ?? 0)
+                                    color: expanded.theme.onColor(expanded.theme.red)
+                                    font.pointSize: expanded.theme.fontSmall * 0.7
+                                    font.weight: Font.Bold
+                                }
+                            }
+                            MouseArea {
+                                id: tabMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: expanded.showPage(tab.modelData.key)
+                            }
                         }
-                        Text {
-                            id: tabLabel
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: tab.modelData.title
-                            color: expanded.theme.text
-                            font.pointSize: expanded.theme.fontSmall
-                            font.weight: Font.DemiBold
-                            opacity: tab.current ? 1 : 0
-                            Behavior on opacity { NumberAnimation { duration: 150 } }
-                        }
-                    }
-                    // Count badge (e.g. notifications)
-                    Rectangle {
-                        visible: (tab.modelData.badge ?? 0) > 0 && !tab.current
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        width: Math.max(12, badgeLabel.implicitWidth + 6)
-                        height: 12
-                        radius: 6
-                        color: expanded.theme.red
-                        Text {
-                            id: badgeLabel
-                            anchors.centerIn: parent
-                            text: (tab.modelData.badge ?? 0) > 99 ? "99+" : String(tab.modelData.badge ?? 0)
-                            color: expanded.theme.onColor(expanded.theme.red)
-                            font.pointSize: expanded.theme.fontSmall * 0.7
-                            font.weight: Font.Bold
-                        }
-                    }
-                    MouseArea {
-                        id: tabMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: expanded.showPage(tab.modelData.key)
                     }
                 }
             }
-
-            Item { Layout.fillWidth: true }
 
             Kirigami.Icon {
                 visible: expanded.backend.hasBattery
@@ -205,6 +236,8 @@ Item {
             id: viewport
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.minimumWidth: 0
+            Layout.maximumWidth: expanded.width
             clip: true
 
             Item {
@@ -246,6 +279,8 @@ Item {
                         // A page typing text (e.g. a calendar link) keeps the island focused and open.
                         readonly property bool pageInteracting: item !== null && item.interacting === true
                         onPageInteractingChanged: expanded.interacting = pageInteracting
+                        readonly property bool pageHolding: item !== null && item.holdOpen === true
+                        onPageHoldingChanged: expanded.holding = pageHolding
                     }
                 }
             }
