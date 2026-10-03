@@ -384,8 +384,9 @@ local service answers) and offers the ones it finds first.
   breaks stay as they are). The change date, lock state and next reminder (an
   orange badge) come from its SQLite database, which is opened read-only and
   never written; all writing is done by the `betternotes` command.
-  - The new-note button asks only for a **title**: the note is created empty
-    and appears in the list at once; click it to write in it later.
+  - A quick note (the field at the top, Enter) is only a **title**: the note
+    is created empty and appears in the list at once; click it to write in
+    it later.
   - In the editor the title is a field above the plain-text content; both
     are saved 1.5 s after typing stops, when the field loses focus, or on
     Ctrl+S. Rich formatting is not rebuilt here: a note with rich text, and

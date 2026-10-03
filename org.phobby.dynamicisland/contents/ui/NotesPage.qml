@@ -6,8 +6,8 @@
     top that adds a quick note to the default source or searches the notes.
     Clicking a note opens it for editing; changes are written back to its app
     1.5 s after typing stops, when the field loses focus, or with Ctrl+S.
-    A BetterNotes note is started with its title alone and filled in later;
-    its title can be changed in the editor too. Text that could not be saved
+    A quick note to BetterNotes is its title alone, filled in later; the
+    title can be changed in the editor too. Text that could not be saved
     stays (NotesBackend.drafts) and can be saved again.
     Notes apps are connected right here: the ones found on this computer are
     offered first.
@@ -23,7 +23,7 @@ Item {
     required property var notes             // NotesBackend
     signal defaultPicked(string id)
 
-    // "list" | "note" (editor) | "title" (a new BetterNotes note: its title only)
+    // "list" | "note" (editor)
     // | "sources" (connected apps, add one) | "form" (connect `formType`) | "install" (how to get BetterNotes)
     property string view: "list"
     property bool searching: false
@@ -32,7 +32,7 @@ Item {
     property string query: ""
     property string status: ""              // short feedback under the field
     property bool statusIsError: false
-    readonly property bool interacting: visible && (view === "note" || view === "form" || view === "title" || typing)
+    readonly property bool interacting: visible && (view === "note" || view === "form" || typing)
     onVisibleChanged: if (!visible) typing = false; else arrive()
     Component.onCompleted: arrive()
     // Opening the page: fetch the notes, or look for notes apps when none is connected.
@@ -99,13 +99,6 @@ Item {
     function open(n: var): void {
         autoSave.stop();
         current = n; saveError = ""; loading = false;
-        // A new BetterNotes note starts with its title alone.
-        if (!n && notes.defaultSource && notes.defaultSource.type === "betternotes") {
-            newTitle.text = "";
-            view = "title";
-            Qt.callLater(() => newTitle.input.forceActiveFocus());
-            return;
-        }
         view = "note";
         const draft = page.notes.drafts[draftKey];
         const resume = () => {
@@ -171,21 +164,6 @@ Item {
         const text = composed();
         if (current) notes.save(current, text, () => {});
         else if (text.trim().length > 0) notes.create(text, "", () => {});
-    }
-
-    // ---- a new BetterNotes note: title only ------------------------------------------
-    property bool creating: false
-    function createTitled(): void {
-        const title = newTitle.text.trim();
-        if (title.length === 0 || creating) return;
-        creating = true; saveError = "";
-        notes.create(title, "", result => {
-            creating = false;
-            if (!result.ok) { saveError = result.error; return; }
-            newTitle.text = "";
-            view = "list"; typing = false;
-            say(i18n("“%1” was created; click it to write in it.", result.note.title), false);
-        });
     }
 
     // ---- connecting ----------------------------------------------------------------
@@ -295,14 +273,6 @@ Item {
                 color: page.theme.text
                 hoverColor: page.theme.faint
                 onClicked: { page.searching = !page.searching; topField.text = ""; page.query = ""; if (page.searching) page.focusField(); else page.typing = false; }
-            }
-            IconButton {
-                iconName: "document-new-symbolic"
-                iconSize: 14
-                implicitWidth: 24; implicitHeight: 24
-                color: page.theme.text
-                hoverColor: page.theme.faint
-                onClicked: page.open(null)
             }
             IconButton {
                 iconName: "configure-symbolic"
@@ -705,63 +675,6 @@ Item {
                 onClicked: page.notes.detect(result => { page.found = result; page.detected = true; if (result.betternotes) page.showForm("betternotes"); })
             }
         }
-    }
-
-    // ---- a new BetterNotes note: its title ----------------------------------------------
-    ColumnLayout {
-        anchors.fill: parent
-        visible: page.view === "title"
-        spacing: 6
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 6
-            IconButton {
-                iconName: "go-previous-symbolic"
-                iconSize: 12
-                implicitWidth: 20; implicitHeight: 20
-                color: page.theme.text
-                hoverColor: page.theme.faint
-                onClicked: { page.view = "list"; page.saveError = ""; }
-            }
-            SourceBadge { type: "betternotes" }
-            Text {
-                Layout.fillWidth: true
-                text: i18n("New note in BetterNotes")
-                color: page.theme.subText
-                font.pointSize: page.theme.fontSmall * 0.9
-                elide: Text.ElideRight
-            }
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 6
-            PillField {
-                id: newTitle
-                theme: page.theme
-                Layout.fillWidth: true
-                implicitHeight: 28
-                enabled: !page.creating
-                placeholder: i18n("Title, e.g. Shopping list")
-                onAccepted: page.createTitled()
-                onEscaped: { page.view = "list"; page.saveError = ""; }
-            }
-            PillButton {
-                theme: page.theme
-                implicitHeight: 24
-                primary: true
-                enabled: newTitle.text.trim().length > 0 && !page.creating
-                text: page.creating ? i18n("Creating…") : i18n("Create")
-                onClicked: page.createTitled()
-            }
-        }
-        Text {
-            Layout.fillWidth: true
-            text: page.saveError.length > 0 ? page.saveError : i18n("The note is created empty; write in it afterwards.")
-            color: page.saveError.length > 0 ? page.theme.readable(page.theme.danger, page.theme.surface) : page.theme.subText
-            font.pointSize: page.theme.fontSmall * 0.9
-            wrapMode: Text.Wrap
-        }
-        Item { Layout.fillHeight: true }
     }
 
     // ---- editor ----------------------------------------------------------------------
