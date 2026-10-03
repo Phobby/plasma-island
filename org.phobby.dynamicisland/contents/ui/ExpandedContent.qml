@@ -304,6 +304,9 @@ Item {
             WheelHandler {
                 // Mouse wheel or touchpad swipe pages; accumulate to debounce
                 // high-resolution touchpad deltas. Sliders handle their own wheel.
+                // Not while a page holds the island (e.g. editing the Controls
+                // buttons): there the wheel scrolls that page's list.
+                enabled: !expanded.holding
                 property real acc: 0
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: event => {

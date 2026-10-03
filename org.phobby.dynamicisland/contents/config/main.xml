@@ -155,6 +155,13 @@
     <entry name="pageOrder" type="String">
       <default>activities,media,control,notifications,quicksettings,tools,calendar,notes,clipboard,devices</default>
     </entry>
+    <!-- Buttons of the Controls page, in order, at most 6 (Settings → Controls); see ControlCatalog.qml -->
+    <entry name="controlTiles" type="String">
+      <default>dnd,nightlight,power,bluetooth,wifi,updates</default>
+    </entry>
+    <!-- Colour schemes the "Dark mode" button switches between (remembered when it switches away) -->
+    <entry name="darkColorScheme" type="String"><default></default></entry>
+    <entry name="lightColorScheme" type="String"><default></default></entry>
     <!-- Language of the widget: auto (the system's), tr or en; see Lang.qml -->
     <entry name="language" type="String">
       <default>auto</default>

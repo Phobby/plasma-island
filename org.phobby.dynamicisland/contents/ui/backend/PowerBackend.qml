@@ -30,4 +30,14 @@ Item {
     BatteryMonitor.PowerProfilesControl {
         id: control
     }
+
+    // "Keep awake" in Controls: the same manual sleep/screen-lock block as the
+    // battery applet's. It holds while this backend lives (the whole session).
+    readonly property bool keptAwake: inhibition.isManuallyInhibited
+    function setKeepAwake(on: bool): void {
+        if (on) inhibition.inhibit(Lang.i18n("Keep awake (Dynamic Island)")); else inhibition.uninhibit();
+    }
+    BatteryMonitor.InhibitionControl {
+        id: inhibition
+    }
 }

@@ -23,8 +23,10 @@ Expanded pages: **Activities** (all ongoing activities, actions and privacy
 details), **Media**, **System** (information only: CPU, CPU temperature, GPU,
 RAM, battery, network ↓/↑ and disk cards; Fixed or Dynamic view),
 **Notifications** (last 3, arrival time; under the mouse quick reply and
-dismiss; "clear all" with confirmation), **Controls** (Do Not Disturb, Night Light, power profile,
-Bluetooth, Wi-Fi, updates; volume and screen brightness sliders below),
+dismiss; "clear all" with confirmation), **Controls** (up to six buttons of your choice, like a phone's
+quick settings: Do Not Disturb, Night Light, power profile, Bluetooth,
+Wi-Fi, updates, airplane mode, VPN, hotspot, screen recording, KDE Connect…;
+hold one to change them; volume and screen brightness sliders below),
 **Tools** (timer, stopwatch, Pomodoro, alarm), **Calendar** (month view, the
 events of the selected day and their details; calendars are connected right
 on this page), **Notes** (quick notes and the notes of Joplin, Simplenote and
@@ -130,6 +132,27 @@ Calendar, Notes, Clipboard, Devices. The order is stored as `pageOrder`
 This order only places the tabs; which live activity the small island shows
 first is the priority list of the Activities tab, so privacy indicators,
 calls and screen recording still come first whatever the page order is.
+**Controls** tab: the buttons of the Controls page, like a phone's quick
+settings: at most six, in the order shown (drag by the handle), the others
+listed below to add. Holding a button on the Controls page in the island
+edits them there too: the buttons wiggle; drag one sideways to move it (the
+others make room; holding and dragging works in one go), "−" takes one away,
+the others are offered below as round icons to add (the name of the one
+under the pointer is shown above them; the wheel scrolls them), "Done" ends
+it. The island stays open while editing. Stored as `controlTiles`. Available:
+Focus (Do Not Disturb), Night Light, power profile, Bluetooth, Wi-Fi,
+updates, airplane mode (the same switch as Plasma's network applet), VPN
+(connects the one used last, shows the active one's name), hotspot, record
+screen and screenshot (Spectacle, a region), camera (opens Kamoso, Snapshot,
+Cheese or guvcview; lit while the camera is in use), microphone and sound
+(mute), KDE Connect (opens it; lit while a phone is connected), find phone
+(rings it), dark mode, keep awake (the battery applet's manual sleep and
+screen-lock block), lock, calculator, System Settings. A button whose part
+is missing (no VPN set up, no camera app, no phone…) is dimmed. Dark mode
+switches the colour scheme with `plasma-apply-colorscheme` and remembers the
+one it left (`darkColorScheme` / `lightColorScheme`), so a custom scheme
+comes back; without one it takes the Light/Dark counterpart by name, else
+Breeze. NFC is not offered: Plasma has no NFC switch.
 **Activities** tab: priority order (up/down), split island on/off, keep
 playing media visible, watch the download folder, momentary event duration, a
 separate switch for every system event and live activity type.
@@ -251,6 +274,7 @@ org.phobby.dynamicisland/
     ├── NativeBridge.qml, BlurBridge.qml          import the native modules
     ├── Lang.qml, translations/tr.js, qmldir      the widget's own translations (singleton)
     ├── PageCatalog.qml                           the expanded pages and their default order
+    ├── ControlCatalog.qml                        the buttons the Controls page can show (at most 6)
     └── config*.qml                                settings pages (configLayout: page order)
 native/
 ├── windowblur.*               org.phobby.dynamicisland.effects (shaped KWin blur)

@@ -145,6 +145,14 @@ PlasmoidItem {
     readonly property var calendarBackend: calendarLoader.item
     readonly property var clipboardBackend: clipboardLoader.item
     readonly property var kdeconnectBackend: kdeconnectLoader.item
+    // "Dark mode" in Controls; remembers the schemes it switches between.
+    ColorSchemeBackend {
+        id: colorSchemes
+        core: root.core
+        darkScheme: root.cfg.darkColorScheme
+        lightScheme: root.cfg.lightColorScheme
+        onRemember: (dark, name) => { if (dark) root.cfg.darkColorScheme = name; else root.cfg.lightColorScheme = name; }
+    }
 
     // ---- native core (optional: native/core) ------------------------------------
     Loader {
@@ -429,9 +437,14 @@ PlasmoidItem {
             power: root.powerBackend
             bluetooth: root.bluetoothBackend
             network: root.networkBackend
-            core: root.cfg.showUpdates ? root.core : null
+            core: root.core
+            kdeconnect: root.kdeconnectBackend
+            schemes: colorSchemes
             backend: root.plasmaBackend
+            showUpdates: root.cfg.showUpdates
             showVolume: root.cfg.showVolumeModule
+            tiles: root.cfg.controlTiles
+            onTilesEdited: tiles => root.cfg.controlTiles = tiles
         }
     }
 

@@ -14,6 +14,11 @@ ConfigModel {
         source: "configLayout.qml"
     }
     ConfigCategory {
+        name: Lang.i18n("Controls")
+        icon: "configure"
+        source: "configControls.qml"
+    }
+    ConfigCategory {
         name: Lang.i18n("Activities")
         icon: "view-list-details"
         source: "configActivities.qml"
