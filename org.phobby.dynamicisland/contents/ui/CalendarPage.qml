@@ -631,7 +631,7 @@ Item {
                                 text: line.modelData.text
                                 textFormat: Text.StyledText
                                 color: page.theme.subText
-                                linkColor: page.theme.readable(page.theme.blue, page.theme.surface)
+                                linkColor: page.theme.readable(page.theme.control, page.theme.surface)
                                 font.pointSize: page.theme.fontSmall * 0.9
                                 wrapMode: Text.Wrap
                                 onLinkActivated: link => Qt.openUrlExternally(link)

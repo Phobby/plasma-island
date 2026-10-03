@@ -106,7 +106,7 @@ Item {
                         width: 12
                         height: 12
                         visible: row.model.notifyRcName === "kdeconnect"
-                        tint: notif.theme.blue
+                        tint: notif.theme.control
                     }
                 }
                 ColumnLayout {
@@ -217,7 +217,7 @@ Item {
                     radius: 15
                     color: notif.theme.faint
                     border.width: 1
-                    border.color: replyInput.activeFocus ? notif.theme.blue : "transparent"
+                    border.color: replyInput.activeFocus ? notif.theme.control : "transparent"
                     TextInput {
                         id: replyInput
                         anchors.fill: parent
@@ -234,7 +234,7 @@ Item {
                 IconButton {
                     id: sendButton
                     iconName: "document-send-symbolic"
-                    color: notif.theme.blue
+                    color: notif.theme.control
                     hoverColor: notif.theme.faint
                     enabled: replyInput.text.length > 0
                     onClicked: {

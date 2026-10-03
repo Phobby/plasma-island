@@ -20,7 +20,7 @@ Rectangle {
     radius: height / 2
     color: theme.faint
     border.width: 1
-    border.color: fieldInput.activeFocus ? theme.blue : "transparent"
+    border.color: fieldInput.activeFocus ? theme.control : "transparent"
 
     TextInput {
         id: fieldInput
@@ -29,7 +29,7 @@ Rectangle {
         anchors.rightMargin: 12
         verticalAlignment: TextInput.AlignVCenter
         color: field.theme.text
-        selectionColor: field.theme.blue
+        selectionColor: field.theme.control
         font.pointSize: field.theme.fontSmall
         echoMode: field.secret ? TextInput.Password : TextInput.Normal
         clip: true

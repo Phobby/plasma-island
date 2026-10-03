@@ -74,7 +74,7 @@ Item {
                 width: parent.width
                 wrapMode: Text.Wrap
                 textFormat: Text.StyledText
-                linkColor: googlePage.theme.readable(googlePage.theme.blue, googlePage.theme.surface)
+                linkColor: googlePage.theme.readable(googlePage.theme.control, googlePage.theme.surface)
                 readonly property string problem: googlePage.error.length > 0 ? googlePage.error : googlePage.step === "start" ? googlePage.google.signInError : ""
                 color: googlePage.theme.text
                 font.pointSize: googlePage.theme.fontSmall * 0.9

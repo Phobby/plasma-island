@@ -71,7 +71,7 @@ Item {
                 width: parent.width
                 wrapMode: Text.Wrap
                 textFormat: Text.StyledText
-                linkColor: accountPage.theme.readable(accountPage.theme.blue, accountPage.theme.surface)
+                linkColor: accountPage.theme.readable(accountPage.theme.control, accountPage.theme.surface)
                 color: accountPage.error.length > 0 ? accountPage.theme.readable(accountPage.theme.danger, accountPage.theme.surface) : accountPage.theme.text
                 font.pointSize: accountPage.theme.fontSmall * 0.9
                 text: accountPage.error.length > 0 ? accountPage.error

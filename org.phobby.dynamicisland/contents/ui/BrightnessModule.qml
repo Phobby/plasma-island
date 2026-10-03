@@ -44,7 +44,7 @@ Item {
                 GlassSlider {
                     Layout.fillWidth: true
                     value: row.maxBrightness > 0 ? row.brightness / row.maxBrightness : 0
-                    fillColor: module.theme.text
+                    fillColor: module.theme.sliderFill
                     trackColor: module.theme.track
                     onMoved: v => module.display.setBrightness(row.displayName, Math.max(1, Math.round(v * row.maxBrightness)))
                 }

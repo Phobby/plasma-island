@@ -136,7 +136,7 @@ Item {
                 Layout.fillWidth: true
                 enabled: media.backend.canSeek
                 value: media.backend.length > 0 ? media.backend.position / media.backend.length : 0
-                fillColor: media.theme.text
+                fillColor: media.theme.sliderFill
                 trackColor: media.theme.track
                 onMoved: v => seekDebounce.restart()
                 Timer {

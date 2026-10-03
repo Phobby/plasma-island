@@ -22,6 +22,12 @@ Item {
     id: island
 
     required property Theme theme
+    // Icons that colour themselves (application and symbolic icons without a
+    // colour of their own) take Kirigami's colours: here the island's, not the shell's.
+    Kirigami.Theme.inherit: false
+    Kirigami.Theme.textColor: theme.text
+    Kirigami.Theme.backgroundColor: theme.surface
+    Kirigami.Theme.highlightColor: theme.control
     required property PlasmaBackend backend
     property var network: null
     required property ActivityManager manager
@@ -79,8 +85,8 @@ Item {
                                        : theme.pillHeight
     readonly property real targetRadius: mode === "expanded" ? theme.expandedRadius
                                        : mode === "notification" ? theme.notificationRadius
-                                       : mode === "event" ? theme.eventHeight / 2
-                                       : theme.pillHeight / 2
+                                       : mode === "event" ? theme.rounded(theme.eventHeight / 2)
+                                       : theme.rounded(theme.pillHeight / 2)
 
     // The window has to stay large while the surface is still bigger than
     // the small window (i.e. until the collapse animation has finished).
@@ -108,6 +114,35 @@ Item {
         NumberAnimation { target: surface; property: "anchors.horizontalCenterOffset"; to: 5; duration: 80; easing.type: Easing.InOutQuad }
         NumberAnimation { target: surface; property: "anchors.horizontalCenterOffset"; to: -3; duration: 70; easing.type: Easing.InOutQuad }
         NumberAnimation { target: surface; property: "anchors.horizontalCenterOffset"; to: 0; duration: 60; easing.type: Easing.OutQuad }
+    }
+
+    // ---- the size setting: crisp text ------------------------------------------
+    // The island is scaled as a whole (main.qml). Plasma draws text with native
+    // rendering, glyphs made for one size, and those smear when scaled; Qt's own
+    // rendering scales cleanly. So while the size is not 100% every text item
+    // is switched over, and back at 100%. Items come and go (pages, lists), hence
+    // the walk repeats while the island shows more than the clock; never at 100%.
+    Text { id: textProbe; visible: false }
+    readonly property bool scaled: theme.scale !== 1
+    property bool retyped: false
+    function retype(item: Item, type: int): void {
+        if (item.renderType !== undefined && item.renderType !== type) item.renderType = type;
+        const kids = item.children;
+        for (let i = 0; i < kids.length; ++i) retype(kids[i], type);
+    }
+    function retypeAll(): void {
+        if (!scaled && !retyped) return;
+        retype(island, scaled ? Text.QtRendering : textProbe.renderType);
+        retyped = scaled;
+    }
+    onScaledChanged: retypeAll()
+    onModeChanged: if (scaled) Qt.callLater(retypeAll)
+    Component.onCompleted: retypeAll()
+    Timer {
+        interval: 350
+        repeat: true
+        running: island.scaled && island.mode !== "idle"
+        onTriggered: island.retypeAll()
     }
 
     // ---- hover → expand / collapse --------------------------------------------
@@ -167,6 +202,12 @@ Item {
         morphAnim.start();
     }
 
+    // The roundness setting changed: the surface at rest takes the new radius.
+    Connections {
+        target: island.theme
+        function onRoundnessChanged() { if (!morphAnim.running) surface.radius = island.targetRadius; }
+    }
+
     ParallelAnimation {
         id: morphAnim
         NumberAnimation { id: wAnim; target: surface; property: "width"; easing.overshoot: island.theme.overshoot }
@@ -188,7 +229,7 @@ Item {
         y: island.theme.windowTopPad
         width: island.theme.pillWidth
         height: island.theme.pillHeight
-        radius: island.theme.pillHeight / 2
+        radius: island.theme.rounded(island.theme.pillHeight / 2)
 
         HoverHandler {
             id: hover
@@ -375,7 +416,7 @@ Item {
         z: -1
         width: island.theme.bubbleSize
         height: island.theme.bubbleSize
-        radius: width / 2
+        radius: island.theme.rounded(width / 2)
         y: surface.y
         x: island.split ? island.bubbleRestX : island.bubbleTuckedX
         scale: island.split ? 1 : 0.55

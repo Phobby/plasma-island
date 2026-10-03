@@ -52,12 +52,27 @@ PlasmoidItem {
     }
     fullRepresentation: Item {}
 
+    // Settings → Appearance. While that page is open, what it is editing shows at
+    // once: the settings window runs in a QML engine of its own, so the page hands
+    // its working values over through the configuration (preview*); what is kept
+    // is only written on Apply.
+    readonly property bool previewing: root.cfg.previewActive
     Theme {
         id: theme
-        mode: root.cfg.themeMode
-        surfaceOpacity: root.cfg.surfaceOpacity / 100
+        follow: (root.previewing ? root.cfg.previewMode : root.cfg.appearanceMode) === 0
+        style: root.previewing ? Styles.parse(root.cfg.previewStyle, null) : root.storedStyle
+        systemSource: root.previewing ? root.cfg.previewSource : root.cfg.followSource
+        systemScheme: colorSchemes.colors
+        systemTop: root.cfg.topMargin
         blurActive: blur.active
     }
+    // No settings window can be open when the shell starts: a preview left behind
+    // (the shell was stopped while one was open) ends here.
+    Component.onCompleted: if (root.cfg.previewActive) root.cfg.previewActive = false
+    // The custom style as stored; before one was ever stored, the look of the
+    // earlier settings (opacity, blur, distance from top, light metal).
+    readonly property var storedStyle: Styles.parse(root.cfg.customStyle, {
+        opacity: root.cfg.surfaceOpacity, blur: root.cfg.blurEnabled, top: root.cfg.topMargin, light: root.cfg.themeMode === 2 })
 
     PlasmaBackend {
         id: backend
@@ -153,6 +168,9 @@ PlasmoidItem {
         lightScheme: root.cfg.lightColorScheme
         onRemember: (dark, name) => { if (dark) root.cfg.darkColorScheme = name; else root.cfg.lightColorScheme = name; }
     }
+    // The applied colour scheme, for the settings page (its preset samples and swatches).
+    readonly property string schemeText: Styles.schemeText(colorSchemes.colors)
+    onSchemeTextChanged: if (root.cfg.systemScheme !== schemeText) root.cfg.systemScheme = schemeText
 
     // ---- native core (optional: native/core) ------------------------------------
     Loader {
@@ -520,6 +538,8 @@ PlasmoidItem {
         return Qt.rect(g.x + a.x, g.y + a.y, a.width, a.height);
     }
 
+    // The island is laid out at its designed size and scaled as a whole (the size
+    // setting); the window and the blur region are that much larger or smaller.
     readonly property real windowWidth: (island.needsLargeWindow
                                          ? Math.max(theme.expandedWidth, theme.notificationWidth, theme.eventWidth)
                                          : 2 * theme.smallHalfWidth) + 2 * theme.windowSidePad
@@ -544,16 +564,19 @@ PlasmoidItem {
         hideOnWindowDeactivate: false
         visible: true
 
-        x: Math.round(root.screenRect.x + (root.screenRect.width - width) / 2)
-        y: Math.round(root.screenRect.y + root.cfg.topMargin - theme.windowTopPad)
+        x: Math.round(root.screenRect.x + (root.screenRect.width - width) / 2 + theme.offsetX)
+        y: Math.round(root.screenRect.y + theme.topOffset - theme.windowTopPad * theme.scale)
 
         mainItem: Item {
-            width: Math.round(root.windowWidth)
-            height: Math.round(root.windowHeight)
+            width: Math.round(root.windowWidth * theme.scale)
+            height: Math.round(root.windowHeight * theme.scale)
 
             Island {
                 id: island
-                anchors.fill: parent
+                width: parent.width / theme.scale
+                height: parent.height / theme.scale
+                transformOrigin: Item.TopLeft
+                scale: theme.scale
                 theme: theme
                 backend: backend
                 network: root.networkBackend
@@ -599,12 +622,13 @@ PlasmoidItem {
     Loader {
         id: blur
         readonly property bool active: status === Loader.Ready && item && item.available
-        source: root.cfg.blurEnabled ? "BlurBridge.qml" : ""
+        source: theme.blurWanted ? "BlurBridge.qml" : ""
         onLoaded: {
             item.window = dialog;
-            item.rect = Qt.binding(() => island.surfaceRect);
-            item.radius = Qt.binding(() => island.surfaceRadius);
-            item.rect2 = Qt.binding(() => island.bubbleRect);
+            const scaled = r => Qt.rect(r.x * theme.scale, r.y * theme.scale, r.width * theme.scale, r.height * theme.scale);
+            item.rect = Qt.binding(() => scaled(island.surfaceRect));
+            item.radius = Qt.binding(() => island.surfaceRadius * theme.scale);
+            item.rect2 = Qt.binding(() => scaled(island.bubbleRect));
             item.enabled = true;
         }
         onStatusChanged: if (status === Loader.Error) {

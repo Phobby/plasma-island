@@ -38,6 +38,9 @@ Item {
     signal downloadFinished(string id, string finalPath, bool success)
 
     signal screenUnlocked()
+    // The system's colour scheme or accent colour was changed (System Settings,
+    // a global theme, plasma-apply-colorscheme): KDE announces it on D-Bus.
+    signal colorSchemeChanged()
     // KDE Connect telephony: event = ringing | talking | missedCall | disconnected …
     signal callEvent(string event, string number, string contactName, string devicePath)
 
@@ -121,6 +124,13 @@ Item {
         iface: "org.freedesktop.ScreenSaver"
         member: "ActiveChanged"
         onTriggered: (args) => { if (args.length > 0 && args[0] === false) bridge.screenUnlocked(); }
+    }
+    Core.DBusSignalWatcher {
+        path: "/KGlobalSettings"
+        iface: "org.kde.KGlobalSettings"
+        member: "notifyChange"
+        // (type, argument); type 0 = the palette
+        onTriggered: (args) => { if (args.length > 0 && Number(args[0]) === 0) bridge.colorSchemeChanged(); }
     }
     Core.DBusSignalWatcher {
         iface: "org.kde.kdeconnect.device.telephony"

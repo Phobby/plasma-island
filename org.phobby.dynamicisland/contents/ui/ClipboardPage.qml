@@ -327,7 +327,7 @@ Item {
                 wrapMode: TextEdit.Wrap
                 textFormat: TextEdit.PlainText
                 color: page.theme.text
-                selectionColor: page.theme.blue
+                selectionColor: page.theme.control
                 font.pointSize: page.theme.fontSmall
                 selectByMouse: true
                 onCursorRectangleChanged: editorView.follow(cursorRectangle)

@@ -669,7 +669,7 @@ Item {
                     selectByMouse: true
                     text: page.notes.betterNotesInstall
                     color: page.theme.text
-                    selectionColor: page.theme.blue
+                    selectionColor: page.theme.control
                     font.family: "monospace"
                     font.pointSize: page.theme.fontSmall * 0.85
                 }
@@ -814,7 +814,7 @@ Item {
                 wrapMode: TextEdit.Wrap
                 textFormat: TextEdit.PlainText
                 color: page.theme.text
-                selectionColor: page.theme.blue
+                selectionColor: page.theme.control
                 font.pointSize: page.theme.fontSmall
                 selectByMouse: true
                 readOnly: page.readOnly || page.loading

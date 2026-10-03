@@ -78,7 +78,7 @@ Item {
         implicitWidth: pillLabel.implicitWidth + 22
         implicitHeight: 26
         radius: 13
-        readonly property color fill: primary ? connect.theme.blue : connect.theme.faint
+        readonly property color fill: primary ? connect.theme.control : connect.theme.faint
         color: pillMouse.pressed ? Qt.darker(fill, 1.2) : pillMouse.containsMouse && !primary ? connect.theme.over(connect.theme.hoverFill, connect.theme.over(fill, connect.theme.surface)) : fill
         opacity: enabled ? 1 : 0.4
         scale: pillMouse.pressed ? 0.95 : pillMouse.containsMouse ? 1.05 : 1
@@ -88,7 +88,7 @@ Item {
             id: pillLabel
             anchors.centerIn: parent
             text: parent.text
-            color: parent.primary ? connect.theme.onColor(connect.theme.blue) : connect.theme.text
+            color: parent.primary ? connect.theme.onColor(connect.theme.control) : connect.theme.text
             font.pointSize: connect.theme.fontSmall
             font.weight: Font.DemiBold
         }
@@ -102,7 +102,7 @@ Item {
         radius: 14
         color: connect.theme.faint
         border.width: 1
-        border.color: fieldInput.activeFocus ? connect.theme.blue : "transparent"
+        border.color: fieldInput.activeFocus ? connect.theme.control : "transparent"
         TextInput {
             id: fieldInput
             anchors.fill: parent
@@ -110,7 +110,7 @@ Item {
             anchors.rightMargin: 12
             verticalAlignment: TextInput.AlignVCenter
             color: connect.theme.text
-            selectionColor: connect.theme.blue
+            selectionColor: connect.theme.control
             font.pointSize: connect.theme.fontSmall
             clip: true
             selectByMouse: true

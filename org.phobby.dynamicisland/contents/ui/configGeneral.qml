@@ -13,9 +13,7 @@ KCM.SimpleKCM {
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
 
-    property alias cfg_surfaceOpacity: opacitySlider.value
-    property alias cfg_blurEnabled: blurCheck.checked
-    property alias cfg_themeMode: themeCombo.currentIndex
+    property int cfg_appearanceMode
     property alias cfg_showClock: clockCheck.checked
     property alias cfg_topMargin: topMarginSpin.value
     property alias cfg_avoidPanels: avoidPanelsCheck.checked
@@ -33,38 +31,11 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: Lang.i18n("Appearance")
         }
 
-        QQC2.ComboBox {
-            id: themeCombo
-            Kirigami.FormData.label: Lang.i18n("Style:")
-            model: [Lang.i18n("Follow color scheme"), Lang.i18n("Always dark (graphite)"), Lang.i18n("Always light (aluminium)")]
-        }
-
-        RowLayout {
-            Kirigami.FormData.label: Lang.i18n("Opacity:")
-            QQC2.Slider {
-                id: opacitySlider
-                from: 30
-                to: 100
-                stepSize: 1
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 10
-            }
-            QQC2.Label {
-                text: Lang.percent(Math.round(opacitySlider.value))
-            }
-        }
-
-        QQC2.CheckBox {
-            id: blurCheck
-            Kirigami.FormData.label: Lang.i18n("Background:")
-            text: Lang.i18n("Blur what is behind the island")
-        }
         QQC2.Label {
-            Layout.fillWidth: true
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 20
+            Kirigami.FormData.label: Lang.i18n("Look:")
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
-            font: Kirigami.Theme.smallFont
-            opacity: 0.7
-            text: Lang.i18n("Needs the optional native helper (install.sh --with-blur) and the KWin Blur effect. Without it the surface stays opaque.")
+            text: Lang.i18n("Colours, opacity, blur, size and shape are set in Appearance.")
         }
 
         QQC2.CheckBox {
@@ -76,6 +47,8 @@ KCM.SimpleKCM {
         QQC2.SpinBox {
             id: topMarginSpin
             Kirigami.FormData.label: Lang.i18n("Distance from top:")
+            // A custom look brings its own distance (Appearance).
+            enabled: page.cfg_appearanceMode === 0
             from: 0
             to: 200
             textFromValue: (v) => Lang.i18n("%1 px", v)

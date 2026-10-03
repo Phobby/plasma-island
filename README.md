@@ -1,9 +1,10 @@
 # Dynamic Island — Plasma 6 plasmoid
 
 A pill-shaped plasmoid that sits at the top centre of the screen and works
-like the iOS Dynamic Island. Its look is a metallic glass inspired by Oxygen
-(graphite gradient, silver rim, top highlight, inner and outer shadow), with
-the background blurred by KWin.
+like the iOS Dynamic Island. It takes its colours from Plasma, or wears a look
+of your own (Settings → Appearance): among others the original metallic glass
+inspired by Oxygen (graphite gradient, silver rim, top highlight, inner and
+outer shadow), with the background blurred by KWin.
 
 Tested on: Kubuntu, Plasma 6.6.6, Qt 6.10.2, Wayland.
 
@@ -109,9 +110,7 @@ the screen it was added to.
 
 | Setting | Description |
 |---|---|
-| Style | Follow the colour scheme / Always dark (graphite, default) / Always light (aluminium) |
-| Transparency | Surface opacity (30–100 %). At least 90 % is applied without blur |
-| Blur | Blur the content behind (needs the native helper) |
+| Appearance | Follow the system, or a custom look: see [Appearance](#appearance) |
 | Clock | Clock when idle and in the expanded header |
 | Distance from top / below panels | Position |
 | Notifications, display time | Behaviour when a notification arrives |
@@ -170,6 +169,55 @@ settings, without restarting Plasma; see "Translations" below.
 
 The end times of the timer, stopwatch, Pomodoro and alarm are stored in the
 settings; they carry on where they were even if plasmashell restarts.
+
+### Appearance
+
+Settings → Appearance has two modes.
+
+**Follow the system** (default). Background, text, border and accent colour
+come from Plasma and change with it at once, without restarting the shell.
+"Colours from" chooses what "the system" is, because inside plasmashell there
+are two:
+
+- *The colour scheme*: what System Settings → Colours applies, with the
+  accent colour, as applications show it. System Settings writes it to
+  `kdeglobals` and announces the change on D-Bus
+  (`org.kde.KGlobalSettings.notifyChange`, type 0); the island reads the file
+  again on that signal (`backend/ColorSchemeBackend.qml`). Nothing is polled.
+  This needs the native helper; without it the Plasma style is used.
+- *The Plasma style*: what the panel and other widgets use. This is
+  `Kirigami.Theme`, which inside plasmashell is libplasma's `PlasmaTheme` over
+  `Plasma::Theme` and follows `Plasma::Theme::themeChanged` by itself. It is
+  the colour scheme too, unless the Plasma style brings its own colours
+  (Oxygen, Breeze Dark…).
+
+(The Qt palette is neither: with a widget style like Kvantum it is that
+style's.)
+
+**Custom.** The island keeps the look you set, whatever the system does:
+
+| | |
+|---|---|
+| Ready-made looks | Oxygen Metallic (the original), Breeze Dark, Breeze Light, Pure Glass (Minimal), High Contrast (text and status colours at 4.5:1 or more, controls and border at 3:1 or more, nothing translucent to read on). Choosing one keeps where the island sits and how large it is. "Reset to the preset" undoes the fine tuning |
+| Opacity | 0–100 %, as set (independent of blur) |
+| Blur | On/off and a level. KWin blurs with one strength for the whole desktop (System Settings → Desktop Effects → Blur), so the level adds frosting over the blurred background |
+| Distance from top | 0–40 px (while following the system: the one in General) |
+| Horizontal position | −100…+100 px from the centre |
+| Size | 80–120 %: the whole island is scaled, text stays sharp |
+| Corner roundness | From sharp corners to a full capsule |
+| Colours | Background (or the system's accent colour), buttons and controls (or the accent colour; kept visible on the background), text (automatic by contrast, or your own) |
+| Border | On/off, 1–4 px, the look's own colour or yours |
+| Shadow | None / light / strong |
+
+Every change shows on the island at once while the settings window is open;
+Apply keeps it, Cancel returns to what was stored. A look can be saved under a
+name ("Work", "Night") and chosen again later; the custom look also stays
+while the island follows the system. Whoever used the earlier settings (style,
+opacity, blur) finds them as the first custom look.
+
+Everything goes through `Theme.qml`: a look is plain data (`Styles.qml`) and
+every colour and size there is a binding of it. The ambient glow sits on top of
+whatever look is chosen.
 
 ### Ambient glow
 
@@ -300,6 +348,7 @@ org.phobby.dynamicisland/
     │                          Thermal, Updates, Dbus, Unlock; for transfers
     │                          KdeConnectTransfer, RemovableTransfer, BrowserDownload
     ├── TransferActivity.qml, TransferHub.qml, TransfersCard.qml   shared transfer activity
+    ├── Styles.qml                 the looks: presets and a custom style as data (singleton)
     ├── Theme.qml, IslandShape.qml, ActivityCompact/Minimal/Card.qml, EventBanner.qml,
     │   BatteryGlyph.qml, MiniRing.qml, …        shared visual language
     ├── *Module.qml, *Page.qml                    expanded pages

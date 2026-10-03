@@ -10,7 +10,7 @@ Rectangle {
     required property Theme theme
     property string text
     property bool primary: false
-    property color tint: theme.blue          // fill of a primary button
+    property color tint: theme.control          // fill of a primary button
     signal clicked()
 
     implicitWidth: label.implicitWidth + 22

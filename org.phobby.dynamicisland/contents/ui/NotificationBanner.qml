@@ -33,7 +33,7 @@ Item {
                 anchors.bottom: parent.bottom
                 anchors.margins: -3
                 visible: banner.notification?.notifyRcName === "kdeconnect"
-                tint: banner.theme.blue
+                tint: banner.theme.control
             }
         }
         ColumnLayout {

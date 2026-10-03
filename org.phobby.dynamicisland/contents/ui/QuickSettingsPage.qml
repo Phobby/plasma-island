@@ -164,7 +164,7 @@ Item {
         property string label
         property string badge
         property bool checked
-        property color tint: page.theme.blue
+        property color tint: page.theme.control
         property bool available: true
         property bool editing: false
         property int slot: -1                   // position among the chosen buttons (editing: drag)

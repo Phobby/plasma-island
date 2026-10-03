@@ -1,7 +1,9 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
 
-    Theme: colors, metrics and motion for the island. Sizes derive from
+    Theme: colors, metrics and motion for the island, all in one place. Either
+    the system's colours (Plasma) or a custom style (Styles.qml); everything
+    below is a binding, so a change of either shows at once. Sizes derive from
     Kirigami.Units.gridUnit so they follow the font DPI / scale factor.
 */
 import QtQuick
@@ -10,13 +12,52 @@ import org.kde.kirigami as Kirigami
 QtObject {
     id: theme
 
-    // 0 = follow color scheme, 1 = dark, 2 = light
-    property int mode: 1
-    property real surfaceOpacity: 0.82
-    // With real KWin blur behind we can afford more transparency.
+    // true = the system's colours (Plasma), false = `style` (see Styles.qml)
+    property bool follow: true
+    property var style: Styles.defaults("oxygen")
+    // Distance from the top of the screen while following the system (Settings → General).
+    property int systemTop: 6
+    // KWin really blurs what is behind the island (native helper + Blur effect).
     property bool blurActive: false
 
-    readonly property bool dark: mode === 1 || (mode === 0 && Kirigami.Theme.backgroundColor.hslLightness < 0.5)
+    // ---- the system's colours -------------------------------------------------
+    // Two things can be "the system" inside plasmashell:
+    //   the colour scheme  what System Settings → Colours applies, with the accent
+    //                      colour (systemScheme, read by ColorSchemeBackend when KDE
+    //                      announces a change);
+    //   the Plasma style   what the panel and other widgets use: Kirigami.Theme,
+    //                      here libplasma's PlasmaTheme over Plasma::Theme, which
+    //                      follows Plasma::Theme::themeChanged by itself. It is the
+    //                      colour scheme too unless the style brings its own colours.
+    // Both are bindings: a change shows at once and nothing is polled.
+    // 0 = the colour scheme (the Plasma style where it cannot be read), 1 = the Plasma style
+    property int systemSource: 0
+    // { background, text, accent } of the applied colour scheme; null = not known
+    property var systemScheme: null
+    Kirigami.Theme.colorSet: Kirigami.Theme.Window
+    Kirigami.Theme.inherit: false
+    readonly property var scheme: systemSource === 0 ? systemScheme : null
+    readonly property color systemBackground: scheme ? scheme.background : Kirigami.Theme.backgroundColor
+    readonly property color systemText: scheme ? scheme.text : Kirigami.Theme.textColor
+    readonly property color systemAccent: scheme ? scheme.accent : Kirigami.Theme.highlightColor
+    readonly property real systemFrameContrast: Kirigami.Theme.frameContrast > 0 ? Kirigami.Theme.frameContrast : 0.2
+
+    // ---- the look ---------------------------------------------------------------
+    readonly property string material: follow ? "flat" : style.material
+    // High contrast: nothing translucent that text has to be read on or with.
+    readonly property bool strong: !follow && style.strong === true
+    readonly property color base: follow ? systemBackground : style.background === "accent" ? systemAccent : style.background
+    readonly property bool dark: luminance(base) < 0.179     // white reads better on it than black
+    readonly property bool blurWanted: follow ? true : style.blur
+    readonly property int blurLevel: follow ? 1 : style.blurLevel
+    readonly property real scale: follow ? 1 : style.scale / 100
+    readonly property real roundness: follow ? 1 : style.radius / 100
+    readonly property int topOffset: follow ? systemTop : style.top
+    readonly property int offsetX: follow ? 0 : style.offsetX
+    readonly property int borderWidth: follow ? 1 : style.border ? style.borderWidth : 0
+    readonly property int shadowLevel: follow ? 1 : style.shadow
+    // A corner radius under the roundness setting (100% = as designed, a full capsule).
+    function rounded(radius: real): real { return radius * roundness; }
 
     // ---- metrics --------------------------------------------------------------
     readonly property real gu: Kirigami.Units.gridUnit          // ~18px @ 1x
@@ -27,8 +68,8 @@ QtObject {
     readonly property real notificationHeight: Math.round(gu * 4)
     readonly property real expandedWidth: Math.round(gu * 24)
     readonly property real expandedHeight: Math.round(gu * 11.5)
-    readonly property real expandedRadius: 28
-    readonly property real notificationRadius: 26
+    readonly property real expandedRadius: rounded(28)
+    readonly property real notificationRadius: rounded(26)
     // Transient system events (charging, Bluetooth, volume…): a wide pill.
     readonly property real eventWidth: Math.round(gu * 19)
     readonly property real eventHeight: Math.round(gu * 2.9)
@@ -46,7 +87,7 @@ QtObject {
 
     // Transparent margin around the island inside its window (room for the
     // drop shadow and for OutBack overshoot).
-    readonly property real shadowSize: 18
+    readonly property real shadowSize: shadowLevel === 0 ? 0 : shadowLevel === 1 ? 12 : 18
     readonly property real windowSidePad: 26
     readonly property real windowTopPad: 6
     readonly property real windowBottomPad: 28
@@ -58,27 +99,60 @@ QtObject {
     readonly property real overshoot: 0.9
 
     // ---- colors -------------------------------------------------------------
-    readonly property real alpha: blurActive ? surfaceOpacity : Math.max(surfaceOpacity, 0.9)
+    // Following the system keeps the surface readable without blur; a custom
+    // style takes the opacity as it is set.
+    readonly property real alpha: follow ? (blurActive ? 0.82 : 0.92) : style.opacity / 100
+    function shade(c: color, factor: real, a: real): color {
+        return Qt.rgba(Math.min(1, c.r * factor), Math.min(1, c.g * factor), Math.min(1, c.b * factor), a);
+    }
+    function mix(a: color, b: color, t: real): color {
+        return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1);
+    }
+    readonly property bool metal: material === "metal"
 
-    // Oxygen-like brushed metal: graphite top → near-black bottom (dark),
-    // or brushed aluminium (light).
-    readonly property color bodyTop: dark ? Qt.rgba(0.20, 0.21, 0.23, alpha) : Qt.rgba(0.93, 0.94, 0.95, alpha)
-    readonly property color bodyMid: dark ? Qt.rgba(0.10, 0.105, 0.115, alpha) : Qt.rgba(0.84, 0.85, 0.87, alpha)
-    readonly property color bodyBottom: dark ? Qt.rgba(0.045, 0.047, 0.052, alpha) : Qt.rgba(0.76, 0.77, 0.79, alpha)
+    // Metal: Oxygen-like brushed metal, a vertical gradient around the base colour
+    // (graphite top → near-black bottom, or brushed aluminium). Flat and glass: one colour.
+    readonly property color bodyTop: shade(base, !metal ? 1 : dark ? 2 : 1.107, alpha)
+    readonly property color bodyMid: shade(base, 1, alpha)
+    readonly property color bodyBottom: shade(base, !metal ? 1 : dark ? 0.45 : 0.905, alpha)
 
-    // 1px silver rim gradient
-    readonly property color rimTop: dark ? Qt.rgba(0.80, 0.82, 0.86, 0.55) : Qt.rgba(1, 1, 1, 0.95)
-    readonly property color rimBottom: dark ? Qt.rgba(0.35, 0.36, 0.39, 0.35) : Qt.rgba(0.55, 0.56, 0.60, 0.55)
+    // The border. Its own colour: metal a silver rim, brighter at the top; glass
+    // a hairline of light; flat the system's frame colour (text into background).
+    readonly property color borderGiven: !follow && style.borderColor.length > 0 ? style.borderColor : "transparent"
+    readonly property bool borderOwn: !follow && style.borderColor.length > 0
+    readonly property color rimTop: borderOwn ? borderGiven
+        : metal ? (dark ? Qt.rgba(0.80, 0.82, 0.86, 0.55) : Qt.rgba(1, 1, 1, 0.95))
+        : material === "glass" ? (dark ? Qt.rgba(1, 1, 1, 0.30) : Qt.rgba(0, 0, 0, 0.22))
+        : mix(base, text, systemFrameContrast)
+    readonly property color rimBottom: borderOwn ? borderGiven
+        : metal ? (dark ? Qt.rgba(0.35, 0.36, 0.39, 0.35) : Qt.rgba(0.55, 0.56, 0.60, 0.55))
+        : material === "glass" ? (dark ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(0, 0, 0, 0.12))
+        : rimTop
 
-    readonly property color highlight: dark ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.55)
-    readonly property color innerShadow: dark ? Qt.rgba(0, 0, 0, 0.45) : Qt.rgba(0, 0, 0, 0.10)
-    readonly property color dropShadow: dark ? Qt.rgba(0, 0, 0, 0.45) : Qt.rgba(0, 0, 0, 0.22)
+    readonly property color highlight: metal ? (dark ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.55))
+        : material === "glass" ? (dark ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.30)) : "transparent"
+    readonly property color innerShadow: !metal ? "transparent" : dark ? Qt.rgba(0, 0, 0, 0.45) : Qt.rgba(0, 0, 0, 0.10)
+    readonly property color dropShadow: shadowLevel === 0 ? "transparent"
+        : shadowLevel === 1 ? (dark ? Qt.rgba(0, 0, 0, 0.26) : Qt.rgba(0, 0, 0, 0.14))
+        : dark ? Qt.rgba(0, 0, 0, 0.45) : Qt.rgba(0, 0, 0, 0.22)
+    // Frosting over the blurred background. The blur itself is KWin's and has one
+    // strength for the whole desktop; a level adds a milky veil that hides more of
+    // what is behind.
+    readonly property color frost: !blurActive || blurLevel === 0 ? "transparent"
+        : Qt.rgba(1, 1, 1, (dark ? [0, 0.05, 0.11] : [0, 0.18, 0.34])[blurLevel])
 
-    readonly property color text: dark ? "#f4f5f7" : "#16171a"
-    readonly property color subText: dark ? Qt.rgba(0.92, 0.93, 0.96, 0.62) : Qt.rgba(0.08, 0.09, 0.10, 0.74)
-    readonly property color faint: dark ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(0, 0, 0, 0.10)
-    readonly property color track: dark ? Qt.rgba(1, 1, 1, 0.16) : Qt.rgba(0, 0, 0, 0.14)
-    readonly property color accent: Kirigami.Theme.highlightColor
+    readonly property color text: follow ? systemText : style.text.length > 0 ? style.text : dark ? "#f4f5f7" : "#16171a"
+    readonly property color subText: strong ? mix(text, base, 0.12) : Qt.rgba(text.r, text.g, text.b, dark ? 0.62 : 0.74)
+    readonly property color faint: dark ? Qt.rgba(1, 1, 1, strong ? 0.20 : 0.12) : Qt.rgba(0, 0, 0, strong ? 0.16 : 0.10)
+    readonly property color track: dark ? Qt.rgba(1, 1, 1, strong ? 0.42 : 0.16) : Qt.rgba(0, 0, 0, strong ? 0.45 : 0.14)
+    // Buttons, fields, selections. The accent is the system's unless the style names a colour.
+    // Kept visible on the surface (3:1, as WCAG asks of controls): a dull accent is lightened or darkened.
+    readonly property color controlGiven: follow || style.control === "accent" ? systemAccent : style.control
+    readonly property color control: ensure(controlGiven, surface, 3)
+    // Sliders: the text colour in Oxygen Metallic as it comes (its iOS-like white), else the control colour.
+    readonly property color sliderFill: !follow && style.preset === "oxygen" && style.control === Styles.presets.oxygen.control ? text : control
+    readonly property color accent: follow || style.control === "accent" || style.preset === "oxygen" && style.control === Styles.presets.oxygen.control
+        ? systemAccent : controlGiven
     readonly property color live: "#32d74b"      // iOS green: charging, camera, success
     readonly property color orange: "#ff9f0a"    // microphone, timers
     readonly property color red: "#ff3b30"       // recording, low battery, errors
@@ -89,11 +163,11 @@ QtObject {
     readonly property color danger: "#ff453a"
 
     // ---- contrast (WCAG 2.x) ----------------------------------------------------
-    // Opaque approximation of the glass body behind content (its mid tone).
-    readonly property color surface: dark ? Qt.rgba(0.10, 0.105, 0.115, 1) : Qt.rgba(0.84, 0.85, 0.87, 1)
-    // State fills for buttons/chips, visible in both themes.
-    readonly property color hoverFill: dark ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.06)
-    readonly property color pressedFill: dark ? Qt.rgba(1, 1, 1, 0.20) : Qt.rgba(0, 0, 0, 0.16)
+    // Opaque approximation of the body behind content.
+    readonly property color surface: Qt.rgba(base.r, base.g, base.b, 1)
+    // State fills for buttons/chips, visible on dark and light surfaces.
+    readonly property color hoverFill: dark ? Qt.rgba(1, 1, 1, strong ? 0.16 : 0.08) : Qt.rgba(0, 0, 0, strong ? 0.12 : 0.06)
+    readonly property color pressedFill: dark ? Qt.rgba(1, 1, 1, strong ? 0.30 : 0.20) : Qt.rgba(0, 0, 0, strong ? 0.26 : 0.16)
     readonly property real minContrast: 4.5
 
     function luminance(c: color): real {
@@ -116,10 +190,13 @@ QtObject {
         return contrast(w, bg) >= contrast(k, bg) ? w : k;
     }
     // `c` adjusted (lighter on dark, darker on light) until it reaches 4.5:1 on `bg`.
-    function readable(c: color, bg: color): color {
+    function readable(c: color, bg: color): color { return ensure(c, bg, minContrast); }
+    function ensure(c: color, bg: color, ratio: real): color {
         const back = bg === undefined ? surface : bg;
         let out = Qt.rgba(c.r, c.g, c.b, 1);
-        for (let i = 0; i < 12 && contrast(out, back) < minContrast; ++i) {
+        // Black cannot be lightened by a factor.
+        if (luminance(out) < 0.004 && luminance(over(back, surface)) < 0.2) out = Qt.rgba(0.2, 0.2, 0.2, 1);
+        for (let i = 0; i < 24 && contrast(out, back) < ratio; ++i) {
             out = luminance(over(back, surface)) < 0.2 ? Qt.lighter(out, 1.12) : Qt.darker(out, 1.12);
             if (luminance(out) > 0.98 || luminance(out) < 0.005) break;
         }

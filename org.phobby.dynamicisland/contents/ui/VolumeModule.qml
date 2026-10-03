@@ -29,7 +29,7 @@ Item {
         GlassSlider {
             Layout.fillWidth: true
             value: vol.backend.muted ? 0 : vol.backend.volume
-            fillColor: vol.backend.muted ? vol.theme.subText : vol.theme.text
+            fillColor: vol.backend.muted ? vol.theme.subText : vol.theme.sliderFill
             trackColor: vol.theme.track
             onMoved: v => vol.backend.setVolume(v)
         }

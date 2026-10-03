@@ -9,6 +9,11 @@ ConfigModel {
         source: "configGeneral.qml"
     }
     ConfigCategory {
+        name: Lang.i18n("Appearance")
+        icon: "preferences-desktop-theme-global"
+        source: "configAppearance.qml"
+    }
+    ConfigCategory {
         name: Lang.i18n("Layout")
         icon: "view-sort"
         source: "configLayout.qml"
