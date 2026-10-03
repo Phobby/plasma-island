@@ -4,7 +4,11 @@
     "Notes": jot something down quickly, or look up what was noted. One list
     of every connected notes app (NotesBackend), newest first, with a field on
     top that adds a quick note to the default source or searches the notes.
-    Clicking a note opens it for editing; changes are written back to its app.
+    Clicking a note opens it for editing; changes are written back to its app
+    1.5 s after typing stops, when the field loses focus, or with Ctrl+S.
+    A BetterNotes note is started with its title alone and filled in later;
+    its title can be changed in the editor too. Text that could not be saved
+    stays (NotesBackend.drafts) and can be saved again.
     Notes apps are connected right here: the ones found on this computer are
     offered first.
 */
@@ -19,8 +23,8 @@ Item {
     required property var notes             // NotesBackend
     signal defaultPicked(string id)
 
-    // "list" | "note" (editor) | "sources" (connected apps, add one) | "form" (connect `formType`)
-    // | "install" (how to get BetterNotes)
+    // "list" | "note" (editor) | "title" (a new BetterNotes note: its title only)
+    // | "sources" (connected apps, add one) | "form" (connect `formType`) | "install" (how to get BetterNotes)
     property string view: "list"
     property bool searching: false
     // The top field has keyboard focus (the island only takes the keyboard on request).
@@ -28,7 +32,7 @@ Item {
     property string query: ""
     property string status: ""              // short feedback under the field
     property bool statusIsError: false
-    readonly property bool interacting: visible && (view === "note" || view === "form" || typing)
+    readonly property bool interacting: visible && (view === "note" || view === "form" || view === "title" || typing)
     onVisibleChanged: if (!visible) typing = false; else arrive()
     Component.onCompleted: arrive()
     // Opening the page: fetch the notes, or look for notes apps when none is connected.
@@ -76,44 +80,113 @@ Item {
     property string savedText: ""
     property bool saving: false
     property string saveError: ""
-    // A note of an app with its own editor (BetterNotes) is only shown here.
+    property bool loading: false
+    // Locked notes and BetterNotes notes with rich text are only shown here.
     readonly property bool readOnly: current !== null && current.readOnly === true
+    // BetterNotes notes have a title of their own: edited in a field above the text.
+    readonly property bool titled: current !== null && current.type === "betternotes"
+    readonly property string draftKey: current ? current.key : "new:" + (notes.defaultSource ? notes.defaultSource.id : "")
+    // What would be saved: "title\ncontent" for a titled note, the text otherwise.
+    function composed(): string { return titled ? titleField.text.trim() + "\n" + editor.text : editor.text; }
+    readonly property bool dirty: view === "note" && !readOnly && !loading && (titled ? titleField.text.trim() + "\n" + editor.text : editor.text) !== savedText
+    function show(text: string): void {
+        if (titled) {
+            const i = text.indexOf("\n");
+            titleField.text = i < 0 ? text : text.slice(0, i);
+            editor.text = i < 0 ? "" : text.slice(i + 1);
+        } else editor.text = text;
+    }
     function open(n: var): void {
-        current = n; savedText = n ? n.text : ""; saveError = "";
-        editor.text = savedText;
+        autoSave.stop();
+        current = n; saveError = ""; loading = false;
+        // A new BetterNotes note starts with its title alone.
+        if (!n && notes.defaultSource && notes.defaultSource.type === "betternotes") {
+            newTitle.text = "";
+            view = "title";
+            Qt.callLater(() => newTitle.input.forceActiveFocus());
+            return;
+        }
         view = "note";
-        if (n && n.readOnly) {
-            if (n.loaded) { editor.text = savedText = n.text.indexOf(n.title + "\n") === 0 ? n.text.slice(n.title.length + 1) : ""; return; }
-            editor.text = savedText = i18n("Loading…");
-            notes.loadText(n, (error, text) => {
-                if (page.current !== n) return;
-                if (error) { page.saveError = error; editor.text = savedText = ""; return; }
-                n.text = n.title + "\n" + text; n.loaded = true;        // also found by the search from now on
-                editor.text = savedText = text;
+        const draft = page.notes.drafts[draftKey];
+        const resume = () => {
+            if (draft !== undefined && !readOnly) {
+                show(draft);
+                saveError = i18n("Not saved yet.");
+            }
+            if (!readOnly) Qt.callLater(() => { editor.forceActiveFocus(); editor.cursorPosition = editor.length; });
+        };
+        if (n && n.type === "betternotes" && !n.loaded) {
+            loading = true;
+            titleField.text = n.title; editor.text = i18n("Loading…"); savedText = "";
+            notes.loadText(n, (error, text, rich) => {
+                // The list may have been refreshed meanwhile: the same note is another object then.
+                if (!page.current || page.current.key !== n.key) return;
+                loading = false;
+                if (error) { page.saveError = error; editor.text = ""; savedText = page.composed(); return; }
+                // Also found by the search from now on. Plain text would lose rich formatting: only shown.
+                const fields = { text: page.current.title + "\n" + text, loaded: true };
+                if (rich) { fields.rich = true; fields.readOnly = true; }
+                page.notes.remember(n.key, fields);
+                page.current = Object.assign({}, page.current, fields);
+                savedText = page.current.text; show(savedText);
+                resume();
             });
             return;
         }
-        Qt.callLater(() => { editor.forceActiveFocus(); editor.cursorPosition = editor.length; });
+        // A titled note is always "title\ncontent", also when it has no content yet.
+        savedText = !n ? "" : !titled ? n.text : n.title + "\n" + (n.text.indexOf(n.title + "\n") === 0 ? n.text.slice(n.title.length + 1) : "");
+        show(savedText);
+        resume();
     }
     function saveNote(then: var): void {
-        const text = editor.text;
-        if (saving) return;
+        if (saving || loading) return;
+        const text = composed();
         if (readOnly) { if (then) then(); return; }
         if (text === savedText || (current === null && text.trim().length === 0)) { if (then) then(); return; }
+        if (titled && titleField.text.trim().length === 0) { saveError = i18n("Give the note a title."); return; }
+        autoSave.stop();
         saving = true; saveError = "";
         const finished = result => {
             saving = false;
+            // The text stays in the editor (and in the backend's drafts): nothing is lost.
             if (!result.ok) { saveError = result.error; return; }
             current = result.note; savedText = text;
             // Typed on while it was being saved: save again.
-            if (editor.text !== text) autoSave.restart(); else if (then) then();
+            if (composed() !== text) autoSave.restart(); else if (then) then();
         };
         if (current) notes.save(current, text, finished); else notes.create(text, "", finished);
     }
     function closeNote(): void {
         saveNote(() => { view = "list"; typing = false; });
     }
+    // Back to the list without saving: the text stays as a draft of this note.
+    function leaveNote(): void {
+        if (dirty) notes.setDraft(draftKey, composed());
+        autoSave.stop(); saveError = ""; view = "list"; typing = false;
+    }
     Timer { id: autoSave; interval: 1500; onTriggered: page.saveNote(null) }
+    // The island closes (the page goes away): what was typed is saved, or kept as a draft.
+    Component.onDestruction: {
+        if (!dirty) return;
+        const text = composed();
+        if (current) notes.save(current, text, () => {});
+        else if (text.trim().length > 0) notes.create(text, "", () => {});
+    }
+
+    // ---- a new BetterNotes note: title only ------------------------------------------
+    property bool creating: false
+    function createTitled(): void {
+        const title = newTitle.text.trim();
+        if (title.length === 0 || creating) return;
+        creating = true; saveError = "";
+        notes.create(title, "", result => {
+            creating = false;
+            if (!result.ok) { saveError = result.error; return; }
+            newTitle.text = "";
+            view = "list"; typing = false;
+            say(i18n("“%1” was created; click it to write in it.", result.note.title), false);
+        });
+    }
 
     // ---- connecting ----------------------------------------------------------------
     property var found: ({ joplin: false, joplinRunning: false, simplenote: false, betternotes: false })
@@ -289,9 +362,10 @@ Item {
                         Text {
                             Layout.fillWidth: true
                             // BetterNotes: tags and priority; others: the text after the title.
-                            readonly property string rest: row.modelData.readOnly
+                            readonly property string rest: row.modelData.type === "betternotes"
                                 ? (row.modelData.tags || []).map(t => "#" + t).concat(row.modelData.priority && row.modelData.priority !== "Normal" ? [row.modelData.priority] : [])
-                                                              .concat(row.modelData.locked ? [i18n("Locked")] : []).join(" · ")
+                                                              .concat(row.modelData.locked ? [i18n("Locked")] : [])
+                                                              .concat(page.notes.drafts[row.modelData.key] !== undefined ? [i18n("Not saved")] : []).join(" · ")
                                 : row.modelData.text.replace(/^\s*\S[^\n]*\n?/, "").replace(/\s+/g, " ").trim()
                             visible: rest.length > 0
                             text: rest.slice(0, 120)
@@ -633,6 +707,63 @@ Item {
         }
     }
 
+    // ---- a new BetterNotes note: its title ----------------------------------------------
+    ColumnLayout {
+        anchors.fill: parent
+        visible: page.view === "title"
+        spacing: 6
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            IconButton {
+                iconName: "go-previous-symbolic"
+                iconSize: 12
+                implicitWidth: 20; implicitHeight: 20
+                color: page.theme.text
+                hoverColor: page.theme.faint
+                onClicked: { page.view = "list"; page.saveError = ""; }
+            }
+            SourceBadge { type: "betternotes" }
+            Text {
+                Layout.fillWidth: true
+                text: i18n("New note in BetterNotes")
+                color: page.theme.subText
+                font.pointSize: page.theme.fontSmall * 0.9
+                elide: Text.ElideRight
+            }
+        }
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+            PillField {
+                id: newTitle
+                theme: page.theme
+                Layout.fillWidth: true
+                implicitHeight: 28
+                enabled: !page.creating
+                placeholder: i18n("Title, e.g. Shopping list")
+                onAccepted: page.createTitled()
+                onEscaped: { page.view = "list"; page.saveError = ""; }
+            }
+            PillButton {
+                theme: page.theme
+                implicitHeight: 24
+                primary: true
+                enabled: newTitle.text.trim().length > 0 && !page.creating
+                text: page.creating ? i18n("Creating…") : i18n("Create")
+                onClicked: page.createTitled()
+            }
+        }
+        Text {
+            Layout.fillWidth: true
+            text: page.saveError.length > 0 ? page.saveError : i18n("The note is created empty; write in it afterwards.")
+            color: page.saveError.length > 0 ? page.theme.readable(page.theme.danger, page.theme.surface) : page.theme.subText
+            font.pointSize: page.theme.fontSmall * 0.9
+            wrapMode: Text.Wrap
+        }
+        Item { Layout.fillHeight: true }
+    }
+
     // ---- editor ----------------------------------------------------------------------
     ColumnLayout {
         anchors.fill: parent
@@ -647,15 +778,32 @@ Item {
                 implicitWidth: 20; implicitHeight: 20
                 color: page.theme.text
                 hoverColor: page.theme.faint
-                onClicked: page.closeNote()
+                // Saving failed: leave anyway, the text is kept as a draft.
+                onClicked: if (page.saveError.length > 0) page.leaveNote(); else page.closeNote()
             }
             SourceBadge {
                 visible: type.length > 0
                 type: page.current ? page.current.type : page.notes.defaultSource ? page.notes.defaultSource.type : ""
             }
+            PillField {
+                id: titleField
+                visible: page.titled && !page.readOnly
+                theme: page.theme
+                Layout.fillWidth: true
+                implicitHeight: 22
+                placeholder: i18n("Title")
+                onEdited: { if (!page.loading) autoSave.restart(); }
+                onAccepted: { editor.forceActiveFocus(); editor.cursorPosition = editor.length; }
+                onEscaped: page.closeNote()
+                Connections {
+                    target: titleField.input
+                    function onActiveFocusChanged() { if (!titleField.input.activeFocus && page.view === "note") page.saveNote(null); }
+                }
+            }
             Text {
                 Layout.fillWidth: true
-                text: page.saveError.length > 0 ? page.saveError
+                visible: !titleField.visible
+                text: page.saveError.length > 0 && !page.titled ? page.saveError
                     : page.readOnly ? page.current.title
                     : page.current ? page.notes.types[page.current.type].name
                     : page.notes.defaultSource ? i18n("New note in %1", page.notes.defaultSource.name) : ""
@@ -665,7 +813,7 @@ Item {
             }
             Text {
                 visible: !page.readOnly
-                text: page.saving ? i18n("Saving…") : editor.text !== page.savedText ? i18n("Edited") : page.current ? i18n("Saved") : ""
+                text: page.loading ? "" : page.saving ? i18n("Saving…") : page.dirty ? i18n("Edited") : page.current ? i18n("Saved") : ""
                 color: page.theme.subText
                 font.pointSize: page.theme.fontSmall * 0.9
             }
@@ -676,6 +824,38 @@ Item {
                 implicitHeight: 20
                 text: i18n("Edit in BetterNotes")
                 onClicked: page.notes.openBetterNotes()
+            }
+        }
+        // Saving failed: say why, keep the text, offer to try again.
+        Rectangle {
+            Layout.fillWidth: true
+            visible: page.titled && page.saveError.length > 0
+            implicitHeight: errorRow.implicitHeight + 8
+            radius: 8
+            color: Qt.rgba(page.theme.danger.r, page.theme.danger.g, page.theme.danger.b, 0.16)
+            RowLayout {
+                id: errorRow
+                anchors.fill: parent
+                anchors.leftMargin: 8
+                anchors.rightMargin: 4
+                spacing: 6
+                Text {
+                    Layout.fillWidth: true
+                    text: page.saveError
+                    color: page.theme.readable(page.theme.danger, page.theme.surface)
+                    font.pointSize: page.theme.fontSmall * 0.9
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 3
+                    elide: Text.ElideRight
+                }
+                PillButton {
+                    visible: !page.readOnly && page.dirty
+                    theme: page.theme
+                    implicitHeight: 20
+                    primary: true
+                    text: page.saving ? i18n("Saving…") : i18n("Try again")
+                    onClicked: page.saveNote(null)
+                }
             }
         }
         Flickable {
@@ -699,9 +879,11 @@ Item {
                 selectionColor: page.theme.blue
                 font.pointSize: page.theme.fontSmall
                 selectByMouse: true
-                readOnly: page.readOnly
+                readOnly: page.readOnly || page.loading
                 onCursorRectangleChanged: editorView.follow(cursorRectangle)
-                onTextChanged: if (page.view === "note" && !page.readOnly && text !== page.savedText) autoSave.restart()
+                onTextChanged: if (page.dirty) autoSave.restart()
+                // Clicking elsewhere saves at once.
+                onActiveFocusChanged: if (!activeFocus && page.view === "note") page.saveNote(null)
                 Keys.onEscapePressed: page.closeNote()
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_S && (event.modifiers & Qt.ControlModifier)) { page.saveNote(null); event.accepted = true; }
