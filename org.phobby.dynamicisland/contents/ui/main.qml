@@ -565,6 +565,8 @@ PlasmoidItem {
                 showVolumeModule: root.cfg.showVolumeModule
                 showNotificationModule: root.cfg.showNotificationModule
                 pageOrder: root.cfg.pageOrder
+                ambientGlow: root.cfg.ambientGlow
+                onAmbientGlowToggled: root.cfg.ambientGlow = !root.cfg.ambientGlow
                 systemView: root.cfg.systemView === 0 ? "fixed" : "dynamic"
                 // The gear in the expanded header: Plasma's settings window of this widget.
                 onSettingsRequested: {

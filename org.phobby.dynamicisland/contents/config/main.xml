@@ -155,6 +155,8 @@
     <entry name="pageOrder" type="String">
       <default>activities,media,control,notifications,quicksettings,tools,calendar,notes,clipboard,devices</default>
     </entry>
+    <!-- Ambient glow: the island's edge in the colour of the album cover, following the music (Media page) -->
+    <entry name="ambientGlow" type="Bool"><default>false</default></entry>
     <!-- Buttons of the Controls page, in order, at most 6 (Settings → Controls); see ControlCatalog.qml -->
     <entry name="controlTiles" type="String">
       <default>dnd,nightlight,power,bluetooth,wifi,updates</default>

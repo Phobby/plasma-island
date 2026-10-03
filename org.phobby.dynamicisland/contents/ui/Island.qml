@@ -36,6 +36,14 @@ Item {
     property string systemView: "dynamic"
     signal systemMetricClicked(string key)
     signal settingsRequested()
+    // Ambient glow (the colour of the cover, following the music); see AmbientGlow.qml.
+    property bool ambientGlow: false
+    signal ambientGlowToggled()
+    AmbientGlow {
+        id: glow
+        enabled: island.ambientGlow
+        backend: island.backend
+    }
     // Provider pages for the expanded view: [{ key, icon, title, component, visible }]
     property var extraPages: []
     property string pageOrder: ""
@@ -169,6 +177,12 @@ Item {
     IslandShape {
         id: surface
         theme: island.theme
+        glowShown: glow.shown
+        glowStrength: glow.strength
+        glowColor: glow.color
+        // a hint of the colour on the small pill, less on the large card
+        glowTint: island.mode === "expanded" ? 0.06 : 0.13
+        bodyScale: glow.visibleAtAll ? glow.bodyScale : 1
         anchors.horizontalCenter: parent.horizontalCenter
         y: island.theme.windowTopPad
         width: island.theme.pillWidth
@@ -323,6 +337,8 @@ Item {
                 systemView: island.systemView
                 onSystemMetricClicked: key => island.systemMetricClicked(key)
                 onSettingsRequested: island.settingsRequested()
+                ambientGlow: island.ambientGlow
+                onAmbientGlowToggled: island.ambientGlowToggled()
             }
         }
     }

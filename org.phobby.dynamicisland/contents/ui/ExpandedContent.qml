@@ -26,6 +26,9 @@ Item {
     signal systemMetricClicked(string key)
     // The gear in the header: the widget's settings.
     signal settingsRequested()
+    // The ambient glow's switch on the Media page.
+    property bool ambientGlow: false
+    signal ambientGlowToggled()
 
     // True while the user types a reply: the island keeps keyboard focus
     // and does not collapse.
@@ -344,6 +347,8 @@ Item {
         MediaModule {
             theme: expanded.theme
             backend: expanded.backend
+            glowEnabled: expanded.ambientGlow
+            onGlowToggled: expanded.ambientGlowToggled()
         }
     }
     Component {

@@ -519,5 +519,7 @@ var table = {
     "The island has %1 buttons: remove one to add another.": "Adada %1 düğme var: başka birini eklemek için birini kaldır.",
     "Restore default buttons": "Varsayılan düğmelere döndür",
     "Keep awake (Dynamic Island)": "Uyanık tut (Dinamik Ada)",
-    "Tap to add (at most %1); drag to move, \"−\" removes.": "Eklemek için dokun (en fazla %1); taşımak için sürükle, \"−\" kaldırır."
+    "Tap to add (at most %1); drag to move, \"−\" removes.": "Eklemek için dokun (en fazla %1); taşımak için sürükle, \"−\" kaldırır.",
+    "Turn off the glow": "Işıltıyı kapat",
+    "Glow in the colour of the cover, with the music": "Müzikle birlikte kapak renginde ışılda"
 };

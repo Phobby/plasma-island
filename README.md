@@ -171,6 +171,41 @@ settings, without restarting Plasma; see "Translations" below.
 The end times of the timer, stopwatch, Pomodoro and alarm are stored in the
 settings; they carry on where they were even if plasmashell restarts.
 
+### Ambient glow
+
+Off by default; the wave button at the top right of the Media page switches
+it (the choice is kept, `ambientGlow`). While it is on:
+
+- The edge of the island glows in the colour of the album cover and the
+  surface takes a faint tint of it (a bit more on the small pill, less on the
+  expanded card). A new song crossfades to its colour in 0.7 s.
+- The glow breathes with the loudness of the music; on a bass hit the drawn
+  surface grows by 4 % for 90 ms and eases back in 220 ms, and the glow
+  peaks. Only the drawing grows: the content and the input area keep their
+  size. The glow is drawn below and beside the island, where the window has
+  room (it hangs from the top of the screen).
+- Paused, it stays as a dim, still light; without media it goes out.
+  Switched off, everything fades out in 350 ms and nothing of it is left
+  (the glow layer is not even created then).
+
+**Colour:** the cover is drawn at 16×16 into a canvas and its pixels are
+sorted into 12 hue bins weighted by saturation × √brightness (grey and black
+pixels do not count); the colour is the mean of the heaviest bin, moved in
+HSL to saturation ≥ 0.5 and lightness 0.5–0.65. A grey, black or white cover
+gives a soft silver. Each cover is analysed once (cached by its URL).
+
+**Music:** `pw-record` captures the default output's monitor
+(`stream.capture.sink`) as raw float, mono, 8 kHz (~32 KB/s through a pipe;
+`AudioLevels` in the native core). Every 32 ms it computes the RMS (loudness)
+and the RMS after two one-pole low-pass filters at 150 Hz (bass, 12 dB/oct:
+kick drums and bass lines, no FFT needed), both with automatic gain so quiet
+and loud tracks move alike. A bass hit is a jump to 1.45× the bass of the last
+~0.6 s (at most one per 180 ms). The process only runs while the glow is on
+and something plays. libpipewire's own API was not used because its
+development headers are not needed anywhere else (the privacy watcher uses
+`pw-dump` the same way). Without the native module the glow still shows the
+cover's colour, without following the music.
+
 ### Translations
 
 Every visible text is an English source string passed to `Lang.i18n()`,
@@ -275,6 +310,7 @@ org.phobby.dynamicisland/
     ├── Lang.qml, translations/tr.js, qmldir      the widget's own translations (singleton)
     ├── PageCatalog.qml                           the expanded pages and their default order
     ├── ControlCatalog.qml                        the buttons the Controls page can show (at most 6)
+    ├── AmbientGlow.qml, AlbumColor.qml           the glow: cover colour, music, bass pops
     └── config*.qml                                settings pages (configLayout: page order)
 native/
 ├── windowblur.*               org.phobby.dynamicisland.effects (shaped KWin blur)
@@ -282,7 +318,7 @@ native/
                                PipeWireWatcher, DBusSignalWatcher, Launcher,
                                UpdatesChecker, DownloadWatcher, SecretStore,
                                LoopbackServer, LocalTools, PopupWatcher,
-                               IslandService (D-Bus API)
+                               AudioLevels, IslandService (D-Bus API)
 tools/island-push, tools/notify-done.sh, tools/i18n-check
 ```
 

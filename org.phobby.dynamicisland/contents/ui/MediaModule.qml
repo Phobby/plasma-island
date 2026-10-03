@@ -12,6 +12,9 @@ Item {
 
     required property Theme theme
     required property PlasmaBackend backend
+    // The ambient glow (cover colour, follows the music): on/off from here.
+    property bool glowEnabled: false
+    signal glowToggled()
 
     implicitHeight: layout.implicitHeight
 
@@ -89,9 +92,22 @@ Item {
                 }
             }
 
-            Equalizer {
+            ColumnLayout {
                 Layout.alignment: Qt.AlignTop | Qt.AlignRight
-                Layout.topMargin: 4
+                spacing: 4
+            IconButton {
+                Layout.alignment: Qt.AlignRight
+                iconName: "view-media-visualization-symbolic"
+                iconSize: 14
+                implicitWidth: 24; implicitHeight: 24
+                toolTip: media.glowEnabled ? Lang.i18n("Turn off the glow") : Lang.i18n("Glow in the colour of the cover, with the music")
+                color: media.glowEnabled ? media.theme.live : media.theme.subText
+                hoverColor: media.theme.faint
+                onClicked: media.glowToggled()
+            }
+            Equalizer {
+                Layout.alignment: Qt.AlignRight
+                Layout.rightMargin: 4
                 // Decorative "now playing" indicator: only shown while playing
                 // (paused bars look like a clickable "…" menu).
                 running: media.visible && media.backend.isPlaying
@@ -99,6 +115,7 @@ Item {
                 Behavior on opacity { NumberAnimation { duration: 200 } }
                 color: media.theme.live
                 Layout.preferredHeight: 16
+            }
             }
         }
 
