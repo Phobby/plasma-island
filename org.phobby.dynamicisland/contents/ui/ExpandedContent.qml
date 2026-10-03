@@ -15,6 +15,7 @@ Item {
 
     required property Theme theme
     required property PlasmaBackend backend
+    property var network: null
     required property ActivityManager manager
     property bool active: false
     property bool showMediaModule: true
@@ -358,6 +359,7 @@ Item {
             visible: expanded.showSystemModule
             theme: expanded.theme
             backend: expanded.backend
+            network: expanded.network
             mode: expanded.systemView
             onMetricClicked: key => expanded.systemMetricClicked(key)
         }

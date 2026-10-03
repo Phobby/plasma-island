@@ -4,6 +4,8 @@
     switches of the Controls page: Wi-Fi, airplane mode (the same setting as
     Plasma's network applet), the VPN connections, the hotspot.
     NetworkManager does not report how many clients use a hotspot.
+    Also the connection the machine is online through (wired before Wi-Fi)
+    with the address lines of the applet's Details tab.
 */
 import QtQuick
 import org.kde.plasma.networkmanagement as PlasmaNM
@@ -48,6 +50,27 @@ Item {
         if (activeVpn) lastVpn = activeVpn.connection;
     }
 
+    // The active wired / Wi-Fi connection: { name, device, wired, ipv4, mac } or null.
+    property var primary: null
+    function collectPrimary(): void {
+        let best = null;
+        for (let i = 0; i < rows.count; ++i) {
+            const r = rows.objectAt(i);
+            if (r && r.carrier && (!best || (r.type === PlasmaNM.Enums.Wired && best.type !== PlasmaNM.Enums.Wired))) best = r;
+        }
+        if (!best) { primary = null; return; }
+        // The labels of the details are translated by plasma-nm, so the values are
+        // recognised by their form: the address comes before gateway and name
+        // server, the device's own MAC after the access point's (BSSID).
+        const values = [];
+        for (let i = 0; i < best.details.count; ++i) values.push(best.details.objectAt(i)?.value ?? "");
+        primary = {
+            name: best.name, device: best.iface, wired: best.type === PlasmaNM.Enums.Wired,
+            ipv4: values.find(v => /^\d{1,3}(\.\d{1,3}){3}$/.test(v)) ?? "",
+            mac: values.filter(v => /^([0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(v)).pop() ?? ""
+        };
+    }
+
     function signalIcon(strength: int): string {
         return strength >= 80 ? "network-wireless-100" : strength >= 55 ? "network-wireless-80"
              : strength >= 35 ? "network-wireless-60" : strength >= 15 ? "network-wireless-40" : "network-wireless-20";
@@ -60,17 +83,33 @@ Item {
     Instantiator {
         id: rows
         model: networkModel
-        onObjectAdded: Qt.callLater(net.collectVpns)
-        onObjectRemoved: Qt.callLater(net.collectVpns)
+        onObjectAdded: { Qt.callLater(net.collectVpns); Qt.callLater(net.collectPrimary); }
+        onObjectRemoved: { Qt.callLater(net.collectVpns); Qt.callLater(net.collectPrimary); }
         delegate: QtObject {
+            id: entry
             required property var model
             readonly property int state: model.ConnectionState ?? 0
             readonly property int type: model.Type ?? 0
             readonly property string name: model.Name ?? ""
             readonly property string connection: model.ConnectionPath ?? ""
             readonly property string device: model.DevicePath ?? ""
+            readonly property string iface: model.DeviceName ?? ""
+            readonly property bool carrier: state === PlasmaNM.Enums.Activated && (type === PlasmaNM.Enums.Wired || type === PlasmaNM.Enums.Wireless)
+            onNameChanged: Qt.callLater(net.collectPrimary)
+            // Rows of the applet's Details tab (section titles have no value).
+            readonly property Instantiator details: Instantiator {
+                model: entry.carrier ? entry.model.ConnectionDetailsModel : null
+                onObjectAdded: Qt.callLater(net.collectPrimary)
+                onObjectRemoved: Qt.callLater(net.collectPrimary)
+                delegate: QtObject {
+                    required property var model
+                    readonly property string value: model.detailValue ?? ""
+                    onValueChanged: Qt.callLater(net.collectPrimary)
+                }
+            }
             property int previous: state
             onStateChanged: {
+                Qt.callLater(net.collectPrimary);
                 if (type === PlasmaNM.Enums.Vpn) Qt.callLater(net.collectVpns);
                 const was = previous;
                 previous = state;

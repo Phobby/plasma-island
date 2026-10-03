@@ -15,6 +15,8 @@
     In both layouts the card under the pointer grows by one unit (and shows its
     details); its row neighbours make room. Cards never change rows or order
     on hover, so the hovered card always stays under the pointer.
+    The network card grows further: beside the traffic it shows the connection
+    the machine is online through (name, IPv4 address, MAC address).
 
     Sensor polling is gated by PlasmaBackend.systemActive, which the island
     sets only while this page is shown.
@@ -26,6 +28,8 @@ Item {
 
     required property Theme theme
     required property PlasmaBackend backend
+    // backend/NetworkBackend.qml (null without plasma-nm): the connection details.
+    property var network: null
     property string mode: "dynamic"
 
     readonly property real spacing: 6
@@ -70,7 +74,7 @@ Item {
 
     // ---- metrics ----------------------------------------------------------------------
     readonly property var metrics: {
-        const b = backend, m = {};
+        const b = backend, m = {}, link = network?.primary ?? null;
         m.cpu = {
             key: "cpu", caption: Lang.i18nc("@label short for processor", "CPU"),
             value: b.cpuUsage / 100, ringText: Lang.percent(Math.round(b.cpuUsage)), color: levelColor(b.cpuUsage / 100),
@@ -107,6 +111,8 @@ Item {
             value: netTotal / netPeak, ringText: "", color: theme.network,
             detail: "↓ " + b.formatBytes(b.netDownRate) + "/s", detail2: "↑ " + b.formatBytes(b.netUpRate) + "/s",
             smallText: "↓" + b.compactRate(b.netDownRate),
+            // shown beside the traffic while the card is hovered
+            extra: link ? [link.name, link.ipv4, link.mac].filter(s => s.length > 0) : [],
             active: hysteresis("net", netTotal, 100 * 1024, 40 * 1024), score: Math.min(100, netTotal / 10240)
         };
         m.disk = {
@@ -142,11 +148,17 @@ Item {
             });
         };
 
-        // The hovered card takes one more unit of its own row.
+        // The hovered card takes one more unit of its own row; one with extra
+        // lines (network) takes most of the row.
         const grow = (rows) => {
             for (const row of rows) {
                 const it = row.find(it => it.key === hoveredKey);
-                if (it) { it.span += 1; it.large = true; }
+                if (!it) continue;
+                const wide = M[it.key].extra?.length > 0;
+                // squeezed neighbours fall back to the small layout
+                if (wide) row.forEach(other => other.large = false);
+                it.span += wide ? 4 : 1;
+                it.large = true;
             }
             return rows;
         };

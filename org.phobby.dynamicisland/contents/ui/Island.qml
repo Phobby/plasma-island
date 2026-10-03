@@ -23,6 +23,7 @@ Item {
 
     required property Theme theme
     required property PlasmaBackend backend
+    property var network: null
     required property ActivityManager manager
 
     // configuration
@@ -325,6 +326,7 @@ Item {
                 anchors.topMargin: island.theme.padding * 0.7
                 theme: island.theme
                 backend: island.backend
+                network: island.network
                 manager: island.manager
                 active: island.expanded
                 showMediaModule: island.showMediaModule

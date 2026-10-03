@@ -1,7 +1,8 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
     One system metric. Small: ring + caption. Large (active / wide): ring
-    beside title, detail and a second detail line.
+    beside title, detail and a second detail line. While hovered, the metric's
+    extra lines (if any) form a second column beside them.
 */
 import QtQuick
 import QtQuick.Layouts
@@ -67,7 +68,7 @@ Rectangle {
             fontSize: card.theme.fontSmall * 0.85
         }
         ColumnLayout {
-            Layout.fillWidth: true
+            Layout.fillWidth: !extra.visible
             spacing: 0
             Text {
                 Layout.fillWidth: true
@@ -94,6 +95,26 @@ Rectangle {
                 font.pointSize: card.theme.fontSmall * 0.9
                 font.features: { "tnum": 1 }
                 elide: Text.ElideRight
+            }
+        }
+        ColumnLayout {
+            id: extra
+            Layout.fillWidth: true
+            visible: card.hovered && lines.count > 0
+            spacing: 0
+            Repeater {
+                id: lines
+                model: card.metric.extra ?? []
+                delegate: Text {
+                    required property string modelData
+                    required property int index
+                    Layout.fillWidth: true
+                    text: modelData
+                    color: index === 0 ? card.theme.text : card.theme.subText
+                    font.pointSize: index === 0 ? card.theme.fontSmall : card.theme.fontSmall * 0.9
+                    font.features: { "tnum": 1 }
+                    elide: Text.ElideRight
+                }
             }
         }
     }

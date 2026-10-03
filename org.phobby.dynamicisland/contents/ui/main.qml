@@ -556,6 +556,7 @@ PlasmoidItem {
                 anchors.fill: parent
                 theme: theme
                 backend: backend
+                network: root.networkBackend
                 manager: activities
                 showClock: root.cfg.showClock
                 hoverDelay: root.cfg.hoverDelay
