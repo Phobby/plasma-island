@@ -74,7 +74,7 @@ KCM.SimpleKCM {
                 wrapMode: Text.Wrap
                 font: Kirigami.Theme.smallFont
                 opacity: 0.7
-                text: Lang.i18n("Also after the island closed or the shell restarted, with the unsaved draft. Only which note it was is remembered, never its text. A locked note is not opened here: it is offered to be opened in BetterNotes, which asks for the password itself.")
+                text: Lang.i18n("Also after the island closed or the shell restarted, with the unsaved draft. Only which note it was is remembered, never its text. A locked note asks for its password each time; the password is never kept.")
             }
         }
 

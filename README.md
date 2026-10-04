@@ -431,7 +431,7 @@ provider (see "AI" below) and spends a little of the account's usage.
 | Download | Download a large file in a browser (Flatpak/Snap browsers only show size and speed) |
 | Timer etc. | Expanded → Tools page (a 1-minute timer is the quickest test) |
 | Weather | Expanded → Weather page: "Choose a Location", type a city, pick it; hover a day, click it for its hours, the arrow goes back. Settings → Weather: units |
-| Notes, carrying on | Open a note on the Notes page, move the pointer away so the island closes, open it again: the same note's editor. Lock a note in BetterNotes: "Open in BetterNotes" instead of its text |
+| Notes, carrying on | Open a note on the Notes page, move the pointer away so the island closes, open it again: the same note's editor. Lock a note in BetterNotes (0.1.15+): the page asks for the master password, then shows the note |
 | Themes | Settings → Appearance → Custom: a gradient under Fine tuning; "Export Theme…", then "Add New…" → From a File with that file. The store needs its address first (see "Themes: files and the store") |
 | AI | Settings → Layout: switch "AI" on. Expanded → AI page: "Claude Code" (found by itself when installed and signed in), ask something; move the pointer away while it answers, press Escape and leave: three dots, then "Answer ready". `tools/ai-cli-check --user-memory --trace` for the checks with the real command |
 | Cloud | Needs `rclone` with at least one remote (`rclone config`). Settings → Layout: switch "Cloud" on. Expanded → Cloud page: go into a folder, rest the pointer on a small file and drag it to the desktop, drop a file on the list. Without rclone the page shows how to install it |
@@ -692,15 +692,17 @@ local service answers) and offers the ones it finds first.
   protection as above). Going back to the list ends it. A note that was
   deleted meanwhile, or whose app is not running or no longer connected,
   leads to the list without a message.
-- **Locked notes (BetterNotes)** are never shown here, also not when carrying
-  on: instead of the editor the page says that the note is locked and offers
-  "Open in BetterNotes" (its window there asks for the master password) and
-  "Cancel" (back to the list). Nothing of the note is fetched. BetterNotes
-  0.1.14 encrypts a locked note's text (XChaCha20-Poly1305, the key derived
-  from the password with Argon2id) and its command cannot take the password:
-  neither `show` nor `update` has an option for it, and `update` refuses a
-  locked note. The island does not rebuild that encryption, so it never asks
-  for a password, and none is ever kept or written anywhere.
+- **Locked notes (BetterNotes)** ask for the master password right on the
+  island, also when carrying on. BetterNotes encrypts a locked note's text
+  (XChaCha20-Poly1305, the key derived from the password with Argon2id);
+  from 0.1.15 its command takes the password on its standard input
+  (`show <id> --password-stdin`, `update <id> --password-stdin …`), for that
+  one command. The island hands it over that way (never as an argument),
+  holds it only while that note is open on the page, to save what is typed,
+  and forgets it when the note is left or the island closes: coming back
+  asks again. A wrong password is said (exit status 3). What the note says
+  is never put into the list, the search, a draft or the settings. With an
+  older BetterNotes the page says so and offers "Open in BetterNotes".
 - Tokens are stored in KDE Wallet (folder "Dynamic Island"), never in the
   configuration file, and are deleted when an app is disconnected.
 - Settings → Notes: connected apps (disconnect), the default app for quick

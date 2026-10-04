@@ -16,8 +16,14 @@
     and id, in the settings), so the page comes back to it after the island
     closed or the shell restarted, with the unsaved draft if there is one. A
     note that is gone, or whose app cannot be reached, leads to the list
-    without a word. A locked note is never shown here: BetterNotes' command
-    cannot take the password, so the page only offers to open it there.
+    without a word.
+
+    A locked note (BetterNotes) asks for its master password right here; the
+    command takes it on its standard input (0.1.15+). The password is held
+    only while that note is open in this page, to save what is typed, and is
+    forgotten when the note is left or the island closes; coming back asks
+    again. The note's text is never put into the list, the search or a
+    draft. With an older BetterNotes the page can only offer to open it there.
 */
 import QtQuick
 import QtQuick.Layouts
@@ -39,7 +45,7 @@ Item {
     property string query: ""
     property string status: ""              // short feedback under the field
     property bool statusIsError: false
-    readonly property bool interacting: visible && (view === "note" || view === "form" || typing)
+    readonly property bool interacting: visible && (view === "note" || view === "form" || typing || (view === "locked" && notes.betterNotesUnlocks))
     onVisibleChanged: if (!visible) typing = false; else arrive()
     Component.onCompleted: arrive()
     // Opening the page: fetch the notes, or look for notes apps when none is connected.
@@ -86,15 +92,44 @@ Item {
     }
 
     // ---- a locked note --------------------------------------------------------------
-    // Nothing of its content is fetched or shown; BetterNotes asks for the password itself.
+    // Nothing of it is fetched or shown before its password was given here.
     property var lockedNote: null
+    // The password of the locked note that is open now; "" otherwise. Never stored.
+    property string password: ""
+    property string lockError: ""
+    property bool unlocking: false
     function showLocked(n: var): void {
         autoSave.stop();
         lockedNote = n; current = null; saveError = ""; loading = false; typing = false;
-        editor.text = ""; titleField.text = ""; savedText = "";
+        password = ""; lockError = ""; unlocking = false;
+        editor.text = ""; titleField.text = ""; savedText = ""; passwordField.text = "";
         view = "locked";
         remember(n, true);
+        if (notes.betterNotesUnlocks) Qt.callLater(page.focusPassword);
     }
+    function focusPassword(): void { if (view === "locked") passwordField.input.forceActiveFocus(); }
+    function unlock(): void {
+        const n = lockedNote, given = passwordField.text;
+        if (n === null || unlocking || given.length === 0) return;
+        unlocking = true; lockError = "";
+        notes.loadText(n, (error, text, rich) => {
+            unlocking = false;
+            if (page.lockedNote !== n || page.view !== "locked") return;
+            passwordField.text = "";
+            if (error === "wrong") { lockError = Lang.i18n("The password is wrong."); Qt.callLater(page.focusPassword); return; }
+            if (error) { lockError = error === "locked" ? Lang.i18n("BetterNotes did not take the password. Quit it and start it again (0.1.15 or newer).") : error; return; }
+            // open in the editor; the text stays in this page only
+            password = given;
+            lockedNote = null;
+            current = Object.assign({}, n, { text: n.title + "\n" + text, loaded: true, rich: rich === true, readOnly: rich === true });
+            saveError = ""; loading = false;
+            view = "note";
+            savedText = current.text;
+            show(savedText);
+            if (!readOnly) Qt.callLater(page.focusEditor);
+        }, given);
+    }
+    function focusEditor(): void { editor.forceActiveFocus(); editor.cursorPosition = editor.length; }
     function openLocked(): void {
         if (lockedNote === null || opening) return;
         if (!notes.betterNotesOpens) { notes.openBetterNotes(); leaveLocked(); return; }
@@ -107,7 +142,7 @@ Item {
     }
     function leaveLocked(): void {
         remember(lockedNote, false);
-        lockedNote = null;
+        lockedNote = null; password = ""; lockError = ""; passwordField.text = "";
         view = "list";
     }
 
@@ -182,6 +217,7 @@ Item {
     function open(n: var, quiet: bool): void {
         if (n && n.locked === true) { showLocked(n); return; }
         autoSave.stop();
+        password = "";
         current = n; saveError = ""; loading = false;
         view = "note";
         remember(n, n !== null && n !== undefined);
@@ -234,15 +270,17 @@ Item {
             // Typed on while it was being saved: save again.
             if (composed() !== text) autoSave.restart(); else if (then) then();
         };
-        if (current) notes.save(current, text, finished); else notes.create(text, "", finished);
+        if (current) notes.save(current, text, finished, password); else notes.create(text, "", finished);
     }
     function closeNote(): void {
-        saveNote(() => { remember(current, false); view = "list"; typing = false; });
+        saveNote(() => { remember(current, false); password = ""; view = "list"; typing = false; });
     }
     // Back to the list without saving: the text stays as a draft of this note.
     function leaveNote(): void {
-        if (dirty) notes.setDraft(draftKey, composed());
+        // (what a locked note says is not kept as a draft)
+        if (dirty && !(current && current.locked)) notes.setDraft(draftKey, composed());
         remember(current, false);
+        password = "";
         autoSave.stop(); saveError = ""; view = "list"; typing = false;
     }
     Timer { id: autoSave; interval: 1500; onTriggered: page.saveNote(null) }
@@ -250,7 +288,7 @@ Item {
     Component.onDestruction: {
         if (!dirty) return;
         const text = composed();
-        if (current) notes.save(current, text, () => {});
+        if (current) notes.save(current, text, () => {}, password);
         else if (text.trim().length > 0) notes.create(text, "", () => {});
     }
 
@@ -490,14 +528,40 @@ Item {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            text: Lang.i18n("This note is locked. BetterNotes asks for the password itself; it cannot be entered here.")
-            color: page.theme.subText
+            text: page.lockError.length > 0 ? page.lockError
+                : page.notes.betterNotesUnlocks ? Lang.i18n("This note is locked. Enter the master password of BetterNotes; it is used for this note only and kept nowhere.")
+                : Lang.i18n("This note is locked. To enter its password here, update BetterNotes to 0.1.15 or newer; until then it can be opened there.")
+            color: page.lockError.length > 0 ? page.theme.readable(page.theme.danger, page.theme.surface) : page.theme.subText
             font.pointSize: page.theme.fontSmall * 0.9
         }
         RowLayout {
-            Layout.alignment: Qt.AlignHCenter
+            Layout.fillWidth: true
             spacing: 6
+            PillField {
+                id: passwordField
+                objectName: "notePassword"
+                visible: page.notes.betterNotesUnlocks
+                theme: page.theme
+                Layout.fillWidth: true
+                secret: true
+                placeholder: Lang.i18n("Password")
+                enabled: !page.unlocking
+                onEdited: page.lockError = ""
+                onAccepted: page.unlock()
+                onEscaped: page.leaveLocked()
+            }
+            Item { visible: !page.notes.betterNotesUnlocks; Layout.fillWidth: true }
             PillButton {
+                objectName: "noteUnlock"
+                visible: page.notes.betterNotesUnlocks
+                theme: page.theme
+                primary: true
+                enabled: !page.unlocking
+                text: page.unlocking ? Lang.i18n("Opening…") : Lang.i18n("Unlock")
+                onClicked: page.unlock()
+            }
+            PillButton {
+                visible: !page.notes.betterNotesUnlocks
                 theme: page.theme
                 primary: true
                 enabled: !page.opening
@@ -509,6 +573,7 @@ Item {
                 text: Lang.i18n("Cancel")
                 onClicked: page.leaveLocked()
             }
+            Item { visible: !page.notes.betterNotesUnlocks; Layout.fillWidth: true }
         }
     }
 

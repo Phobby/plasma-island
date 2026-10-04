@@ -16,9 +16,13 @@
                   the content on standard input) and shows a note as its
                   sticky window (`open <id>`, 0.1.14+); the change date, lock state
                   and next reminder come from its SQLite database, which is
-                  only ever read. A note is edited here as plain text; locked
-                  notes and notes with rich text stay read-only (BetterNotes
-                  has its own editor for those).
+                  only ever read. A note is edited here as plain text; notes
+                  with rich text stay read-only (BetterNotes has its own
+                  editor for those). A locked note is read and written with
+                  its master password on the command's standard input
+                  (`--password-stdin`, 0.1.15+): the password is handed over
+                  for that one command and kept nowhere here, and the note's
+                  text never enters the list.
 
     `sourcesJson` is a JSON list of { id, type, name, server, user } and is
     stored in the widget configuration. Tokens live in KWallet (native core)
@@ -90,7 +94,7 @@ QtObject {
     // (an AppImage that was only added to the menu). "" = not installed.
     function betterNotesCommand(): string {
         if (!local) return "";
-        const found = local.findExecutable("betternotes");
+        const found = local.findExecutable(betterNotesName);
         if (found.length > 0) return found;
         for (const dir of desktopDirs) {
             const exec = /^Exec=("([^"]+)"|(\S+))/m.exec(local.readTextFile(dir + "/org.betternotes.BetterNotes.desktop"));
@@ -101,8 +105,9 @@ QtObject {
         }
         return "";
     }
+    property string betterNotesName: "betternotes"
     property var desktopDirs: ["~/.local/share/applications", "/usr/local/share/applications", "/usr/share/applications"]
-    readonly property string betterNotesData: local ? local.dataHome() + "/betternotes" : ""
+    property string betterNotesData: local ? local.dataHome() + "/betternotes" : ""
     readonly property bool hasBetterNotes: sources.some(s => s.type === "betternotes")
     // Its database changed (a note was edited in the app): list again, at once.
     readonly property Binding watchBinding: Binding {
@@ -135,11 +140,16 @@ QtObject {
     }
     // The content of a BetterNotes note (`betternotes show <id>`). done(error, text, rich):
     // rich = it has formatting that plain text would lose, so it is only shown here.
-    function loadText(item: var, done: var): void {
+    // A locked note needs `password` (0.1.15+): the error is then "locked" (none given, or a BetterNotes
+    // too old for it) or "wrong". The password goes to the command's standard input, nowhere else.
+    function loadText(item: var, done: var, password: var): void {
         const command = betterNotesCommand();
         if (!item || item.type !== "betternotes" || command.length === 0) { done(Lang.i18n("BetterNotes was not found."), ""); return; }
-        if (item.locked) { done("", Lang.i18n("This note is locked. Open it in BetterNotes to read it.")); return; }
-        local.run(command, ["show", item.id], (code, out, err) => {
+        const secret = item.locked === true;
+        if (secret && (!betterNotesUnlocks || typeof password !== "string" || password.length === 0)) { done("locked", ""); return; }
+        const shown = (code, out, err) => {
+            if (secret && code === 3) { done("wrong", ""); return; }
+            if (secret && code === 4) { done("locked", ""); return; }
             if (code !== 0) { done((err || out).trim() || Lang.i18n("BetterNotes could not show the note."), ""); return; }
             const at = out.indexOf("--- Content ---\n");
             let text = at >= 0 ? out.slice(at + 16).replace(/\n$/, "") : out;
@@ -148,7 +158,9 @@ QtObject {
             if (rich)
                 text = text.replace(/<br\s*\/?>|<\/(p|div|li|h[1-6])>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\n{3,}/g, "\n\n").trim();
             done("", text, rich);
-        });
+        };
+        if (secret) local.runWithInput(command, ["show", item.id, "--password-stdin"], password + "\n", shown);
+        else local.run(command, ["show", item.id], shown);
     }
     // Runs `betternotes` with `input` on its standard input where args hold "--body", "-".
     // An older native module cannot write to standard input: the content then goes
@@ -158,6 +170,7 @@ QtObject {
         if (command.length === 0) { done(-1, "", Lang.i18n("BetterNotes was not found.")); return; }
         if (input === null || input === undefined) local.run(command, args, done);
         else if (typeof local.runWithInput === "function") local.runWithInput(command, args, input, done);
+        else if (args.indexOf("--password-stdin") >= 0) done(4, "", "");      // (an old native module cannot hand over a password)
         else {
             const at = args.indexOf("-");
             local.run(command, args.slice(0, at).concat([input]).concat(args.slice(at + 1)), done);
@@ -172,6 +185,8 @@ QtObject {
             return Lang.i18n("The BetterNotes that is running is too old to open a note from here. Quit it and start it again (0.1.14 or newer).");
         if (/is in the trash/.test(text)) return Lang.i18n("This note is in the trash of BetterNotes. Restore it there first.");
         if (/does not exist/.test(text)) return Lang.i18n("This note no longer exists in BetterNotes.");
+        if (code === 3) return Lang.i18n("The password is wrong.");
+        if (code === 4) return Lang.i18n("This note is locked: its password is needed.");
         if (code === -1 && text.length === 0) return Lang.i18n("BetterNotes did not answer.");
         return text.replace(/^(Error|BetterNotes):\s*/, "").split("\n")[0] || fallback;
     }
@@ -186,6 +201,11 @@ QtObject {
     readonly property bool betterNotesOpens: {
         const m = /(\d+)\.(\d+)\.(\d+)/.exec(betterNotesVersion);
         return m !== null && (Number(m[1]) * 1e6 + Number(m[2]) * 1e3 + Number(m[3])) >= 1014;
+    }
+    // 0.1.15 takes a locked note's password on standard input (`--password-stdin`).
+    readonly property bool betterNotesUnlocks: {
+        const m = /(\d+)\.(\d+)\.(\d+)/.exec(betterNotesVersion);
+        return m !== null && (Number(m[1]) * 1e6 + Number(m[2]) * 1e3 + Number(m[3])) >= 1015;
     }
     function checkBetterNotes(): void {
         const command = betterNotesCommand();
@@ -400,7 +420,7 @@ QtObject {
             list: function (source, token, done) {
                 const command = backend.betterNotesCommand();
                 if (command.length === 0) { done("missing", []); return; }
-                if (!backend.betterNotesOpens) backend.checkBetterNotes();
+                if (!backend.betterNotesUnlocks) backend.checkBetterNotes();
                 backend.local.run(command, ["list"], (code, out, err) => {
                     if (code !== 0) { done((err || out).trim() || Lang.i18n("BetterNotes could not list its notes."), []); return; }
                     // What the command does not print: change date, lock, next reminder (read-only).
@@ -416,7 +436,8 @@ QtObject {
                         const item = backend.note(source, row.id, row.title, updated, null);
                         item.title = row.title;
                         item.locked = Number(x.locked || 0) === 1;
-                        item.readOnly = item.locked || (before !== undefined && before.rich === true);
+                        // (a locked note is written with its password; an older BetterNotes cannot take one)
+                        item.readOnly = (item.locked && !backend.betterNotesUnlocks) || (before !== undefined && before.rich === true);
                         item.rich = before !== undefined && before.rich === true;
                         item.priority = row.priority; item.tags = row.tags;
                         item.reminder = Number(x.reminder || 0) * 1000;
@@ -450,8 +471,8 @@ QtObject {
                     });
                 });
             },
-            // `text` is "title\ncontent"; only what changed is sent.
-            save: function (source, token, old, text, done) {
+            // `text` is "title\ncontent"; only what changed is sent. A locked note: its password first on standard input.
+            save: function (source, token, old, text, done, password) {
                 const i = text.indexOf("\n");
                 const title = (i < 0 ? text : text.slice(0, i)).trim(), content = i < 0 ? "" : text.slice(i + 1);
                 const oldContent = old.loaded && old.text.indexOf(old.title + "\n") === 0 ? old.text.slice(old.title.length + 1) : old.loaded ? "" : null;
@@ -465,7 +486,11 @@ QtObject {
                     done("", item);
                 };
                 if (args.length === 2) { saved(); return; }
-                backend.runBetterNotes(args, args.indexOf("-") >= 0 ? content : null, (code, out, err) => {
+                const secret = old.locked === true;
+                if (secret && (typeof password !== "string" || password.length === 0)) { done(backend.betterNotesError(4, "", "", "")); return; }
+                if (secret) args.splice(2, 0, "--password-stdin");
+                const input = (secret ? password + "\n" : "") + (args.indexOf("-") >= 0 ? content : "");
+                backend.runBetterNotes(args, secret || args.indexOf("-") >= 0 ? input : null, (code, out, err) => {
                     if (code !== 0) { done(backend.betterNotesError(code, out, err, Lang.i18n("BetterNotes could not save the note."))); return; }
                     saved();
                 });
@@ -586,15 +611,18 @@ QtObject {
             done({ ok: true, note: item, error: "" });
         });
     }
-    function save(old: var, text: string, done: var): void {
+    // `password`: of a locked note, for this one save.
+    function save(old: var, text: string, done: var, password: var): void {
         const s = sources.find(x => x.id === old.source);
         if (!s || (!secrets[s.id] && !types[s.type].local)) { setDraft(old.key, text); done({ ok: false, note: null, error: Lang.i18n("This notes app is no longer connected.") }); return; }
+        const secret = old.locked === true;
         driver(s.type).save(s, secrets[s.id] || "local", old, text, (error, item) => {
-            if (error) { setDraft(old.key, text); done({ ok: false, note: null, error: error }); return; }
+            // (what a locked note says is never kept here: no draft of it, and the list holds its title only)
+            if (error) { if (!secret) setDraft(old.key, text); done({ ok: false, note: null, error: error }); return; }
             if (drafts[old.key] === text) setDraft(old.key, null);
-            replace(s.id, item);
+            replace(s.id, secret ? Object.assign({}, item, { text: item.title, loaded: false }) : item);
             done({ ok: true, note: item, error: "" });
-        });
+        }, password);
     }
 
     readonly property string signature: available ? sources.map(s => s.id + "|" + s.server).join("\n") : ""

@@ -441,7 +441,6 @@ var table = {
     "@info remaining time\u0004%1 min left": "%1 dk kaldı",
     "@info remaining time\u0004%1 h left": "%1 sa kaldı",
     "BetterNotes was not found.": "BetterNotes bulunamadı.",
-    "This note is locked. Open it in BetterNotes to read it.": "Bu not kilitli. Okumak için BetterNotes'ta aç.",
     "BetterNotes could not show the note.": "BetterNotes notu gösteremedi.",
     "The BetterNotes that is running is too old to save from here. Quit it and start it again (0.1.13 or newer).": "Çalışan BetterNotes buradan kaydetmek için çok eski. Kapatıp yeniden başlat (0.1.13 veya daha yeni).",
     "The BetterNotes that is running is too old to open a note from here. Quit it and start it again (0.1.14 or newer).": "Çalışan BetterNotes buradan not açmak için çok eski. Kapatıp yeniden başlat (0.1.14 veya daha yeni).",
@@ -793,7 +792,6 @@ var table = {
     "@info wind from the south-west\u0004SW": "GB",
     "@info wind from the west\u0004W": "B",
     "@info wind from the north-west\u0004NW": "KB",
-    "This note is locked. BetterNotes asks for the password itself; it cannot be entered here.": "Bu not kilitli. Şifreyi BetterNotes kendisi sorar; burada girilemez.",
     "Open in BetterNotes": "BetterNotes'ta aç",
     "Do Not Disturb before an event": "Etkinlikten önce Rahatsız Etmeyin",
     "A calendar event is about to start: Do Not Disturb until it ends": "Bir takvim etkinliği başlamak üzere: bitene kadar Rahatsız Etmeyin",
@@ -831,7 +829,6 @@ var table = {
     "I will ask again next time": "Bir dahaki sefere yine soracağım",
     "When the page opens:": "Sayfa açıldığında:",
     "Carry on in the note that was being edited": "Notlarda kaldığın yerden devam et",
-    "Also after the island closed or the shell restarted, with the unsaved draft. Only which note it was is remembered, never its text. A locked note is not opened here: it is offered to be opened in BetterNotes, which asks for the password itself.": "Ada kapandıktan ya da kabuk yeniden başladıktan sonra da, kaydedilmemiş taslakla birlikte. Yalnızca hangi not olduğu hatırlanır, metni asla. Kilitli bir not burada açılmaz: şifreyi kendisi soran BetterNotes'ta açması önerilir.",
     "Not available on this system (its part is missing or switched off)": "Bu sistemde kullanılamıyor (ilgili parça yok ya da kapalı)",
     "Yes: %1 · Not now or no answer: %2": "Evet: %1 · Şimdi değil ya da cevapsız: %2",
     "Off: you chose “Never suggest this”": "Kapalı: “Bir daha önerme” dedin",
@@ -1059,5 +1056,13 @@ var table = {
     "%1 has no room left.": "%1 bulutunda yer kalmadı.",
     "%1 is being asked too often right now and makes everyone wait. Try again in a moment.": "%1 şu anda çok sık sorgulanıyor ve herkesi bekletiyor. Biraz sonra yeniden dene.",
     "why: Settings → Cloud": "nedeni: Ayarlar → Bulut",
-    "Dragging out needs the island's native helper. Use Download.": "Dışarı sürüklemek için adanın yerel yardımcısı gerekir. İndir düğmesini kullan."
+    "Dragging out needs the island's native helper. Use Download.": "Dışarı sürüklemek için adanın yerel yardımcısı gerekir. İndir düğmesini kullan.",
+    "The password is wrong.": "Parola yanlış.",
+    "BetterNotes did not take the password. Quit it and start it again (0.1.15 or newer).": "BetterNotes parolayı kabul etmedi. Kapatıp yeniden başlat (0.1.15 veya daha yeni).",
+    "This note is locked. Enter the master password of BetterNotes; it is used for this note only and kept nowhere.": "Bu not kilitli. BetterNotes ana parolasını gir; yalnızca bu not için kullanılır ve hiçbir yerde saklanmaz.",
+    "This note is locked. To enter its password here, update BetterNotes to 0.1.15 or newer; until then it can be opened there.": "Bu not kilitli. Parolasını burada girebilmek için BetterNotes'u 0.1.15 veya daha yeni bir sürüme güncelle; o zamana kadar orada açılabilir.",
+    "Opening…": "Açılıyor…",
+    "Unlock": "Kilidi aç",
+    "Also after the island closed or the shell restarted, with the unsaved draft. Only which note it was is remembered, never its text. A locked note asks for its password each time; the password is never kept.": "Ada kapandıktan ya da kabuk yeniden başladıktan sonra da, kaydedilmemiş taslakla birlikte. Yalnızca hangi not olduğu hatırlanır, metni asla. Kilitli bir not her seferinde parolasını sorar; parola hiçbir zaman saklanmaz.",
+    "This note is locked: its password is needed.": "Bu not kilitli: parolası gerekli."
 };

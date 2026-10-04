@@ -1,0 +1,32 @@
+#!/bin/sh
+# A stand-in for the `betternotes` command (0.1.15), for tests/tst_notes_locked.qml:
+# note 7 is locked with the master password "hunter2", note 3 is not. What it
+# was started with is written to tests/.run/fake-betternotes/ (args, stdin).
+here="$(cd "$(dirname "$0")" && pwd)"
+box="$here/.run/fake-betternotes"
+mkdir -p "$box"
+case "$1" in --version) echo "BetterNotes ${FAKE_BN_VERSION:-0.1.15}"; exit 0 ;; esac
+printf '%s\n' "$@" > "$box/args"
+command="$1"; id="$2"
+with_password=0
+for a in "$@"; do [ "$a" = "--password-stdin" ] && with_password=1; done
+password=""
+if [ $with_password -eq 1 ]; then IFS= read -r password; fi
+case "$command" in
+    list) printf '%-6s%-10s%-20s%s\n' ID PRIORITY TAGS TITLE 3 Normal - Shopping 7 Normal - "Secret title"; exit 0 ;;
+    show)
+        if [ "$id" = "7" ]; then
+            [ $with_password -eq 1 ] || { echo "BetterNotes: note 7 is locked" >&2; exit 4; }
+            [ "$password" = "hunter2" ] || { echo "BetterNotes: wrong password" >&2; exit 3; }
+            printf 'Title: Secret title\n--- Content ---\n%s\n' "$(cat "$box/secret" 2>/dev/null || echo 'the secret text')"; exit 0
+        fi
+        printf 'Title: Shopping\n--- Content ---\nmilk\n'; exit 0 ;;
+    update)
+        if [ "$id" = "7" ]; then
+            [ $with_password -eq 1 ] || { echo "BetterNotes: note 7 is locked" >&2; exit 4; }
+            [ "$password" = "hunter2" ] || { echo "BetterNotes: wrong password" >&2; exit 3; }
+            cat > "$box/secret"; exit 0
+        fi
+        cat > "$box/plain"; exit 0 ;;
+esac
+exit 1

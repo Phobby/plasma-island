@@ -24,6 +24,7 @@ Item {
         property bool busy: false
         property bool hasBetterNotes: true
         property bool betterNotesOpens: true
+        property bool betterNotesUnlocks: false
         readonly property var types: ({ joplin: { name: "Joplin", color: "#1071d3", icon: "" }, simplenote: { name: "Simplenote", color: "#3361cc", icon: "" },
                                         memos: { name: "Memos", color: "#10b981", icon: "" }, betternotes: { name: "BetterNotes", color: "#2563eb", icon: "", local: true } })
         readonly property string betterNotesInstall: ""
@@ -199,6 +200,7 @@ Item {
             compare([p.view, p.current], ["list", null]);
         }
 
+        // (with a BetterNotes that cannot take a password; with one that can: tst_notes_locked.qml)
         function test_a_locked_note_is_never_shown() {
             let p = open();
             p.open(find("7"));
