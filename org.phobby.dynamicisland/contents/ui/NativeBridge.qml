@@ -108,10 +108,15 @@ Item {
         source: "LocalBridge.qml"
         onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old for local notes apps; run install.sh again")
     }
-    // One command read while it runs (the AI tab's Claude Code). See native/core/streamprocess.h
-    readonly property var stream: streamLoader.item
+    // One command read while it runs (the AI tab's Claude Code); made when first asked for, so it
+    // does not exist while that tab is off. null with an older native module. See native/core/streamprocess.h
+    function streamProcess(): var {
+        streamLoader.active = true;
+        return streamLoader.item;
+    }
     Loader {
         id: streamLoader
+        active: false
         source: "StreamBridge.qml"
         onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old for Claude Code in the AI tab; run install.sh again")
     }

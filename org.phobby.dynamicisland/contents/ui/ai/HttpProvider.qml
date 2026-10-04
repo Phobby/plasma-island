@@ -38,7 +38,7 @@ AiProvider {
         const end = (status, text) => {
             if (over) return;
             over = true;
-            timer.destroy();
+            if (timer) timer.destroy();
             done(status, text);
         };
         timer.triggered.connect(() => { end(0, ""); x.abort(); });

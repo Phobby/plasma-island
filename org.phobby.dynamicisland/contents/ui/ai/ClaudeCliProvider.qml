@@ -39,8 +39,12 @@ AiProvider {
     id: provider
 
     readonly property var local: core !== null ? core.local : null
-    readonly property var process: core !== null ? core.stream : null
-    readonly property bool usable: local !== null && process !== null
+    // The native helper that runs the command; asked of the core when first needed.
+    property var process: null
+    function ready(): bool {
+        if (process === null && core !== null) process = typeof core.streamProcess === "function" ? core.streamProcess() : core.stream || null;
+        return local !== null && process !== null;
+    }
     property string sandbox: local ? local.dataHome() + "/dynamicisland/ai-sandbox" : ""
     // The command's name: looked for on the PATH and in ~/.local/bin.
     property string commandName: "claude"
@@ -54,7 +58,7 @@ AiProvider {
     }
     // done({ found, helper, version }): helper = the native module is there.
     function detect(done: var): void {
-        if (!usable) { done({ found: false, helper: false, version: "" }); return; }
+        if (!ready()) { done({ found: false, helper: false, version: "" }); return; }
         command = local.findExecutable(commandName);
         if (command.length === 0) { version = ""; names = []; done({ found: false, helper: true, version: "" }); return; }
         run(["--version"], (code, out) => {
@@ -84,7 +88,7 @@ AiProvider {
             for (const name of names) list.push({ id: name, name: name });
             done({ ok: true, models: list, problem: null });
         };
-        if (usable && command.length === 0) detect(answer); else answer();
+        if (ready() && command.length === 0) detect(answer); else answer();
     }
 
     // ---- one question ----------------------------------------------------------------
@@ -95,7 +99,7 @@ AiProvider {
     property var queued: null               // a question waiting for the command of the one before to end
 
     function send(messages: var, model: string, options: var): void {
-        if (!usable) { finished({ ok: false, cut: false, problem: { kind: "missing", detail: "" } }); return; }
+        if (!ready()) { finished({ ok: false, cut: false, problem: { kind: "missing", detail: "" } }); return; }
         const start = () => {
             if (command.length === 0) { finished({ ok: false, cut: false, problem: { kind: "missing", detail: "" } }); return; }
             if (process.running) {
