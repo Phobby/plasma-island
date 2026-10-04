@@ -9,6 +9,7 @@
       notification  banner with icon, title, first line          (queued)
       event         transient system event (charging, Bluetooth…) (queued)
       expanded      paged modules                                (hover)
+      dot           a small dot in the pill's place               (dot mode: a click)
 
     What is live / queued is decided by the ActivityManager. While a banner or
     event is shown, hovering pauses it instead of expanding, so it can be clicked.
@@ -17,6 +18,7 @@
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import org.kde.plasma.extras as PlasmaExtras
 
 Item {
     id: island
@@ -48,7 +50,8 @@ Item {
     signal ambientGlowToggled()
     AmbientGlow {
         id: glow
-        enabled: island.ambientGlow
+        // not while the island is a dot: nothing of it would be seen
+        enabled: island.ambientGlow && !island.dot
         backend: island.backend
     }
     // Provider pages for the expanded view: [{ key, icon, title, component, visible }]
@@ -59,6 +62,56 @@ Item {
     property string dropPage: ""
     function filesOver(): void { if (dropPage.length > 0 && !expanded) openPage(dropPage); }
 
+    // ---- dot mode ---------------------------------------------------------------
+    // A click on the small island shrinks it to a dot in the same place; a click on the dot
+    // brings back the closed pill. Off: a click opens the island, as it always did.
+    property bool dotMode: false
+    property real dotSize: 15
+    // Whether hovering the dot opens the island (it then returns to the dot).
+    property bool dotHoverExpand: false
+    // Events while it is a dot: 0 = only the dot shows them, 1 = it opens for them and returns, 2 = nothing.
+    property int dotEvents: 0
+    // An incoming call, an alarm, low battery: opens for them whatever dotEvents says.
+    property bool dotCriticalExpand: true
+    // It is a dot now (main.qml keeps this across restarts).
+    property bool dot: false
+    onDotModeChanged: if (!dotMode) dot = false
+    // The pointer is still on the island after the click that changed its form: hovering opens
+    // nothing until it has left once (the dot's click returns to the *closed* pill).
+    property bool hoverSpent: false
+    // The pill's content appears after the shape has grown out of the dot.
+    property int revealDelay: 0
+    readonly property bool calling: primary !== null && primary.category === "call"
+    readonly property bool menuOpen: menuLoader.item !== null && menuLoader.item.status === PlasmaExtras.Menu.Open
+    function shrink(): void {
+        if (!dotMode) return;
+        expandTimer.stop();
+        hoverSpent = true;
+        revealDelay = 0;
+        expanded = false;
+        dot = true;
+        spentTimer.restart();
+    }
+    function unshrink(): void {
+        expandTimer.stop();
+        hoverSpent = true;
+        revealDelay = 170;
+        dot = false;
+        spentTimer.restart();
+    }
+    // What the dot says: a privacy indicator's colour, a recording, something critical waiting,
+    // something waiting; nothing = the island's own body.
+    readonly property color dotColor: manager.indicators.length > 0 ? manager.indicators[0].color
+                                    : primary !== null && primary.category === "recording" ? theme.danger
+                                    : dotEvents !== 2 && manager.waitingCritical ? "#ffd60a"
+                                    : dotEvents !== 2 && manager.waiting > 0 ? theme.accent
+                                    : dotEvents !== 2 && primary !== null ? theme.accent
+                                    : "transparent"
+    // A running live activity pulses.
+    readonly property bool dotPulse: mode === "dot" && dotEvents !== 2 && primary !== null
+    Binding { target: island.manager; property: "quiet"; value: island.dot && island.dotEvents !== 1 }
+    Binding { target: island.manager; property: "quietCritical"; value: island.dotCriticalExpand }
+
     // ---- state ----------------------------------------------------------------
     property bool expanded: false
     // Kept for the notification layer (the ActivityManager owns the queue).
@@ -67,11 +120,12 @@ Item {
     readonly property var primary: manager.primary
     readonly property var secondary: manager.secondary
 
-    readonly property bool hovered: hover.hovered || bubbleHover.hovered
+    readonly property bool hovered: hover.hovered || bubbleHover.hovered || dotHover.hovered
     // A text field (quick reply) needs keyboard focus: see main.qml.
     readonly property bool wantsKeyboard: expanded && expandedContent.interacting
     readonly property string mode: expanded ? "expanded"
                                  : currentEvent ? (currentEvent.kind === "notification" ? "notification" : "event")
+                                 : dot && !(dotCriticalExpand && calling) ? "dot"
                                  : secondary ? "split"
                                  : primary ? "live"
                                  : "idle"
@@ -86,16 +140,19 @@ Item {
     readonly property real targetWidth: mode === "expanded" ? expandedWidth
                                       : mode === "notification" ? theme.notificationWidth
                                       : mode === "event" ? (currentEvent.width || theme.eventWidth)
+                                      : mode === "dot" ? dotSize
                                       : mode === "split" ? theme.splitMainWidth
                                       : mode === "live" ? liveWidth
                                       : theme.pillWidth
     readonly property real targetHeight: mode === "expanded" ? expandedHeight
                                        : mode === "notification" ? theme.notificationHeight
                                        : mode === "event" ? (currentEvent.height || theme.eventHeight)
+                                       : mode === "dot" ? dotSize
                                        : theme.pillHeight
     readonly property real targetRadius: mode === "expanded" ? theme.expandedRadius
                                        : mode === "notification" ? theme.notificationRadius
                                        : mode === "event" ? theme.rounded(Math.min((currentEvent.height || theme.eventHeight) / 2, 26))
+                                       : mode === "dot" ? dotSize / 2
                                        : theme.rounded(theme.pillHeight / 2)
 
     // The window has to stay large while the surface is still bigger than
@@ -115,8 +172,13 @@ Item {
     readonly property rect surfaceRect: Qt.rect(surface.x, surface.y, surface.width, surface.height)
     readonly property real surfaceRadius: surface.radius
     // Where the island takes the pointer: its shape (see main.qml, native/windowmask.h).
-    readonly property rect hitRect: surfaceRect
-    readonly property real hitRadius: surfaceRadius
+    // The dot is smaller than a comfortable target: it takes the pointer a little around itself too.
+    readonly property real dotTarget: 24
+    readonly property rect hitRect: mode === "dot" ? Qt.rect(surface.x - Math.max(0, dotTarget - surface.width) / 2,
+                                                             surface.y - Math.max(0, dotTarget - surface.height) / 2,
+                                                             Math.max(dotTarget, surface.width), Math.max(dotTarget, surface.height))
+                                                   : surfaceRect
+    readonly property real hitRadius: mode === "dot" ? Math.min(hitRect.width, hitRect.height) / 2 : surfaceRadius
     // Draws that region's outline (a hidden setting, or DYNAMICISLAND_DEBUG_REGION).
     property bool debugRegion: false
     readonly property rect bubbleRect: bubble.opacity > 0.05 ? Qt.rect(bubble.x, bubble.y, bubble.width, bubble.height) : Qt.rect(0, 0, 0, 0)
@@ -172,12 +234,29 @@ Item {
     Timer {
         id: expandTimer
         interval: island.hoverDelay
-        onTriggered: if (island.hovered && !island.currentEvent) island.expanded = true
+        onTriggered: if (island.hovered && !island.currentEvent && !island.hoverSpent
+                             && (island.mode !== "dot" || island.dotHoverExpand)) {
+            // The pointer came to click the pill and the island opened under it: for a moment, and
+            // while the pointer rests, that click still means the pill (see graceArea).
+            if (island.dotMode && island.mode !== "dot") {
+                island.gracePos = hover.point.scenePosition;
+                island.grace = true;
+                graceTimer.restart();
+            }
+            island.expanded = true;
+        }
+    }
+    property bool grace: false
+    property point gracePos: Qt.point(0, 0)
+    Timer {
+        id: graceTimer
+        interval: 700
+        onTriggered: island.grace = false
     }
     Timer {
         id: collapseTimer
         interval: island.collapseDelay
-        onTriggered: if (!island.hovered && !expandedContent.interacting && !expandedContent.holding) island.expanded = false
+        onTriggered: if (!island.hovered && !expandedContent.interacting && !expandedContent.holding && !island.menuOpen) island.expanded = false
     }
     // A menu the page opened has closed: close like after the pointer left.
     Connections {
@@ -191,9 +270,16 @@ Item {
             collapseTimer.stop();
             if (!currentEvent && !expanded) expandTimer.restart();
         } else {
+            spentTimer.restart();
             expandTimer.stop();
             if (expanded) collapseTimer.restart();
         }
+    }
+    // The pointer has really left (not only the form changing under it): hovering opens again.
+    Timer {
+        id: spentTimer
+        interval: 250
+        onTriggered: if (!island.hovered) island.hoverSpent = false
     }
     // Opened by a click (handle icon / tap) without the pointer on it.
     Timer {
@@ -202,6 +288,7 @@ Item {
         onTriggered: if (!island.hovered && !expandedContent.holding) island.expanded = false
     }
     onExpandedChanged: {
+        if (!expanded) grace = false;
         if (expanded) {
             expandedContent.selectDefaultPage();
             if (!hovered) unattendedCollapseTimer.restart();
@@ -226,7 +313,11 @@ Item {
     function morph(): void {
         const grow = targetWidth * targetHeight >= surface.width * surface.height;
         morphAnim.stop();
-        const dur = grow ? theme.morphDuration : theme.collapseDuration;
+        // To the dot: the content fades first, then the shape shrinks; out of it the shape
+        // grows with the usual spring and the content follows (revealDelay).
+        const toDot = mode === "dot";
+        preMorph.duration = toDot ? 90 : 0;
+        const dur = toDot ? 280 : grow ? theme.morphDuration : theme.collapseDuration;
         wAnim.duration = hAnim.duration = rAnim.duration = dur;
         wAnim.easing.type = hAnim.easing.type = grow ? Easing.OutBack : Easing.OutCubic;
         wAnim.to = targetWidth;
@@ -241,39 +332,66 @@ Item {
         function onRoundnessChanged() { if (!morphAnim.running) surface.radius = island.targetRadius; }
     }
 
-    ParallelAnimation {
+    SequentialAnimation {
         id: morphAnim
-        NumberAnimation { id: wAnim; target: surface; property: "width"; easing.overshoot: island.theme.overshoot }
-        NumberAnimation { id: hAnim; target: surface; property: "height"; easing.overshoot: island.theme.overshoot }
-        NumberAnimation { id: rAnim; target: surface; property: "radius"; easing.type: Easing.OutCubic }
+        PauseAnimation { id: preMorph; duration: 0 }
+        ParallelAnimation {
+            NumberAnimation { id: wAnim; target: surface; property: "width"; easing.overshoot: island.theme.overshoot }
+            NumberAnimation { id: hAnim; target: surface; property: "height"; easing.overshoot: island.theme.overshoot }
+            NumberAnimation { id: rAnim; target: surface; property: "radius"; easing.type: Easing.OutCubic }
+        }
+        ScriptAction { script: island.revealDelay = 0 }
     }
 
     // ---- surface ----------------------------------------------------------------
     IslandShape {
         id: surface
         theme: island.theme
-        glowShown: glow.shown
-        glowStrength: glow.strength
-        glowColor: glow.color
+        // the dot under the pointer glows (and grows a little); otherwise the music's glow
+        glowShown: island.mode === "dot" ? island.dotGlow : glow.shown
+        glowStrength: island.mode === "dot" ? 0.7 : glow.strength
+        glowColor: island.mode === "dot" ? (island.dotColor.a > 0 ? island.dotColor : island.theme.accent) : glow.color
+        scale: island.mode === "dot" && island.hovered ? 1.22 : 1
+        Behavior on scale { SpringAnimation { spring: 4; damping: 0.32; epsilon: 0.005 } }
         // a hint of the colour on the small pill, less on the large card
         glowTint: island.mode === "expanded" ? 0.06 : 0.13
         bodyScale: glow.visibleAtAll ? glow.bodyScale : 1
         anchors.horizontalCenter: parent.horizontalCenter
-        y: island.theme.windowTopPad
+        // smaller than the pill (the dot): in the middle of where the pill is
+        y: island.theme.windowTopPad + Math.max(0, (island.theme.pillHeight - height) / 2)
         width: island.theme.pillWidth
         height: island.theme.pillHeight
         radius: island.theme.rounded(island.theme.pillHeight / 2)
 
         HoverHandler {
             id: hover
+            onPointChanged: {
+                if (!island.grace) return;
+                const p = point.scenePosition;
+                if (Math.abs(p.x - island.gracePos.x) > 8 || Math.abs(p.y - island.gracePos.y) > 8) island.grace = false;
+            }
         }
 
         TapHandler {
             enabled: island.mode === "idle" || island.mode === "live" || island.mode === "split"
             onTapped: {
                 expandTimer.stop();
-                island.expanded = true;
+                if (island.dotMode) island.shrink();
+                else island.expanded = true;
             }
+        }
+        // Dot mode, the open island: a click where nothing else takes it (a button, a list, a field).
+        TapHandler {
+            gesturePolicy: TapHandler.WithinBounds
+            enabled: island.dotMode && island.mode === "expanded"
+            onTapped: island.shrink()
+        }
+        // Right click where nothing else takes it: the island's own menu.
+        TapHandler {
+            acceptedButtons: Qt.RightButton
+            gesturePolicy: TapHandler.WithinBounds
+            enabled: island.dotMode && island.mode !== "notification" && island.mode !== "event" && island.mode !== "dot"
+            onTapped: island.showMenu()
         }
         DropArea {
             objectName: "islandDrop"
@@ -295,15 +413,43 @@ Item {
             scale: shown ? 1 : 0.94
             visible: opacity > 0.01
             Behavior on opacity {
-                NumberAnimation {
-                    duration: island.theme.fadeDuration
-                    easing.type: Easing.OutCubic
+                SequentialAnimation {
+                    PauseAnimation { duration: island.revealDelay }
+                    NumberAnimation {
+                        duration: island.theme.fadeDuration
+                        easing.type: Easing.OutCubic
+                    }
                 }
             }
             Behavior on scale {
                 NumberAnimation {
                     duration: island.theme.morphDuration
                     easing.type: Easing.OutCubic
+                }
+            }
+        }
+
+        // dot: what it has to say, as a colour
+        Layer {
+            layerMode: "dot"
+            width: island.dotSize
+            height: island.dotSize
+            Rectangle {
+                id: dotCore
+                objectName: "dotCore"
+                anchors.centerIn: parent
+                width: Math.max(4, island.dotSize * 0.5)
+                height: width
+                radius: width / 2
+                color: island.dotColor
+                visible: island.dotColor.a > 0
+                SequentialAnimation on opacity {
+                    running: island.dotPulse
+                    loops: Animation.Infinite
+                    alwaysRunToEnd: true
+                    NumberAnimation { to: 0.25; duration: 550; easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 1; duration: 550; easing.type: Easing.InOutSine }
+                    PauseAnimation { duration: 1400 }
                 }
             }
         }
@@ -433,6 +579,8 @@ Item {
                 systemView: island.systemView
                 onSystemMetricClicked: key => island.systemMetricClicked(key)
                 onSettingsRequested: island.settingsRequested()
+                dotMode: island.dotMode
+                onShrinkRequested: island.shrink()
                 ambientGlow: island.ambientGlow
                 onAmbientGlowToggled: island.ambientGlowToggled()
             }
@@ -502,6 +650,57 @@ Item {
         }
     }
 
+    // ---- the dot's target: a little larger than the dot ---------------------------------
+    Item {
+        id: dotArea
+        objectName: "dotArea"
+        visible: island.mode === "dot"
+        x: island.hitRect.x; y: island.hitRect.y; width: island.hitRect.width; height: island.hitRect.height
+        z: 5
+        HoverHandler { id: dotHover }
+        TapHandler { onTapped: island.unshrink() }
+        TapHandler {
+            acceptedButtons: Qt.RightButton
+            onTapped: island.showMenu()
+        }
+    }
+    // The click that was on its way to the pill when the island opened under the pointer.
+    MouseArea {
+        id: graceArea
+        objectName: "graceArea"
+        visible: island.grace && island.mode === "expanded"
+        x: surface.x; y: surface.y; width: surface.width; height: surface.height
+        z: 4
+        onClicked: island.shrink()
+    }
+    // the glow of the hovered dot fades in and out
+    property real dotGlow: mode === "dot" && hovered ? 1 : 0
+    Behavior on dotGlow { NumberAnimation { duration: 160 } }
+
+    // ---- the island's menu (right click) ------------------------------------------------
+    function showMenu(): void {
+        menuLoader.active = true;
+        menuLoader.item.openRelative();
+    }
+    Loader {
+        id: menuLoader
+        active: false
+        sourceComponent: PlasmaExtras.Menu {
+            visualParent: island.mode === "dot" ? dotArea : surface
+            placement: PlasmaExtras.Menu.BottomPosedLeftAlignedPopup
+            PlasmaExtras.MenuItem {
+                text: island.dot ? Lang.i18n("Back to pill") : Lang.i18n("Shrink to dot")
+                icon: island.dot ? "window-restore-symbolic" : "window-minimize-symbolic"
+                onClicked: island.dot ? island.unshrink() : island.shrink()
+            }
+            PlasmaExtras.MenuItem {
+                text: Lang.i18n("Settings")
+                icon: "configure-symbolic"
+                onClicked: island.settingsRequested()
+            }
+        }
+    }
+
     // the pointer region, outlined (for looking at it)
     Rectangle {
         visible: island.debugRegion
@@ -521,8 +720,8 @@ Item {
         id: privacyDots
         spacing: 4
         x: (bubble.visible ? bubble.x + bubble.width : surface.x + surface.width) + 8
-        y: surface.y + island.theme.pillHeight / 2 - height / 2
-        visible: island.mode !== "expanded"
+        y: island.theme.windowTopPad + island.theme.pillHeight / 2 - height / 2
+        visible: island.mode !== "expanded" && island.mode !== "dot"
         Repeater {
             model: island.manager.indicators
             delegate: Rectangle {

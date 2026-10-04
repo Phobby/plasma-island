@@ -23,7 +23,8 @@ Rectangle {
     Behavior on color { ColorAnimation { duration: 250 } }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
-    TapHandler { onTapped: card.clicked() }
+    // takes the click for itself: the island behind it does not see it (dot mode's empty-surface click)
+    TapHandler { gesturePolicy: TapHandler.WithinBounds; onTapped: card.clicked() }
 
     // small
     ColumnLayout {

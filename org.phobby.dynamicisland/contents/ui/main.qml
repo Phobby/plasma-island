@@ -782,6 +782,14 @@ PlasmoidItem {
                 showClock: root.cfg.showClock
                 hoverDelay: root.cfg.hoverDelay
                 collapseDelay: root.cfg.collapseDelay
+                dotMode: root.cfg.dotMode
+                dotSize: Math.max(10, Math.min(28, root.cfg.dotSize))
+                dotHoverExpand: root.cfg.dotHoverExpand
+                dotEvents: root.cfg.dotEvents
+                dotCriticalExpand: root.cfg.dotCriticalExpand
+                // as it was left, always the pill, or always the dot
+                Component.onCompleted: dot = root.cfg.dotMode && (root.cfg.dotStart === 2 || (root.cfg.dotStart === 0 && root.cfg.dotState))
+                onDotChanged: if (root.cfg.dotState !== dot) root.cfg.dotState = dot
                 showMediaModule: root.cfg.showMediaModule
                 showSystemModule: root.cfg.showSystemModule
                 showVolumeModule: root.cfg.showVolumeModule

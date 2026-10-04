@@ -51,6 +51,17 @@
     <entry name="notificationDuration" type="Int">
       <default>4000</default>
     </entry>
+    <!-- Dot mode: a click shrinks the island to a small dot, a click on the dot brings the pill back -->
+    <entry name="dotMode" type="Bool"><default>true</default></entry>
+    <!-- whether it is a dot now (kept across restarts) -->
+    <entry name="dotState" type="Bool"><default>false</default></entry>
+    <!-- 0 = as it was left, 1 = always the pill, 2 = always the dot -->
+    <entry name="dotStart" type="Int"><default>0</default></entry>
+    <entry name="dotSize" type="Int"><default>15</default></entry>
+    <entry name="dotHoverExpand" type="Bool"><default>false</default></entry>
+    <!-- 0 = only the dot shows it, 1 = opens for it and returns to the dot, 2 = nothing -->
+    <entry name="dotEvents" type="Int"><default>0</default></entry>
+    <entry name="dotCriticalExpand" type="Bool"><default>true</default></entry>
     <entry name="hoverDelay" type="Int">
       <default>120</default>
     </entry>

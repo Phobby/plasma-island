@@ -20,6 +20,64 @@ Tested on: Kubuntu, Plasma 6.6.6, Qt 6.10.2, Wayland.
 | Suggestion | A moment a rule knows (see "Suggestions") | A sentence and its answers as buttons: Yes · Not now · Never suggest this; gone after 10 s |
 | Expanded | Mouse hover or click | Pages (below) |
 | Privacy dots | Microphone / camera in use | Orange (microphone) / green (camera) dot to the right of the island, visible in every state |
+| Dot | Dot mode: a click on the island | A small circle (15 px, 10–28) in the pill's place; a click on it brings the closed pill back |
+
+### Dot mode
+
+A click turns the island into a small dot in the same place, for when it
+should be out of the way; a click on the dot brings back the closed pill.
+Everything else is as it was. Settings → General → Dot mode (on by default;
+off, a click opens the island as before).
+
+What shrinks it:
+
+- a click on the small island (idle, a live activity, the main pill of the
+  split island);
+- a click that was on its way there when hovering opened the island: for
+  0.7 s after it opened, while the pointer has not moved;
+- a click on the open island where nothing else takes it (not a button, a
+  list, a field or a card);
+- the ⌄ button at the top right of the open island;
+- right click → "Shrink to dot" (also "Back to pill" on the dot).
+
+A notification or an event on the island keeps its own clicks (open,
+dismiss, its buttons); the split island's circle still opens the island.
+
+The dot glows and grows a little under the pointer and, unless the setting
+says so, does not open. What it shows:
+
+| Dot | Meaning |
+|---|---|
+| The island's body, nothing inside | Nothing going on |
+| Orange / green / red centre | Microphone / camera / screen in use (always shown) |
+| Red centre | A recording is running |
+| Accent-coloured centre, pulsing | A live activity is running |
+| Accent-coloured centre | Notifications are waiting |
+| Yellow centre | A critical event is waiting (only when "always open for critical events" is off) |
+
+"Events in dot mode": *only the dot shows them* (default) keeps
+notifications, questions and critical events until the pill is back and
+shows them then; passing events (volume, brightness…) are dropped as stale.
+*Open for them, then back to the dot* shows each as usual and returns.
+*Show nothing* keeps the dot plain (privacy colours stay) and still keeps
+the notifications. An incoming call, an alarm or timer going off and low
+battery open the island in every case unless that setting is off. The state
+survives a restart ("Start as": as it was left / always the pill / always
+the dot). While it is a dot the ambient glow and its audio analysis are
+off and the hidden layers do not animate.
+
+### Where the island takes clicks
+
+The island's window is larger than the island (room for the shadow, the
+spring's overshoot and the larger states). Only the drawn shape takes the
+pointer (the pill, the card, the split circle, the dot with a 24 px target),
+with its rounded corners; everything around it goes to the window
+underneath. The native helper does this with `QWindow::setMask`, which is
+the surface's input region on Wayland and the window shape on X11, and
+follows the shape on every frame of a morph. To see the region, set the
+hidden option `debugInputRegion=true` in the widget's `[Configuration][General]`
+group, or start plasmashell with `DYNAMICISLAND_DEBUG_REGION=1`: a red
+outline is drawn around it.
 
 Expanded pages: **Activities** (all ongoing activities, actions and privacy
 details), **Media**, **System** (information only: CPU, CPU temperature, GPU,
@@ -1236,6 +1294,13 @@ OSD keeps appearing too. Pick one of them:
   break the system was changed.
 
 ## Known limitations
+
+- **Click region on X11:** written for both, but tried only on Wayland. On
+  X11 `setMask` also clips what is drawn, so the shadow and the glow outside
+  the shape may be cut there.
+- **Dragging onto the island:** as before, only the visible island takes a
+  drag (it opens and the page takes the drop); the region is not widened
+  while something is dragged.
 
 - **Double notifications:** Plasma's own notification popups cannot be turned
   off. The island shows notifications *in addition*. You can move the system

@@ -110,6 +110,27 @@ Item {
         onTriggered: manager.warm = true
     }
 
+    // The island is a dot (Island.qml): events do not open it. What should not be missed
+    // (notifications, questions, critical events) waits, without ageing, until it is a pill again.
+    property bool quiet: false
+    // ...except what must be seen at once: an incoming call, an alarm, low battery.
+    property bool quietCritical: true
+    property int waiting: 0
+    property bool waitingCritical: false
+    function critical(ev: var): bool { return ev.force === true || ev.critical === true || ev.shake === true; }
+    function lasting(ev: var): bool { return ev.kind === "notification" || Array.isArray(ev.buttons) || critical(ev); }
+    function countWaiting(): void {
+        const kept = queue.filter(q => q.kept === true);
+        waiting = kept.length;
+        waitingCritical = kept.some(q => critical(q));
+    }
+    onQuietChanged: {
+        if (quiet) return;
+        const now = Date.now();
+        for (const q of queue) q.queuedAt = now;
+        if (!currentEvent) gapTimer.restart();
+    }
+
     function flash(ev: var): void {
         ev.kind = ev.kind || "event";
         if (!warm && ev.kind === "event") return;
@@ -125,7 +146,9 @@ Item {
             }
             queue = queue.filter(q => q.key !== ev.key);
         }
+        ev.kept = quiet && lasting(ev);
         queue.push(ev);
+        countWaiting();
         // Deferred: a live activity toggled in the same tick must rank first.
         if (!currentEvent) Qt.callLater(showNext);
     }
@@ -137,10 +160,13 @@ Item {
     function showNext(): void {
         if (currentEvent || holdEvents) return;
         const now = Date.now();
-        queue = queue.filter(q => now - q.queuedAt < maxEventAge);
-        const i = eventsAllowed ? 0 : queue.findIndex(q => q.force);
+        queue = queue.filter(q => now - q.queuedAt < maxEventAge || (quiet && q.kept === true));
+        const i = quiet ? (quietCritical ? queue.findIndex(q => critical(q)) : -1)
+                : eventsAllowed ? 0 : queue.findIndex(q => q.force);
+        countWaiting();
         if (i < 0 || queue.length === 0) return;
         currentEvent = queue.splice(i, 1)[0];
+        countWaiting();
         eventTimer.interval = durationOf(currentEvent);
         eventTimer.restart();
         if (typeof currentEvent.shown === "function") currentEvent.shown();

@@ -27,6 +27,9 @@ Item {
     signal systemMetricClicked(string key)
     // The gear in the header: the widget's settings.
     signal settingsRequested()
+    // Dot mode (Island.qml): a button that shrinks the island to its dot.
+    property bool dotMode: false
+    signal shrinkRequested()
     // The ambient glow's switch on the Media page.
     property bool ambientGlow: false
     signal ambientGlowToggled()
@@ -297,6 +300,17 @@ Item {
                 color: expanded.theme.subText
                 font.pointSize: expanded.theme.fontSmall
                 font.weight: Font.DemiBold
+            }
+            IconButton {
+                objectName: "shrinkButton"
+                visible: expanded.dotMode
+                iconName: "window-minimize-symbolic"
+                iconSize: 12
+                implicitWidth: 22; implicitHeight: 22
+                toolTip: Lang.i18n("Shrink to dot")
+                color: expanded.theme.subText
+                hoverColor: expanded.theme.faint
+                onClicked: expanded.shrinkRequested()
             }
             IconButton {
                 iconName: "configure-symbolic"

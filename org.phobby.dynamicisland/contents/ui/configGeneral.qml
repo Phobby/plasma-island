@@ -22,6 +22,12 @@ KCM.SimpleKCM {
     property alias cfg_hoverDelay: hoverSpin.value
     property alias cfg_collapseDelay: collapseSpin.value
     property alias cfg_preferredPlayer: playerField.text
+    property alias cfg_dotMode: dotModeCheck.checked
+    property alias cfg_dotStart: dotStartCombo.currentIndex
+    property alias cfg_dotSize: dotSizeSpin.value
+    property alias cfg_dotHoverExpand: dotHoverCheck.checked
+    property alias cfg_dotEvents: dotEventsCombo.currentIndex
+    property alias cfg_dotCriticalExpand: dotCriticalCheck.checked
     property alias cfg_systemView: systemViewCombo.currentIndex
 
     Kirigami.FormLayout {
@@ -100,6 +106,55 @@ KCM.SimpleKCM {
             id: playerField
             Kirigami.FormData.label: Lang.i18n("Preferred player:")
             placeholderText: Lang.i18n("e.g. spotify, elisa, firefox (empty = automatic)")
+        }
+
+        Kirigami.Separator {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: Lang.i18n("Dot mode")
+        }
+        QQC2.CheckBox {
+            id: dotModeCheck
+            Kirigami.FormData.label: Lang.i18n("Click:")
+            text: Lang.i18n("A click shrinks the island to a dot")
+        }
+        QQC2.Label {
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
+            wrapMode: Text.Wrap
+            font: Kirigami.Theme.smallFont
+            text: Lang.i18n("Click the small island, use the button at the top of the open island, or right-click it. A click on the dot brings the pill back. Off: a click opens the island.")
+        }
+        QQC2.ComboBox {
+            id: dotStartCombo
+            Kirigami.FormData.label: Lang.i18n("Start as:")
+            enabled: dotModeCheck.checked
+            model: [Lang.i18n("As it was left"), Lang.i18n("Always the pill"), Lang.i18n("Always the dot")]
+        }
+        QQC2.SpinBox {
+            id: dotSizeSpin
+            Kirigami.FormData.label: Lang.i18n("Dot size:")
+            enabled: dotModeCheck.checked
+            from: 10
+            to: 28
+            textFromValue: (v) => Lang.i18n("%1 px", v)
+            valueFromText: (t) => parseInt(t)
+        }
+        QQC2.CheckBox {
+            id: dotHoverCheck
+            Kirigami.FormData.label: Lang.i18n("Hovering the dot:")
+            enabled: dotModeCheck.checked
+            text: Lang.i18n("Opens the island")
+        }
+        QQC2.ComboBox {
+            id: dotEventsCombo
+            Kirigami.FormData.label: Lang.i18n("Events in dot mode:")
+            enabled: dotModeCheck.checked
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
+            model: [Lang.i18n("Only the dot shows them"), Lang.i18n("Open for them, then back to the dot"), Lang.i18n("Show nothing")]
+        }
+        QQC2.CheckBox {
+            id: dotCriticalCheck
+            enabled: dotModeCheck.checked
+            text: Lang.i18n("Always open for critical events (incoming call, alarm, low battery)")
         }
 
         Kirigami.Separator {
