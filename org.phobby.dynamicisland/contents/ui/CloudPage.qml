@@ -537,15 +537,17 @@ Item {
                             color: row.local.length > 0 ? page.theme.readable(page.theme.live, page.theme.surface) : page.theme.subText
                             font.pointSize: page.theme.fontSmall * 0.8
                         }
+                        // (a cloud's own document, a Google Doc for one, has no size)
                         Text {
-                            visible: !row.modelData.dir
-                            text: page.cloud.size(row.modelData.size)
+                            Layout.preferredWidth: 52
+                            horizontalAlignment: Text.AlignRight
+                            text: row.modelData.dir ? "" : row.modelData.size >= 0 ? page.cloud.size(row.modelData.size) : "—"
                             color: page.theme.subText
                             font.pointSize: page.theme.fontSmall * 0.85
                             font.features: { "tnum": 1 }
                         }
                         Text {
-                            Layout.preferredWidth: 46
+                            Layout.preferredWidth: 74
                             horizontalAlignment: Text.AlignRight
                             text: page.when(row.modelData.modified)
                             color: page.theme.subText
@@ -617,7 +619,7 @@ Item {
             text: page.status.length > 0 ? page.status
                 : page.more ? Lang.i18n("There are more items than are shown. Use the search to find a name.")
                 : sync === null ? "" : sync.source.length > 0 ? Lang.i18n("%1 (from %2)", page.cloud.stateText(sync.state), sync.source)
-                : page.cloud.stateText(sync.state) + ": " + sync.note
+                : page.cloud.stateText(sync.state) + " · " + Lang.i18n("why: Settings → Cloud")
             color: page.theme.subText
             font.pointSize: page.theme.fontSmall * 0.8
             elide: Text.ElideRight

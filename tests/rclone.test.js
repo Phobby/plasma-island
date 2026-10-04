@@ -53,6 +53,7 @@ test("arguments: one argument for remote and path, after --", () => {
         for (const never of ["move", "moveto", "sync", "delete", "purge", "rmdir", "rmdirs", "deletefile", "--delete-after", "--config", "--rc"])
             check(args[0] + " never " + never, args.indexOf(never), -1);
         check(args[0] + ": no prompt", args.indexOf("--ask-password=false") > 0, true);
+        check(args[0] + ": rclone's own retries are left alone", args.indexOf("--low-level-retries"), -1);
     }
     check("reconnect", R.reconnectCommand("my drive"), "rclone config reconnect my drive:");
 });
@@ -112,6 +113,9 @@ test("what went wrong", () => {
     check("sign-in ran out", p(1, 'CRITICAL: Failed to create file system for "drive:": couldn\'t find root directory ID: Get "https://www.googleapis.com/…": couldn\'t fetch token: invalid_grant: maybe token expired? - try refreshing with "rclone config reconnect drive:"'), "auth");
     check("401", p(1, "NOTICE: Failed to lsjson: 401 Unauthorized"), "auth");
     check("no room", p(1, "ERROR : big.bin: Failed to copy: googleapi: Error 403: The user's Drive storage quota has been exceeded., storageQuotaExceeded"), "full");
+    // (as Google Drive really answered on this computer: a limit on requests, not a full cloud and not "not allowed")
+    check("asked too often", p(1, "2026/10/04 20:51:11 NOTICE: Failed to lsjson with 2 errors: last error was: error in ListJSON: couldn't list directory: googleapi: Error 403: Quota exceeded for quota metric 'Queries' and limit 'Previous quota: Requests per minute' of service 'drive.googleapis.com' for consumer 'project_number:202264815644'.\nDetails:\n[ { \"reason\": \"RATE_LIMIT_EXCEEDED\" } ]\n, rateLimitExceeded"), "busy");
+    check("429", p(1, "ERROR : 429 Too Many Requests"), "busy");
     check("no answer in time", R.problem(-1, ""), { kind: "timeout", detail: "" });
     check("a JSON log line", p(1, '{"level":"error","msg":"Failed to copy: dial tcp: i/o timeout","source":"x"}'), "network");
     const odd = R.problem(1, "2026/10/04 17:34:52 ERROR : Something odd happened with /home/user/.config/rclone/rclone.conf and \"/tmp/secret file\"");

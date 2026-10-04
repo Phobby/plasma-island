@@ -435,6 +435,7 @@ QtObject {
         case "denied": return Lang.i18n("%1 does not allow this.", name);
         case "remote": return Lang.i18n("rclone does not know %1 any more.", name);
         case "full": return Lang.i18n("%1 has no room left.", name);
+        case "busy": return Lang.i18n("%1 is being asked too often right now and makes everyone wait. Try again in a moment.", name);
         }
         return detail.length > 0 ? detail : Lang.i18n("Something went wrong.");
     }

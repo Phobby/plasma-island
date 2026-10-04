@@ -31,14 +31,14 @@ CloudProvider {
         else local.run(command, extra.concat(args), done);
     }
     function list(path: string, done: var): void {
-        ask(Rclone.listArguments(remote, path), 45000, (code, out, err) => {
+        ask(Rclone.listArguments(remote, path), 90000, (code, out, err) => {
             const listing = code === 0 ? Rclone.parseList(out) : null;
             if (listing !== null) done({ ok: true, entries: listing.entries, more: listing.more, problem: null });
             else done({ ok: false, entries: [], more: false, problem: Rclone.problem(code, err) });
         });
     }
     function about(done: var): void {
-        ask(Rclone.aboutArguments(remote), 45000, (code, out, err) => {
+        ask(Rclone.aboutArguments(remote), 90000, (code, out, err) => {
             // (a cloud that cannot say how full it is answers with a notice and nothing else)
             if (code === 0 || /doesn't support about/i.test(err)) done({ ok: true, about: code === 0 ? Rclone.parseAbout(out) : null, problem: null });
             else done({ ok: false, about: null, problem: Rclone.problem(code, err) });

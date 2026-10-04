@@ -14,8 +14,10 @@
 // can delete, move or sync. rclone's configuration file is never read by the
 // island: only the command is asked.
 
-// Short waits and few retries: an island must not hang on a cloud. No prompt can ever appear.
-const QUIET = ["--retries", "1", "--low-level-retries", "2", "--contimeout", "10s", "--timeout", "30s", "--ask-password=false"];
+// Short waits: an island must not hang on a cloud. No prompt can ever appear. rclone's own low-level
+// retries stay as they are (10): a cloud that says "too many requests" (Google Drive does, on the
+// client id rclone shares among its users) is asked again by rclone itself, a little later each time.
+const QUIET = ["--retries", "1", "--contimeout", "10s", "--timeout", "30s", "--ask-password=false"];
 const MAX_ENTRIES = 2000;
 
 function remotesArguments() { return ["listremotes", "--json"]; }
@@ -50,7 +52,7 @@ function listArguments(remote, path) { return ["lsjson", "--no-mimetype"].concat
 function aboutArguments(remote) { return ["about", "--json"].concat(QUIET, ["--", remote + ":"]); }
 function sizeArguments(remote, path) { return ["size", "--json"].concat(QUIET, ["--", target(remote, path)]); }
 // Progress is asked for as a line of JSON twice a second.
-const PROGRESS = ["--stats", "500ms", "--use-json-log", "--stats-log-level", "NOTICE", "--retries", "1", "--low-level-retries", "3", "--contimeout", "10s", "--ask-password=false"];
+const PROGRESS = ["--stats", "500ms", "--use-json-log", "--stats-log-level", "NOTICE", "--retries", "1", "--contimeout", "10s", "--ask-password=false"];
 // To this computer: `local` is the full path of the file (or, for a folder, of the folder) to make.
 function downloadArguments(remote, path, local, folder) {
     return [folder ? "copy" : "copyto", "--ignore-existing"].concat(PROGRESS, ["--", target(remote, path), local]);
@@ -160,6 +162,7 @@ function logMessage(line) {
 //   network  no connection / unreachable     notfound the folder or file is gone
 //   denied   not allowed                      remote   rclone does not know this remote
 //   timeout  no answer in time                full     the cloud has no room left
+//   busy     the cloud is asked too often right now (a rate limit, not a full cloud)
 //   unknown  anything else (detail: rclone's own last words, without addresses of this computer)
 function problem(exitCode, errors) {
     const lines = String(errors || "").split("\n").map(logMessage).map(l => l.trim()).filter(l => l.length > 0);
@@ -170,7 +173,8 @@ function problem(exitCode, errors) {
     if (exitCode < 0 && last.length === 0) kind = "timeout";
     else if (is(/didn't find section in config file|is not a known remote/i)) kind = "remote";
     else if (is(/invalid_grant|token (has )?expired|expired token|couldn't fetch token|failed to (refresh|get) token|unauthori[sz]ed|\b401\b|re-?authori[sz]e|config reconnect|invalid_client|AuthenticationFailed|login failed/i)) kind = "auth";
-    else if (is(/quota exceeded|storage (quota|limit)|insufficient storage|\b507\b|no space left|storageQuotaExceeded|over quota/i)) kind = "full";
+    else if (is(/storageQuotaExceeded|storage (quota|limit)|insufficient storage|\b507\b|no space left|over quota/i)) kind = "full";
+    else if (is(/rateLimitExceeded|RATE_LIMIT_EXCEEDED|quota exceeded for quota metric|too many requests|\b429\b|slow ?down/i)) kind = "busy";
     else if (is(/no such host|connection refused|network is unreachable|no route to host|dial tcp|i\/o timeout|context deadline exceeded|TLS handshake|connection reset|temporary failure in name resolution/i)) kind = "network";
     else if (exitCode === 3 || exitCode === 4 || is(/directory not found|object not found|file not found/i)) kind = "notfound";
     else if (is(/permission denied|\b403\b|forbidden|access denied|: permission\b/i)) kind = "denied";

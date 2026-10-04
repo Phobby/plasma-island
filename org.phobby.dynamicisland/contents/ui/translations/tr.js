@@ -1056,5 +1056,7 @@ var table = {
     "This folder is not there any more.": "Bu klasör artık yok.",
     "%1 does not allow this.": "%1 buna izin vermiyor.",
     "rclone does not know %1 any more.": "rclone artık %1 uzağını tanımıyor.",
-    "%1 has no room left.": "%1 bulutunda yer kalmadı."
+    "%1 has no room left.": "%1 bulutunda yer kalmadı.",
+    "%1 is being asked too often right now and makes everyone wait. Try again in a moment.": "%1 şu anda çok sık sorgulanıyor ve herkesi bekletiyor. Biraz sonra yeniden dene.",
+    "why: Settings → Cloud": "nedeni: Ayarlar → Bulut"
 };
