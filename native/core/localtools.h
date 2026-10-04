@@ -16,7 +16,8 @@
  * (`betternotes update … --body -` reads the content from standard input).
  *
  * Also the island's own small files under the user's data directory (theme
- * files, what the suggestions learned): written, listed and deleted here.
+ * files, what the suggestions learned, a kept AI chat): written, listed and
+ * deleted here.
  */
 class LocalTools : public QObject
 {
@@ -38,6 +39,8 @@ public:
     Q_INVOKABLE double fileSize(const QString &path) const;
     // Writes a text file (UTF-8) in one piece, making its directory; false if it could not.
     Q_INVOKABLE bool writeTextFile(const QString &path, const QString &text) const;
+    // The same, readable and writable by the owner only (a kept AI chat).
+    Q_INVOKABLE bool writePrivateFile(const QString &path, const QString &text) const;
     // Deletes a file; false if there was none or it could not be deleted.
     Q_INVOKABLE bool removeFile(const QString &path) const;
     // Names of the files in a directory that end with `suffix`, sorted; [] if there is no such directory.
@@ -59,6 +62,7 @@ Q_SIGNALS:
 
 private:
     void start(const QString &program, const QStringList &arguments, const QByteArray *input, const QJSValue &callback);
+    bool write(const QString &path, const QString &text, bool ownerOnly) const;
 
     QFileSystemWatcher m_watcher;
     QStringList m_paths;

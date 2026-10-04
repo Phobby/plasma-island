@@ -4,7 +4,8 @@
 #                                     D-Bus API service, update counter,
 #                                     passwords in KWallet, OAuth loopback,
 #                                     local notes app helpers, open popup menus,
-#                                     audio levels for the ambient glow
+#                                     audio levels for the ambient glow,
+#                                     a command read while it runs (AI tab)
 cmake_minimum_required(VERSION 3.16)
 project(dynamicisland-effects LANGUAGES CXX)
 
@@ -58,6 +59,7 @@ qt_add_qml_module(dynamicislandcore
         core/localtools.h core/localtools.cpp
         core/popupwatcher.h core/popupwatcher.cpp
         core/audiolevels.h core/audiolevels.cpp
+        core/streamprocess.h core/streamprocess.cpp
     OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml/org/phobby/dynamicisland/core
 )
 target_include_directories(dynamicislandcore PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)

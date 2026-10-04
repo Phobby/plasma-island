@@ -62,6 +62,16 @@ double LocalTools::fileSize(const QString &path) const
 
 bool LocalTools::writeTextFile(const QString &path, const QString &text) const
 {
+    return write(path, text, false);
+}
+
+bool LocalTools::writePrivateFile(const QString &path, const QString &text) const
+{
+    return write(path, text, true);
+}
+
+bool LocalTools::write(const QString &path, const QString &text, bool ownerOnly) const
+{
     const QString full = expand(path);
     if (!QDir().mkpath(QFileInfo(full).absolutePath())) {
         return false;
@@ -70,6 +80,9 @@ bool LocalTools::writeTextFile(const QString &path, const QString &text) const
     QSaveFile file(full);
     if (!file.open(QIODevice::WriteOnly)) {
         return false;
+    }
+    if (ownerOnly) {
+        file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
     }
     const QByteArray bytes = text.toUtf8();
     return file.write(bytes) == bytes.size() && file.commit();
