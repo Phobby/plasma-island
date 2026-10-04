@@ -44,6 +44,13 @@ KCM.SimpleKCM {
     Timer { id: warningTimer; interval: 6000; onTriggered: page.lastTabWarning = false }
 
     PageCatalog { id: catalog }
+    // One of the widget's own pictures ("lucide:sparkles"): this window cannot colour a file,
+    // so the copy made for a dark or a light window (contents/icons/README).
+    function iconSource(icon: string): string {
+        if (icon.indexOf("lucide:") !== 0) return icon;
+        const dark = Kirigami.ColorUtils.brightnessForColor(Kirigami.Theme.backgroundColor) === Kirigami.ColorUtils.Dark;
+        return Qt.resolvedUrl("../icons/ai/" + icon.slice(7) + (dark ? "-on-dark.svg" : "-on-light.svg"));
+    }
     function info(key: string): var { return catalog.pages.find(p => p.key === key); }
 
     // The list follows cfg_pageOrder; a drag moves rows, the drop writes it back.
@@ -137,7 +144,7 @@ KCM.SimpleKCM {
                         Kirigami.Icon {
                             Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
                             Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
-                            source: wrapper.page_ ? wrapper.page_.icon : ""
+                            source: wrapper.page_ ? page.iconSource(wrapper.page_.icon) : ""
                         }
                         ColumnLayout {
                             Layout.fillWidth: true

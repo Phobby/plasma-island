@@ -1,8 +1,9 @@
 /*
     SPDX-License-Identifier: ISC
 
-    The weather pictures (contents/icons/weather/*.svg: Lucide, ISC licence,
-    see the LICENSE beside them) as their inner SVG markup, so that they can
+    The weather pictures (contents/icons/weather/*.svg) and the AI tab's
+    sparkles (contents/icons/ai/sparkles.svg): Lucide, ISC licence, see the
+    LICENSE beside them, as their inner SVG markup, so that they can
     be drawn in any colour: image(name, "#rrggbb") is an SVG as a data URI,
     with that colour as its stroke. WeatherIcon.qml shows one.
 
@@ -28,6 +29,7 @@ const shapes = {
     "map-pin": '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
     "moon": '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>',
     "snowflake": '<path d="m10 20-1.25-2.5L6 18"/><path d="M10 4 8.75 6.5 6 6"/><path d="m14 20 1.25-2.5L18 18"/><path d="m14 4 1.25 2.5L18 6"/><path d="m17 21-3-6h-4"/><path d="m17 3-3 6 1.5 3"/><path d="M2 12h6.5L10 9"/><path d="m20 10-1.5 2 1.5 2"/><path d="M22 12h-6.5L14 15"/><path d="m4 10 1.5 2L4 14"/><path d="m7 21 3-6-1.5-3"/><path d="m7 3 3 6h4"/>',
+    "sparkles": '<path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/><circle cx="4" cy="20" r="2"/>',
     "sun": '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
     "sunrise": '<path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/>',
     "sunset": '<path d="M12 10V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m16 6-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/>',
@@ -37,6 +39,11 @@ const shapes = {
 };
 
 function has(name) { return shapes[name] !== undefined; }
+// An icon name that means one of these pictures ("weather:sun", "lucide:sparkles"): its name, else "".
+function own(icon) {
+    const text = String(icon || "");
+    return text.indexOf("weather:") === 0 ? text.slice(8) : text.indexOf("lucide:") === 0 ? text.slice(7) : "";
+}
 // The picture `name` in `color` ("#rrggbb"), as the source of an Image.
 function image(name, color) {
     if (shapes[name] === undefined) return "";

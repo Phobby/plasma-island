@@ -16,13 +16,16 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ICONS = os.path.join(HERE, "..", "org.phobby.dynamicisland", "contents", "icons", "weather")
+# Other pictures of the same set, drawn the same way: the AI tab's sparkles.
+MORE = [os.path.join(HERE, "..", "org.phobby.dynamicisland", "contents", "icons", "ai", "sparkles.svg")]
 TARGET = os.path.join(HERE, "..", "org.phobby.dynamicisland", "contents", "ui", "WeatherIcons.js")
 
 HEADER = '''/*
     SPDX-License-Identifier: ISC
 
-    The weather pictures (contents/icons/weather/*.svg: Lucide, ISC licence,
-    see the LICENSE beside them) as their inner SVG markup, so that they can
+    The weather pictures (contents/icons/weather/*.svg) and the AI tab's
+    sparkles (contents/icons/ai/sparkles.svg): Lucide, ISC licence, see the
+    LICENSE beside them, as their inner SVG markup, so that they can
     be drawn in any colour: image(name, "#rrggbb") is an SVG as a data URI,
     with that colour as its stroke. WeatherIcon.qml shows one.
 
@@ -33,6 +36,11 @@ HEADER = '''/*
 '''
 FOOTER = '''
 function has(name) { return shapes[name] !== undefined; }
+// An icon name that means one of these pictures ("weather:sun", "lucide:sparkles"): its name, else "".
+function own(icon) {
+    const text = String(icon || "");
+    return text.indexOf("weather:") === 0 ? text.slice(8) : text.indexOf("lucide:") === 0 ? text.slice(7) : "";
+}
 // The picture `name` in `color` ("#rrggbb"), as the source of an Image.
 function image(name, color) {
     if (shapes[name] === undefined) return "";
@@ -44,10 +52,12 @@ function image(name, color) {
 
 def build():
     lines = []
-    for name in sorted(os.listdir(ICONS)):
+    files = {name: os.path.join(ICONS, name) for name in os.listdir(ICONS)}
+    files.update({os.path.basename(path): path for path in MORE})
+    for name in sorted(files):
         if not name.endswith(".svg"):
             continue
-        svg = open(os.path.join(ICONS, name), encoding="utf-8").read()
+        svg = open(files[name], encoding="utf-8").read()
         inner = re.search(r"<svg[^>]*>(.*)</svg>", svg, re.S).group(1)
         inner = re.sub(r"\s+", " ", inner).replace(" />", "/>").replace("> <", "><").strip()
         if "'" in inner:

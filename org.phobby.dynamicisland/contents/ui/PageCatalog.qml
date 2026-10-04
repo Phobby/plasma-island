@@ -31,7 +31,7 @@ QtObject {
         { key: "calendar", icon: "view-calendar", title: Lang.i18n("Calendar"), config: "showCalendar",
           hint: Lang.i18n("Also the upcoming-event activity") },
         { key: "notes", icon: "view-pim-notes", title: Lang.i18n("Notes"), config: "showNotes", hint: "" },
-        { key: "ai", icon: "dialog-messages", title: Lang.i18n("AI"), config: "showAi",
+        { key: "ai", icon: "lucide:sparkles", title: Lang.i18n("AI"), config: "showAi",
           hint: Lang.i18n("Quick questions to Claude Code, a local model or a service with a key") },
         { key: "cloud", icon: "folder-cloud", title: Lang.i18n("Cloud"), config: "showCloud",
           hint: Lang.i18n("Your clouds through rclone: folders by name, drag out, drop in, sync state") },

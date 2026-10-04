@@ -11,6 +11,14 @@ calculator-symbolic.svg was drawn for this widget (GPL-2.0-or-later): the
 Calculator button of the Controls page needs a single-colour icon and the
 Breeze one is partly transparent.
 
+ai/sparkles.svg is from Lucide (https://lucide.dev), ISC licence (ai/LICENSE):
+the picture of the AI tab, of its activity on the island and of its settings
+page. It is a generic "sparkles" sign, not the logo of any company. Drawn in
+the theme's colour like the weather pictures (WeatherIcons.js, under the name
+"lucide:sparkles"); sparkles-on-dark.svg and sparkles-on-light.svg are the
+same picture in a fixed colour for the settings window, which cannot colour a
+file of the widget.
+
 weather/*.svg are from Lucide (https://lucide.dev), released under the ISC
 licence; those of them that come from Feather (moon, wind…) are under the MIT
 licence. Both texts are in weather/LICENSE. They are the pictures of the

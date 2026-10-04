@@ -1009,6 +1009,12 @@ app or a terminal is named instead); no file, picture or drop is taken, and
 nothing of the clipboard, the screen, the notes or the calendar is added by
 itself. The rule-based suggestions stay what they are: nothing here feeds them.
 
+**Its picture** is a generic "sparkles" sign: Lucide's `sparkles` (ISC licence,
+`contents/icons/ai/`, the same set as the weather pictures), embedded and drawn
+in the theme's colour on the tab, on the island's AI activity and, in a copy
+for a dark and one for a light window, on the settings page. It is not the logo
+of any company, and none is used.
+
 ### What can answer
 
 Sources are connected on the page itself. What is found on this computer is

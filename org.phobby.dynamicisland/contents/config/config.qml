@@ -1,4 +1,5 @@
 import QtQuick
+import org.kde.kirigami as Kirigami
 import "../ui"
 import org.kde.plasma.configuration
 
@@ -50,7 +51,10 @@ ConfigModel {
     }
     ConfigCategory {
         name: Lang.i18n("AI")
-        icon: "dialog-messages"
+        // The tab's own picture (Lucide's sparkles). The settings window cannot colour a file of
+        // the widget, so there is one for a dark and one for a light window.
+        icon: Qt.resolvedUrl(Kirigami.ColorUtils.brightnessForColor(Kirigami.Theme.backgroundColor) === Kirigami.ColorUtils.Dark
+                             ? "../icons/ai/sparkles-on-dark.svg" : "../icons/ai/sparkles-on-light.svg")
         source: "configAi.qml"
     }
     ConfigCategory {

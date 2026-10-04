@@ -40,7 +40,7 @@ Item {
         // not in the priority order: below every other activity
         category: "assistant"
         active: provider.waiting
-        icon: "dialog-messages"
+        icon: "lucide:sparkles"
         color: provider.theme.text
         title: Lang.i18n("Thinking…")
         subtitle: provider.sourceName
@@ -101,7 +101,7 @@ Item {
             if (!provider.enabled || !provider.notify || provider.ai.viewing) return;
             provider.manager.flash({
                 key: "ai-answer",
-                icon: "dialog-messages",
+                icon: "lucide:sparkles",
                 color: provider.theme.live,
                 title: Lang.i18n("Answer ready"),
                 subtitle: Markdown.firstLine(text, 70),
@@ -114,7 +114,7 @@ Item {
             if (!provider.enabled || !provider.notify || provider.ai.viewing) return;
             provider.manager.flash({
                 key: "ai-answer",
-                icon: "dialog-messages",
+                icon: "lucide:sparkles",
                 color: provider.theme.orange,
                 title: Lang.i18n("No answer"),
                 subtitle: provider.ai.problemOf(provider.ai.messages[provider.ai.messages.length - 1]),

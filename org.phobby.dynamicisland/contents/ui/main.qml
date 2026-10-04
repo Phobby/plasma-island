@@ -824,7 +824,7 @@ PlasmoidItem {
                       visible: root.cfg.showCalendar && calendarProviderLoader.item !== null },
                     { key: "notes", icon: "view-pim-notes", title: Lang.i18n("Notes"), component: notesPage, visible: root.cfg.showNotes },
                     // The dot: an answer arrived while another page (or none) was shown.
-                    { key: "ai", icon: "dialog-messages", title: Lang.i18n("AI"), component: aiPage, visible: root.cfg.showAi && root.aiBackend !== null,
+                    { key: "ai", icon: "lucide:sparkles", title: Lang.i18n("AI"), component: aiPage, visible: root.cfg.showAi && root.aiBackend !== null,
                       dot: root.aiBackend !== null && root.aiBackend.unseen },
                     // The dot: a cloud is nearly full, or a sync has an error.
                     { key: "cloud", icon: "folder-cloud", title: Lang.i18n("Cloud"), component: cloudPage, visible: root.cfg.showCloud && root.cloudBackend !== null,

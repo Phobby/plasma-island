@@ -9,6 +9,7 @@
 import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "WeatherIcons.js" as WeatherIcons
 
 Item {
     id: expanded
@@ -201,10 +202,11 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 x: tab.titled ? 10 : tab.labelled ? 7 : (tab.width - 14) / 2
                                 spacing: tab.labelled ? 3 : 6
-                                // An icon of the system's theme, or one of the widget's own pictures ("weather:<name>").
+                                // An icon of the system's theme, or one of the widget's own pictures ("weather:<name>", "lucide:<name>").
                                 Item {
                                     id: tabIcon
-                                    readonly property bool own: tab.modelData.icon.indexOf("weather:") === 0
+                                    readonly property string ownName: WeatherIcons.own(tab.modelData.icon)
+                                    readonly property bool own: ownName.length > 0
                                     width: 14
                                     height: 14
                                     anchors.verticalCenter: parent.verticalCenter
@@ -219,7 +221,7 @@ Item {
                                     WeatherIcon {
                                         anchors.fill: parent
                                         visible: tabIcon.own
-                                        name: tabIcon.own ? tab.modelData.icon.slice(8) : ""
+                                        name: tabIcon.ownName
                                         color: tab.current ? expanded.theme.text : expanded.theme.subText
                                     }
                                 }
