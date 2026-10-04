@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+# weather-icons — the embedded weather pictures as something QML can colour.
+#
+#   tools/weather-icons            write contents/ui/WeatherIcons.js from the
+#                                  SVG files in contents/icons/weather
+#   tools/weather-icons --check    exit 1 when that file is not what the SVG files say
+#
+# The pictures are Lucide's (ISC licence, contents/icons/weather/LICENSE):
+# outlines whose colour is "currentColor". Kirigami's icon item does not
+# colour a file of the widget's own, so the island draws them itself: each
+# picture's inner markup is kept in WeatherIcons.js and WeatherIcon.qml makes
+# an SVG of it in the colour that is wanted.
+import os
+import re
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ICONS = os.path.join(HERE, "..", "org.phobby.dynamicisland", "contents", "icons", "weather")
+TARGET = os.path.join(HERE, "..", "org.phobby.dynamicisland", "contents", "ui", "WeatherIcons.js")
+
+HEADER = '''/*
+    SPDX-License-Identifier: ISC
+
+    The weather pictures (contents/icons/weather/*.svg: Lucide, ISC licence,
+    see the LICENSE beside them) as their inner SVG markup, so that they can
+    be drawn in any colour: image(name, "#rrggbb") is an SVG as a data URI,
+    with that colour as its stroke. WeatherIcon.qml shows one.
+
+    Written by tools/weather-icons from the SVG files; do not edit by hand.
+*/
+.pragma library
+
+'''
+FOOTER = '''
+function has(name) { return shapes[name] !== undefined; }
+// The picture `name` in `color` ("#rrggbb"), as the source of an Image.
+function image(name, color) {
+    if (shapes[name] === undefined) return "";
+    return "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="'
+        + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + shapes[name] + "</svg>");
+}
+'''
+
+
+def build():
+    lines = []
+    for name in sorted(os.listdir(ICONS)):
+        if not name.endswith(".svg"):
+            continue
+        svg = open(os.path.join(ICONS, name), encoding="utf-8").read()
+        inner = re.search(r"<svg[^>]*>(.*)</svg>", svg, re.S).group(1)
+        inner = re.sub(r"\s+", " ", inner).replace(" />", "/>").replace("> <", "><").strip()
+        if "'" in inner:
+            raise SystemExit(f"{name}: a single quote in the markup")
+        lines.append(f"    \"{name[:-4]}\": '{inner}'")
+    return HEADER + "const shapes = {\n" + ",\n".join(lines) + "\n};\n" + FOOTER
+
+
+def main():
+    text = build()
+    current = open(TARGET, encoding="utf-8").read() if os.path.exists(TARGET) else ""
+    if "--check" in sys.argv:
+        if current != text:
+            print("contents/ui/WeatherIcons.js is not what the SVG files say; run tools/weather-icons")
+            return 1
+        print("weather icons: WeatherIcons.js matches the SVG files")
+        return 0
+    if current != text:
+        open(TARGET, "w", encoding="utf-8").write(text)
+    print("contents/ui/WeatherIcons.js: " + str(text.count("': '") + text.count("\": '")) + " pictures" + ("" if current != text else " (unchanged)"))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -18,6 +18,9 @@ Item {
     required property ActivityManager manager
     required property Theme theme
     property var weather: null              // backend/WeatherBackend.qml
+    // Tests hand in the day; nothing else here reads the clock.
+    property var clock: null
+    function today(): var { return typeof clock === "function" ? clock() : new Date(); }
     property bool enabled: true
     property string announced: ""
     signal announcedEdited(string text)
@@ -30,15 +33,17 @@ Item {
         return d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate());
     }
     // What is worth announcing in `days` (the backend's list) that `already` does not
-    // hold: [{ key, kind, offset, night, chance }], today and tomorrow only.
-    function pending(days: var, already: string, today: var): var {
+    // hold: [{ key, kind, offset, night, chance }], today and tomorrow only. `kind` is
+    // what falls from the sky (a day's `alert`: rain, snow or storm); `night` says that
+    // today's is left for the night.
+    function pending(days: var, already: string, today: var, night: bool): var {
         const seen = already.split(",");
         const out = [];
         for (const day of days) {
-            if (day.offset > 1 || day.kind.length === 0) continue;
-            if (day.kind === "rain" && !isNaN(day.chance) && day.chance < minimumChance) continue;
-            const key = dayKey(day.offset, today) + ":" + day.kind;
-            if (seen.indexOf(key) < 0) out.push({ key: key, kind: day.kind, offset: day.offset, night: day.night, chance: day.chance });
+            if (day.offset > 1 || day.alert.length === 0) continue;
+            if (day.alert === "rain" && !isNaN(day.chance) && day.chance < minimumChance) continue;
+            const key = dayKey(day.offset, today) + ":" + day.alert;
+            if (seen.indexOf(key) < 0) out.push({ key: key, kind: day.alert, offset: day.offset, night: day.offset === 0 && night, chance: day.chance });
         }
         return out;
     }
@@ -52,8 +57,8 @@ Item {
     function check(): void {
         // Not while the island still drops events (its first moments): it would count as announced.
         if (!enabled || !weather || !weather.ready || manager.warm === false) return;
-        const today = new Date();
-        const news = pending(weather.days, announced, today);
+        const today = provider.today();
+        const news = pending(weather.days, announced, today, weather.current !== null && !weather.current.day);
         if (news.length === 0) return;
         // The nearest and most serious one speaks; all of them count as announced.
         const rank = n => n.offset * 10 + (n.kind === "storm" ? 0 : n.kind === "snow" ? 1 : 2);
@@ -61,10 +66,11 @@ Item {
         manager.flash({
             key: "weather",
             shake: first.kind === "storm",
-            icon: first.kind === "storm" ? "weather-storm" : first.kind === "snow" ? "weather-snow" : "weather-showers",
+            // the widget's own pictures ("weather:" + name, see ActivityIcon)
+            icon: "weather:" + (first.kind === "storm" ? "cloud-lightning" : first.kind === "snow" ? "cloud-snow" : "cloud-rain"),
             color: first.kind === "storm" ? theme.orange : theme.blue,
             title: title(first.kind, first.offset, first.night),
-            subtitle: weather.placeName.split(",")[0],
+            subtitle: weather.placeName,
             trailing: !isNaN(first.chance) && first.chance > 0 ? { type: "text", text: Lang.percent(Math.round(first.chance)), color: theme.text } : undefined,
             duration: 6000
         });

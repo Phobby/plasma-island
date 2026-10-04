@@ -1,14 +1,18 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
-    Weather: the place (searched by name at BBC Weather, the provider of
-    Plasma's weather engine that needs no account) and the alert for rain,
-    snow and storms. Whether the Weather tab is shown is set in Layout.
+    Weather: the place (searched by name, as on the island's Weather page),
+    the units and the alert for rain, snow and storms. Whether the Weather tab
+    is shown is set in Layout.
+
+    The search asks Open-Meteo's geocoding service when "Search" is pressed,
+    not before and not while typing here.
 */
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
+import "WeatherData.js" as WeatherData
 
 KCM.SimpleKCM {
     id: page
@@ -16,29 +20,52 @@ KCM.SimpleKCM {
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
 
-    property string cfg_weatherPlace
-    property string cfg_weatherPlaceName
+    property string cfg_weatherLocation
+    property alias cfg_weatherUnits: unitsCombo.currentIndex
     property alias cfg_showWeatherAlerts: alertsCheck.checked
 
-    // The search runs through the same backend as the island (null without Plasma's weather engine).
+    readonly property var place: WeatherData.parsePlace(cfg_weatherLocation)
+
+    // Only its search is used here: switched off, it fetches no weather.
     Loader { id: backend; source: "backend/WeatherBackend.qml" }
     readonly property var weather: backend.status === Loader.Ready ? backend.item : null
     Binding { target: page.weather; property: "enabled"; value: false; when: page.weather !== null }
 
     property var found: []
     property bool searching: false
-    property bool searched: false
+    // "" | "none" | "offline" | "service"
+    property string problem: ""
     function search(): void {
-        if (!weather || searchField.text.trim().length === 0) return;
-        searching = true; searched = false; found = [];
-        weather.search(searchField.text, results => { page.searching = false; page.searched = true; page.found = results; });
+        if (!weather || searchField.text.trim().length < 2) return;
+        searching = true; problem = ""; found = [];
+        weather.search(searchField.text, (results, error) => {
+            page.searching = false;
+            page.found = results;
+            page.problem = error.length > 0 ? error : results.length === 0 ? "none" : "";
+        });
+    }
+    function pick(result: var): void {
+        cfg_weatherLocation = JSON.stringify({ name: result.name, admin: result.admin, country: result.country, latitude: result.latitude, longitude: result.longitude });
+        found = [];
+        searchField.text = "";
     }
 
     Kirigami.FormLayout {
-        QQC2.Label {
+        RowLayout {
             Kirigami.FormData.label: Lang.i18n("Place:")
-            text: page.cfg_weatherPlaceName.length > 0 ? page.cfg_weatherPlaceName : Lang.i18n("None chosen yet")
-            font.weight: page.cfg_weatherPlaceName.length > 0 ? Font.DemiBold : Font.Normal
+            QQC2.Label {
+                text: page.place !== null ? WeatherData.placeLabel(page.place) : Lang.i18n("None chosen yet")
+                font.weight: page.place !== null ? Font.DemiBold : Font.Normal
+            }
+            QQC2.ToolButton {
+                visible: page.place !== null
+                icon.name: "edit-clear"
+                display: QQC2.AbstractButton.IconOnly
+                text: Lang.i18n("Forget the place")
+                onClicked: page.cfg_weatherLocation = ""
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.text: text
+            }
         }
         RowLayout {
             Kirigami.FormData.label: Lang.i18n("Search:")
@@ -52,7 +79,7 @@ KCM.SimpleKCM {
             QQC2.Button {
                 icon.name: "search"
                 text: Lang.i18n("Search")
-                enabled: !page.searching && searchField.text.trim().length > 0
+                enabled: !page.searching && searchField.text.trim().length >= 2
                 onClicked: page.search()
             }
             QQC2.BusyIndicator {
@@ -70,22 +97,17 @@ KCM.SimpleKCM {
                 delegate: QQC2.Button {
                     required property var modelData
                     Layout.fillWidth: true
-                    icon.name: page.cfg_weatherPlace === modelData.place ? "checkmark" : "mark-location"
-                    text: modelData.name
-                    onClicked: { page.cfg_weatherPlace = modelData.place; page.cfg_weatherPlaceName = modelData.name; }
+                    icon.name: "mark-location"
+                    text: WeatherData.placeLabel(modelData)
+                    onClicked: page.pick(modelData)
                 }
             }
         }
         QQC2.Label {
-            visible: page.searched && page.found.length === 0
-            text: Lang.i18n("No place was found by that name.")
-            opacity: 0.7
-        }
-        QQC2.Label {
-            visible: page.weather === null
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
-            wrapMode: Text.Wrap
-            text: Lang.i18n("Plasma's weather engine was not found on this system, so there is no weather to show.")
+            visible: page.problem.length > 0
+            text: page.problem === "none" ? Lang.i18n("No place was found by that name.")
+                : page.problem === "offline" ? Lang.i18n("No connection: places cannot be searched right now.")
+                : Lang.i18n("The search did not answer; try again in a moment.")
             opacity: 0.7
         }
         QQC2.Label {
@@ -94,7 +116,31 @@ KCM.SimpleKCM {
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
             opacity: 0.7
-            text: Lang.i18n("The weather comes from BBC Weather through Plasma's own weather engine, without an account; the name of the place is sent to it. It is asked again every 30 minutes. Plasma has no working location service to find the place by itself.")
+            text: Lang.i18n("The place is never detected: the Weather page starts empty and it is chosen by name, here or on the page. Weather and search come from Open-Meteo.com, without an account or a key. What is sent: the text that is searched for, and the coordinates of the chosen place (for its weather, every 30 minutes while the page is switched on). Nothing else.")
+        }
+
+        Kirigami.Separator {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: Lang.i18n("Units")
+        }
+        QQC2.ComboBox {
+            id: unitsCombo
+            Kirigami.FormData.label: Lang.i18n("Show in:")
+            model: [Lang.i18n("°C, km/h, mm"), Lang.i18n("°F, mph, inches")]
+            // The texts change with the language: the choice stays.
+            property int chosen: 0
+            onActivated: chosen = currentIndex
+            onModelChanged: Qt.callLater(() => { if (currentIndex !== chosen) currentIndex = chosen; })
+            Component.onCompleted: chosen = currentIndex
+            onCurrentIndexChanged: if (currentIndex >= 0) chosen = currentIndex
+        }
+        QQC2.Label {
+            Layout.fillWidth: true
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
+            wrapMode: Text.Wrap
+            font: Kirigami.Theme.smallFont
+            opacity: 0.7
+            text: Lang.i18n("The names of days, conditions and wind directions follow the widget's language (Language).")
         }
 
         Kirigami.Separator {
@@ -112,7 +158,7 @@ KCM.SimpleKCM {
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
             opacity: 0.7
-            text: Lang.i18n("Shown once, for a few seconds, when the forecast for today, tonight or tomorrow says so. The forecast is by the day, so it cannot say the minute it starts.")
+            text: Lang.i18n("Shown once, for a few seconds, when the forecast for today, tonight or tomorrow says so.")
         }
     }
 }

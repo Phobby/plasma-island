@@ -15,6 +15,7 @@ Item {
     height: 1400
 
     Loader { id: appearance; anchors.fill: parent; source: "../org.phobby.dynamicisland/contents/ui/configAppearance.qml" }
+    Loader { id: weather; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configWeather.qml" }
 
     TestCase {
         name: "Settings"
@@ -54,6 +55,22 @@ Item {
             page.set("background", "#aa0000");
             compare(page.style.gradientStops[0], "#aa0000");
             wait(120);
+        }
+
+        function test_weather_place_and_units() {
+            if (weather.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = weather.item;
+            compare(page.place, null, "no place until one is chosen");
+            verify(page.weather !== null);
+            compare([page.weather.enabled, page.weather.requests], [false, 0], "the settings page fetches no weather and searches nothing by itself");
+            page.pick({ name: "Tëstwick", admin: "Tëstwick", country: "Exampleland", latitude: 12.34567, longitude: 45.67891 });
+            compare(JSON.parse(page.cfg_weatherLocation), { name: "Tëstwick", admin: "Tëstwick", country: "Exampleland", latitude: 12.34567, longitude: 45.67891 });
+            compare(page.place.name, "Tëstwick");
+            page.cfg_weatherLocation = "";
+            compare(page.place, null);
+            page.cfg_weatherUnits = 1;
+            compare(page.cfg_weatherUnits, 1);
+            compare(page.weather.requests, 0);
         }
 
         // Export the look, reset the settings, bring the file back with "Add New…".

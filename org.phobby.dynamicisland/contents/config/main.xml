@@ -149,10 +149,14 @@
          Tokens are kept in KWallet, never here. -->
     <entry name="showNotes" type="Bool"><default>true</default></entry>
     <entry name="showClipboard" type="Bool"><default>true</default></entry>
-    <!-- Weather: the page, its place (a source of Plasma's weather engine, e.g.
-         "bbcukmet|weather|Elsewhere, Otherland, YY|1234567", and its name), the alert
-         for rain, snow and storms, and (written by the widget) what was already announced -->
+    <!-- Weather: the page; its place, chosen on the page by name: JSON { name, admin, country,
+         latitude, longitude } ("" = none yet, the page starts empty); the units (0 = °C, km/h, mm;
+         1 = °F, mph, in); the alert for rain, snow and storms, and (written by the widget) what
+         was already announced -->
     <entry name="showWeather" type="Bool"><default>true</default></entry>
+    <entry name="weatherLocation" type="String"><default></default></entry>
+    <entry name="weatherUnits" type="Int"><default>0</default></entry>
+    <!-- Earlier (the place of Plasma's weather engine and its name): the name only starts the first search -->
     <entry name="weatherPlace" type="String"><default></default></entry>
     <entry name="weatherPlaceName" type="String"><default></default></entry>
     <entry name="showWeatherAlerts" type="Bool"><default>true</default></entry>

@@ -1,7 +1,8 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
     Tinted symbolic icon that can pulse (recording dot) — or a plain dot when
-    `icon` is "dot".
+    `icon` is "dot", or one of the widget's own weather pictures when it is
+    "weather:<name>" (WeatherIcon.qml).
 */
 import QtQuick
 import org.kde.kirigami as Kirigami
@@ -17,13 +18,20 @@ Item {
     implicitWidth: 18
     implicitHeight: 18
 
+    readonly property bool own: root.icon.indexOf("weather:") === 0
     Kirigami.Icon {
         id: glyph
         anchors.fill: parent
-        visible: root.icon !== "dot"
-        source: root.icon
+        visible: root.icon !== "dot" && !root.own
+        source: root.own ? "" : root.icon
         color: root.color
         isMask: true
+    }
+    WeatherIcon {
+        anchors.fill: parent
+        visible: root.own
+        name: root.own ? root.icon.slice(8) : ""
+        color: root.color
     }
     Rectangle {
         anchors.centerIn: parent

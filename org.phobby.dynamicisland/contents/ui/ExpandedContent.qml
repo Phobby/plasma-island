@@ -193,14 +193,27 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 x: tab.titled ? 10 : tab.labelled ? 7 : (tab.width - 14) / 2
                                 spacing: tab.labelled ? 3 : 6
-                                Kirigami.Icon {
+                                // An icon of the system's theme, or one of the widget's own pictures ("weather:<name>").
+                                Item {
+                                    id: tabIcon
+                                    readonly property bool own: tab.modelData.icon.indexOf("weather:") === 0
                                     width: 14
                                     height: 14
                                     anchors.verticalCenter: parent.verticalCenter
-                                    source: tab.modelData.icon + "-symbolic"
-                                    fallback: tab.modelData.icon
-                                    color: tab.current ? expanded.theme.text : expanded.theme.subText
-                                    isMask: true
+                                    Kirigami.Icon {
+                                        anchors.fill: parent
+                                        visible: !tabIcon.own
+                                        source: tabIcon.own ? "" : tab.modelData.icon + "-symbolic"
+                                        fallback: tab.modelData.icon
+                                        color: tab.current ? expanded.theme.text : expanded.theme.subText
+                                        isMask: true
+                                    }
+                                    WeatherIcon {
+                                        anchors.fill: parent
+                                        visible: tabIcon.own
+                                        name: tabIcon.own ? tab.modelData.icon.slice(8) : ""
+                                        color: tab.current ? expanded.theme.text : expanded.theme.subText
+                                    }
                                 }
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter

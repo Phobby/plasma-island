@@ -15,8 +15,9 @@ failed=0
 echo "== texts"
 python3 tools/i18n-check --strict | sed -n '1,2p' || failed=1
 
-echo "== theme catalog"
+echo "== theme catalog, weather pictures"
 python3 tools/catalog-update --check || failed=1
+python3 tools/weather-icons --check || failed=1
 
 echo "== rules (node)"
 if command -v node >/dev/null 2>&1; then

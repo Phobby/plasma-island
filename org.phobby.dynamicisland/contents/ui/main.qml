@@ -104,9 +104,11 @@ PlasmoidItem {
     OptionalBackend { id: dndLoader; source: "backend/DndBackend.qml" }
     OptionalBackend { id: tasksLoader; source: "backend/TasksBackend.qml" }
     OptionalBackend { id: jobsLoader; source: "backend/JobsBackend.qml" }
-    // Weather and the application list: Plasma's own data engines (plasma-workspace).
+    // Weather: Open-Meteo, for the place chosen on the Weather page (nothing is asked before one is).
     OptionalBackend { id: weatherLoader; source: root.cfg.showWeather ? "backend/WeatherBackend.qml" : "" }
-    Binding { target: root.weatherBackend; property: "place"; value: root.cfg.weatherPlace; when: root.weatherBackend !== null }
+    Binding { target: root.weatherBackend; property: "location"; value: root.cfg.weatherLocation; when: root.weatherBackend !== null }
+    Binding { target: root.weatherBackend; property: "imperial"; value: root.cfg.weatherUnits === 1; when: root.weatherBackend !== null }
+    // The application list: Plasma's own data engine (plasma-workspace).
     OptionalBackend { id: appsLoader; source: root.cfg.showApps ? "backend/AppsBackend.qml" : "" }
     // Calendar: .ics links (no Akonadi). backend/CalendarBackend.qml is the
     // older PIM-plugin source, kept for reference but no longer loaded.
@@ -519,10 +521,8 @@ PlasmoidItem {
         WeatherPage {
             theme: root.islandTheme
             weather: root.weatherBackend
-            onSetupRequested: {
-                island.expanded = false;
-                Plasmoid.internalAction("configure").trigger();
-            }
+            earlierName: root.cfg.weatherPlaceName
+            onLocationPicked: json => root.cfg.weatherLocation = json
         }
     }
 
@@ -662,8 +662,8 @@ PlasmoidItem {
                 }
                 extraPages: [
                     // The weather tab shows the weather itself: its icon and, where there is room, the temperature.
-                    { key: "weather", icon: root.weatherBackend && root.weatherBackend.ready ? root.weatherBackend.icon : "weather-clear",
-                      label: root.weatherBackend && root.weatherBackend.ready ? Math.round(root.weatherBackend.temperature) + "°" : "",
+                    { key: "weather", icon: "weather:" + (root.weatherBackend ? root.weatherBackend.icon : "cloud-sun"),
+                      label: root.weatherBackend && root.weatherBackend.ready ? root.weatherBackend.degrees(root.weatherBackend.temperature) : "",
                       title: Lang.i18n("Weather"), component: weatherPage, visible: root.cfg.showWeather && root.weatherBackend !== null },
                     { key: "apps", icon: "view-app-grid-symbolic", title: Lang.i18n("Apps"), component: appsPage, visible: root.cfg.showApps && root.appsBackend !== null },
                     { key: "quicksettings", icon: "configure", title: Lang.i18n("Controls"), component: quickSettingsPage, visible: root.cfg.showQuickSettings },

@@ -175,7 +175,8 @@ of the expanded island; drag one by its handle to move its tab, switch it off
 to take it out of the tab bar altogether. The last tab that is on cannot be
 switched off ("At least one tab has to stay on"). *Modules*: the parts inside
 a page that can be switched (the volume slider in Controls).
-**Weather** tab: the place and the alert; see "Weather" below.
+**Weather** tab: the place (search by name, or forget it), the units and the
+alert; see "Weather" below.
 **Habits** tab: the permanent habits (rename, delete, drag into order), the
 time of the evening review, its reminder on/off, the calendar's colours
 (GitHub green / the system's accent colour, also in Appearance) and "Reset
@@ -445,7 +446,8 @@ native/
                                LoopbackServer, LocalTools (commands, SQLite, small files), PopupWatcher,
                                AudioLevels, IslandService (D-Bus API)
 catalog/                       the theme store: index.json, themes/*.islandtheme.json, the JSON Schema
-tools/island-push, tools/notify-done.sh, tools/i18n-check, tools/habits-test, tools/catalog-update
+tools/island-push, tools/notify-done.sh, tools/i18n-check, tools/habits-test, tools/catalog-update,
+tools/weather-icons
 tools/run-tests                every check that needs no running island: the texts, the rules (node), tests/
 tests/tst_*.qml                QML tests under qmltestrunner, off screen (habits provider, appearance…)
 ```
@@ -644,26 +646,57 @@ REST API" plugin; not done).
 
 A tab of its own (Layout switches and moves it like any other): the current
 temperature, what it feels like, the condition, humidity and wind, and the
-next days with high, low and the chance of rain. Its tab shows the weather's
-icon and, where the tab bar has room, the temperature.
+next seven days with high, low and the chance of precipitation. Its tab shows
+the weather's picture and, where the tab bar has room, the temperature.
 
-- **Source:** the same one as Plasma's weather widget: plasma-workspace's
-  "weather" data engine and its providers (`backend/WeatherBackend.qml`). Of
-  those, BBC Weather (`bbcukmet`) covers the world without an account or API
-  key, so that is where places are searched. It is asked again every 30 minutes.
-- **Place:** chosen by name in Settings → Weather (search, pick a result,
-  Apply). Plasma's own location service (the "geolocation" engine) asks
-  Mozilla's location service, which was shut down, so the place cannot be
-  found automatically.
-- **What BBC does not have:** an hourly forecast, and "feels like". The latter
-  is worked out from the observation: wind chill at 10 °C and below with wind,
-  the heat index at 27 °C and above in humid air, the temperature in between.
-- **Alert:** rain (40 % or more), snow or a storm in the forecast for today,
-  tonight or tomorrow is shown once on the island for a few seconds ("Rain
-  tonight · Reykjavik · 70 %"); a storm also shakes it. It is an event of its
-  own and has nothing to do with the System page's cards. Because the
-  forecast is by the day, it cannot say "in 30 minutes". Settings → Weather
-  switches it off.
+- **It starts empty.** The place is never detected: until one is chosen the
+  page only shows "Choose a Location" and nothing is asked of any service.
+  The button opens a search right in the island: type a city's name and the
+  matches are listed as you type (name, region, country); a click chooses
+  one, stores it and loads its weather. The place's name at the top right of
+  the page opens the search again at any time; Settings → Weather can search
+  and forget the place too.
+- **Days and hours:** the day under the pointer lights up and lifts a little.
+  A click slides that day's hours in from the side: on top its high and low,
+  sunrise and sunset; below, hour by hour: time, picture, temperature, what
+  it feels like, the chance of precipitation, its amount (when there is any),
+  humidity, wind speed and direction. The list scrolls; for today it starts
+  at the current hour, which is highlighted. The arrow goes back.
+- **Source:** [Open-Meteo](https://open-meteo.com) (`backend/WeatherBackend.qml`,
+  `WeatherData.js`): its forecast service for the weather and its geocoding
+  service for the search. Neither needs a key or an account. The data is
+  under CC BY 4.0, which the search view credits ("Weather data by
+  Open-Meteo.com"); the free service is for non-commercial use. The forecast
+  is asked again every 30 minutes while the page is switched on, and when
+  the page is opened after that long.
+  The earlier source (BBC Weather through Plasma's weather engine) gave a
+  forecast by the day only: no hours, no hourly humidity or chance of
+  precipitation, no "feels like". A place chosen there has to be chosen once
+  more (its name is offered in the search field).
+- **What is sent:** to the geocoding service the text that is searched for
+  (and the widget's language, for the names it answers in); to the forecast
+  service the coordinates of the chosen place, rounded to four decimals.
+  Nothing else: no place name with the coordinates, no identifier, and no
+  request at all before a place is searched or chosen.
+- **Units and language:** Settings → Weather switches between °C, km/h, mm
+  and °F, mph, inches (the values are converted for showing; nothing is asked
+  again). Day names, conditions and wind directions are in the widget's
+  language.
+- **Pictures:** an embedded set, not the system's icon theme: the SVG files
+  in `contents/icons/weather/` are from [Lucide](https://lucide.dev) (ISC
+  licence; the icons that come from Feather are MIT; the full text is the
+  `LICENSE` beside them). Sun, moon, sun or moon behind a cloud, clouds, fog,
+  drizzle, rain, showers by day and by night, snow, sleet and hail,
+  thunderstorm, and the small ones for the place, sunrise and sunset. They
+  are outlines in one colour and are drawn in the theme's text colour
+  (`WeatherIcon.qml`; `tools/weather-icons` writes `WeatherIcons.js` from the
+  SVG files, because Kirigami's icon item does not colour a file of the
+  widget's own).
+- **Alert:** rain (a chance of 40 % or more), snow or a storm in the forecast
+  for today, tonight or tomorrow is shown once on the island for a few
+  seconds ("Rain tonight · Reykjavik · 70 %"); a storm also shakes it. It is
+  an event of its own and has nothing to do with the System page's cards.
+  Settings → Weather switches it off.
 
 ## Apps
 

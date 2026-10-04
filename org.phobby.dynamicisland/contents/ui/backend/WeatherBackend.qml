@@ -1,157 +1,156 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
 
-    Weather from the same source as Plasma's own weather widget: the "weather"
-    data engine (plasma-workspace) and its providers. BBC Weather (bbcukmet) is
-    the one that covers the world without an account or key, so that is what
-    is searched; a place is one of the engine's sources, e.g.
-    "bbcukmet|weather|Elsewhere, Otherland, YY|1234567", and other providers'
-    sources work as well if one is set by hand.
+    Weather from Open-Meteo (open-meteo.com; see WeatherData.js for what is
+    asked and how the answer is read): the current weather, seven days and
+    every hour of them, for a place the user chose by name. No key and no
+    account; the data is under CC BY 4.0, so the page and the README credit
+    it.
 
-    What BBC gives: the current observation (temperature, conditions,
-    humidity, wind) and a forecast of a few days (condition, high, low, chance
-    of rain). It has no hourly forecast and no "feels like": that one is
-    worked out here the way weather services do, from the observation: wind
-    chill when it is cold and windy, the heat index when it is hot and humid,
-    the temperature itself in between. Texts come in English from the
-    provider, so the condition is named here from its icon.
+    There is no locating: nothing is known about where the computer is until
+    a place is chosen (search()), and then only that place's coordinates are
+    sent, every half hour while the Weather page is switched on.
 
-    The place is chosen by name (search()). Plasma's own location service
-    (the "geolocation" engine) asks Mozilla's location service, which was shut
-    down, so there is nothing to locate with automatically.
+    Values are °C, km/h and mm; degrees(), speed() and amount() give them in
+    the units of `imperial`. Nothing but now() reads the clock.
 */
 import QtQuick
-import org.kde.plasma.plasma5support as P5
 import ".."
+import "../WeatherData.js" as WeatherData
 
 Item {
     id: weather
 
     property bool enabled: true
-    property string place: ""
-    // Asking again more often than the provider measures is of no use.
+    // The chosen place: JSON { name, admin, country, latitude, longitude }; "" = none yet.
+    property string location: ""
+    // °F, mph and inches instead of °C, km/h and mm.
+    property bool imperial: false
+    // Asking again more often than the forecast changes is of no use.
     property int refreshMinutes: 30
+    // Tests hand in other addresses and the moment.
+    property string forecastBase: WeatherData.FORECAST_URL
+    property string searchBase: WeatherData.SEARCH_URL
+    property var clock: null
+    function now(): real { return typeof clock === "function" ? clock() : Date.now(); }
 
-    readonly property var raw: place.length > 0 && source.data[place] !== undefined ? source.data[place] : null
-    readonly property bool ready: raw !== null && raw["Temperature"] !== undefined
-    // The engine answers with a report without observation when the place is not known (any more).
-    readonly property bool failed: place.length > 0 && raw !== null && !ready
-    readonly property string placeName: ready ? String(raw["Place"] || "").replace(/, [A-Z]{2}$/, "") : ""
-    readonly property real temperature: ready ? celsius(Number(raw["Temperature"]), raw["Temperature Unit"]) : NaN
-    readonly property int humidity: ready && raw["Humidity"] !== undefined ? Math.round(Number(raw["Humidity"])) : -1
-    readonly property real windKmh: ready && raw["Wind Speed"] !== undefined ? kmh(Number(raw["Wind Speed"]), raw["Wind Speed Unit"]) : NaN
-    readonly property string windDirection: ready ? String(raw["Wind Direction"] || "") : ""
-    readonly property string icon: ready ? String(raw["Condition Icon"] || "weather-none-available") : "weather-none-available"
-    readonly property string condition: ready ? describe(icon, String(raw["Current Conditions"] || "")) : ""
-    readonly property real feelsLike: ready ? apparent(temperature, humidity, windKmh) : NaN
-    // °C, % (-1 = unknown), km/h (NaN = unknown)
-    function apparent(t: real, rh: int, wind: real): real {
-        // Wind chill (Environment Canada / US NWS, 2001), for 10 °C and below with wind.
-        if (t <= 10 && !isNaN(wind) && wind > 4.8) {
-            const v = Math.pow(wind, 0.16);
-            return 13.12 + 0.6215 * t - 11.37 * v + 0.3965 * t * v;
-        }
-        // Heat index (Rothfusz, US NWS), for 27 °C and above with humid air.
-        if (t >= 27 && rh >= 40) {
-            const f = t * 9 / 5 + 32;
-            const hi = -42.379 + 2.04901523 * f + 10.14333127 * rh - 0.22475541 * f * rh - 0.00683783 * f * f
-                     - 0.05481717 * rh * rh + 0.00122874 * f * f * rh + 0.00085282 * f * rh * rh - 0.00000199 * f * f * rh * rh;
-            return (hi - 32) * 5 / 9;
-        }
-        return t;
-    }
-    readonly property string credit: ready ? String(raw["Credit"] || "") : ""
-    readonly property var observed: ready && raw["Observation Timestamp"] ? new Date(raw["Observation Timestamp"]) : null
-    // [{ offset (days from today), night, icon, condition, kind, high, low, chance }]; high/low NaN = not given
-    readonly property var days: {
-        const out = [];
-        if (!ready) return out;
-        const total = Number(raw["Total Weather Days"]) || 0;
-        for (let i = 0; i < total; ++i) {
-            const parts = String(raw["Short Forecast Day " + i] || "").split("|");
-            if (parts.length < 6) continue;
-            const number = t => t.length > 0 && isFinite(Number(t)) ? Number(t) : NaN;
-            out.push({
-                offset: i, night: i === 0 && /night/i.test(parts[0]), icon: parts[1], condition: describe(parts[1], parts[2]),
-                kind: kindOf(parts[1]), high: number(parts[3]), low: number(parts[4]), chance: number(parts[5])
-            });
-        }
-        return out;
-    }
+    readonly property var place: WeatherData.parsePlace(location)
+    readonly property bool hasPlace: place !== null
+    readonly property string placeName: place !== null ? place.name : ""
+    readonly property string placeLabel: place !== null ? WeatherData.placeLabel(place) : ""
 
-    // KUnitConversion ids as the engine reports them.
-    function celsius(value: real, unit: var): real {
-        return unit === 6002 ? (value - 32) * 5 / 9 : unit === 6000 ? value - 273.15 : value;
-    }
-    function kmh(value: real, unit: var): real {
-        return unit === 9002 ? value * 1.609344 : unit === 9000 ? value * 3.6 : unit === 9005 ? value * 1.852 : value;
-    }
-    // What falls from the sky, for the alert: "storm" | "snow" | "rain" | ""
-    function kindOf(icon: string): string {
-        return /storm/.test(icon) ? "storm" : /snow|hail|freezing/.test(icon) ? "snow" : /showers|rain/.test(icon) ? "rain" : "";
-    }
-    // The condition in the widget's language, by the icon the provider chose.
-    function describe(icon: string, fallback: string): string {
-        const i = icon.replace(/-(day|night)$/, "").replace(/-night$/, "");
-        if (/storm/.test(i)) return Lang.i18n("Thunderstorm");
-        if (/hail/.test(i)) return Lang.i18n("Hail");
-        if (/snow-rain|freezing/.test(i)) return Lang.i18n("Sleet");
-        if (/snow-scattered/.test(i)) return Lang.i18n("Light snow");
-        if (/snow/.test(i)) return Lang.i18n("Snow");
-        if (/showers-scattered/.test(i)) return Lang.i18n("Light rain");
-        if (/showers|rain/.test(i)) return Lang.i18n("Rain");
-        if (/fog|mist/.test(i)) return Lang.i18n("Fog");
-        if (/many-clouds|overcast/.test(i)) return Lang.i18n("Overcast");
-        if (/few-clouds/.test(i)) return Lang.i18n("Mostly clear");
-        if (/clouds/.test(i)) return Lang.i18n("Partly cloudy");
-        if (/clear/.test(i)) return /night/.test(icon) ? Lang.i18nc("@info the sky at night", "Clear") : Lang.i18n("Sunny");
-        return fallback.length > 0 ? fallback.charAt(0).toUpperCase() + fallback.slice(1) : "";
-    }
+    // What the service last answered, and that as of now (WeatherData.parse).
+    property string raw: ""
+    property var forecast: null
+    property real fetchedAt: 0
+    property bool loading: false
+    // Why there is no (new) weather: "" | "offline" | "service"
+    property string problem: ""
+    readonly property bool ready: hasPlace && forecast !== null
+    readonly property var current: ready ? forecast.current : null
+    readonly property var days: ready ? forecast.days : []
+    readonly property real temperature: current !== null ? current.temperature : NaN
+    // The picture of the weather now: a name of the embedded set (WeatherIcon.qml).
+    readonly property string icon: iconFor(current !== null ? current.kind : "partly", current === null || current.day)
+    // Every request that was made (tests look at this).
+    property int requests: 0
 
-    P5.DataSource {
-        id: source
-        engine: "weather"
-        connectedSources: weather.enabled && weather.place.length > 0 ? [weather.place] : []
-        interval: Math.max(15, weather.refreshMinutes) * 60000
-    }
-
-    // ---- choosing a place ---------------------------------------------------------
-    // done([{ name, place }]) with the places BBC knows by that name; [] = none (or no network).
-    property var pending: ({})
-    function search(query: string, done: var): void {
-        const text = query.trim();
-        if (text.length === 0) { done([]); return; }
-        const key = "bbcukmet|validate|" + text;
-        pending[key] = done;
-        // An answer that is still held would not be announced again.
-        finder.disconnectSource(key);
-        finder.connectSource(key);
-        giveUp.restart();
-    }
-    P5.DataSource {
-        id: finder
-        engine: "weather"
-        onNewData: (key, data) => {
-            const done = weather.pending[key];
-            if (done === undefined || data["validate"] === undefined) return;
-            delete weather.pending[key];
-            finder.disconnectSource(key);
-            // "bbcukmet|valid|single|place|NAME|extra|ID" or "…|multiple|place|…|extra|…|place|…"; "…|invalid|…" = none
-            const parts = String(data["validate"]).split("|"), found = [];
-            for (let i = 0; parts[1] === "valid" && i + 3 < parts.length; ++i) {
-                if (parts[i] !== "place" || parts[i + 2] !== "extra") continue;
-                found.push({ name: parts[i + 1].replace(/, [A-Z]{2}$/, ""), place: "bbcukmet|weather|" + parts[i + 1] + "|" + parts[i + 3] });
-            }
-            done(found);
+    // ---- showing ------------------------------------------------------------------
+    // The embedded pictures (contents/icons/weather, Lucide), by name: WeatherIcon.qml
+    // draws them in the theme's colour.
+    function iconFor(kind: string, day: bool): string { return WeatherData.icon(kind, day); }
+    function describe(kind: string, day: bool): string {
+        switch (kind) {
+        case "clear": return day ? Lang.i18n("Sunny") : Lang.i18nc("@info the sky at night", "Clear");
+        case "mostly": return Lang.i18n("Mostly clear");
+        case "partly": return Lang.i18n("Partly cloudy");
+        case "overcast": return Lang.i18n("Overcast");
+        case "fog": return Lang.i18n("Fog");
+        case "drizzle": return Lang.i18n("Light rain");
+        case "rain": return Lang.i18n("Rain");
+        case "showers": return Lang.i18n("Showers");
+        case "sleet": return Lang.i18n("Sleet");
+        case "snow": return Lang.i18n("Snow");
+        case "storm": return Lang.i18n("Thunderstorm");
+        case "hail": return Lang.i18n("Hail");
         }
+        return "";
     }
+    function degrees(celsius: real): string { return isNaN(celsius) ? "–" : Math.round(WeatherData.temperature(celsius, imperial)) + "°"; }
+    readonly property string degreeUnit: imperial ? "°F" : "°C"
+    readonly property string speedUnit: imperial ? Lang.i18nc("@info unit of wind speed", "mph") : Lang.i18nc("@info unit of wind speed", "km/h")
+    readonly property string amountUnit: imperial ? Lang.i18nc("@info unit of rainfall, inches", "in") : Lang.i18nc("@info unit of rainfall", "mm")
+    function speed(kmh: real): string { return isNaN(kmh) ? "–" : String(Math.round(WeatherData.speed(kmh, imperial))); }
+    function amount(mm: real): string {
+        if (isNaN(mm)) return "–";
+        const v = WeatherData.amount(mm, imperial);
+        return v <= 0 ? "0" : v.toLocaleString(Lang.locale, "f", imperial ? 2 : 1);
+    }
+    // Where the wind comes from: "N", "NE"…
+    readonly property var windNames: [Lang.i18nc("@info wind from the north", "N"), Lang.i18nc("@info wind from the north-east", "NE"),
+        Lang.i18nc("@info wind from the east", "E"), Lang.i18nc("@info wind from the south-east", "SE"), Lang.i18nc("@info wind from the south", "S"),
+        Lang.i18nc("@info wind from the south-west", "SW"), Lang.i18nc("@info wind from the west", "W"), Lang.i18nc("@info wind from the north-west", "NW")]
+    function windName(degrees: real): string { return isNaN(degrees) ? "" : windNames[WeatherData.compass(degrees)]; }
+
+    // ---- asking ---------------------------------------------------------------------
+    // done(status, text); status 0 = no connection
+    function get(url: string, done: var): void {
+        const xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => { if (xhr.readyState === XMLHttpRequest.DONE) done(xhr.status, xhr.responseText || ""); };
+        ++requests;
+        xhr.open("GET", url);
+        xhr.send();
+    }
+    property int seq: 0
+    function refresh(): void {
+        if (!enabled || !hasPlace) return;
+        const run = ++seq;
+        loading = true;
+        get(WeatherData.forecastUrl(forecastBase, place.latitude, place.longitude), (status, text) => {
+            if (run !== seq) return;
+            loading = false;
+            const read = status === 200 ? WeatherData.parse(text, now()) : { ok: false };
+            if (!read.ok) { problem = status === 0 ? "offline" : "service"; return; }
+            raw = text; forecast = read; fetchedAt = now(); problem = "";
+        });
+    }
+    // For the moment the page opens: ask now unless that just happened; the hour it is moves on either way.
+    function refreshIfStale(): void {
+        retime();
+        if (enabled && hasPlace && !loading && now() - fetchedAt > refreshMinutes * 60000) refresh();
+    }
+    function retime(): void {
+        if (raw.length === 0) return;
+        const read = WeatherData.parse(raw, now());
+        if (read.ok) forecast = read;
+    }
+    // Another place: what was known is of the old one.
+    readonly property string placeKey: place !== null ? place.latitude + "," + place.longitude : ""
+    onPlaceKeyChanged: { ++seq; raw = ""; forecast = null; fetchedAt = 0; problem = ""; loading = false; refresh(); }
+    onEnabledChanged: refreshIfStale()
     Timer {
-        id: giveUp
-        interval: 15000
-        onTriggered: {
-            const waiting = weather.pending;
-            weather.pending = ({});
-            for (const key in waiting) { finder.disconnectSource(key); waiting[key]([]); }
-        }
+        interval: Math.max(15, weather.refreshMinutes) * 60000
+        repeat: true
+        running: weather.enabled && weather.hasPlace
+        onTriggered: weather.refresh()
+    }
+    // "Now" and "today" move on between two answers.
+    Timer {
+        interval: 5 * 60000
+        repeat: true
+        running: weather.enabled && weather.ready
+        onTriggered: weather.retime()
+    }
+
+    // The places called like `query`: done(results, problem); see WeatherData.parseSearch.
+    // Only the last search answers.
+    property int searchSeq: 0
+    function search(query: string, done: var): void {
+        const run = ++searchSeq, text = query.trim();
+        if (text.length < 2) { done([], ""); return; }
+        get(WeatherData.searchUrl(searchBase, text, Lang.language), (status, answer) => {
+            if (run !== searchSeq) return;
+            if (status !== 200) done([], status === 0 ? "offline" : "service"); else done(WeatherData.parseSearch(answer), "");
+        });
     }
 }

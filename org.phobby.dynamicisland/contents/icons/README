@@ -10,3 +10,11 @@ is only used to label that note source.
 calculator-symbolic.svg was drawn for this widget (GPL-2.0-or-later): the
 Calculator button of the Controls page needs a single-colour icon and the
 Breeze one is partly transparent.
+
+weather/*.svg are from Lucide (https://lucide.dev), released under the ISC
+licence; those of them that come from Feather (moon, wind…) are under the MIT
+licence. Both texts are in weather/LICENSE. They are the pictures of the
+Weather page: sun, moon, clouds, fog, drizzle, rain, showers, snow, hail,
+thunderstorm, and the small ones for the place, sunrise and sunset. They are
+drawn in the theme's colour through contents/ui/WeatherIcons.js, which
+tools/weather-icons writes from these files.
