@@ -49,6 +49,11 @@ ConfigModel {
         source: "configNotes.qml"
     }
     ConfigCategory {
+        name: Lang.i18n("AI")
+        icon: "dialog-messages"
+        source: "configAi.qml"
+    }
+    ConfigCategory {
         name: Lang.i18n("Tools")
         icon: "chronometer"
         source: "configTools.qml"

@@ -20,6 +20,7 @@ Item {
     Loader { id: suggestions; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configSuggestions.qml" }
     Loader { id: notes; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configNotes.qml" }
     Loader { id: layout; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configLayout.qml" }
+    Loader { id: ai; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configAi.qml" }
     PageCatalog { id: pages }
     QtObject { id: stored; property string suggestionsData: ""; property string suggestionsAvailable: "" }
 
@@ -149,6 +150,41 @@ Item {
             compare(page.info("ai").title, "AI");
             page.cfg_showAi = false;
             compare(page.shownTabs, before);
+            wait(100);
+        }
+
+        function test_ai_sources_models_and_limits() {
+            if (ai.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = ai.item;
+            compare([page.cfg_showAi, page.cfg_aiKeepHistory, page.sources.length], [false, false, 0], "off, nothing kept, nothing connected");
+            page.cfg_aiSources = JSON.stringify([
+                { id: "claude-cli-1", kind: "claude-cli", server: "", model: "" },
+                { id: "local-1", kind: "local", server: "http://192.168.1.20:8080/v1", model: "llama" },
+                { id: "anthropic-1", kind: "anthropic", server: "", model: "claude-test" },
+                { id: "gone-1", kind: "a-kind-of-another-version", server: "", model: "" }]);
+            compare(page.sources.map(s => page.label(s)), ["Claude Code", "Local model server · 192.168.1.20", "Anthropic API"], "a kind this version does not know is left out");
+            compare(page.hasClaudeCode, true);
+            // the model of a source, typed
+            page.setModel("claude-cli-1", " sonnet ");
+            compare(JSON.parse(page.cfg_aiSources).map(s => s.model), ["sonnet", "llama", "claude-test"]);
+            page.setModel("claude-cli-1", "");
+            compare(JSON.parse(page.cfg_aiSources)[0], { id: "claude-cli-1", kind: "claude-cli", server: "", model: "" });
+            // the default, and disconnecting it
+            page.cfg_aiDefault = "anthropic-1";
+            page.remove("anthropic-1");
+            compare([JSON.parse(page.cfg_aiSources).map(s => s.id), page.cfg_aiDefault], [["claude-cli-1", "local-1"], ""]);
+            verify(page.cfg_aiSources.indexOf("key") < 0, "nothing of a key is ever in the settings");
+            // the limits are numbers within their bounds
+            page.cfg_aiMaxTokens = 999999;
+            page.cfg_aiMaxChars = 1;
+            compare([page.cfg_aiMaxTokens, page.cfg_aiMaxChars], [8192, 200]);
+            page.cfg_aiMaxTokens = 2048; page.cfg_aiMaxChars = 4000;
+            page.cfg_aiNotify = false; page.cfg_aiKeepHistory = true; page.cfg_showAi = true;
+            compare([page.cfg_aiNotify, page.cfg_aiKeepHistory, page.cfg_showAi], [false, true, true]);
+            // what Claude Code is run with is said and cannot be set
+            let note = null;
+            (function walk(item) { if (item.objectName === "claudeCodeNote") note = item; for (const c of item.children) walk(c); })(page);
+            verify(note !== null && note.text.indexOf("tools are off, text answers only") > 0 && note.text.indexOf("cannot be changed") > 0);
             wait(100);
         }
 
