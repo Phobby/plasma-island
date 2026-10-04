@@ -1,9 +1,12 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
-    The pages of the expanded island: their order (drag by the handle) and
-    whether each is shown. The switches are the same settings as before
-    (showMediaModule, showTools…); only the order (pageOrder) is new.
-    This order is only where a page sits among the tabs; which live activity
+    Two lists, kept apart.
+    Tabs: the pages along the top of the expanded island: their order (drag by
+    the handle) and whether each is shown; a hidden one is not in the tab bar
+    at all. At least one stays on. The switches are the pages' own settings
+    (showMediaModule, showTools, showWeather…), the order is pageOrder.
+    Modules: the parts inside a page that can be switched.
+    The tab order is only where a page sits among the tabs; which live activity
     the island shows first is the priority list in Activities.
 */
 import QtQuick
@@ -28,6 +31,14 @@ KCM.SimpleKCM {
     property bool cfg_showNotes
     property bool cfg_showClipboard
     property bool cfg_showDevicesModule
+    property bool cfg_showWeather
+    property bool cfg_showApps
+    property alias cfg_showVolumeModule: volumeSwitch.checked
+
+    // Tabs that are switched on (Activities comes and goes by itself and does not count).
+    readonly property int shownTabs: catalog.pages.filter(p => p.config.length > 0 && page["cfg_" + p.config] === true).length
+    property bool lastTabWarning: false
+    Timer { id: warningTimer; interval: 6000; onTriggered: page.lastTabWarning = false }
 
     PageCatalog { id: catalog }
     function info(key: string): var { return catalog.pages.find(p => p.key === key); }
@@ -54,10 +65,20 @@ KCM.SimpleKCM {
     ColumnLayout {
         spacing: Kirigami.Units.largeSpacing
 
+        Kirigami.Heading {
+            level: 4
+            text: Lang.i18n("Tabs")
+        }
         QQC2.Label {
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             text: Lang.i18n("Drag a page by its handle to change where its tab sits in the expanded island; the switch shows or hides it.")
+        }
+        Kirigami.InlineMessage {
+            Layout.fillWidth: true
+            type: Kirigami.MessageType.Warning
+            visible: page.lastTabWarning
+            text: Lang.i18n("At least one tab has to stay on.")
         }
 
         ListView {
@@ -139,9 +160,21 @@ KCM.SimpleKCM {
                             opacity: 0.7
                         }
                         QQC2.Switch {
+                            id: tabSwitch
                             visible: wrapper.configKey.length > 0
-                            checked: wrapper.configKey.length > 0 && page["cfg_" + wrapper.configKey] === true
-                            onToggled: page["cfg_" + wrapper.configKey] = checked
+                            readonly property bool on: wrapper.configKey.length > 0 && page["cfg_" + wrapper.configKey] === true
+                            Binding { target: tabSwitch; property: "checked"; value: tabSwitch.on }
+                            onToggled: {
+                                // The last tab that is on stays on.
+                                if (!checked && on && page.shownTabs <= 1) {
+                                    checked = true;
+                                    page.lastTabWarning = true;
+                                    warningTimer.restart();
+                                    return;
+                                }
+                                page.lastTabWarning = false;
+                                page["cfg_" + wrapper.configKey] = checked;
+                            }
                             QQC2.ToolTip.visible: hovered
                             QQC2.ToolTip.text: checked ? Lang.i18n("Shown") : Lang.i18n("Hidden")
                         }
@@ -165,6 +198,51 @@ KCM.SimpleKCM {
             font: Kirigami.Theme.smallFont
             opacity: 0.7
             text: Lang.i18n("This order only places the tabs. Which live activity the small island shows first (privacy indicators, calls, screen recording…) is set by the priority list in Activities, and urgent events still come first.")
+        }
+
+        Kirigami.Heading {
+            Layout.topMargin: Kirigami.Units.largeSpacing
+            level: 4
+            text: Lang.i18n("Modules")
+        }
+        QQC2.Label {
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            text: Lang.i18n("Parts inside a page. They do not add or remove a tab.")
+        }
+        QQC2.ItemDelegate {
+            Layout.fillWidth: true
+            hoverEnabled: false
+            down: false
+            background: Rectangle { radius: Kirigami.Units.cornerRadius; color: Qt.alpha(Kirigami.Theme.textColor, 0.04) }
+            contentItem: RowLayout {
+                spacing: Kirigami.Units.smallSpacing
+                Kirigami.Icon {
+                    Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
+                    Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
+                    source: "audio-volume-high"
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
+                    QQC2.Label { Layout.fillWidth: true; text: Lang.i18n("Volume"); elide: Text.ElideRight }
+                    QQC2.Label {
+                        Layout.fillWidth: true
+                        text: Lang.i18n("The volume slider on the Controls page")
+                        font: Kirigami.Theme.smallFont
+                        opacity: 0.7
+                        elide: Text.ElideRight
+                    }
+                }
+                QQC2.Switch { id: volumeSwitch }
+            }
+        }
+        QQC2.Label {
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            font: Kirigami.Theme.smallFont
+            opacity: 0.7
+            text: Lang.i18n("The buttons of the Controls page and their order are set in Controls; the weather's place in Weather.")
         }
     }
 }

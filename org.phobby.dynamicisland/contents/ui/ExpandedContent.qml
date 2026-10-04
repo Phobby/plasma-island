@@ -139,7 +139,10 @@ Item {
                 readonly property int count: expanded.pages.length
                 readonly property real gap: 4
                 readonly property real currentFull: currentTitle.width + 36
-                readonly property real fullFit: (count - 1) * (30 + gap) + currentFull
+                // A tab's short label (the weather's temperature) beside its icon, while it is not the current one.
+                readonly property real labelWidth: 22
+                readonly property int labelled: expanded.pages.filter(p => (p.label ?? "").length > 0 && p.key !== expanded.currentKey).length
+                readonly property real fullFit: (count - 1) * (30 + gap) + currentFull + labelled * labelWidth
                 // The current tab keeps its title while the others can stay at least 22 px.
                 readonly property bool showTitle: count <= 1 || width >= (count - 1) * (22 + gap) + currentFull
                 readonly property real otherWidth: width >= fullFit ? 30
@@ -164,8 +167,10 @@ Item {
                             required property var modelData
                             readonly property bool current: modelData.key === expanded.currentKey
                             readonly property bool titled: current && tabsArea.showTitle
+                            // Only where every tab has its full width: a label never squeezes the others.
+                            readonly property bool labelled: !current && (modelData.label ?? "").length > 0 && tabsArea.width >= tabsArea.fullFit
                             height: 24
-                            width: current ? tabsArea.currentWidth : tabsArea.otherWidth
+                            width: current ? tabsArea.currentWidth : tabsArea.otherWidth + (labelled ? tabsArea.labelWidth : 0)
                             radius: 12
                             color: current ? expanded.theme.faint : tabMouse.containsMouse ? Qt.rgba(expanded.theme.faint.r, expanded.theme.faint.g, expanded.theme.faint.b, expanded.theme.faint.a / 2) : "transparent"
                             clip: true
@@ -173,8 +178,8 @@ Item {
 
                             Row {
                                 anchors.verticalCenter: parent.verticalCenter
-                                x: tab.titled ? 10 : (tab.width - 14) / 2
-                                spacing: 6
+                                x: tab.titled ? 10 : tab.labelled ? 7 : (tab.width - 14) / 2
+                                spacing: tab.labelled ? 3 : 6
                                 Kirigami.Icon {
                                     width: 14
                                     height: 14
@@ -186,6 +191,16 @@ Item {
                                 }
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
+                                    visible: tab.labelled
+                                    text: tab.modelData.label ?? ""
+                                    color: expanded.theme.subText
+                                    font.pointSize: expanded.theme.fontSmall * 0.9
+                                    font.weight: Font.DemiBold
+                                    font.features: { "tnum": 1 }
+                                }
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: !tab.labelled
                                     text: tab.modelData.title
                                     color: expanded.theme.text
                                     font.pointSize: expanded.theme.fontSmall

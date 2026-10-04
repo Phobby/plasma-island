@@ -1,11 +1,14 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
     Pomodoro: work / short break cycles, long break after N rounds. Phase
-    changes are transient events.
+    changes are transient events. A focus round that ran to its end is counted
+    in the statistics (PomodoroStats.js); a skipped or stopped one, and breaks,
+    are not.
 */
 import QtQuick
 import ".."
 import "../TimeFormat.js" as TimeFormat
+import "../PomodoroStats.js" as Stats
 
 Item {
     id: provider
@@ -23,6 +26,8 @@ Item {
     readonly property int round: cfg.pomodoroRound             // completed work sessions in this set
     readonly property int rounds: Math.max(1, cfg.pomodoroRounds)
     readonly property real remaining: running ? Math.max(0, (endsAt - now) / 1000) : cfg.pomodoroWork * 60
+
+    readonly property var stats: Stats.parse(cfg.pomodoroStats)
 
     function phaseName(p: string): string {
         return p === "work" ? Lang.i18n("Focus") : p === "long" ? Lang.i18n("Long break") : Lang.i18n("Break");
@@ -46,6 +51,8 @@ Item {
     function advance(announce: bool): void {
         let next;
         if (phase === "work") {
+            // `announce` = the round ran out by itself (skip() passes false).
+            if (announce) cfg.pomodoroStats = JSON.stringify(Stats.record(stats, new Date()));
             const done = round + 1;
             cfg.pomodoroRound = done;
             next = done >= rounds ? "long" : "break";

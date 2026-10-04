@@ -28,7 +28,8 @@ dismiss; "clear all" with confirmation), **Controls** (up to six buttons of your
 quick settings: Do Not Disturb, Night Light, power profile, Bluetooth,
 Wi-Fi, updates, airplane mode, VPN, hotspot, screen recording, KDE Connect…;
 hold one to change them; volume and screen brightness sliders below),
-**Tools** (timer, stopwatch, Pomodoro, alarm), **Calendar** (month view, the
+**Weather** (now and the next days), **Apps** (shortcuts to applications of
+your choice), **Tools** (timer, stopwatch, Pomodoro with statistics, alarm), **Calendar** (month view, the
 events of the selected day and their details; calendars are connected right
 on this page), **Notes** (quick notes and the notes of Joplin, Simplenote and
 Memos), **Clipboard** (what was copied recently: texts, code, images, files),
@@ -116,7 +117,7 @@ the screen it was added to.
 | Notifications, display time | Behaviour when a notification arrives |
 | Hover delay / close on leave | Default 120 ms / 400 ms |
 | Preferred player | E.g. `spotify`. This player is shown if it is playing (or nothing else is); if empty Plasma chooses. Matches the identity/desktop file name case-insensitively. A player that says "Playing" while its position stands still for ~9 s (Spotify after a Spotify Connect session was stopped on the phone) counts as not playing |
-| Volume | The volume slider in Controls |
+| Volume | The volume slider in Controls (Layout → Modules) |
 | System view | Fixed (5 cards, 2 rows) / Dynamic (default: the cards that are active right now grow, no gaps; with few active cards the two busiest stay large). In both views the card under the mouse grows and shows its details. Clicking a card opens `btop` in the default terminal with only that metric's graph (needs the native module and btop ≥ 1.4; btop's own configuration file is not touched) |
 
 **Layout** tab: the pages of the expanded island in one list. Drag a page by
@@ -162,7 +163,13 @@ many minutes after the end to disappear (10), all-day events, update interval
 (5 min) and the connected calendar links ("Connect a Calendar" wizard; see
 below).
 **Tools** tab: timer/alarm sound (a file can be chosen), Pomodoro durations
-and number of rounds.
+and number of rounds, the Pomodoro statistics and their reset.
+**Layout** tab, two lists that are kept apart. *Tabs*: the pages along the top
+of the expanded island; drag one by its handle to move its tab, switch it off
+to take it out of the tab bar altogether. The last tab that is on cannot be
+switched off ("At least one tab has to stay on"). *Modules*: the parts inside
+a page that can be switched (the volume slider in Controls).
+**Weather** tab: the place and the alert; see "Weather" below.
 **Language** tab: Automatic (Turkish when the system is Turkish, English
 otherwise), Türkçe or English. Applies at once, to the island and the
 settings, without restarting Plasma; see "Translations" below.
@@ -560,6 +567,63 @@ Not supported: **Standard Notes** (its notes are end-to-end encrypted; reading
 them needs Argon2id and XChaCha20-Poly1305, i.e. libsodium, which the native
 module does not link yet) and **Obsidian** (only through the community "Local
 REST API" plugin; not done).
+
+## Weather
+
+A tab of its own (Layout switches and moves it like any other): the current
+temperature, what it feels like, the condition, humidity and wind, and the
+next days with high, low and the chance of rain. Its tab shows the weather's
+icon and, where the tab bar has room, the temperature.
+
+- **Source:** the same one as Plasma's weather widget: plasma-workspace's
+  "weather" data engine and its providers (`backend/WeatherBackend.qml`). Of
+  those, BBC Weather (`bbcukmet`) covers the world without an account or API
+  key, so that is where places are searched. It is asked again every 30 minutes.
+- **Place:** chosen by name in Settings → Weather (search, pick a result,
+  Apply). Plasma's own location service (the "geolocation" engine) asks
+  Mozilla's location service, which was shut down, so the place cannot be
+  found automatically.
+- **What BBC does not have:** an hourly forecast, and "feels like". The latter
+  is worked out from the observation: wind chill at 10 °C and below with wind,
+  the heat index at 27 °C and above in humid air, the temperature in between.
+- **Alert:** rain (40 % or more), snow or a storm in the forecast for today,
+  tonight or tomorrow is shown once on the island for a few seconds ("Rain
+  tonight · Reykjavik · 70 %"); a storm also shakes it. It is an event of its
+  own and has nothing to do with the System page's cards. Because the
+  forecast is by the day, it cannot say "in 30 minutes". Settings → Weather
+  switches it off.
+
+## Apps
+
+A grid of up to 12 shortcuts. A click starts the application and closes the
+island; a right click selects one to rename (the label under the icon) or
+remove; dragging moves it. A dot under an icon means the application has a
+window open.
+
+"Add" lists the installed applications with a search field. The list is the
+one Plasma's own launchers use: the system's application database (KService /
+KSycoca, built from the XDG `.desktop` files and the menu's rules), read
+through plasma-workspace's "apps" data engine (`backend/AppsBackend.qml`);
+entries the menu hides (`NoDisplay`, settings modules) are left out. Starting
+goes through the same engine (`KIO::ApplicationLauncherJob`), the running dot
+comes from the task manager's window list. A shortcut is kept as the
+`.desktop` file's menu id with its name and icon (`appShortcuts`, JSON in the
+widget's settings).
+
+## Pomodoro statistics
+
+Every focus round that runs to its end is counted for its day; breaks, and
+rounds that were skipped or stopped, are not. Under the Pomodoro clock:
+"Today: 3 · This week: 14 · Streak: 5 days" (the week is Monday to Sunday; the
+streak is the days in a row with at least one round, and is not lost before
+today's first round). A click on that line shows the last seven days as bars,
+with the total and the longest streak; another click goes back.
+
+The numbers are a small JSON text in the widget's own settings
+(`pomodoroStats`: rounds per day for the last year, the total, the longest
+streak) — no database, no file of its own. `PomodoroStats.js` does the
+counting and takes the day as an argument, so it never reads the clock.
+Settings → Tools resets them, after asking.
 
 ## Clipboard
 

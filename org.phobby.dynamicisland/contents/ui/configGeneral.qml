@@ -23,7 +23,6 @@ KCM.SimpleKCM {
     property alias cfg_collapseDelay: collapseSpin.value
     property alias cfg_preferredPlayer: playerField.text
     property alias cfg_systemView: systemViewCombo.currentIndex
-    property alias cfg_showVolumeModule: volumeCheck.checked
 
     Kirigami.FormLayout {
         Kirigami.Separator {
@@ -112,17 +111,12 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: Lang.i18n("Pages:")
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
-            text: Lang.i18n("Which pages are shown, and in what order, is set in Layout.")
+            text: Lang.i18n("Which pages are shown, in what order, and the parts inside them, is set in Layout.")
         }
         QQC2.ComboBox {
             id: systemViewCombo
             Kirigami.FormData.label: Lang.i18n("System view:")
             model: [Lang.i18n("Fixed (5 cards)"), Lang.i18n("Dynamic (active metrics grow)")]
-        }
-        QQC2.CheckBox {
-            id: volumeCheck
-            Kirigami.FormData.label: Lang.i18n("Show:")
-            text: Lang.i18n("Volume (in Controls)")
         }
     }
 }

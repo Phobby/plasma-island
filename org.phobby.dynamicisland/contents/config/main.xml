@@ -117,6 +117,8 @@
     <entry name="pomodoroShortBreak" type="Int"><default>5</default></entry>
     <entry name="pomodoroLongBreak" type="Int"><default>15</default></entry>
     <entry name="pomodoroRounds" type="Int"><default>4</default></entry>
+    <!-- Written by the widget: JSON { days: { "YYYY-MM-DD": completed focus rounds }, total, best (longest streak) } -->
+    <entry name="pomodoroStats" type="String"><default></default></entry>
     <entry name="alarmAt" type="String"><default>0</default></entry>
     <entry name="alarmTime" type="String"><default>07:00</default></entry>
     <entry name="alarmLabel" type="String"><default></default></entry>
@@ -147,6 +149,17 @@
          Tokens are kept in KWallet, never here. -->
     <entry name="showNotes" type="Bool"><default>true</default></entry>
     <entry name="showClipboard" type="Bool"><default>true</default></entry>
+    <!-- Weather: the page, its place (a source of Plasma's weather engine, e.g.
+         "bbcukmet|weather|Elsewhere, Otherland, YY|1234567", and its name), the alert
+         for rain, snow and storms, and (written by the widget) what was already announced -->
+    <entry name="showWeather" type="Bool"><default>true</default></entry>
+    <entry name="weatherPlace" type="String"><default></default></entry>
+    <entry name="weatherPlaceName" type="String"><default></default></entry>
+    <entry name="showWeatherAlerts" type="Bool"><default>true</default></entry>
+    <entry name="weatherAnnounced" type="String"><default></default></entry>
+    <!-- Apps: the page and its shortcuts, JSON list of { id (menu id of the .desktop file), name, icon, label } -->
+    <entry name="showApps" type="Bool"><default>true</default></entry>
+    <entry name="appShortcuts" type="String"><default>[]</default></entry>
     <entry name="notesSources" type="String"><default>[]</default></entry>
     <entry name="notesDefault" type="String"><default></default></entry>
     <entry name="notesRefreshMinutes" type="Int"><default>2</default></entry>
@@ -170,7 +183,7 @@
     </entry>
     <!-- Order of the expanded pages (Settings → Layout), comma-separated keys; see PageCatalog.qml -->
     <entry name="pageOrder" type="String">
-      <default>activities,media,control,notifications,quicksettings,tools,calendar,notes,clipboard,devices</default>
+      <default>activities,media,control,weather,notifications,quicksettings,apps,tools,calendar,notes,clipboard,devices</default>
     </entry>
     <!-- Ambient glow: the island's edge in the colour of the album cover, following the music (Media page) -->
     <entry name="ambientGlow" type="Bool"><default>false</default></entry>

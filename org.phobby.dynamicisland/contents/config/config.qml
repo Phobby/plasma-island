@@ -39,6 +39,11 @@ ConfigModel {
         source: "configCalendar.qml"
     }
     ConfigCategory {
+        name: Lang.i18n("Weather")
+        icon: "weather-clear"
+        source: "configWeather.qml"
+    }
+    ConfigCategory {
         name: Lang.i18n("Notes")
         icon: "view-pim-notes"
         source: "configNotes.qml"

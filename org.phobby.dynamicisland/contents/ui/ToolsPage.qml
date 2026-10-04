@@ -8,6 +8,7 @@ import QtQuick
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import "TimeFormat.js" as TimeFormat
+import "PomodoroStats.js" as Stats
 
 Item {
     id: tools
@@ -24,6 +25,12 @@ Item {
     property int section: -1
     Component.onCompleted: if (section < 0) section = timer.running || timer.paused ? 0 : stopwatch.running ? 1 : pomodoro.running ? 2 : 0
     property int customMinutes: 15
+    // Pomodoro statistics: the day they are counted for is taken when the page
+    // opens and when a round is counted (a page left open over midnight catches up then).
+    property bool pomodoroChart: false
+    property var today: new Date()
+    onActiveChanged: if (active) today = new Date(); else pomodoroChart = false
+    Connections { target: tools.pomodoro; function onStatsChanged() { tools.today = new Date(); } }
     property int alarmHour: Number(String(alarm.alarmTime).split(":")[0]) || 7
     property int alarmMinute: Number(String(alarm.alarmTime).split(":")[1]) || 0
 
@@ -233,58 +240,142 @@ Item {
             }
 
             // ---- pomodoro ----
-            RowLayout {
-                spacing: 14
-                MiniRing {
-                    Layout.preferredWidth: 56
-                    Layout.preferredHeight: 56
-                    lineWidth: 4
-                    readonly property real phaseSeconds: (tools.pomodoro.phase === "work" ? tools.pomodoro.cfg.pomodoroWork
-                                                          : tools.pomodoro.phase === "long" ? tools.pomodoro.cfg.pomodoroLongBreak
-                                                          : tools.pomodoro.cfg.pomodoroShortBreak) * 60
-                    value: tools.pomodoro.running ? 1 - tools.pomodoro.remaining / phaseSeconds : 0
-                    color: tools.pomodoro.phase === "work" || !tools.pomodoro.running ? tools.theme.red : tools.theme.live
-                    trackColor: tools.theme.track
-                    icon: tools.pomodoro.phase === "work" || !tools.pomodoro.running ? "view-task" : "kteatime"
-                }
+            // The clock and, under it, the statistics in one line; a click on that
+            // line turns the section into the last seven days as bars, and back.
+            Item {
                 ColumnLayout {
-                    spacing: 0
-                    Text {
-                        text: tools.pomodoro.running ? tools.pomodoro.phaseName(tools.pomodoro.phase) : Lang.i18n("Pomodoro")
-                        color: tools.theme.subText
-                        font.pointSize: tools.theme.fontSmall
+                    anchors.fill: parent
+                    visible: !tools.pomodoroChart
+                    spacing: 2
+                    Item { Layout.fillHeight: true }
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 14
+                        MiniRing {
+                            Layout.preferredWidth: 56
+                            Layout.preferredHeight: 56
+                            lineWidth: 4
+                            readonly property real phaseSeconds: (tools.pomodoro.phase === "work" ? tools.pomodoro.cfg.pomodoroWork
+                                                                  : tools.pomodoro.phase === "long" ? tools.pomodoro.cfg.pomodoroLongBreak
+                                                                  : tools.pomodoro.cfg.pomodoroShortBreak) * 60
+                            value: tools.pomodoro.running ? 1 - tools.pomodoro.remaining / phaseSeconds : 0
+                            color: tools.pomodoro.phase === "work" || !tools.pomodoro.running ? tools.theme.red : tools.theme.live
+                            trackColor: tools.theme.track
+                            icon: tools.pomodoro.phase === "work" || !tools.pomodoro.running ? "view-task" : "kteatime"
+                        }
+                        ColumnLayout {
+                            spacing: 0
+                            Text {
+                                text: tools.pomodoro.running ? tools.pomodoro.phaseName(tools.pomodoro.phase) : Lang.i18n("Pomodoro")
+                                color: tools.theme.subText
+                                font.pointSize: tools.theme.fontSmall
+                            }
+                            Text {
+                                text: TimeFormat.clock(tools.pomodoro.remaining)
+                                color: tools.theme.text
+                                font.pointSize: tools.theme.fontNormal * 1.7
+                                font.weight: Font.DemiBold
+                                font.features: { "tnum": 1 }
+                            }
+                            Row {
+                                spacing: 4
+                                Repeater {
+                                    model: tools.pomodoro.rounds
+                                    delegate: Rectangle {
+                                        required property int index
+                                        width: 7; height: 7; radius: 3.5
+                                        color: index < tools.pomodoro.round ? tools.theme.red : tools.theme.track
+                                    }
+                                }
+                            }
+                        }
+                        Item { Layout.fillWidth: true }
+                        RoundButton {
+                            visible: tools.pomodoro.running
+                            icon: "media-skip-forward-symbolic"
+                            onClicked: tools.pomodoro.skip()
+                        }
+                        RoundButton {
+                            icon: tools.pomodoro.running ? "media-playback-stop-symbolic" : "media-playback-start-symbolic"
+                            tint: tools.theme.red
+                            fill: Qt.rgba(tint.r, tint.g, tint.b, 0.18)
+                            onClicked: tools.pomodoro.running ? tools.pomodoro.stop() : tools.pomodoro.start()
+                        }
                     }
+                    Item { Layout.fillHeight: true }
                     Text {
-                        text: TimeFormat.clock(tools.pomodoro.remaining)
-                        color: tools.theme.text
-                        font.pointSize: tools.theme.fontNormal * 1.7
-                        font.weight: Font.DemiBold
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
+                        text: Lang.i18n("Today: %1 · This week: %2 · Streak: %3", Stats.count(tools.pomodoro.stats, tools.today),
+                                        Stats.week(tools.pomodoro.stats, tools.today), Lang.i18np("%1 day", "%1 days", Stats.streak(tools.pomodoro.stats, tools.today)))
+                        color: statsMouse.containsMouse ? tools.theme.text : tools.theme.subText
+                        font.pointSize: tools.theme.fontSmall * 0.9
                         font.features: { "tnum": 1 }
+                        elide: Text.ElideRight
+                        MouseArea { id: statsMouse; anchors.fill: parent; anchors.margins: -3; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tools.pomodoroChart = true }
                     }
-                    Row {
-                        spacing: 4
+                }
+                // The last seven days
+                ColumnLayout {
+                    anchors.fill: parent
+                    visible: tools.pomodoroChart
+                    spacing: 3
+                    RowLayout {
+                        id: bars
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        spacing: 6
+                        readonly property var week: Stats.lastSeven(tools.pomodoro.stats, tools.today)
+                        readonly property int peak: Math.max(1, ...week.map(d => d.count))
                         Repeater {
-                            model: tools.pomodoro.rounds
-                            delegate: Rectangle {
+                            model: bars.week
+                            delegate: ColumnLayout {
+                                id: bar
+                                required property var modelData
                                 required property int index
-                                width: 7; height: 7; radius: 3.5
-                                color: index < tools.pomodoro.round ? tools.theme.red : tools.theme.track
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                Layout.preferredWidth: 10
+                                spacing: 1
+                                Text {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: bar.modelData.count
+                                    color: bar.modelData.count > 0 ? tools.theme.text : tools.theme.subText
+                                    font.pointSize: tools.theme.fontSmall * 0.85
+                                    font.features: { "tnum": 1 }
+                                }
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    Rectangle {
+                                        anchors.bottom: parent.bottom
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        width: Math.min(22, parent.width)
+                                        height: Math.max(3, parent.height * bar.modelData.count / bars.peak)
+                                        radius: 3
+                                        // today stands out
+                                        color: bar.modelData.count === 0 ? tools.theme.track : bar.index === 6 ? tools.theme.red : Qt.rgba(tools.theme.red.r, tools.theme.red.g, tools.theme.red.b, 0.55)
+                                    }
+                                }
+                                Text {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: bar.modelData.date.toLocaleDateString(Lang.locale, "ddd")
+                                    color: bar.index === 6 ? tools.theme.text : tools.theme.subText
+                                    font.pointSize: tools.theme.fontSmall * 0.85
+                                }
                             }
                         }
                     }
+                    Text {
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
+                        text: Lang.i18n("Total: %1 · Longest streak: %2", tools.pomodoro.stats.total, Lang.i18np("%1 day", "%1 days", Stats.bestStreak(tools.pomodoro.stats, tools.today)))
+                        color: tools.theme.subText
+                        font.pointSize: tools.theme.fontSmall * 0.9
+                        font.features: { "tnum": 1 }
+                    }
                 }
-                Item { Layout.fillWidth: true }
-                RoundButton {
-                    visible: tools.pomodoro.running
-                    icon: "media-skip-forward-symbolic"
-                    onClicked: tools.pomodoro.skip()
-                }
-                RoundButton {
-                    icon: tools.pomodoro.running ? "media-playback-stop-symbolic" : "media-playback-start-symbolic"
-                    tint: tools.theme.red
-                    fill: Qt.rgba(tint.r, tint.g, tint.b, 0.18)
-                    onClicked: tools.pomodoro.running ? tools.pomodoro.stop() : tools.pomodoro.start()
-                }
+                MouseArea { anchors.fill: parent; visible: tools.pomodoroChart; cursorShape: Qt.PointingHandCursor; onClicked: tools.pomodoroChart = false }
             }
 
             // ---- alarm ----

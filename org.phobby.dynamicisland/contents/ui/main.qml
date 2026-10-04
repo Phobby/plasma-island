@@ -104,6 +104,10 @@ PlasmoidItem {
     OptionalBackend { id: dndLoader; source: "backend/DndBackend.qml" }
     OptionalBackend { id: tasksLoader; source: "backend/TasksBackend.qml" }
     OptionalBackend { id: jobsLoader; source: "backend/JobsBackend.qml" }
+    // Weather and the application list: Plasma's own data engines (plasma-workspace).
+    OptionalBackend { id: weatherLoader; source: root.cfg.showWeather ? "backend/WeatherBackend.qml" : "" }
+    Binding { target: root.weatherBackend; property: "place"; value: root.cfg.weatherPlace; when: root.weatherBackend !== null }
+    OptionalBackend { id: appsLoader; source: root.cfg.showApps ? "backend/AppsBackend.qml" : "" }
     // Calendar: .ics links (no Akonadi). backend/CalendarBackend.qml is the
     // older PIM-plugin source, kept for reference but no longer loaded.
     OptionalBackend { id: calendarLoader; source: root.cfg.showCalendar ? "backend/IcsCalendarBackend.qml" : "" }
@@ -157,6 +161,8 @@ PlasmoidItem {
     readonly property var dndBackend: dndLoader.item
     readonly property var tasksBackend: tasksLoader.item
     readonly property var jobsBackend: jobsLoader.item
+    readonly property var weatherBackend: weatherLoader.item
+    readonly property var appsBackend: appsLoader.item
     readonly property var calendarBackend: calendarLoader.item
     readonly property var clipboardBackend: clipboardLoader.item
     readonly property var kdeconnectBackend: kdeconnectLoader.item
@@ -389,6 +395,17 @@ PlasmoidItem {
                 enabled: root.cfg.showCalendar
             }
         }
+        WhenAvailable {
+            dependency: root.weatherBackend
+            sourceComponent: WeatherProvider {
+                manager: activities
+                theme: root.islandTheme
+                weather: root.weatherBackend
+                enabled: root.cfg.showWeather && root.cfg.showWeatherAlerts
+                announced: root.cfg.weatherAnnounced
+                onAnnouncedEdited: text => root.cfg.weatherAnnounced = text
+            }
+        }
         KdeConnectProvider {
             manager: activities
             backend: backend
@@ -475,6 +492,29 @@ PlasmoidItem {
             pomodoro: pomodoroProvider
             alarm: alarmProvider
             active: island.expanded
+        }
+    }
+
+    Component {
+        id: weatherPage
+        WeatherPage {
+            theme: root.islandTheme
+            weather: root.weatherBackend
+            onSetupRequested: {
+                island.expanded = false;
+                Plasmoid.internalAction("configure").trigger();
+            }
+        }
+    }
+
+    Component {
+        id: appsPage
+        AppsPage {
+            theme: root.islandTheme
+            apps: root.appsBackend
+            shortcuts: root.cfg.appShortcuts
+            onEdited: json => root.cfg.appShortcuts = json
+            onLaunched: island.expanded = false
         }
     }
 
@@ -602,6 +642,11 @@ PlasmoidItem {
                     if (root.core) root.core.startDetached("sh", [String(Qt.resolvedUrl("../scripts/btop-view.sh")).replace(/^file:\/\//, ""), key]);
                 }
                 extraPages: [
+                    // The weather tab shows the weather itself: its icon and, where there is room, the temperature.
+                    { key: "weather", icon: root.weatherBackend && root.weatherBackend.ready ? root.weatherBackend.icon : "weather-clear",
+                      label: root.weatherBackend && root.weatherBackend.ready ? Math.round(root.weatherBackend.temperature) + "°" : "",
+                      title: Lang.i18n("Weather"), component: weatherPage, visible: root.cfg.showWeather && root.weatherBackend !== null },
+                    { key: "apps", icon: "view-app-grid-symbolic", title: Lang.i18n("Apps"), component: appsPage, visible: root.cfg.showApps && root.appsBackend !== null },
                     { key: "quicksettings", icon: "configure", title: Lang.i18n("Controls"), component: quickSettingsPage, visible: root.cfg.showQuickSettings },
                     { key: "tools", icon: "chronometer", title: Lang.i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },
                     { key: "calendar", icon: "view-calendar", title: Lang.i18n("Calendar"), component: calendarPage,
