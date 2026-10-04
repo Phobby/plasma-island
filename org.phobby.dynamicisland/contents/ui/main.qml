@@ -475,6 +475,11 @@ PlasmoidItem {
                 onAnnouncedEdited: text => root.cfg.weatherAnnounced = text
             }
         }
+        // Whether an application fills the screen: only looked at while suggestions are on.
+        Loader {
+            id: fullscreenWatch
+            source: root.cfg.suggestionsEnabled ? "backend/FullscreenBackend.qml" : ""
+        }
         // What a suggestion needs of the other parts; a part that is off or missing takes its rule with it.
         SuggestionProvider {
             id: suggestionProvider
@@ -493,6 +498,11 @@ PlasmoidItem {
             powerWatched: root.cfg.showPowerEvents
             mediaWatched: root.cfg.showMediaModule
             enabled: root.cfg.suggestionsEnabled
+            fullscreen: fullscreenWatch.item !== null && fullscreenWatch.item.active
+            level: root.cfg.suggestionLevel
+            dailyCards: root.cfg.suggestionDailyCards
+            cooldownMinutes: root.cfg.suggestionCooldownMinutes
+            halfLifeDays: root.cfg.suggestionHalfLifeDays
             gapMinutes: root.cfg.suggestionGapMinutes
             lowBattery: root.cfg.lowBatteryThreshold
         }
@@ -796,6 +806,7 @@ PlasmoidItem {
                 showNotificationModule: root.cfg.showNotificationModule
                 pageOrder: root.cfg.pageOrder
                 debugRegion: root.debugRegion
+                suggestions: suggestionProvider
                 dropPage: root.cfg.showCloud && root.cloudBackend !== null ? "cloud" : ""
                 ambientGlow: root.cfg.ambientGlow
                 onAmbientGlowToggled: root.cfg.ambientGlow = !root.cfg.ambientGlow

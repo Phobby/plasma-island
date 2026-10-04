@@ -1,12 +1,14 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
 
-    The suggestion provider with the real ActivityManager and stand-ins for
-    the parts it watches and acts on (Do Not Disturb, power profiles, media,
-    screen casts, the microphone, Pomodoro, the calendar, Bluetooth). The
-    provider is handed its time (`clock`); the system's clock is never read
-    or changed. "The shell restarts" is a new provider on what the old one
-    stored.
+    Suggestions on the island (providers/SuggestionProvider.qml on the real
+    ActivityManager, with stand-ins for Do Not Disturb, the media, the power
+    profile, the calendar…): a card with its answers and its "Why?"; learning
+    to do it by itself and undoing that; learning from what is done by hand;
+    whose a change is and what is taken back when its cause ends; when
+    nothing interrupts; a moment that passes; cards a day and a rule's wait;
+    several things on one card; what is kept across a restart, and the first
+    version's data. The clock is the test's own (`moment`).
 */
 import QtQuick
 import QtTest
@@ -38,6 +40,7 @@ Item {
         property bool isPaused: true
         property bool hasSink: true
         property string sinkName: "Speakers"
+        property var sink: ({ formFactor: "", ports: [], activePortIndex: -1 })
         function playPause() { isPlaying = !isPlaying; isPaused = !isPlaying; }
     }
     QtObject {
@@ -62,6 +65,7 @@ Item {
     }
     QtObject { id: pomodoroTimer; property string phase: "" }
     QtObject { id: agenda; property string phase: ""; property var pinned: null }
+    property bool fullscreenNow: false
     QtObject {
         id: radio
         property var connectedDevices: []
@@ -85,6 +89,7 @@ Item {
             pomodoro: pomodoroTimer
             calendar: agenda
             clock: () => root.moment
+            fullscreen: root.fullscreenNow
         }
     }
 
@@ -94,359 +99,281 @@ Item {
 
         readonly property real minute: 60000
         readonly property real hour: 3600000
+        readonly property real day: 86400000
         property var p: null
 
-        function start() {
-            p = providerComponent.createObject(root);
-            verify(p !== null);
-            wait(10);
-            return p;
-        }
+        function start() { p = providerComponent.createObject(root); verify(p !== null); wait(10); return p; }
         // (an object that is destroyed lives until the event loop comes round)
         function stop() { if (p !== null) { p.destroy(); p = null; wait(10); } }
         function restart() { stop(); return start(); }
         function later(ms) { root.moment += ms; }
         function event() { return activities.currentEvent; }
-        function asked() { return event() !== null && event().key === "suggestion" && Array.isArray(event().buttons); }
-        function quietNow() { wait(60); return event() === null && activities.queue.length === 0; }
-        // the recording starts (and with it the rule's moment), or stops
-        function record(on) { nativeCore.screenCastApps = on ? ["OBS Studio"] : []; }
-        // one round of the recording's question, answered: "yes" | "later" | "never" | "timeout" | "closed"
-        function round(what) {
-            record(true);
-            tryVerify(asked, 2000, "the question for: " + what);
-            if (what === "timeout") activities.expireEvent();
-            else if (what === "closed") activities.closeEvent();
-            else activities.chooseEvent(what === "yes" ? 0 : what === "later" ? 1 : 2);
-            wait(10);
+        function asked() { return event() !== null && event().key === "suggestion"; }
+        function offered() { return event() !== null && event().key === "suggestion-offer"; }
+        function nothing() { wait(60); return event() === null && activities.queue.length === 0; }
+        function press(label) {
+            const i = event().buttons.findIndex(b => b.text === label);
+            verify(i >= 0, "a button " + label);
+            activities.chooseEvent(i);
+            wait(20);
         }
-        function mode(id) { return Suggestions.rule(p.store.read(), id).mode; }
+        function clear() { while (event() !== null) { activities.dismissEvent(); wait(250); } activities.queue = []; }
+        function state() { return Suggestions.parse(settings.suggestionsData); }
+        function signals(id) { return state().events.filter(e => e.r === id).map(e => e.s); }
+        function record(on) { nativeCore.screenCastApps = on ? [{ name: "obs" }] : []; wait(20); }
+        function mic(on) { nativeCore.microphoneApps = on ? [{ name: "meet" }] : []; wait(20); }
+        function round(on) { pomodoroTimer.phase = on ? "work" : "break"; wait(20); }
+        function meeting(key, minutes, more) {
+            agenda.pinned = Object.assign({ key: key, title: "Stand-up", start: root.moment + 5 * minute, end: root.moment + (5 + minutes) * minute, calendar: "Work", link: "" }, more || {});
+            agenda.phase = "upcoming"; wait(20);
+        }
+        function meetingOver() { agenda.phase = ""; agenda.pinned = null; wait(20); }
 
+        function initTestCase() { Lang.setting = "en"; activities.warm = true; }
         function init() {
-            Lang.setting = "en";
-            activities.warm = true;
-            activities.dismissEvent();
-            activities.queue = [];
-            settings.suggestionsData = "";
-            settings.suggestionsAvailable = "";
-            nativeCore.screenCastApps = []; nativeCore.microphoneApps = []; nativeCore.local = null;
-            quiet.active = false; quiet.until = null;
-            profiles.profile = "balanced";
-            media.batteryPercent = 80; media.batteryPluggedIn = false; media.isPlaying = false; media.isPaused = true; media.hasMedia = true; media.sinkName = "Speakers";
-            pomodoroTimer.phase = ""; agenda.phase = ""; agenda.pinned = null; radio.connectedDevices = [];
-            root.withDnd = true;
-            root.moment = new Date(2026, 9, 5, 9, 0).getTime();
+            settings.suggestionsData = ""; settings.suggestionsAvailable = "";
+            root.moment = new Date(2026, 9, 5, 9, 0).getTime(); root.withDnd = true; root.fullscreenNow = false;
+            media.isPlaying = false; media.isPaused = true; media.hasBattery = true; media.batteryPluggedIn = false; media.batteryPercent = 80;
+            media.sink = ({ formFactor: "", ports: [], activePortIndex: -1 });
+            quiet.active = false; quiet.until = null; profiles.profile = "balanced";
+            nativeCore.screenCastApps = []; nativeCore.microphoneApps = []; pomodoroTimer.phase = ""; agenda.phase = ""; agenda.pinned = null; radio.connectedDevices = [];
             start();
         }
-        function cleanup() { stop(); }
+        function cleanup() { stop(); clear(); }
 
-        function test_a_question_with_three_answers() {
+        function test_01_a_card_with_its_answers_and_its_why() {
+            compare(settings.suggestionsAvailable, "meeting,meeting-media,recording,call,pomodoro,battery,disconnect,headphones");
             record(true);
             tryVerify(asked);
-            const e = event();
-            compare(e.title, "The screen is being recorded. Hide notifications while it lasts?");
-            compare(e.buttons.map(b => b.text), ["Yes", "Not now", "Never suggest this"]);
-            compare([e.duration, e.height, e.buttons[0].primary], [10000, islandTheme.questionHeight, true]);
-            compare(Suggestions.rule(p.store.read(), "recording").last, root.moment, "counted as suggested once it is shown");
-            // Yes: hidden while the recording lasts
-            activities.chooseEvent(0);
-            compare([quiet.active, p.held, event()], [true, "recording", null]);
-            compare(Suggestions.rule(p.store.read(), "recording").yes, 1);
+            compare(event().title, "The screen is being recorded. Hide notifications while it lasts?");
+            compare(event().subtitle, "Why? This is the moment the rule is for; I am still learning.");
+            compare(event().buttons.map(b => b.text + (b.more ? "*" : "")), ["Yes", "Always", "No", "Not now*", "Turn this rule off*"]);
+            compare(signals("recording"), ["shown"]);
+            press("Yes");
+            compare([quiet.active, signals("recording"), p.owned.dnd.id], [true, ["shown", "yes"], "recording"]);
+            // its cause ends: what it switched on is taken back
             record(false);
-            compare([quiet.active, p.held], [false, ""], "and back when it is over");
+            compare([quiet.active, p.owned.dnd], [false, undefined]);
+            verify(nothing());
+            // only coarse buckets are kept: no title, no application
+            compare(state().events.map(e => e.c), ["wd|am", "wd|am"]);
+            verify(settings.suggestionsData.indexOf("obs") < 0);
         }
 
-        function test_not_now_three_times_then_less_often() {
-            for (let i = 0; i < 3; ++i) {
-                round("later");
-                compare(quiet.active, false);
-                record(false);
-                later(10 * minute);
+        function test_02_it_learns_to_do_it_by_itself_and_an_undo_takes_that_back() {
+            for (let i = 0; i < 4; ++i) {
+                round(true); tryVerify(asked); press("Yes"); compare(quiet.active, true);
+                round(false); compare(quiet.active, false);
+                if (i < 3) { clear(); later(day); }
             }
-            compare(Suggestions.rule(p.store.read(), "recording").laterRow, 3);
-            // ten minutes after the third: not asked; neither 59 minutes after it
-            record(true);
-            verify(quietNow(), "waits longer now");
-            record(false);
-            later(49 * minute);
-            record(true);
-            verify(quietNow());
-            record(false);
-            later(1 * minute);                                  // an hour after the third
-            record(true);
-            tryVerify(asked);
-            activities.chooseEvent(1);
-            record(false);
-            // the fourth: two hours
-            later(119 * minute);
-            record(true);
-            verify(quietNow());
-            record(false);
-            later(1 * minute);
-            record(true);
-            tryVerify(asked);
-        }
-
-        function test_never_is_kept_across_a_restart() {
-            round("never");
-            compare([mode("recording"), quiet.active], ["off", false]);
-            record(false);
-            later(3 * hour);
-            record(true);
-            verify(quietNow());
-            record(false);
-            // plasmashell restarts: a new provider on what was stored
-            restart();
-            later(24 * hour);
-            record(true);
-            verify(quietNow(), "still off after the restart");
-            compare(Suggestions.rule(p.store.read(), "recording").why, "never");
-            // the other rules are not touched
-            record(false);
-            media.batteryPercent = 15;
-            tryVerify(asked);
-            compare(event().title, "The battery is low (15%). Switch to the power saving profile?");
-        }
-
-        function test_learning_is_a_file_that_outlives_the_shell() {
-            if (tools.status !== Loader.Ready || typeof tools.item.writeTextFile !== "function") skip("the native module is not built: ./install.sh");
-            const file = decodeURIComponent(String(Qt.resolvedUrl(".")).replace(/^file:\/\//, "")) + ".run/suggestions-" + Math.floor(Math.random() * 1e9).toString(36) + ".json";
-            nativeCore.local = tools.item;
-            restart();
-            p.store.path = file;
-            verify(p.store.inFile);
-            for (let i = 0; i < 2; ++i) { round("yes"); record(false); later(10 * minute); }
-            round("later");
-            record(false);
-            const text = tools.item.readTextFile(file);
-            compare(JSON.parse(text).rules.recording, { mode: "suggest", why: "", yes: 2, later: 1, yesRow: 0, laterRow: 1, last: root.moment, asked: 0, told: 0 });
-            compare(settings.suggestionsData, "", "not in the settings when there is the file");
-            // the shell restarts
-            restart();
-            p.store.path = file;
-            compare(Suggestions.rule(p.store.read(), "recording").yes, 2);
-            compare(Suggestions.text(p.store.read()), text);
-            tools.item.removeFile(file);
-        }
-
-        function test_no_answer_five_times_switches_it_off_and_says_so_once() {
-            for (let i = 1; i <= 5; ++i) {
-                round(i % 2 ? "timeout" : "closed");
-                record(false);
-                if (i < 5) { compare(mode("recording"), "suggest"); verify(quietNow()); }
-                later(5 * hour);
-            }
-            compare(mode("recording"), "off");
-            tryVerify(() => event() !== null && event().key === "suggestion-note");
-            compare([event().title, event().subtitle], ["I will not show this suggestion any more", "You can switch it on again in Settings → Suggestions"]);
-            activities.dismissEvent();
-            record(true);
-            verify(quietNow(), "not suggested any more");
-        }
-
-        function test_yes_three_times_then_automatic_with_undo() {
-            for (let i = 1; i <= 3; ++i) {
-                round("yes");
-                compare(quiet.active, true);
-                if (i < 3) { record(false); later(10 * minute); verify(quietNow(), "no offer after " + i); }
-            }
-            // the third yes: asked once whether to do it automatically
-            tryVerify(asked);
-            compare([event().title, event().subtitle], ["Shall I do this automatically from now on?", "Hide notifications while the screen is recorded"]);
-            compare(event().buttons.map(b => b.text), ["Yes", "No, keep asking"]);
-            activities.chooseEvent(0);
-            compare(mode("recording"), "auto");
-            tryVerify(() => event() !== null && event().title === "Automatic from now on");
-            activities.dismissEvent();
-            record(false);
-            compare(quiet.active, false);
-
-            // from now on: done without asking, said with an Undo
-            later(1 * minute);                                  // also within the pause between suggestions
-            record(true);
-            compare([quiet.active, p.held], [true, "recording"], "done at once");
+            // sure enough now, on different days: asked once whether to do it by itself
+            tryVerify(offered);
+            compare(event().subtitle, "Do Not Disturb in a focus round · Weekdays · morning");
+            press("Yes"); clear();
+            later(day);
+            round(true);
+            compare([quiet.active, asked()], [true, false], "done without asking");
             tryVerify(() => event() !== null && event().key === "dnd");
-            compare([event().title, event().subtitle, event().trailing.type, event().trailing.text], ["Do Not Disturb is on", "Done automatically", "button", "Undo"]);
-            verify(!Array.isArray(event().buttons), "no question");
-            // Undo: taken back, and the rule asks again
-            activities.activateEvent();
-            compare([quiet.active, mode("recording")], [false, "suggest"]);
-            tryVerify(() => event() !== null && event().title === "Undone");
-            activities.dismissEvent();
-            record(false);
-            later(10 * minute);
-            record(true);
-            tryVerify(asked, 2000, "asks again after the undo");
-            compare(event().buttons.length, 3);
+            compare([event().title, event().subtitle, event().trailing.text], ["Do Not Disturb is on", "Done automatically", "Undo"]);
+            compare(state().log.length, 1);
+            // Undo: taken back, and it asks again here
+            activities.activateEvent(); wait(20);
+            compare([quiet.active, state().log[0].undone, Suggestions.status(state(), "pomodoro", "wd|am", root.moment)], [false, 1, "ask"]);
+            clear(); round(false); later(3 * day);      // (over the weekend: the same kind of day)
+            round(true); tryVerify(asked);
+            // "Always": automatic at once; a second undo closes the rule here, said once
+            press("Always"); clear(); round(false); later(day);
+            round(true); compare(quiet.active, true);
+            tryVerify(() => event() !== null && event().key === "dnd");
+            activities.activateEvent(); wait(20);
+            tryVerify(() => event() !== null && event().title === "I will not do this here any more");
+            compare(Suggestions.status(state(), "pomodoro", "wd|am", root.moment), "off");
+            clear(); round(false); later(day);
+            round(true); verify(nothing()); compare(quiet.active, false);
+            // …but only here: in the evening it still asks
+            round(false); later(10 * hour);
+            round(true); tryVerify(asked);
         }
 
-        function test_declining_the_offer_keeps_asking() {
-            for (let i = 1; i <= 3; ++i) { round("yes"); if (i < 3) { record(false); later(10 * minute); } }
-            tryVerify(asked);
-            activities.chooseEvent(1);                          // "No, keep asking"
-            compare(mode("recording"), "suggest");
-            record(false);
-            for (let i = 0; i < 3; ++i) {
-                later(10 * minute);
-                round("yes");
-                record(false);
-                verify(quietNow(), "the offer is made once");
+        function test_03_done_by_hand_at_its_moment_it_learns_without_asking() {
+            // four times: Do Not Disturb by hand just before the focus round
+            for (let i = 0; i < 4; ++i) {
+                quiet.setActive(true); wait(20); later(minute);
+                round(true);
+                compare(asked(), false);
+                if (i < 3) verify(nothing());
+                round(false); compare(quiet.active, true, "the user's own is not switched off");
+                quiet.setActive(false); wait(20);
+                if (i < 3) { clear(); later(day); }
             }
+            compare(signals("pomodoro"), ["implicit", "implicit", "implicit", "implicit"]);
+            // …and one question: shall I?
+            tryVerify(offered);
+            press("No, keep asking"); clear(); later(day);
+            quiet.setActive(true); wait(20); round(true);
+            verify(nothing(), "asked once, at the fourth time");
+            round(false); quiet.setActive(false); wait(20);
+            compare(state().rules.pomodoro.offered["wd|am"], 1);
+        }
+        function test_03b_the_question_after_four_times_by_hand() {
+            for (let i = 0; i < 4; ++i) {
+                // by hand shortly after the moment, while its card is out: the card goes away
+                round(true); tryVerify(asked);
+                later(minute); quiet.setActive(true); wait(30);
+                if (i < 3) { verify(!asked()); verify(nothing()); }
+                round(false); quiet.setActive(false); wait(20);
+                if (i < 3) { clear(); later(day); }
+            }
+            tryVerify(offered);
+            compare(event().title, "You did this by hand the last 4 times: Do Not Disturb. Shall I do it by myself?");
+            press("No, keep asking"); clear(); later(day);
+            for (let i = 0; i < 2; ++i) { quiet.setActive(true); wait(20); round(true); wait(30); round(false); quiet.setActive(false); wait(20); later(day); }
+            verify(nothing(), "it does not ask that again");
         }
 
-        function test_not_while_do_not_disturb_or_a_recording_and_not_too_often() {
-            // Do Not Disturb is on: nothing is suggested
-            quiet.active = true;
-            media.batteryPercent = 15;
-            record(true);
-            verify(quietNow());
-            quiet.active = false;
+        function test_04_whose_it_is() {
+            // the user's own Do Not Disturb: nothing is suggested, nothing is switched off
+            quiet.setActive(true); wait(20); later(10 * minute);
+            record(true); verify(nothing());
+            record(false); compare(quiet.active, true);
+            quiet.setActive(false); wait(20); later(hour);
+            // ours, but the user switched it off in between: left alone afterwards
+            record(true); tryVerify(asked); press("Yes"); compare(quiet.active, true);
+            later(minute); quiet.setActive(false); wait(20);
+            compare(p.owned.dnd, undefined);
+            later(minute); quiet.setActive(true); wait(20);
             record(false);
-            media.batteryPercent = 80;
-            // the screen is recorded: no other rule's question (its own came at the start)
-            round("later");
-            later(30 * minute);
-            media.batteryPercent = 12;
-            verify(quietNow(), "not into a recording");
-            record(false);
-            media.batteryPercent = 80;
-            // two rules, two minutes apart: the second waits for the pause
-            later(30 * minute);
-            media.batteryPercent = 15;
-            tryVerify(asked);
-            activities.chooseEvent(1);
-            later(2 * minute);
-            pomodoroTimer.phase = "work";
-            verify(quietNow(), "within five minutes of the last one");
-            pomodoroTimer.phase = "break";
-            later(3 * minute);
-            pomodoroTimer.phase = "work";
-            tryVerify(asked);
-            compare(event().title, "A focus round has started. Turn on Do Not Disturb until the break?");
-            // the pause is a setting
-            activities.chooseEvent(1);
-            p.gapMinutes = 30;
-            later(10 * minute);
-            media.batteryPercent = 80; media.batteryPercent = 15;
-            verify(quietNow());
+            compare(quiet.active, true, "switched on again by the user: theirs");
+            quiet.setActive(false); wait(20); clear(); later(day);
+            // an event's Do Not Disturb runs until the event ends, and its running out is nobody's doing
+            meeting("m1", 30); tryVerify(asked); press("Yes");
+            compare([quiet.active, quiet.until.getTime()], [true, agenda.pinned.end]);
+            later(36 * minute); meetingOver(); quiet.setActive(false); wait(20);
+            compare(signals("meeting").indexOf("undo"), -1);
+            clear(); later(day);
+            // the media paused for a call plays again when the call ends, unless the user did something
+            media.isPlaying = true; media.isPaused = false; wait(20);
+            mic(true); tryVerify(asked); press("Yes"); compare(media.isPaused, true);
+            mic(false); compare(media.isPlaying, true);
         }
 
-        function test_a_rule_whose_part_is_missing_never_comes_up() {
-            compare(settings.suggestionsAvailable, "meeting,recording,call,battery,pomodoro,headphones");
-            stop();
-            root.withDnd = false;                               // no Do Not Disturb on this system
-            profiles.profilesAvailable = false;
-            start();
-            compare(settings.suggestionsAvailable, "call,headphones");
-            record(true);
-            pomodoroTimer.phase = "work";
-            media.batteryPercent = 5;
-            agenda.pinned = { key: "e1", title: "Stand-up", end: root.moment + hour }; agenda.phase = "upcoming";
-            verify(quietNow());
-            profiles.profilesAvailable = true;
-            // a part that is switched off in the settings
-            p.recordingWatched = false; p.mediaWatched = false;
-            compare(settings.suggestionsAvailable, "battery");
-            // the whole thing switched off
-            stop();
-            root.withDnd = true;
-            start();
-            p.enabled = false;
-            record(true);
-            verify(quietNow());
+        function test_05_nothing_interrupts() {
+            // full screen: no card, no mark; it waits in the open island
+            root.fullscreenNow = true;
+            round(true); verify(nothing());
+            compare([p.pending.map(x => x.id), p.hint], [["pomodoro"], false]);
+            root.fullscreenNow = false;
+            // the moment passes: gone, and nothing was learned
+            round(false);
+            compare([p.pending.length, signals("pomodoro")], [0, []]);
+            later(hour);
+            // Do Not Disturb on, the screen recorded, a call: the same
+            record(true); tryVerify(asked); press("No"); clear();
+            media.isPlaying = true; media.isPaused = false; wait(20);
+            mic(true); verify(nothing());
+            compare(p.pending.map(x => x.id), ["call"]);
+            // answered in the open island
+            p.answerPending("call", "yes");
+            compare([media.isPaused, p.pending.length, signals("call")], [true, 0, ["yes"]]);
+            mic(false); record(false);
         }
 
-        function test_what_is_there_at_the_start_is_not_news() {
-            stop();
-            nativeCore.screenCastApps = ["OBS Studio"];
-            media.batteryPercent = 10;
-            pomodoroTimer.phase = "work";
-            start();
-            verify(quietNow());
-        }
-
-        function test_every_rule_does_its_thing_and_can_take_it_back() {
-            // an event is about to start: Do Not Disturb until it ends
-            const end = root.moment + 45 * minute;
-            agenda.pinned = { key: "e1", title: "Stand-up", end: end };
-            agenda.phase = "upcoming";
-            tryVerify(asked);
+        function test_06_a_moment_that_passes_teaches_nothing() {
+            meeting("m1", 60); tryVerify(asked);
             compare(event().title, "“Stand-up” starts soon. Turn on Do Not Disturb until it ends?");
-            activities.chooseEvent(0);
-            compare([quiet.active, quiet.until.getTime(), p.held], [true, end, ""]);
-            p.undo("meeting");
-            compare(quiet.active, false);
-            agenda.phase = ""; agenda.pinned = null;
+            meetingOver();
+            verify(nothing(), "the card is gone");
+            compare(signals("meeting"), ["shown"]);
+            compare(Math.round(Suggestions.estimate(state(), "meeting", "wd|am|cal:Work|dur:mid", root.moment).confidence * 100), 50);
+            verify(settings.suggestionsData.indexOf("Stand-up") < 0, "an event's title is never kept");
+            // no answer in time is a weak signal, not a no
+            later(hour); meeting("m2", 60); tryVerify(asked);
+            activities.expireEvent(); wait(20);
+            compare(signals("meeting"), ["shown", "shown", "timeout"]);
+            compare(Suggestions.status(state(), "meeting", "wd|am|cal:Work|dur:mid", root.moment), "ask");
+        }
 
-            // the microphone is taken into use while something plays: pause
-            later(10 * minute);
-            media.isPlaying = true; media.isPaused = false;
-            nativeCore.microphoneApps = ["Meet"];
-            tryVerify(asked);
-            compare(event().title, "The microphone is in use. Pause the media?");
-            activities.chooseEvent(0);
-            compare([media.isPlaying, media.isPaused], [false, true]);
-            p.undo("call");
-            compare(media.isPlaying, true);
-            nativeCore.microphoneApps = [];
-            // …and nothing to pause, nothing to ask
-            later(10 * minute);
-            media.isPlaying = false; media.isPaused = true;
-            nativeCore.microphoneApps = ["Meet"];
-            verify(quietNow());
-            nativeCore.microphoneApps = [];
+        function test_07_a_rules_wait_and_the_cards_of_a_day() {
+            record(true); tryVerify(asked); press("No"); record(false); clear();
+            // within its wait (20 min, doubled by the no): kept quietly (no mark while the screen is recorded)
+            later(30 * minute);
+            record(true); verify(nothing());
+            compare([p.pending.map(x => x.id), p.hint], [["recording"], false]);
+            record(false); later(15 * minute);
+            record(true); tryVerify(asked); press("Yes"); record(false); clear();
+            // another rule waits only for the pause between two cards
+            later(2 * minute); round(true); verify(nothing()); round(false);
+            later(4 * minute); round(true); tryVerify(asked); press("Yes"); round(false); clear();
+            // the cards of a day
+            p.dailyCards = 4;
+            later(2 * hour); round(true); tryVerify(asked); press("Yes"); round(false); clear();
+            later(2 * hour); round(true); verify(nothing(), "the day's cards are used up");
+            compare(p.pending.length, 1);
+            round(false); later(day);
+            round(true); tryVerify(asked);
+        }
 
-            // the battery is low: the power saving profile
-            later(10 * minute);
-            profiles.profile = "performance";
-            media.batteryPercent = 20;
+        function test_08_several_things_for_one_moment_on_one_card() {
+            media.isPlaying = true; media.isPaused = false; wait(20);
+            meeting("m1", 30, { link: "https://meet.example/x" });
             tryVerify(asked);
-            activities.chooseEvent(0);
-            compare(profiles.profile, "power-saver");
-            p.undo("battery");
-            compare(profiles.profile, "performance", "back to what it was");
-            // on the charger, or already saving: nothing to ask
-            later(10 * minute);
-            media.batteryPercent = 80; media.batteryPluggedIn = true; media.batteryPercent = 10;
-            verify(quietNow());
-            media.batteryPluggedIn = false; media.batteryPercent = 80;
+            compare([event().title, event().checks.map(c => c.text + ":" + c.checked)], ["“Stand-up” starts soon.", ["Do Not Disturb:true", "Pause the media:true"]]);
+            // one of them unticked: each learns by itself
+            event().checks[1].checked = false;
+            press("Yes");
+            compare([quiet.active, media.isPlaying], [true, true]);
+            compare([signals("meeting"), signals("meeting-media")], [["shown", "yes"], ["shown", "no"]]);
+            compare(state().events[0].c, "wd|am|cal:Work|dur:short|video");
+        }
 
-            // a focus round: Do Not Disturb until its break
-            later(10 * minute);
-            pomodoroTimer.phase = "work";
+        function test_09_low_battery_and_the_headphones() {
+            // not over within minutes: no card; it waits, with a mark
+            media.batteryPercent = 15; wait(20);
+            verify(nothing());
+            compare([p.pending.map(x => x.id), p.hint, p.pending[0].title], [["battery"], true, "The battery is low (15%). Switch to the power saving profile?"]);
+            p.answerPending("battery", "yes");
+            compare([profiles.profile, p.owned.profile.before], ["power-saver", "balanced"]);
+            // on the charger again: the profile it had
+            media.batteryPluggedIn = true; wait(20);
+            compare(profiles.profile, "balanced");
+            // the headphones go away while something plays
+            media.sink = ({ formFactor: "headphone", ports: [], activePortIndex: -1 }); wait(20);
+            media.isPlaying = true; media.isPaused = false; wait(20);
+            later(hour);
+            media.sink = ({ formFactor: "", ports: [{ name: "analog-output-speaker" }], activePortIndex: 0 }); wait(20);
             tryVerify(asked);
-            activities.chooseEvent(0);
-            compare([quiet.active, p.held], [true, "pomodoro"]);
-            pomodoroTimer.phase = "break";
-            compare([quiet.active, p.held], [false, ""]);
-            // switched off by hand meanwhile: it is the user's again, the break changes nothing
-            later(10 * minute);
-            pomodoroTimer.phase = "work";
-            tryVerify(asked);
-            activities.chooseEvent(0);
-            quiet.setActive(false);
-            quiet.setActive(true);
-            compare(p.held, "");
-            pomodoroTimer.phase = "break";
-            compare(quiet.active, true);
-            quiet.setActive(false);
-            pomodoroTimer.phase = "";
+            compare(event().title, "The headphones are gone. Pause the media?");
+            press("Yes"); compare(media.isPaused, true);
+            // "headphones connected: play" guesses: off until it is switched on
+            clear(); later(hour);
+            media.sink = ({ formFactor: "headset", ports: [], activePortIndex: -1 }); wait(20);
+            verify(nothing());
+            compare(Suggestions.rule(state(), "headphones").why, "experimental");
+        }
 
-            // headphones while the media is paused: play
-            later(10 * minute);
-            radio.connectedDevices = [{ address: "AA:BB", name: "Buds", icon: "audio-headset-symbolic" }];
-            tryVerify(asked);
-            compare(event().title, "Headphones are connected. Carry on playing?");
-            activities.chooseEvent(0);
-            compare(media.isPlaying, true);
-            p.undo("headphones");
-            compare(media.isPaused, true);
-            // a keyboard is no headphones; the output becoming headphones is
-            later(10 * minute);
-            radio.connectedDevices = [{ address: "AA:BB", name: "Buds", icon: "audio-headset-symbolic" }, { address: "CC:DD", name: "Keys", icon: "input-keyboard-symbolic" }];
-            verify(quietNow());
-            media.sinkName = "Headphones";
-            tryVerify(asked);
+        function test_10_kept_across_a_restart_and_the_first_versions_data() {
+            record(true); tryVerify(asked); press("Always"); record(false); clear();
+            restart(); later(day);
+            record(true);
+            compare([quiet.active, asked()], [true, false], "automatic after the restart");
+            record(false); clear(); stop();
+            // what the first version kept
+            settings.suggestionsData = JSON.stringify({ v: 1, last: 0, rules: { pomodoro: { mode: "auto", yes: 6, later: 0, yesRow: 6, laterRow: 0, last: 0, asked: 1, told: 0 },
+                                                                                 recording: { mode: "off", why: "never", yes: 0, later: 3, yesRow: 0, laterRow: 3, last: 0, asked: 0, told: 0 } } });
+            start(); later(day);
+            round(true); compare(quiet.active, true);
+            round(false); clear();
+            record(true); verify(nothing());
+            compare([state().v, state().rules.recording.why], [2, "never"]);
+        }
+
+        function test_11_off_and_turned_off() {
+            record(true); tryVerify(asked); press("Turn this rule off"); record(false); clear();
+            compare([state().rules.recording.mode, state().rules.recording.why], ["off", "never"]);
+            later(day); record(true); verify(nothing()); record(false);
+            p.enabled = false;
+            round(true); verify(nothing());
+            compare([p.pending.length, quiet.active], [0, false]);
         }
     }
 }

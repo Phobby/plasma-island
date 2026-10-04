@@ -1,16 +1,18 @@
 #!/usr/bin/env node
-// Suggestions (contents/ui/Suggestions.js): what is learned from the answers.
-// Every moment is handed in (ms); the clock is never read. Run by tools/run-tests.
+// What the suggestions learn (contents/ui/Suggestions.js), simulated over
+// weeks with dates handed in: nothing here reads or changes the clock.
+// Run by tools/run-tests; tests/tst_suggestions.qml runs the provider.
 "use strict";
 const fs = require("fs");
 const path = require("path");
 
+const UI = path.join(__dirname, "..", "org.phobby.dynamicisland", "contents", "ui");
 function load(file) {
     const source = fs.readFileSync(file, "utf8").replace(/^\.pragma library\s*$/m, "");
     const names = Array.from(source.matchAll(/^(?:function|const) (\w+)[ (=]/gm), m => m[1]);
     return new Function(source + "\nreturn { " + names.join(", ") + " };")();
 }
-const S = load(path.join(__dirname, "..", "org.phobby.dynamicisland", "contents", "ui", "Suggestions.js"));
+const S = load(path.join(UI, "Suggestions.js"));
 
 let failed = 0, checked = 0;
 function check(what, got, want) {
@@ -18,150 +20,110 @@ function check(what, got, want) {
     const g = JSON.stringify(got), w = JSON.stringify(want);
     if (g === w) return;
     ++failed;
-    console.log("    FAILED: " + what + "\n      got  " + g + "\n      want " + w);
+    console.log(`FAILED ${what}\n   got  ${g}\n   want ${w}`);
 }
-function test(name, body) {
-    const before = failed;
-    body();
-    console.log((failed === before ? "  ok    " : "  FAIL  ") + name);
-}
+const MIN = 60000, HOUR = 3600000, DAY = 86400000;
+const monday = new Date(2026, 9, 5, 14, 0).getTime();        // a Monday, 14:00
+const saturday = monday + 5 * DAY;
+const WD = "wd|noon", WE = "we|noon";
+const many = (state, id, ctx, signal, n, from, step) => { for (let i = 0; i < n; ++i) state = S.record(state, id, ctx, signal, from + i * step).state; return state; };
+const st = (state, id, ctx, at, t) => S.status(state, id, ctx, at, t);
+const conf = (state, id, ctx, at) => Math.round(S.estimate(state, id, ctx, at).confidence * 100);
 
-const MIN = 60000, HOUR = 60 * MIN, GAP = 5 * MIN;
-// Monday 5 October 2026, 09:00: every moment below is counted from it.
-const T0 = new Date(2026, 9, 5, 9, 0).getTime();
-// A suggestion that was shown at `at` and answered with `what`.
-const round = (state, id, at, what) => S.answer(S.shown(state, id, at), id, what).state;
+// ---- contexts: coarse buckets, nothing else
+check("the kind of day and the part of the day", [S.timeFeatures(monday), S.timeFeatures(saturday + 8 * HOUR), S.timeFeatures(new Date(2026, 9, 5, 6, 0).getTime()).part, S.timeFeatures(new Date(2026, 9, 5, 19, 0).getTime()).part],
+      [{ day: "wd", part: "noon" }, { day: "we", part: "night" }, "am", "eve"]);
+check("a context", S.context({ day: "wd", part: "eve", calendar: "Work | x\ny", duration: S.durationBucket(45), video: true, output: "hp" }), "wd|eve|cal:Work   x y|dur:mid|video|out:hp");
+check("…and back", S.features("we|am|cal:Home|dur:long|bat|media|out:spk"), { day: "we", part: "am", calendar: "Home", duration: "long", power: "bat", media: true, output: "spk" });
+check("a title or an application is nothing a context can hold", Object.keys(S.features(S.context({ day: "wd", title: "Secret", app: "x", window: "y" }))), ["day"]);
 
-console.log("Suggestions.js");
+// ---- nothing known: it asks; rules that guess are off
+check("at first", [st(S.empty(), "meeting", WD, monday), conf(S.empty(), "meeting", WD, monday), st(S.empty(), "headphones", WD, monday), S.rule(S.empty(), "headphones").why], ["ask", 50, "off", "experimental"]);
 
-test("a rule nobody answered yet asks", () => {
-    const s = S.empty();
-    check("asks", S.decide(s, "meeting", T0, GAP), "suggest");
-    check("what is known", S.rule(s, "meeting"), { mode: "suggest", why: "", yes: 0, later: 0, yesRow: 0, laterRow: 0, last: 0, asked: 0, told: 0 });
-    check("the rules", S.RULES, ["meeting", "recording", "call", "battery", "pomodoro", "headphones"]);
-});
+// ---- five yeses in one context, on different days: "shall I do it by myself?", then automatic
+let s = S.empty();
+const seen = [];
+for (let i = 0; i < 5; ++i) { seen.push(st(s, "meeting", WD, monday + i * DAY)); s = S.record(s, "meeting", WD, "yes", monday + i * DAY).state; }
+check("asked while it learns, then the offer", [seen, st(s, "meeting", WD, monday + 5 * DAY)], [["ask", "ask", "ask", "ask", "offer"], "offer"]);
+check("four on one day are not enough (two days are needed)", st(many(S.empty(), "meeting", WD, "yes", 5, monday, MIN), "meeting", WD, monday + HOUR), "ask");
+let auto = S.automatic(s, "meeting", WD, true, monday + 5 * DAY);
+check("accepted: automatic there, and only there", [st(auto, "meeting", WD, monday + 7 * DAY), st(auto, "meeting", "wd|eve", monday + 7 * DAY)], ["auto", "ask"]);
+const declined = S.automatic(s, "meeting", WD, false, monday + 5 * DAY);
+check("declined: it keeps asking and does not offer again", [st(declined, "meeting", WD, monday + 6 * DAY), st(S.record(declined, "meeting", WD, "yes", monday + 6 * DAY).state, "meeting", WD, monday + 7 * DAY)], ["ask", "ask"]);
+check("\"always\" makes it automatic at once", st(S.record(S.empty(), "meeting", WD, "always", monday).state, "meeting", WD, monday), "auto");
 
-test("at least five minutes between two suggestions, of whatever rule", () => {
-    const s = S.shown(S.empty(), "meeting", T0);
-    check("the same rule, 4:59 later", S.decide(s, "meeting", T0 + 5 * MIN - 1000, GAP), "");
-    check("another rule, 4:59 later", S.decide(s, "battery", T0 + 5 * MIN - 1000, GAP), "");
-    check("5:00 later", [S.decide(s, "meeting", T0 + 5 * MIN, GAP), S.decide(s, "battery", T0 + 5 * MIN, GAP)], ["suggest", "suggest"]);
-    check("the pause is a setting", [S.decide(s, "battery", T0 + 2 * MIN, 1 * MIN), S.decide(s, "battery", T0 + 20 * MIN, 30 * MIN)], ["suggest", ""]);
-});
+// ---- weekdays welcome, weekend not: the weekend falls silent, the weekdays are untouched
+let w = S.record(s, "meeting", WE, "no", saturday).state;
+check("one no in a new context: mixed with the rule's estimate, still asked", [st(w, "meeting", WE, saturday), conf(w, "meeting", WE, saturday) > 40, st(w, "meeting", WD, saturday)], ["ask", true, "offer"]);
+w = S.record(w, "meeting", WE, "no", saturday + DAY).state;
+check("a second no: silent there", [st(w, "meeting", WE, saturday + DAY), st(w, "meeting", WD, saturday + DAY), conf(w, "meeting", WD, saturday + DAY) >= 80], ["silent", "offer", true]);
 
-test("never again is for good", () => {
-    let s = round(S.empty(), "call", T0, "never");
-    check("off", [S.rule(s, "call").mode, S.rule(s, "call").why], ["off", "never"]);
-    for (const later of [HOUR, 24 * HOUR, 365 * 24 * HOUR]) check("still off after " + later / HOUR + " h", S.decide(s, "call", T0 + later, GAP), "");
-    check("the other rules go on", S.decide(s, "battery", T0 + HOUR, GAP), "suggest");
-    // read back after a restart
-    s = S.parse(S.text(s));
-    check("off after a restart", S.decide(s, "call", T0 + 48 * HOUR, GAP), "");
-    // switched on again in the settings
-    s = S.setMode(s, "call", "suggest");
-    check("on again", [S.decide(s, "call", T0 + 49 * HOUR, GAP), S.rule(s, "call").why], ["suggest", ""]);
-});
+// ---- no answer is not a no
+let ignored = many(S.empty(), "call", WD, "timeout", 5, monday, DAY);
+check("five unanswered: still asked", [st(ignored, "call", WD, monday + 5 * DAY), conf(ignored, "call", WD, monday + 5 * DAY) > 25], ["ask", true]);
+const afterCard = S.record(ignored, "call", WD, "shown", monday + 5 * DAY).state;
+check("…but less often: the wait has doubled five times", [S.waits(afterCard, "call", monday + 5 * DAY, null, 0) / MIN, S.waits(afterCard, "call", monday + 5 * DAY + 641 * MIN, null, 0)], [640, 0]);
+check("a yes ends that", S.waits(S.record(S.record(afterCard, "call", WD, "yes", monday + 6 * DAY).state, "call", WD, "shown", monday + 6 * DAY).state, "call", monday + 6 * DAY, null, 0) / MIN, 20);
+check("two plain noes silence a context; \"not now\" twice does not", [st(many(S.empty(), "call", WD, "no", 2, monday, DAY), "call", WD, monday + 2 * DAY), st(many(S.empty(), "call", WD, "later", 2, monday, DAY), "call", WD, monday + 2 * DAY)], ["silent", "ask"]);
+check("a suggestion nobody saw teaches nothing", [conf(S.record(S.empty(), "call", WD, "shown", monday).state, "call", WD, monday), conf(S.record(S.empty(), "call", WD, "auto", monday).state, "call", WD, monday)], [50, 50]);
 
-test("three times \"not now\" in a row: suggested less often", () => {
-    let s = S.empty(), at = T0;
-    for (let i = 1; i <= 2; ++i) { s = round(s, "pomodoro", at, "later"); at += 10 * MIN; }
-    check("twice: as often as before", [S.wait(S.rule(s, "pomodoro")), S.decide(s, "pomodoro", at, GAP)], [0, "suggest"]);
-    s = round(s, "pomodoro", at, "later");
-    const third = at;
-    check("three in a row", [S.rule(s, "pomodoro").laterRow, S.wait(S.rule(s, "pomodoro"))], [3, HOUR]);
-    check("not for an hour", [S.decide(s, "pomodoro", third + 10 * MIN, GAP), S.decide(s, "pomodoro", third + HOUR - 1, GAP), S.decide(s, "pomodoro", third + HOUR, GAP)], ["", "", "suggest"]);
-    check("other rules are not slowed", S.decide(s, "battery", third + 10 * MIN, GAP), "suggest");
-    // the fourth: twice as long
-    s = round(s, "pomodoro", third + HOUR, "timeout");
-    check("four in a row: two hours", [S.wait(S.rule(s, "pomodoro")), S.decide(s, "pomodoro", third + 3 * HOUR - 1, GAP), S.decide(s, "pomodoro", third + 3 * HOUR, GAP)], [2 * HOUR, "", "suggest"]);
-    // a yes in between: as often as before again
-    const yes = round(s, "pomodoro", third + 3 * HOUR, "yes");
-    check("a yes ends the row", [S.rule(yes, "pomodoro").laterRow, S.wait(S.rule(yes, "pomodoro"))], [0, 0]);
-});
+// ---- what was decided long ago counts less
+const old = many(S.empty(), "call", WD, "no", 2, monday, DAY);
+check("ninety days later the noes have faded: it asks again", [conf(old, "call", WD, monday + 2 * DAY), conf(old, "call", WD, monday + 92 * DAY) > 35, st(old, "call", WD, monday + 92 * DAY)], [20, true, "ask"]);
+const longHalf = S.tuning("balanced", 0, 0, 365);
+check("with a longer half-life they have not", st(old, "call", WD, monday + 92 * DAY, longHalf), "silent");
 
-test("no answer counts like \"not now\"; five in a row switch the rule off, said once", () => {
-    let s = S.empty(), at = T0, result = null;
-    for (let i = 1; i <= 5; ++i) {
-        check("round " + i + " is asked", S.decide(s, "headphones", at, GAP), "suggest");
-        result = S.answer(S.shown(s, "headphones", at), "headphones", i % 2 ? "timeout" : "later");
-        s = result.state;
-        if (i < 5) check("round " + i + ": still on, nothing said", [S.rule(s, "headphones").mode, result.notice], ["suggest", false]);
-        at += 4 * HOUR;
-    }
-    check("the fifth: off, and it is said", [S.rule(s, "headphones").mode, S.rule(s, "headphones").why, result.notice], ["off", "ignored", true]);
-    check("not suggested any more", S.decide(s, "headphones", at + 100 * HOUR, GAP), "");
-    // switched on in the settings and ignored five times again: said again (it was switched on on purpose)
-    s = S.setMode(s, "headphones", "suggest");
-    check("on again, with a clean slate", [S.rule(s, "headphones").laterRow, S.decide(s, "headphones", at, GAP)], [0, "suggest"]);
-    for (let i = 1; i <= 5; ++i) { result = S.answer(S.shown(s, "headphones", at), "headphones", "timeout"); s = result.state; at += 4 * HOUR; }
-    check("off again, said again", [S.rule(s, "headphones").mode, result.notice], ["off", true]);
-});
+// ---- done by hand: learned without asking, and one question after four
+let hand = S.empty();
+const handSeen = [];
+for (let i = 0; i < 4; ++i) { hand = S.record(hand, "pomodoro", WD, "implicit", monday + i * DAY).state; handSeen.push(st(hand, "pomodoro", WD, monday + i * DAY)); }
+check("four times by hand: the offer", handSeen, ["ask", "ask", "ask", "offer"]);
+check("why", [S.why(hand, "pomodoro", WD, monday + 4 * DAY), S.why(s, "meeting", WD, monday + 5 * DAY), S.why(S.empty(), "meeting", WD, monday), S.why(s, "meeting", WE, saturday)],
+      [{ kind: "hand", n: 4 }, { kind: "answers", yes: 5, of: 5 }, { kind: "new" }, { kind: "similar", welcome: true }]);
+hand = S.automatic(hand, "pomodoro", WD, false, monday + 4 * DAY);
+check("asked once: not again, however often it is done by hand", st(many(hand, "pomodoro", WD, "implicit", 3, monday + 5 * DAY, DAY), "pomodoro", WD, monday + 9 * DAY), "ask");
 
-test("three times yes in a row: asked once whether to do it automatically", () => {
-    let s = S.empty(), at = T0, result = null;
-    for (let i = 1; i <= 3; ++i) {
-        result = S.answer(S.shown(s, "meeting", at), "meeting", "yes");
-        s = result.state;
-        check("yes " + i + ": offer", result.offer, i === 3);
-        at += HOUR;
-    }
-    check("counted", [S.rule(s, "meeting").yes, S.rule(s, "meeting").yesRow, S.rule(s, "meeting").asked], [3, 3, 1]);
-    // declined: it keeps asking, and the offer is not made again
-    let no = S.automatic(s, "meeting", false);
-    check("declined: still asks", [S.rule(no, "meeting").mode, S.decide(no, "meeting", at, GAP)], ["suggest", "suggest"]);
-    for (let i = 0; i < 4; ++i) { result = S.answer(S.shown(no, "meeting", at), "meeting", "yes"); no = result.state; at += HOUR; check("no second offer", result.offer, false); }
-    // accepted: automatic
-    const yes = S.automatic(s, "meeting", true);
-    check("accepted: automatic", [S.rule(yes, "meeting").mode, S.decide(yes, "meeting", at, GAP)], ["auto", "auto"]);
-    check("automatic does not wait for the pause between suggestions", S.decide(S.shown(yes, "battery", at), "meeting", at + 1000, GAP), "auto");
-    check("automatic after a restart", S.decide(S.parse(S.text(yes)), "meeting", at + 24 * HOUR, GAP), "auto");
-    // a "not now" between the yeses starts the row again
-    let mixed = S.empty();
-    for (const what of ["yes", "yes", "later", "yes", "yes"]) { result = S.answer(S.shown(mixed, "call", at), "call", what); mixed = result.state; at += HOUR; }
-    check("yes, yes, not now, yes, yes: no offer yet", [result.offer, S.rule(mixed, "call").yesRow], [false, 2]);
-    check("the third in a row", S.answer(S.shown(mixed, "call", at), "call", "yes").offer, true);
-});
+// ---- undo: asks again there; a second undo closes the rule there
+let u = S.record(auto, "meeting", WD, "auto", monday + 7 * DAY).state;
+let r1 = S.record(u, "meeting", WD, "undo", monday + 7 * DAY);
+check("undone once: it asks again, and is noted in the log", [r1.closed, st(r1.state, "meeting", WD, monday + 8 * DAY), r1.state.log.map(l => l.undone)], [false, "ask", [1]]);
+u = S.record(r1.state, "meeting", WD, "always", monday + 8 * DAY).state;
+u = S.record(u, "meeting", WD, "auto", monday + 9 * DAY).state;
+const r2 = S.record(u, "meeting", WD, "undo", monday + 9 * DAY);
+check("undone twice: closed there, open elsewhere", [r2.closed, st(r2.state, "meeting", WD, monday + 10 * DAY), st(r2.state, "meeting", WE, saturday + 7 * DAY)], [true, "off", "ask"]);
+check("switched on again in the settings: open again", st(S.setMode(S.setMode(r2.state, "meeting", "off"), "meeting", "learn"), "meeting", WD, monday + 10 * DAY) !== "off", true);
 
-test("undo puts an automatic rule back to asking", () => {
-    let s = S.empty(), at = T0;
-    for (let i = 0; i < 3; ++i) { s = round(s, "recording", at, "yes"); at += HOUR; }
-    s = S.automatic(s, "recording", true);
-    check("automatic", S.decide(s, "recording", at, GAP), "auto");
-    s = S.undone(s, "recording");
-    check("asks again", [S.rule(s, "recording").mode, S.decide(s, "recording", at + HOUR, GAP)], ["suggest", "suggest"]);
-    check("and is not offered again by itself", S.answer(S.shown(s, "recording", at + HOUR), "recording", "yes").offer, false);
-    check("undoing what was not automatic changes nothing", S.undone(S.empty(), "recording"), S.empty());
-});
+// ---- the settings' modes, forgetting
+check("modes", [st(S.setMode(s, "meeting", "ask"), "meeting", WD, monday + 5 * DAY), st(S.setMode(S.empty(), "call", "auto"), "call", WD, monday), st(S.setMode(s, "meeting", "off"), "meeting", WD, monday),
+                S.rule(S.never(s, "meeting"), "meeting").why, st(S.setMode(S.empty(), "headphones", "learn"), "headphones", WD, monday)], ["ask", "auto", "off", "never", "ask"]);
+check("a context forgotten, a rule reset", [conf(S.forget(w, "meeting", WE), "meeting", WE, saturday + DAY) > 50, S.contexts(w, "meeting", saturday + DAY).map(c => c.ctx + ":" + c.status), S.reset(w, "meeting").events.length],
+      [true, ["wd|noon:offer", "we|noon:silent"], 0]);
 
-test("the settings: mode per rule, forget one rule, forget all", () => {
-    let s = S.empty(), at = T0;
-    s = S.setMode(s, "battery", "auto");
-    check("automatic by hand", S.decide(s, "battery", at, GAP), "auto");
-    s = S.setMode(s, "battery", "off");
-    check("off by hand", [S.decide(s, "battery", at, GAP), S.rule(s, "battery").why], ["", "settings"]);
-    check("the same mode again changes nothing", S.setMode(s, "battery", "off"), s);
-    check("an unknown mode changes nothing", S.setMode(s, "battery", "sometimes"), s);
-    for (let i = 0; i < 4; ++i) { s = round(s, "call", at, "later"); at += 4 * HOUR; }
-    check("learned", [S.rule(s, "call").laterRow, S.wait(S.rule(s, "call"))], [4, 2 * HOUR]);
-    s = S.reset(s, "call");
-    check("forgotten", [S.rule(s, "call"), S.rule(s, "battery").mode], [S.fresh(), "off"]);
-    check("forgetting what was never learned changes nothing", S.reset(s, "meeting"), s);
-});
+// ---- cards a day, the last week
+let busy = S.empty();
+for (let i = 0; i < 4; ++i) busy = S.record(busy, "call", WD, "shown", monday + i * HOUR).state;
+busy = S.record(S.record(busy, "call", WD, "yes", monday).state, "call", WD, "auto", monday - 8 * DAY).state;
+check("cards today, the last seven days", [S.cardsToday(busy, monday + 5 * HOUR), S.cardsToday(busy, monday + DAY), S.week(busy, monday + DAY)], [4, 0, { shown: 4, accepted: 1, automatic: 0 }]);
+check("the levels", [S.tuning("quiet", 0, 0, 0).dailyCards, S.tuning("active", 0, 0, 0).cooldown / MIN, S.tuning("nonsense", 4, 45, 10), st(many(S.empty(), "call", WD, "no", 1, monday, DAY), "call", WD, monday, S.tuning("quiet", 0, 0, 0))],
+      [2, 10, { silentBelow: 0.25, dailyCards: 4, cooldown: 45 * MIN, halfLife: 10 * DAY }, "silent"]);
 
-test("what is stored", () => {
-    let s = S.empty(), at = T0;
-    for (const what of ["yes", "later", "timeout"]) { s = round(s, "meeting", at, what); at += HOUR; }
-    s = round(s, "call", at, "never");
-    const stored = S.text(s);
-    check("read back the same", S.parse(stored), s);
-    check("small", stored.length < 400, true);
-    check("a record per rule", S.parse(stored).rules.meeting, { mode: "suggest", why: "", yes: 1, later: 2, yesRow: 0, laterRow: 2, last: T0 + 2 * HOUR, asked: 0, told: 0 });
-    check("a broken text is an empty record", [S.parse("{nope"), S.parse(""), S.parse("[]")], [S.empty(), S.empty(), S.empty()]);
-    check("unknown rules and odd values are left out",
-          S.parse(JSON.stringify({ last: "x", rules: { spy: { mode: "auto" }, meeting: { mode: "always", yes: -3, later: "2", why: "because" } } })),
-          { v: 1, last: 0, rules: { meeting: { mode: "suggest", why: "", yes: 0, later: 2, yesRow: 0, laterRow: 0, last: 0, asked: 0, told: 0 } } });
-    check("nothing is changed in place", S.text(S.empty()), '{"v":1,"last":0,"rules":{}}');
-});
+// ---- kept small: old signals become sums, what they taught stays
+let big = S.empty();
+for (let i = 0; i < 260; ++i) big = S.record(big, i % 2 ? "meeting" : "call", WD, i % 5 === 0 ? "no" : "yes", monday + i * HOUR).state;
+check("at most 200 signals; the rest folded", [big.events.length, Object.keys(big.folded).sort(), big.folded.call[WD].n > 0, conf(big, "meeting", WD, monday + 261 * HOUR) > 60, S.text(big).length < 16000], [200, ["call", "meeting"], true, true, true]);
+let logged = S.empty();
+for (let i = 0; i < 60; ++i) logged = S.record(logged, "call", WD, "auto", monday + i * MIN).state;
+check("the log keeps the last 50", logged.log.length, 50);
+
+// ---- the first version's data: nothing is lost
+const v1 = JSON.stringify({ v: 1, last: monday, rules: { meeting: { mode: "auto", why: "", yes: 7, later: 1, yesRow: 4, laterRow: 0, last: monday, asked: 1, told: 0 },
+                                                         call: { mode: "off", why: "never", yes: 0, later: 2, yesRow: 0, laterRow: 2, last: monday, asked: 0, told: 0 },
+                                                         recording: { mode: "suggest", why: "", yes: 3, later: 0, yesRow: 3, laterRow: 0, last: monday, asked: 0, told: 0 },
+                                                         battery: { mode: "off", why: "ignored", yes: 0, later: 5, yesRow: 0, laterRow: 5, last: monday, asked: 0, told: 1 } } });
+const m = S.parse(v1);
+check("migrated: the modes", [m.v, st(m, "meeting", WD, monday), S.rule(m, "call").why, S.rule(m, "battery").why, st(m, "recording", WD, monday)], [2, "auto", "never", "ignored", "ask"]);
+check("migrated: the answers, as what is known of the rule in general", [conf(m, "recording", WD, monday), conf(m, "recording", WE, saturday) > 70, typeof m.legacy, S.parse(S.text(m)).folded.meeting["*"].n], [80, true, "string", 7]);
+check("round trip, nonsense, a future version's fields", [S.text(S.parse(S.text(w))) === S.text(w), S.parse("{{").v, S.parse(JSON.stringify({ v: 2, rules: { bogus: {}, call: { mode: "x", closed: { a: 1 } } }, events: [{ r: "bogus", s: "yes" }, { r: "call", s: "zap" }] })).events.length], [true, 2, 0]);
 
 console.log(failed === 0 ? `${checked} checks passed` : `${failed} of ${checked} checks FAILED`);
 process.exit(failed > 0 ? 1 : 0);

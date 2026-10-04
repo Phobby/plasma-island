@@ -1,8 +1,10 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
     An event that asks something: its icon, one sentence, and the event's
-    buttons under it ("Yes · Not now · Never suggest this"). A button answers;
-    the cross or a middle click closes it without an answer.
+    buttons under it ("Yes · Always · No", and behind "⋯" those marked `more`).
+    Several things for one moment are ticks (`checks`), each switched by
+    itself. A button answers; the cross or a middle click closes it without
+    an answer.
 */
 import QtQuick
 import QtQuick.Layouts
@@ -14,11 +16,16 @@ Item {
     property var event: null
     readonly property var buttons: event !== null && Array.isArray(event.buttons) ? event.buttons : []
     readonly property color accent: event?.color ?? theme.text
+    readonly property var checks: event !== null && Array.isArray(event.checks) ? event.checks : []
+    readonly property bool hasMore: buttons.some(b => b.more === true)
+    property bool more: false
+    // counts the ticks' changes (they are plain objects of the event)
+    property int ticked: 0
 
     signal chosen(int index)
     signal dismissed()
 
-    onEventChanged: if (event) appear.restart()
+    onEventChanged: { more = false; if (event) appear.restart(); }
     ParallelAnimation {
         id: appear
         NumberAnimation { target: content; property: "opacity"; from: 0; to: 1; duration: 220; easing.type: Easing.OutCubic }
@@ -89,6 +96,27 @@ Item {
         }
         RowLayout {
             Layout.fillWidth: true
+            visible: banner.checks.length > 0
+            spacing: 6
+            Repeater {
+                model: banner.checks.length
+                delegate: PillButton {
+                    required property int index
+                    readonly property var check: banner.checks[index] ?? null
+                    readonly property bool on: banner.ticked >= 0 && check !== null && check.checked === true
+                    objectName: "suggestionCheck"
+                    theme: banner.theme
+                    implicitHeight: 22
+                    primary: on
+                    tint: banner.theme.control
+                    text: (on ? "☑ " : "☐ ") + (check !== null ? check.text : "")
+                    onClicked: { check.checked = !check.checked; ++banner.ticked; }
+                }
+            }
+            Item { Layout.fillWidth: true }
+        }
+        RowLayout {
+            Layout.fillWidth: true
             spacing: 6
             Item { Layout.fillWidth: true }
             Repeater {
@@ -96,6 +124,7 @@ Item {
                 delegate: PillButton {
                     required property int index
                     readonly property var button: banner.buttons[index] ?? null
+                    visible: button !== null && (button.more === true) === banner.more
                     theme: banner.theme
                     implicitHeight: 24
                     primary: button !== null && button.primary === true
@@ -103,6 +132,15 @@ Item {
                     text: button !== null ? button.text : ""
                     onClicked: banner.chosen(index)
                 }
+            }
+            PillButton {
+                objectName: "suggestionMore"
+                visible: banner.hasMore
+                theme: banner.theme
+                implicitHeight: 24
+                tint: banner.theme.control
+                text: banner.more ? "‹" : "⋯"
+                onClicked: banner.more = !banner.more
             }
         }
     }

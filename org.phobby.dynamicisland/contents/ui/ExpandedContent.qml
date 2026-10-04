@@ -28,6 +28,8 @@ Item {
     signal systemMetricClicked(string key)
     // The gear in the header: the widget's settings.
     signal settingsRequested()
+    // Suggestions that wait quietly (SuggestionProvider), shown as one line under the pages.
+    property var suggestions: null
     // Dot mode (Island.qml): a button that shrinks the island to its dot.
     property bool dotMode: false
     signal shrinkRequested()
@@ -404,6 +406,13 @@ Item {
                     }
                 }
             }
+        }
+
+        SuggestionStrip {
+            objectName: "suggestionStrip"
+            Layout.fillWidth: true
+            theme: expanded.theme
+            source: expanded.suggestions
         }
 
         // Page dots

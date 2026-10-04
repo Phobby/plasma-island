@@ -200,6 +200,11 @@
       <min>1</min>
       <max>240</max>
     </entry>
+    <!-- "quiet", "balanced", "active"; the three numbers: 0 = what the level says -->
+    <entry name="suggestionLevel" type="String"><default>balanced</default></entry>
+    <entry name="suggestionDailyCards" type="Int"><default>0</default></entry>
+    <entry name="suggestionCooldownMinutes" type="Int"><default>0</default></entry>
+    <entry name="suggestionHalfLifeDays" type="Int"><default>0</default></entry>
     <entry name="suggestionsAvailable" type="String"><default></default></entry>
     <entry name="suggestionsData" type="String"><default></default></entry>
 

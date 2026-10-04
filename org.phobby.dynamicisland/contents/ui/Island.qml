@@ -60,6 +60,9 @@ Item {
     // A page that takes dropped files (the Cloud tab): files dragged onto the small island open it there,
     // so that they can be dropped on the page. "" = the small island takes no drops.
     property string dropPage: ""
+    // SuggestionProvider: what waits quietly is shown in the open island, and marked on the pill.
+    property var suggestions: null
+    readonly property bool suggestionHint: suggestions !== null && suggestions.hint
     function filesOver(): void { if (dropPage.length > 0 && !expanded) openPage(dropPage); }
 
     // ---- dot mode ---------------------------------------------------------------
@@ -104,11 +107,11 @@ Item {
     readonly property color dotColor: manager.indicators.length > 0 ? manager.indicators[0].color
                                     : primary !== null && primary.category === "recording" ? theme.danger
                                     : dotEvents !== 2 && manager.waitingCritical ? "#ffd60a"
-                                    : dotEvents !== 2 && manager.waiting > 0 ? theme.accent
+                                    : dotEvents !== 2 && (manager.waiting > 0 || suggestionHint) ? theme.accent
                                     : dotEvents !== 2 && primary !== null ? theme.accent
                                     : "transparent"
     // A running live activity pulses.
-    readonly property bool dotPulse: mode === "dot" && dotEvents !== 2 && primary !== null
+    readonly property bool dotPulse: mode === "dot" && dotEvents !== 2 && (primary !== null || suggestionHint)
     Binding { target: island.manager; property: "quiet"; value: island.dot && island.dotEvents !== 1 }
     Binding { target: island.manager; property: "quietCritical"; value: island.dotCriticalExpand }
 
@@ -581,6 +584,7 @@ Item {
                 onSettingsRequested: island.settingsRequested()
                 dotMode: island.dotMode
                 onShrinkRequested: island.shrink()
+                suggestions: island.suggestions
                 ambientGlow: island.ambientGlow
                 onAmbientGlowToggled: island.ambientGlowToggled()
             }
@@ -713,6 +717,25 @@ Item {
         x: island.bubbleRect.x; y: island.bubbleRect.y; width: island.bubbleRect.width; height: island.bubbleRect.height
         radius: Math.min(width, height) / 2
         color: "transparent"; border.width: 1; border.color: "red"; z: 100
+    }
+
+    // A suggestion waits: a small mark on the pill's corner (the dot pulses instead).
+    Rectangle {
+        objectName: "suggestionHint"
+        visible: island.suggestionHint && (island.mode === "idle" || island.mode === "live" || island.mode === "split")
+        width: 7; height: 7; radius: 3.5
+        x: surface.x + surface.width - 9
+        y: surface.y + 1
+        color: island.theme.accent
+        border.width: 1
+        border.color: island.theme.surface
+        z: 6
+        SequentialAnimation on opacity {
+            running: parent.visible
+            loops: 3
+            NumberAnimation { to: 0.3; duration: 500; easing.type: Easing.InOutSine }
+            NumberAnimation { to: 1; duration: 500; easing.type: Easing.InOutSine }
+        }
     }
 
     // ---- privacy dots (mic = orange, camera = green, screen = red) --------------
