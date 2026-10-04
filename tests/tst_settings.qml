@@ -21,6 +21,7 @@ Item {
     Loader { id: notes; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configNotes.qml" }
     Loader { id: layout; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configLayout.qml" }
     Loader { id: ai; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configAi.qml" }
+    Loader { id: cloud; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configCloud.qml" }
     PageCatalog { id: pages }
     QtObject { id: stored; property string suggestionsData: ""; property string suggestionsAvailable: "" }
 
@@ -134,7 +135,7 @@ Item {
             compare(pages.pages.find(p => p.key === "ai").config, "showAi");
             // an order saved before the tab existed: it takes its place after Notes
             compare(pages.normalize("media,control,notes,clipboard,devices").join(","),
-                    "activities,media,control,weather,notifications,quicksettings,apps,tools,habits,calendar,notes,ai,clipboard,devices");
+                    "activities,media,control,weather,notifications,quicksettings,apps,tools,habits,calendar,notes,ai,cloud,clipboard,devices");
             // and where the user put it, it stays
             const moved = pages.normalize("ai,media,notes");
             verify(moved.indexOf("ai") < moved.indexOf("media") && moved.indexOf("media") < moved.indexOf("notes"), moved.join(","));
@@ -185,6 +186,34 @@ Item {
             let note = null;
             (function walk(item) { if (item.objectName === "claudeCodeNote") note = item; for (const c of item.children) walk(c); })(page);
             verify(note !== null && note.text.indexOf("tools are off, text answers only") > 0 && note.text.indexOf("cannot be changed") > 0);
+            wait(100);
+        }
+
+        function test_cloud_tab_clouds_and_limits() {
+            compare(pages.pages.find(p => p.key === "cloud").config, "showCloud");
+            verify(pages.normalize("media,notes,clipboard").join(",").indexOf("notes,ai,cloud,clipboard") > 0, "its place among the tabs");
+            if (cloud.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = cloud.item;
+            compare([page.cfg_showCloud, layout.status === Loader.Ready ? layout.item.cfg_showCloud : false], [false, false], "off until the user switches it on");
+            // a cloud hidden, and given a name of one's own
+            page.remotes = [{ name: "drive", type: "drive" }, { name: "db", type: "dropbox" }];
+            page.setHidden("drive", true); page.setHidden("db", true); page.setHidden("drive", false);
+            compare(JSON.parse(page.cfg_cloudHidden), ["db"]);
+            page.setAlias("drive", "  Work  "); page.setAlias("db", "db");
+            compare(JSON.parse(page.cfg_cloudAliases), { drive: "Work" });
+            page.setAlias("drive", "");
+            compare(page.cfg_cloudAliases, "{}");
+            // where sync state comes from is said, and that it is unknown when nothing says it
+            page.clients = { dropbox: false, syncthing: false };
+            compare([page.syncSource(page.remotes[0]), page.syncSource(page.remotes[1])], ["", ""]);
+            page.clients = { dropbox: true, syncthing: false };
+            compare([page.syncSource(page.remotes[0]), page.syncSource(page.remotes[1])], ["", "Dropbox"]);
+            // the limits stay within their bounds
+            page.cfg_cloudWarnPercent = 5; page.cfg_cloudCacheMB = 1; page.cfg_cloudAlertPauseHours = 9999;
+            compare([page.cfg_cloudWarnPercent, page.cfg_cloudCacheMB, page.cfg_cloudAlertPauseHours], [50, 50, 168]);
+            let how = null;
+            (function walk(item) { if (item.objectName === "howTo") how = item; for (const c of item.children) walk(c); })(page);
+            verify(how !== null && how.text.indexOf("rclone config reconnect NAME:") > 0 && how.text.indexOf("https://rclone.org/install.sh") > 0);
             wait(100);
         }
 

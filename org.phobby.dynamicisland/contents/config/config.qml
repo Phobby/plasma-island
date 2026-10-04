@@ -54,6 +54,11 @@ ConfigModel {
         source: "configAi.qml"
     }
     ConfigCategory {
+        name: Lang.i18n("Cloud")
+        icon: "folder-cloud"
+        source: "configCloud.qml"
+    }
+    ConfigCategory {
         name: Lang.i18n("Tools")
         icon: "chronometer"
         source: "configTools.qml"
