@@ -787,6 +787,7 @@ PlasmoidItem {
                 showVolumeModule: root.cfg.showVolumeModule
                 showNotificationModule: root.cfg.showNotificationModule
                 pageOrder: root.cfg.pageOrder
+                debugRegion: root.debugRegion
                 dropPage: root.cfg.showCloud && root.cloudBackend !== null ? "cloud" : ""
                 ambientGlow: root.cfg.ambientGlow
                 onAmbientGlowToggled: root.cfg.ambientGlow = !root.cfg.ambientGlow
@@ -828,6 +829,27 @@ PlasmoidItem {
             }
         }
     }
+
+    // ---- where the island takes the pointer ------------------------------------------
+    // The window is larger than what is drawn (room for the shadow, the morph, the larger
+    // states). Only the island's own shape takes the pointer; the rest of the window lets a
+    // click through to what is underneath. Follows the shape while it morphs.
+    Loader {
+        id: mask
+        source: "MaskBridge.qml"
+        onLoaded: {
+            item.window = dialog;
+            const scaled = r => Qt.rect(r.x * theme.scale, r.y * theme.scale, r.width * theme.scale, r.height * theme.scale);
+            item.region = Qt.binding(() => scaled(island.hitRect));
+            item.radius = Qt.binding(() => island.hitRadius * theme.scale);
+            item.region2 = Qt.binding(() => scaled(island.bubbleRect));
+            item.enabled = true;
+        }
+        onStatusChanged: if (status === Loader.Error) {
+            console.info("org.phobby.dynamicisland: native module too old to shape where the island takes the pointer; run install.sh again");
+        }
+    }
+    readonly property bool debugRegion: root.cfg.debugInputRegion || (mask.item !== null && mask.item.debug)
 
     // ---- optional native blur -------------------------------------------------
     // BlurBridge.qml imports the native module; if it is not installed the

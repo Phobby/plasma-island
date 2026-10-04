@@ -114,6 +114,11 @@ Item {
     // Geometry of the glass surfaces in window coordinates (for the blur region).
     readonly property rect surfaceRect: Qt.rect(surface.x, surface.y, surface.width, surface.height)
     readonly property real surfaceRadius: surface.radius
+    // Where the island takes the pointer: its shape (see main.qml, native/windowmask.h).
+    readonly property rect hitRect: surfaceRect
+    readonly property real hitRadius: surfaceRadius
+    // Draws that region's outline (a hidden setting, or DYNAMICISLAND_DEBUG_REGION).
+    property bool debugRegion: false
     readonly property rect bubbleRect: bubble.opacity > 0.05 ? Qt.rect(bubble.x, bubble.y, bubble.width, bubble.height) : Qt.rect(0, 0, 0, 0)
 
     Binding { target: island.manager; property: "holdEvents"; value: island.expanded }
@@ -495,6 +500,20 @@ Item {
                 function onSecondaryChanged() { if (island.secondary) bubbleView.lastActivity = island.secondary; }
             }
         }
+    }
+
+    // the pointer region, outlined (for looking at it)
+    Rectangle {
+        visible: island.debugRegion
+        x: island.hitRect.x; y: island.hitRect.y; width: island.hitRect.width; height: island.hitRect.height
+        radius: Math.min(island.hitRadius, Math.min(width, height) / 2)
+        color: "transparent"; border.width: 1; border.color: "red"; z: 100
+    }
+    Rectangle {
+        visible: island.debugRegion && island.bubbleRect.width > 0
+        x: island.bubbleRect.x; y: island.bubbleRect.y; width: island.bubbleRect.width; height: island.bubbleRect.height
+        radius: Math.min(width, height) / 2
+        color: "transparent"; border.width: 1; border.color: "red"; z: 100
     }
 
     // ---- privacy dots (mic = orange, camera = green, screen = red) --------------

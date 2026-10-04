@@ -24,7 +24,7 @@ qt_add_qml_module(dynamicislandeffects
     PLUGIN_TARGET dynamicislandeffects
     NO_GENERATE_PLUGIN_SOURCE
     CLASS_NAME DynamicIslandEffectsPlugin
-    SOURCES windowblur.h windowblur.cpp plugin.cpp
+    SOURCES windowblur.h windowblur.cpp windowmask.h windowmask.cpp plugin.cpp
     OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml/org/phobby/dynamicisland/effects
 )
 

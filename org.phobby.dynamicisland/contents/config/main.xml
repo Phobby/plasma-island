@@ -234,6 +234,10 @@
     <entry name="cloudAlerted" type="String"><default>{}</default></entry>
     <entry name="cloudLastTarget" type="String"><default></default></entry>
 
+    <!-- Not in the settings window: draws the outline of where the island takes the pointer (also with
+         the environment variable DYNAMICISLAND_DEBUG_REGION) -->
+    <entry name="debugInputRegion" type="Bool"><default>false</default></entry>
+
     <!-- Modules -->
     <entry name="showMediaModule" type="Bool">
       <default>true</default>
