@@ -178,6 +178,16 @@ switched off ("At least one tab has to stay on"). *Modules*: the parts inside
 a page that can be switched (the volume slider in Controls).
 **Weather** tab: the place (search by name, or forget it), the units and the
 alert; see "Weather" below.
+**Suggestions** tab: on/off, the least pause between two suggestions (5
+minutes), and every rule with its switch, its mode (asks / automatic), what
+it has learned so far and "forget" for it; "Forget everything that was
+learned" (asks first). A rule this system cannot make says so. What is
+changed there holds at once; see "Suggestions" below.
+**Notes** tab: the connected apps, where quick notes go, how often they are
+fetched, and "Carry on in the note that was being edited" (on by default).
+**Appearance** tab: besides the look itself, "Add New…" (a theme from a file
+or from the store), "Export Theme…" and the gradient controls; see
+"Appearance" below.
 **Habits** tab: the permanent habits (rename, delete, drag into order), the
 time of the evening review, its reminder on/off, the calendar's colours
 (GitHub green / the system's accent colour, also in Appearance) and "Reset
@@ -373,6 +383,16 @@ jobs are **not shown** in this mode (the message `Failed to register
 Notification service on DBus` is normal). Try those in the real environment
 (with the widget added in plasmashell).
 
+`tools/run-tests` runs every check that needs no running island: the texts
+(`tools/i18n-check --strict`), the theme catalog and the weather pictures,
+the rules written in JavaScript under node (habits, theme files, weather
+data, suggestions) and the QML tests in `tests/` under `qmltestrunner`, off
+screen: providers and pages with stand-ins for what they watch, the settings
+pages as they are, the theme store and the weather against answers served on
+127.0.0.1. No test reads or changes the system's clock: what depends on time
+takes the day or the moment as an argument. Tests that need the native
+module use the one in `native/build` and are skipped without it.
+
 ### Testing module by module
 
 | Module | How to trigger it |
@@ -394,6 +414,10 @@ Notification service on DBus` is normal). Try those in the real environment
 | File job | Copy a large file with Dolphin or extract an archive with `ark --batch` (`kioclient` does not use the job tracker and is not shown) |
 | Download | Download a large file in a browser (Flatpak/Snap browsers only show size and speed) |
 | Timer etc. | Expanded → Tools page (a 1-minute timer is the quickest test) |
+| Weather | Expanded → Weather page: "Choose a Location", type a city, pick it; hover a day, click it for its hours, the arrow goes back. Settings → Weather: units |
+| Notes, carrying on | Open a note on the Notes page, move the pointer away so the island closes, open it again: the same note's editor. Lock a note in BetterNotes: "Open in BetterNotes" instead of its text |
+| Themes | Settings → Appearance → Custom: a gradient under Fine tuning; "Export Theme…", then "Add New…" → From a File with that file. The store needs its address first (see "Themes: files and the store") |
+| Suggestions | Start a screen recording (Spectacle, OBS): the question with its three answers. Settings → Suggestions shows what each rule learned |
 | Habits | Expanded → Habits page: add habits, tick some; set the review time in Settings → Habits to a minute from now for the evening question. Its rules are checked without the clock: `tools/habits-test` |
 | Clipboard | Copy a text, a piece of code and an image (e.g. a Spectacle screenshot); they appear on the Clipboard page, a click copies one again |
 | Notes | Start Joplin, enable its Web Clipper service, paste the token on the island's Notes page; add a quick note and check that it appears in Joplin |
@@ -654,7 +678,8 @@ local service answers) and offers the ones it finds first.
 - Tokens are stored in KDE Wallet (folder "Dynamic Island"), never in the
   configuration file, and are deleted when an app is disconnected.
 - Settings → Notes: connected apps (disconnect), the default app for quick
-  notes, how often notes are fetched (2 minutes by default).
+  notes, how often notes are fetched (2 minutes by default), and whether the
+  page carries on in the note that was being edited (on by default).
 
 Not supported: **Standard Notes** (its notes are end-to-end encrypted; reading
 them needs Argon2id and XChaCha20-Poly1305, i.e. libsodium, which the native

@@ -16,19 +16,19 @@ QtObject {
 
     property var local: null                // LocalTools (LocalBridge.qml), or null
     property var cfg: null                  // the widget's settings (suggestionsData)
-    readonly property bool inFile: local !== null && typeof local.writeTextFile === "function"
+    readonly property bool inFile: !!local && typeof local.writeTextFile === "function"
     // Tests point this somewhere else.
-    property string path: local !== null ? local.dataHome() + "/dynamicisland/suggestions.json" : ""
+    property string path: inFile ? local.dataHome() + "/dynamicisland/suggestions.json" : ""
     // Counts the writes made here (bindings that show the learning follow it).
     property int revision: 0
 
     function read(): var {
-        return Suggestions.parse(inFile ? local.readTextFile(path, 65536) : cfg !== null ? String(cfg.suggestionsData || "") : "");
+        return Suggestions.parse(inFile ? local.readTextFile(path, 65536) : cfg ? String(cfg.suggestionsData || "") : "");
     }
     function write(state: var): void {
         const text = Suggestions.text(state);
         if (inFile) local.writeTextFile(path, text);
-        else if (cfg !== null && cfg.suggestionsData !== text) cfg.suggestionsData = text;
+        else if (cfg && cfg.suggestionsData !== text) cfg.suggestionsData = text;
         ++revision;
     }
 }

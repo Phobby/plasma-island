@@ -1,8 +1,9 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
-    Notes: the connected notes apps, where quick notes go and how often the
-    notes are fetched. Apps are connected on the island's Notes page; their
-    tokens are kept in KDE Wallet and removed when an app is disconnected.
+    Notes: the connected notes apps, where quick notes go, how often the
+    notes are fetched, and whether the page carries on in the note that was
+    open. Apps are connected on the island's Notes page; their tokens are
+    kept in KDE Wallet and removed when an app is disconnected.
 */
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -18,6 +19,7 @@ KCM.SimpleKCM {
 
     property alias cfg_showNotes: enableCheck.checked
     property alias cfg_notesRefreshMinutes: refreshSpin.value
+    property alias cfg_notesResume: resumeCheck.checked
     property string cfg_notesSources: "[]"
     property string cfg_notesDefault: ""
 
@@ -59,6 +61,20 @@ KCM.SimpleKCM {
                 to: 60
                 textFromValue: value => Lang.i18np("every minute", "every %1 minutes", value)
                 valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 1
+            }
+            QQC2.CheckBox {
+                id: resumeCheck
+                Kirigami.FormData.label: Lang.i18n("When the page opens:")
+                enabled: enableCheck.checked
+                text: Lang.i18n("Carry on in the note that was being edited")
+            }
+            QQC2.Label {
+                Layout.fillWidth: true
+                Layout.maximumWidth: Kirigami.Units.gridUnit * 22
+                wrapMode: Text.Wrap
+                font: Kirigami.Theme.smallFont
+                opacity: 0.7
+                text: Lang.i18n("Also after the island closed or the shell restarted, with the unsaved draft. Only which note it was is remembered, never its text. A locked note is not opened here: it is offered to be opened in BetterNotes, which asks for the password itself.")
             }
         }
 

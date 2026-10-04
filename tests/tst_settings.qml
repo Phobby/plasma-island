@@ -8,6 +8,7 @@
 import QtQuick
 import QtTest
 import "../org.phobby.dynamicisland/contents/ui"
+import "../org.phobby.dynamicisland/contents/ui/Suggestions.js" as Suggestions
 
 Item {
     id: root
@@ -16,6 +17,9 @@ Item {
 
     Loader { id: appearance; anchors.fill: parent; source: "../org.phobby.dynamicisland/contents/ui/configAppearance.qml" }
     Loader { id: weather; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configWeather.qml" }
+    Loader { id: suggestions; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configSuggestions.qml" }
+    Loader { id: notes; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configNotes.qml" }
+    QtObject { id: stored; property string suggestionsData: ""; property string suggestionsAvailable: "" }
 
     TestCase {
         name: "Settings"
@@ -71,6 +75,55 @@ Item {
             page.cfg_weatherUnits = 1;
             compare(page.cfg_weatherUnits, 1);
             compare(page.weather.requests, 0);
+        }
+
+        function test_suggestions_rules_modes_and_forgetting() {
+            if (suggestions.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = suggestions.item, store = page.learnedStore;
+            // not the user's own file: what is learned goes to a stand-in for the settings here
+            store.local = null;
+            store.cfg = stored;
+            page.reload();
+            compare(page.learned, Suggestions.empty());
+            compare(page.status("meeting"), "Asks");
+            // what the island learned meanwhile
+            let s = Suggestions.empty();
+            const at = new Date(2026, 9, 5, 9, 0).getTime();
+            for (let i = 0; i < 3; ++i) s = Suggestions.answer(Suggestions.shown(s, "call", at + i * 600000), "call", "later").state;
+            s = Suggestions.answer(Suggestions.shown(s, "battery", at), "battery", "never").state;
+            for (let i = 0; i < 5; ++i) s = Suggestions.answer(Suggestions.shown(s, "headphones", at), "headphones", "timeout").state;
+            stored.suggestionsData = Suggestions.text(s);
+            page.reload();
+            compare(page.status("call"), "Asks, at most once in 1 hour · Yes: 0 · Not now or no answer: 3");
+            compare(page.status("battery"), "Off: you chose “Never suggest this”");
+            compare(page.status("headphones"), "Off: not answered five times in a row · Yes: 0 · Not now or no answer: 5");
+            // the rule's switch and mode
+            page.change(Suggestions.setMode(page.learned, "battery", "suggest"));
+            compare([page.status("battery"), Suggestions.parse(stored.suggestionsData).rules.battery.mode], ["Asks", "suggest"], "written at once");
+            page.change(Suggestions.setMode(page.learned, "meeting", "auto"));
+            compare(page.status("meeting"), "Automatic: done without asking, with an Undo");
+            page.change(Suggestions.setMode(page.learned, "meeting", "off"));
+            compare(page.status("meeting"), "Off");
+            // one rule forgotten, then all of them
+            page.change(Suggestions.reset(page.learned, "call"));
+            compare([page.status("call"), page.learned.rules.headphones.mode], ["Asks", "off"]);
+            page.change(Suggestions.empty());
+            compare(stored.suggestionsData, Suggestions.text(Suggestions.empty()));
+            for (const id of Suggestions.RULES) compare(page.status(id), "Asks", id);
+            // a rule this system cannot make says so
+            stored.suggestionsAvailable = "";
+            compare(page.available, Suggestions.RULES, "not known yet: all are offered");
+            compare([page.cfg_suggestionsEnabled !== undefined, page.cfg_suggestionGapMinutes !== undefined], [true, true]);
+            wait(100);
+        }
+
+        function test_notes_carry_on_switch() {
+            if (notes.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = notes.item;
+            page.cfg_notesResume = true;
+            compare(page.cfg_notesResume, true);
+            page.cfg_notesResume = false;
+            compare(page.cfg_notesResume, false);
         }
 
         // Export the look, reset the settings, bring the file back with "Add New…".

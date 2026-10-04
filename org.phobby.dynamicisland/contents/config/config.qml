@@ -59,6 +59,11 @@ ConfigModel {
         source: "configHabits.qml"
     }
     ConfigCategory {
+        name: Lang.i18n("Suggestions")
+        icon: "dialog-question"
+        source: "configSuggestions.qml"
+    }
+    ConfigCategory {
         name: Lang.i18n("Language")
         icon: "preferences-desktop-locale"
         source: "configLanguage.qml"
