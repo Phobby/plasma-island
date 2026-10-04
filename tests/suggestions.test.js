@@ -123,6 +123,9 @@ const v1 = JSON.stringify({ v: 1, last: monday, rules: { meeting: { mode: "auto"
 const m = S.parse(v1);
 check("migrated: the modes", [m.v, st(m, "meeting", WD, monday), S.rule(m, "call").why, S.rule(m, "battery").why, st(m, "recording", WD, monday)], [2, "auto", "never", "ignored", "ask"]);
 check("migrated: the answers, as what is known of the rule in general", [conf(m, "recording", WD, monday), conf(m, "recording", WE, saturday) > 70, typeof m.legacy, S.parse(S.text(m)).folded.meeting["*"].n], [80, true, "string", 7]);
+check("migrated: a rule that is experimental now stays off, with what it had learned", [S.rule(S.parse(JSON.stringify({ v: 1, last: 5, rules: { headphones: { mode: "suggest", yes: 0, later: 1, last: 5 } } })), "headphones").why,
+       S.parse(JSON.stringify({ v: 1, last: 5, rules: { headphones: { mode: "suggest", yes: 0, later: 1, last: 5 } } })).folded.headphones["*"].neg,
+       S.rule(S.parse(JSON.stringify({ v: 1, rules: { headphones: { mode: "auto", yes: 4 } } })), "headphones").mode], ["experimental", 0.4, "auto"]);
 check("round trip, nonsense, a future version's fields", [S.text(S.parse(S.text(w))) === S.text(w), S.parse("{{").v, S.parse(JSON.stringify({ v: 2, rules: { bogus: {}, call: { mode: "x", closed: { a: 1 } } }, events: [{ r: "bogus", s: "yes" }, { r: "call", s: "zap" }] })).events.length], [true, 2, 0]);
 
 console.log(failed === 0 ? `${checked} checks passed` : `${failed} of ${checked} checks FAILED`);

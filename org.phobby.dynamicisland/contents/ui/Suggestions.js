@@ -151,8 +151,9 @@ function migrate(given) {
         const g = given.rules && given.rules[id];
         if (!g || typeof g !== "object") continue;
         const r = fresh(id);
-        r.mode = g.mode === "auto" ? "auto" : g.mode === "off" ? "off" : "learn";
-        r.why = r.mode === "off" ? (g.why === "never" || g.why === "ignored" ? g.why : "settings") : "";
+        // (a rule that is experimental now stays off unless it was made automatic by the user)
+        r.mode = g.mode === "auto" ? "auto" : g.mode === "off" ? "off" : INFO[id].experimental ? "off" : "learn";
+        r.why = r.mode !== "off" ? "" : g.mode !== "off" ? "experimental" : g.why === "never" || g.why === "ignored" ? g.why : "settings";
         r.last = count(g.last);
         if (g.asked) r.offered["*"] = 1;
         out.rules[id] = r;
