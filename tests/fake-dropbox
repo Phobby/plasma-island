@@ -1,0 +1,6 @@
+#!/bin/sh
+# A stand-in for the Dropbox client's command, for tests/tst_cloud.qml:
+# `status` prints what tests/.run/fake-dropbox/status holds.
+here="$(cd "$(dirname "$0")" && pwd)"
+[ "$1" = "status" ] || exit 2
+cat "$here/.run/fake-dropbox/status" 2>/dev/null || echo "Dropbox isn't running!"

@@ -33,6 +33,8 @@ QtObject {
     property var suspendFn: null
     property var resumeFn: null
     property var cancelFn: null
+    // Starts the same transfer again; offered on its "Failed" event when it is set.
+    property var retryFn: null
 
     // "Zen - video.mp4" / "Pixel 7 → Computer: photo.jpg" / "USB DISK → Documents: report.pdf"
     readonly property string headline: target.length > 0

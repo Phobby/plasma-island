@@ -52,6 +52,8 @@ public:
     // run() in a directory of its own, made (for the owner only) when it is missing: for a command
     // that must never look at the directory the shell happens to be in.
     Q_INVOKABLE void runIn(const QString &directory, const QString &program, const QStringList &arguments, const QJSValue &callback);
+    // run() with a time limit of its own (milliseconds) instead of the usual 15 s: a cloud may answer slowly.
+    Q_INVOKABLE void runFor(int milliseconds, const QString &program, const QStringList &arguments, const QJSValue &callback);
     // Rows of a SELECT on an SQLite file opened read-only, as a list of { column: value }.
     // An empty list also means "could not be read".
     Q_INVOKABLE QVariantList sqliteQuery(const QString &databasePath, const QString &sql) const;
@@ -64,7 +66,8 @@ Q_SIGNALS:
     void pathChanged();
 
 private:
-    void start(const QString &program, const QStringList &arguments, const QByteArray *input, const QJSValue &callback, const QString &directory = QString());
+    void start(const QString &program, const QStringList &arguments, const QByteArray *input, const QJSValue &callback, const QString &directory = QString(),
+               int milliseconds = 15000);
     bool write(const QString &path, const QString &text, bool ownerOnly) const;
 
     QFileSystemWatcher m_watcher;

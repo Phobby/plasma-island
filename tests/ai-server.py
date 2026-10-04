@@ -18,6 +18,12 @@
 #   /anthropic/v1/models, …/v1/messages  the Anthropic API, streamed
 #   /pixel.png                           a picture nobody should ever fetch
 #
+# And for the Cloud tab (tests/tst_cloud.qml):
+#   PROPFIND /dav401/…                   a WebDAV server whose sign-in has run out
+#   /st-<scene>/rest/…                   Syncthing's interface: synced, syncing,
+#                                        paused or error; with --key it wants
+#                                        that key as X-API-Key
+#
 # What a chat request gets is chosen by its model:
 #   tiny-1, claude-test-1  "REPLY[n]: <the last message>" in pieces (n = the
 #                          number of messages sent, the system one not counted)
@@ -128,6 +134,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if path == "/__quit":
             self.answer(204, b"")
             threading.Thread(target=self.server.shutdown, daemon=True).start()
+        elif path.startswith("/st-"):
+            self.syncthing(path)
         elif path == "/pixel.png":
             self.answer(200, b"\x89PNG\r\n\x1a\n", "image/png")
         elif path == "/v1/models":
@@ -144,6 +152,28 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self.answer(200, {"data": data, "has_more": False, "first_id": data[0]["id"], "last_id": data[-1]["id"]})
         else:
             self.answer(404, {"error": {"message": "not found"}})
+
+    def do_PROPFIND(self):
+        self.rfile.read(int(self.headers.get("Content-Length", "0") or 0))
+        self.record(None)
+        self.send_response(401)
+        self.send_header("WWW-Authenticate", 'Basic realm="dav"')
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def syncthing(self, path):
+        scene, rest = path[4:].split("/", 1)
+        if rest == "rest/noauth/health":
+            return self.answer(200, {"status": "OK"})
+        if args.key and self.headers.get("X-API-Key", "") != args.key:
+            return self.answer(403, b"Forbidden\n", "text/plain")
+        if rest == "rest/db/completion":
+            return self.answer(200, {"completion": 42.5 if scene == "syncing" else 100, "needBytes": 1000 if scene == "syncing" else 0})
+        if rest == "rest/system/error":
+            return self.answer(200, {"errors": [{"when": "2026-10-04T10:00:00Z", "message": "folder marker missing"}] if scene == "error" else None})
+        if rest == "rest/config/folders":
+            return self.answer(200, [{"id": "default", "paused": scene == "paused"}])
+        self.answer(404, b"404 page not found\n", "text/plain")
 
     # ---- POST ---------------------------------------------------------------------
     def do_POST(self):

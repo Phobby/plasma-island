@@ -56,9 +56,15 @@ bool StreamProcess::start(const QString &program, const QStringList &arguments, 
     m_process->setProgram(program);
     m_process->setArguments(arguments);
     m_process->setWorkingDirectory(directory.absolutePath());
+    if (m_merge) {
+        m_process->setProcessChannelMode(QProcess::MergedChannels);
+    }
 
     connect(m_process, &QProcess::readyReadStandardOutput, this, &StreamProcess::read);
     connect(m_process, &QProcess::readyReadStandardError, this, [this] {
+        if (m_merge) {
+            return;
+        }
         m_errors.append(m_process->readAllStandardError());
         if (m_errors.size() > s_maxErrors) {
             m_errors = m_errors.right(s_maxErrors);
@@ -125,7 +131,9 @@ void StreamProcess::end(int exitCode)
             Q_EMIT lines({QString::fromUtf8(m_buffer)});
         }
     }
-    m_errors.append(process->readAllStandardError());
+    if (!m_merge) {
+        m_errors.append(process->readAllStandardError());
+    }
     const QString errors = QString::fromUtf8(m_errors.right(s_maxErrors));
     m_buffer.clear();
     m_errors.clear();

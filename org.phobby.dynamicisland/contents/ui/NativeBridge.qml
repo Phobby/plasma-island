@@ -114,6 +114,12 @@ Item {
         streamLoader.active = true;
         return streamLoader.item;
     }
+    // Another one of its own for whoever asks (each transfer of the Cloud tab runs in one); the asker destroys it.
+    property Component streamMaker: null
+    function newStream(owner: QtObject): var {
+        if (streamMaker === null) streamMaker = Qt.createComponent("StreamBridge.qml");
+        return streamMaker.status === Component.Ready ? streamMaker.createObject(owner) : null;
+    }
     Loader {
         id: streamLoader
         active: false

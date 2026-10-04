@@ -129,7 +129,13 @@ void LocalTools::runIn(const QString &directory, const QString &program, const Q
     start(program, arguments, nullptr, callback, full);
 }
 
-void LocalTools::start(const QString &program, const QStringList &arguments, const QByteArray *input, const QJSValue &callback, const QString &directory)
+void LocalTools::runFor(int milliseconds, const QString &program, const QStringList &arguments, const QJSValue &callback)
+{
+    start(program, arguments, nullptr, callback, QString(), qBound(1000, milliseconds, 600000));
+}
+
+void LocalTools::start(const QString &program, const QStringList &arguments, const QByteArray *input, const QJSValue &callback, const QString &directory,
+                       int milliseconds)
 {
     auto *process = new QProcess(this);
     if (!directory.isEmpty()) {
@@ -158,7 +164,7 @@ void LocalTools::start(const QString &program, const QStringList &arguments, con
         }
     });
     // A command that hangs must not pile up.
-    QTimer::singleShot(15000, process, [process, answer] {
+    QTimer::singleShot(milliseconds, process, [process, answer] {
         process->kill();
         answer(-1);
     });

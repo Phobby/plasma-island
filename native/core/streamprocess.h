@@ -25,6 +25,8 @@ class StreamProcess : public QObject
     Q_PROPERTY(bool running READ running NOTIFY runningChanged)
     // The command's process id while it runs, else 0 (for the tests: where it runs).
     Q_PROPERTY(qint64 processId READ processId NOTIFY runningChanged)
+    // Standard error comes through `lines` too (a command that reports its progress there: rclone).
+    Q_PROPERTY(bool mergeErrors MEMBER m_merge)
 
 public:
     explicit StreamProcess(QObject *parent = nullptr);
@@ -53,4 +55,5 @@ private:
     QByteArray m_buffer;
     QByteArray m_errors;
     bool m_stopped = false;
+    bool m_merge = false;
 };

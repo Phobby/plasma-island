@@ -54,6 +54,8 @@ Item {
                 title: Lang.i18n("Failed"),
                 subtitle: t.state === "cancelled" ? Lang.i18n("Cancelled · %1", t.headline)
                         : t.errorText ? t.headline + " · " + t.errorText : t.headline,
+                trailing: t.state === "failed" && t.retryFn ? { type: "button", text: Lang.i18n("Try again") } : null,
+                activate: t.state === "failed" && t.retryFn ? t.retryFn : undefined,
                 duration: 5000
             });
         }
