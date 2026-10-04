@@ -1,12 +1,12 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
-    Suggestions: on/off, the pause between two of them, and every rule with
-    its switch, its mode (asks / automatic) and what it has learned, which can
-    be forgotten per rule or altogether.
 
-    What is learned is the island's own record (SuggestionStore: a small
-    file), read and changed there directly, without Apply: the island reads
-    it anew at every suggestion, so a change here holds at once.
+    Settings → Suggestions: how much they may interrupt, each rule's mode,
+    and everything they learned, in words: per rule and per context what it
+    does now and how sure it is, with "forget" beside it; what was done
+    automatically; the last week in numbers; reset and export. What is
+    learned is the file of SuggestionStore.qml: this page reads and writes
+    the same one as the island.
 */
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -24,6 +24,10 @@ KCM.SimpleKCM {
 
     property alias cfg_suggestionsEnabled: enabledCheck.checked
     property alias cfg_suggestionGapMinutes: gapSpin.value
+    property string cfg_suggestionLevel: "balanced"
+    property alias cfg_suggestionDailyCards: cardsSpin.value
+    property alias cfg_suggestionCooldownMinutes: cooldownSpin.value
+    property alias cfg_suggestionHalfLifeDays: halfLifeSpin.value
 
     function widget(): var { try { return Plasmoid.configuration; } catch (e) { return null; } }
     Loader { id: localTools; source: "LocalBridge.qml" }
@@ -34,6 +38,10 @@ KCM.SimpleKCM {
     }
     property alias learnedStore: store
     SuggestionCatalog { id: catalog }
+    // The moment the page speaks of (tests hand in their own).
+    property var clock: null
+    function now(): real { return typeof clock === "function" ? clock() : Date.now(); }
+    readonly property var tuning: Suggestions.tuning(cfg_suggestionLevel, cfg_suggestionDailyCards, cfg_suggestionCooldownMinutes, cfg_suggestionHalfLifeDays)
 
     // What is learned: as of when the page opened, and after every change made here.
     property var learned: Suggestions.empty()
@@ -51,17 +59,47 @@ KCM.SimpleKCM {
         return text.length > 0 ? text.split(",") : Suggestions.RULES;
     }
     property bool confirmReset: false
+    property string exported: ""
 
+    readonly property var modes: [{ id: "learn", name: Lang.i18n("Learns by itself") }, { id: "ask", name: Lang.i18n("Always asks") },
+                                  { id: "auto", name: Lang.i18n("Automatic") }, { id: "off", name: Lang.i18n("Off") }]
+    readonly property var levels: [{ id: "quiet", name: Lang.i18n("Quiet: rarely, two cards a day") }, { id: "balanced", name: Lang.i18n("Balanced") },
+                                   { id: "active", name: Lang.i18n("Active: asks sooner and more often") }]
+    // One line on a rule: what it does and how sure it is in general.
     function status(id: string): string {
-        const r = Suggestions.rule(learned, id);
         if (available.indexOf(id) < 0) return Lang.i18n("Not available on this system (its part is missing or switched off)");
-        const counts = r.yes + r.later > 0 ? " · " + Lang.i18n("Yes: %1 · Not now or no answer: %2", r.yes, r.later) : "";
-        if (r.mode === "off")
-            return (r.why === "never" ? Lang.i18n("Off: you chose “Never suggest this”")
-                  : r.why === "ignored" ? Lang.i18n("Off: not answered five times in a row") : Lang.i18n("Off")) + counts;
-        if (r.mode === "auto") return Lang.i18n("Automatic: done without asking, with an Undo") + counts;
-        const wait = Suggestions.wait(r);
-        return (wait > 0 ? Lang.i18np("Asks, at most once in %1 hour", "Asks, at most once in %1 hours", Math.round(wait / 3600000)) : Lang.i18n("Asks")) + counts;
+        const r = Suggestions.rule(learned, id);
+        if (r.mode === "off") {
+            return r.why === "never" ? Lang.i18n("Off: you turned this rule off") : r.why === "ignored" ? Lang.i18n("Off: not answered five times in a row")
+                 : r.why === "experimental" ? Lang.i18n("Off: experimental, its trigger is a guess") : Lang.i18n("Off");
+        }
+        if (r.mode === "auto") return Lang.i18n("Automatic: done without asking, with an Undo");
+        if (r.mode === "ask") return Lang.i18n("Always asks");
+        const all = Suggestions.sums(learned, id, null, now(), tuning.halfLife);
+        if (all.weight < 0.5) return Lang.i18n("Asks; nothing learned yet");
+        return Lang.i18n("Learning: welcome %1 in general", Lang.percent(Math.round(100 * (1 + all.pos) / (2 + all.pos + all.neg))));
+    }
+    // "Weekdays · evening: automatic (92%)"
+    function contextLine(id: string, c: var): string {
+        return catalog.contextText(c.ctx) + ": " + catalog.statusText(c.status) + " (" + Lang.percent(Math.round(c.confidence * 100)) + ")";
+    }
+    function weekText(): string {
+        const w = Suggestions.week(learned, now());
+        return Lang.i18n("Last 7 days: %1 shown · %2 accepted · %3 done automatically", w.shown, w.accepted, w.automatic);
+    }
+    function logLine(entry: var): string {
+        return Qt.formatDateTime(new Date(entry.t), "dd.MM.yyyy HH:mm") + " · " + catalog.title(entry.r) + " · " + catalog.contextText(entry.c)
+             + (entry.undone ? " · " + Lang.i18n("undone") : "");
+    }
+    function exportAll(): void {
+        const text = JSON.stringify(learned, null, 2);
+        const tools = store.local;
+        if (tools !== null && typeof tools.writeTextFile === "function") {
+            const path = tools.dataHome() + "/dynamicisland/suggestions-export.json";
+            exported = tools.writeTextFile(path, text) ? Lang.i18n("Written to %1", path) : Lang.i18n("Could not be written");
+        } else {
+            exported = text;
+        }
     }
 
     ColumnLayout {
@@ -72,139 +110,151 @@ KCM.SimpleKCM {
             QQC2.CheckBox {
                 id: enabledCheck
                 Kirigami.FormData.label: Lang.i18n("Suggestions:")
-                text: Lang.i18n("Ask at the right moment whether to do something")
-            }
-            QQC2.SpinBox {
-                id: gapSpin
-                Kirigami.FormData.label: Lang.i18n("Between two suggestions:")
-                enabled: enabledCheck.checked
-                from: 1
-                to: 240
-                // (a new function when the language changes, so that the text follows it)
-                textFromValue: { const language = Lang.language; return value => Lang.i18np("at least %1 minute", "at least %1 minutes", value); }
-                valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 5
+                text: Lang.i18n("Suggest things at the right moment, and learn when that is welcome")
             }
             QQC2.Label {
-                Layout.fillWidth: true
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 24
                 wrapMode: Text.Wrap
                 font: Kirigami.Theme.smallFont
-                opacity: 0.7
-                text: Lang.i18n("One sentence on the island with Yes, Not now and Never suggest this; gone after ten seconds. Nothing is suggested while Do Not Disturb is on or the screen is recorded. Everything is worked out on this computer by fixed rules: no network, no AI.")
+                text: Lang.i18n("Rules and counting only, on this computer: no network, no AI. It keeps the rule, coarse circumstances (kind of day, part of the day, the calendar's name…), your answer and when; never a window, an application, an event's title or anything typed.")
+            }
+            QQC2.ComboBox {
+                Kirigami.FormData.label: Lang.i18n("How much it may interrupt:")
+                enabled: enabledCheck.checked
+                model: page.levels.map(l => l.name)
+                currentIndex: Math.max(0, page.levels.findIndex(l => l.id === page.cfg_suggestionLevel))
+                onActivated: index => page.cfg_suggestionLevel = page.levels[index].id
+            }
+            QQC2.SpinBox {
+                id: cardsSpin
+                Kirigami.FormData.label: Lang.i18n("Cards a day, at most:")
+                enabled: enabledCheck.checked
+                from: 0; to: 30
+                textFromValue: v => v === 0 ? Lang.i18n("as the level says (%1)", page.tuning.dailyCards) : String(v)
+                valueFromText: t => parseInt(t) || 0
+            }
+            QQC2.SpinBox {
+                id: cooldownSpin
+                Kirigami.FormData.label: Lang.i18n("A rule waits after a card:")
+                enabled: enabledCheck.checked
+                from: 0; to: 240; stepSize: 5
+                textFromValue: v => v === 0 ? Lang.i18n("as the level says (%1 min)", Math.round(page.tuning.cooldown / 60000)) : Lang.i18n("%1 min", v)
+                valueFromText: t => parseInt(t) || 0
+            }
+            QQC2.SpinBox {
+                id: gapSpin
+                Kirigami.FormData.label: Lang.i18n("Between two cards:")
+                enabled: enabledCheck.checked
+                from: 1; to: 240
+                textFromValue: v => Lang.i18n("%1 min", v)
+                valueFromText: t => parseInt(t)
+            }
+            QQC2.SpinBox {
+                id: halfLifeSpin
+                Kirigami.FormData.label: Lang.i18n("An answer counts half after:")
+                enabled: enabledCheck.checked
+                from: 0; to: 365
+                textFromValue: v => v === 0 ? Lang.i18n("%1 days", Suggestions.TUNING.halfLifeDays) : Lang.i18n("%1 days", v)
+                valueFromText: t => parseInt(t) || 0
             }
         }
 
-        Kirigami.Heading {
-            level: 4
-            text: Lang.i18n("Rules")
-        }
-        QQC2.Label {
-            Layout.fillWidth: true
-            wrapMode: Text.Wrap
-            text: Lang.i18n("Each rule learns from your answers: three times “Not now” in a row and it asks less often, five and it switches itself off; three times “Yes” in a row and it offers to act by itself. What you change here applies at once.")
-        }
+        Kirigami.Heading { level: 3; text: Lang.i18n("What I learned") }
+        QQC2.Label { objectName: "weekText"; Layout.fillWidth: true; wrapMode: Text.Wrap; text: page.weekText() }
 
         Repeater {
             model: catalog.rules
-            delegate: QQC2.ItemDelegate {
-                id: row
+            delegate: Kirigami.AbstractCard {
+                id: card
                 required property var modelData
-                readonly property var record: Suggestions.rule(page.learned, modelData.id)
-                readonly property bool here: page.available.indexOf(modelData.id) >= 0
-                readonly property bool on: record.mode !== "off"
+                readonly property string ruleId: modelData.id
+                readonly property bool usable: page.available.indexOf(ruleId) >= 0
+                readonly property var contexts: Suggestions.contexts(page.learned, ruleId, page.now(), page.tuning)
                 Layout.fillWidth: true
-                hoverEnabled: false
-                down: false
+                Layout.maximumWidth: Kirigami.Units.gridUnit * 32
                 enabled: enabledCheck.checked
-                background: Rectangle { radius: Kirigami.Units.cornerRadius; color: Qt.alpha(Kirigami.Theme.textColor, 0.04) }
-                contentItem: RowLayout {
+                contentItem: ColumnLayout {
                     spacing: Kirigami.Units.smallSpacing
-                    Kirigami.Icon {
-                        Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
-                        Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
-                        source: row.modelData.icon
-                        opacity: row.here ? 1 : 0.5
-                    }
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-                        QQC2.Label { Layout.fillWidth: true; text: row.modelData.title; elide: Text.ElideRight; opacity: row.here ? 1 : 0.6 }
-                        QQC2.Label {
-                            Layout.fillWidth: true
-                            text: row.modelData.hint
-                            font: Kirigami.Theme.smallFont
-                            opacity: 0.7
-                            elide: Text.ElideRight
-                        }
-                        QQC2.Label {
-                            Layout.fillWidth: true
-                            text: page.status(row.modelData.id)
-                            font: Kirigami.Theme.smallFont
-                            color: row.here && row.record.mode === "off" && row.record.why !== "settings" ? Kirigami.Theme.neutralTextColor : Kirigami.Theme.textColor
-                            opacity: 0.85
-                            elide: Text.ElideRight
+                    RowLayout {
+                        Kirigami.Icon { source: card.modelData.icon; Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium; Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium }
+                        Kirigami.Heading { level: 4; text: card.modelData.title; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                        QQC2.ComboBox {
+                            objectName: "mode-" + card.ruleId
+                            enabled: card.usable
+                            model: page.modes.map(m => m.name)
+                            currentIndex: Math.max(0, page.modes.findIndex(m => m.id === Suggestions.rule(page.learned, card.ruleId).mode))
+                            onActivated: index => page.change(Suggestions.setMode(page.learned, card.ruleId, page.modes[index].id))
                         }
                     }
-                    // asks, or acts by itself
-                    QQC2.ComboBox {
-                        id: modeCombo
-                        enabled: row.here && row.on
-                        model: [Lang.i18n("Asks"), Lang.i18n("Automatic")]
-                        readonly property int wanted: row.record.mode === "auto" ? 1 : 0
-                        Binding { target: modeCombo; property: "currentIndex"; value: modeCombo.wanted }
-                        onModelChanged: Qt.callLater(() => { if (modeCombo.currentIndex !== modeCombo.wanted) modeCombo.currentIndex = modeCombo.wanted; })
-                        onActivated: index => page.change(Suggestions.setMode(page.learned, row.modelData.id, index === 1 ? "auto" : "suggest"))
+                    QQC2.Label { Layout.fillWidth: true; wrapMode: Text.Wrap; font: Kirigami.Theme.smallFont; text: card.modelData.hint }
+                    QQC2.Label { Layout.fillWidth: true; wrapMode: Text.Wrap; text: page.status(card.ruleId) }
+                    Repeater {
+                        model: card.contexts
+                        delegate: RowLayout {
+                            id: row
+                            required property var modelData
+                            Layout.fillWidth: true
+                            QQC2.Label { Layout.fillWidth: true; wrapMode: Text.Wrap; font: Kirigami.Theme.smallFont; text: "• " + page.contextLine(card.ruleId, row.modelData) }
+                            QQC2.ToolButton {
+                                icon.name: "edit-clear-history"
+                                text: Lang.i18n("Forget this context")
+                                display: QQC2.AbstractButton.IconOnly
+                                QQC2.ToolTip.text: text
+                                QQC2.ToolTip.visible: hovered
+                                onClicked: page.change(Suggestions.forget(page.learned, card.ruleId, row.modelData.ctx))
+                            }
+                        }
                     }
-                    QQC2.ToolButton {
-                        enabled: page.learned.rules[row.modelData.id] !== undefined
-                        icon.name: "edit-clear-history"
-                        display: QQC2.AbstractButton.IconOnly
-                        text: Lang.i18n("Forget what this rule learned")
-                        onClicked: page.change(Suggestions.reset(page.learned, row.modelData.id))
-                        QQC2.ToolTip.visible: hovered
-                        QQC2.ToolTip.text: text
-                    }
-                    QQC2.Switch {
-                        id: ruleSwitch
-                        enabled: row.here
-                        Binding { target: ruleSwitch; property: "checked"; value: row.on }
-                        onToggled: page.change(Suggestions.setMode(page.learned, row.modelData.id, checked ? "suggest" : "off"))
-                        QQC2.ToolTip.visible: hovered
-                        QQC2.ToolTip.text: checked ? Lang.i18n("On") : Lang.i18n("Off")
+                    QQC2.Button {
+                        visible: page.learned.rules[card.ruleId] !== undefined || card.contexts.length > 0
+                        icon.name: "edit-reset"
+                        text: Lang.i18n("Reset this rule")
+                        onClicked: page.change(Suggestions.reset(page.learned, card.ruleId))
                     }
                 }
             }
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            QQC2.Button {
-                visible: !page.confirmReset
-                enabled: Object.keys(page.learned.rules).length > 0 || page.learned.last > 0
-                icon.name: "edit-delete"
-                text: Lang.i18n("Forget everything that was learned…")
-                onClicked: page.confirmReset = true
-            }
-            QQC2.Label { visible: page.confirmReset; text: Lang.i18n("Forget the answers of every rule? They all ask again as on the first day.") }
-            QQC2.Button {
-                visible: page.confirmReset
-                icon.name: "edit-delete"
-                text: Lang.i18n("Forget")
-                onClicked: { page.change(Suggestions.empty()); page.confirmReset = false; }
-            }
-            QQC2.Button {
-                visible: page.confirmReset
-                text: Lang.i18n("Cancel")
-                onClicked: page.confirmReset = false
-            }
-        }
+        Kirigami.Heading { level: 3; text: Lang.i18n("Done automatically") }
         QQC2.Label {
             Layout.fillWidth: true
-            wrapMode: Text.Wrap
-            font: Kirigami.Theme.smallFont
-            opacity: 0.7
-            text: store.inFile ? Lang.i18n("What is learned is kept in %1: per rule how often it was answered with yes and with “not now”, and whether it asks, acts by itself or is off. Nothing else.", store.path)
-                               : Lang.i18n("What is learned is kept in the widget's own settings (without the native helper there is no file of its own): per rule how often it was answered with yes and with “not now”, and whether it asks, acts by itself or is off.")
+            visible: page.learned.log.length === 0
+            text: Lang.i18n("Nothing yet.")
+        }
+        Repeater {
+            model: page.learned.log.slice().reverse()
+            delegate: QQC2.Label {
+                required property var modelData
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                font: Kirigami.Theme.smallFont
+                text: page.logLine(modelData)
+            }
+        }
+
+        RowLayout {
+            QQC2.Button {
+                icon.name: "document-export"
+                text: Lang.i18n("Export what was learned")
+                onClicked: page.exportAll()
+            }
+            QQC2.Button {
+                icon.name: "edit-delete"
+                text: page.confirmReset ? Lang.i18n("Really forget everything?") : Lang.i18n("Reset everything learned")
+                onClicked: {
+                    if (!page.confirmReset) { page.confirmReset = true; return; }
+                    page.confirmReset = false;
+                    page.change(Suggestions.empty());
+                }
+            }
+        }
+        QQC2.TextArea {
+            Layout.fillWidth: true
+            visible: page.exported.length > 0
+            readOnly: true
+            wrapMode: TextEdit.WrapAnywhere
+            textFormat: TextEdit.PlainText
+            text: page.exported
         }
     }
 }

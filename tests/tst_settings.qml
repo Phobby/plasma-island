@@ -87,33 +87,43 @@ Item {
             // not the user's own file: what is learned goes to a stand-in for the settings here
             store.local = null;
             store.cfg = stored;
+            const at = new Date(2026, 9, 5, 9, 0).getTime(), day = 86400000;
+            page.clock = () => at + 6 * day;
             page.reload();
             compare(page.learned, Suggestions.empty());
-            compare(page.status("meeting"), "Asks");
+            compare([page.status("meeting"), page.status("headphones")], ["Asks; nothing learned yet", "Off: experimental, its trigger is a guess"]);
             // what the island learned meanwhile
             let s = Suggestions.empty();
-            const at = new Date(2026, 9, 5, 9, 0).getTime();
-            for (let i = 0; i < 3; ++i) s = Suggestions.answer(Suggestions.shown(s, "call", at + i * 600000), "call", "later").state;
-            s = Suggestions.answer(Suggestions.shown(s, "battery", at), "battery", "never").state;
-            for (let i = 0; i < 5; ++i) s = Suggestions.answer(Suggestions.shown(s, "headphones", at), "headphones", "timeout").state;
+            for (let i = 0; i < 5; ++i) s = Suggestions.record(s, "meeting", "wd|am|cal:Work|video", "yes", at + i * day).state;
+            s = Suggestions.automatic(s, "meeting", "wd|am|cal:Work|video", true, at + 5 * day);
+            s = Suggestions.record(s, "meeting", "wd|am|cal:Work|video", "auto", at + 5 * day).state;
+            for (let i = 0; i < 2; ++i) s = Suggestions.record(s, "meeting", "we|eve", "no", at + i * day).state;
+            s = Suggestions.never(Suggestions.record(s, "call", "wd|am|out:hp", "shown", at).state, "call");
             stored.suggestionsData = Suggestions.text(s);
             page.reload();
-            compare(page.status("call"), "Asks, at most once in 1 hour · Yes: 0 · Not now or no answer: 3");
-            compare(page.status("battery"), "Off: you chose “Never suggest this”");
-            compare(page.status("headphones"), "Off: not answered five times in a row · Yes: 0 · Not now or no answer: 5");
-            // the rule's switch and mode
-            page.change(Suggestions.setMode(page.learned, "battery", "suggest"));
-            compare([page.status("battery"), Suggestions.parse(stored.suggestionsData).rules.battery.mode], ["Asks", "suggest"], "written at once");
-            page.change(Suggestions.setMode(page.learned, "meeting", "auto"));
-            compare(page.status("meeting"), "Automatic: done without asking, with an Undo");
-            page.change(Suggestions.setMode(page.learned, "meeting", "off"));
-            compare(page.status("meeting"), "Off");
-            // one rule forgotten, then all of them
-            page.change(Suggestions.reset(page.learned, "call"));
-            compare([page.status("call"), page.learned.rules.headphones.mode], ["Asks", "off"]);
+            compare(page.status("call"), "Off: you turned this rule off");
+            verify(page.status("meeting").indexOf("Learning: welcome ") === 0);
+            const contexts = Suggestions.contexts(page.learned, "meeting", page.now(), page.tuning);
+            compare(contexts.map(c => page.contextLine("meeting", c).replace(/ \(.*$/, "")),
+                    ["Weekdays · morning · Work · with a video link: automatic", "Weekend · evening: does not ask"]);
+            compare(page.weekText(), "Last 7 days: 1 shown · 5 accepted · 1 done automatically");
+            verify(page.logLine(page.learned.log[0]).indexOf(" · Do Not Disturb before an event · Weekdays · morning · Work · with a video link") > 0);
+            // a rule's mode
+            page.change(Suggestions.setMode(page.learned, "call", "learn"));
+            compare([page.status("call"), Suggestions.parse(stored.suggestionsData).rules.call.mode], ["Asks; nothing learned yet", "learn"], "written at once");
+            page.change(Suggestions.setMode(page.learned, "recording", "auto"));
+            compare(page.status("recording"), "Automatic: done without asking, with an Undo");
+            page.change(Suggestions.setMode(page.learned, "recording", "ask"));
+            compare(page.status("recording"), "Always asks");
+            // one context forgotten, one rule, then all of them
+            page.change(Suggestions.forget(page.learned, "meeting", "we|eve"));
+            compare(Suggestions.contexts(page.learned, "meeting", page.now(), page.tuning).length, 1);
+            page.change(Suggestions.reset(page.learned, "meeting"));
+            compare([page.status("meeting"), page.learned.rules.recording.mode], ["Asks; nothing learned yet", "ask"]);
+            page.exportAll();
+            verify(page.exported.indexOf('"v": 2') >= 0, "without the native module the export is shown");
             page.change(Suggestions.empty());
             compare(stored.suggestionsData, Suggestions.text(Suggestions.empty()));
-            for (const id of Suggestions.RULES) compare(page.status(id), "Asks", id);
             // a rule this system cannot make says so
             stored.suggestionsAvailable = "";
             compare(page.available, Suggestions.RULES, "not known yet: all are offered");
