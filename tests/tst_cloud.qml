@@ -247,6 +247,15 @@ Item {
             compare([root.local.readTextFile(root.box + "/Belgeler çğş/deep/a.txt"), cloud.lastTarget], ["the new a", "box:Belgeler çğş/deep"]);
         }
 
+        // The native helper that drags a file out: only a file that is there (the drag itself needs a hand on the mouse).
+        function test_065_only_a_real_file_is_dragged() {
+            const maker = Qt.createComponent("../org.phobby.dynamicisland/contents/ui/DragBridge.qml");
+            compare(maker.status, Component.Ready, maker.errorString());
+            const drag = maker.createObject(root);
+            compare([drag.active, drag.start(root, root.run + "/nothing-here.txt"), drag.start(root, root.box), drag.start(null, root.box + "/a.txt"), drag.active], [false, false, false, false, false]);
+            drag.destroy();
+        }
+
         function test_07_sync_state_only_from_what_says_it() {
             fresh();
             const s = cloud.syncOf("box");

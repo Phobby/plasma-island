@@ -37,7 +37,7 @@ Item {
     property string view: "browse"
     property bool typing: false
     readonly property bool interacting: visible && typing
-    readonly property bool holdOpen: visible && (dropping || view === "upload" || picking)
+    readonly property bool holdOpen: visible && (dropping || view === "upload" || picking || dragging)
     readonly property bool keepsWheel: visible && view === "browse" && shown.length > 0
     readonly property bool tall: visible && view !== "missing" && view !== "empty"
 
@@ -138,6 +138,20 @@ Item {
     }
     function showInFolder(local: string): void {
         if (cloud.core !== null) cloud.core.call(false, "org.freedesktop.FileManager1", "/org/freedesktop/FileManager1", "org.freedesktop.FileManager1", "ShowItems", [[Rclone.fileUrl(local)], ""], null);
+    }
+    // A fetched file is dragged out to the desktop or a file manager. The drag itself is the native
+    // helper's (see native/core/filedrag.h for why not QML's own); the island stays open meanwhile.
+    property bool dragging: false
+    property var dragger: null
+    function dragOut(from: Item, local: string, icon: string): void {
+        if (dragging || cloud.core === null || typeof cloud.core.fileDrag !== "function") return;
+        if (dragger === null) dragger = cloud.core.fileDrag();
+        if (dragger === null) { say(Lang.i18n("Dragging out needs the island's native helper. Use Download.")); return; }
+        dragging = dragger.start(page, local, icon);
+    }
+    Connections {
+        target: page.dragger
+        function onFinished(dropped) { page.dragging = false; }
     }
     // The pointer rests on a small file: fetched quietly, so that it can be dragged.
     function rest(entry: var): void {
@@ -505,12 +519,6 @@ Item {
                     radius: 8
                     color: rowMouse.pressed ? page.theme.pressedFill : rowMouse.containsMouse ? page.theme.hoverFill : "transparent"
 
-                    // dragged out as a file, once it is here
-                    Drag.active: rowMouse.drag.active && row.local.length > 0
-                    Drag.dragType: Drag.Automatic
-                    Drag.supportedActions: Qt.CopyAction
-                    Drag.mimeData: ({ "text/uri-list": row.local.length > 0 ? Rclone.fileUrl(row.local) + "\r\n" : "" })
-
                     RowLayout {
                         anchors.fill: parent
                         anchors.leftMargin: 6
@@ -560,12 +568,23 @@ Item {
                         hoverEnabled: true
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         cursorShape: Qt.PointingHandCursor
-                        drag.target: row.local.length > 0 ? dragGhost : null
+                        // pressed and pulled away: the file is dragged out, once it is here
+                        property point pressedAt: Qt.point(0, 0)
+                        property bool pulled: false
+                        onPressed: mouse => { pressedAt = Qt.point(mouse.x, mouse.y); pulled = false; }
+                        onPositionChanged: mouse => {
+                            if (!pressed || pulled || row.local.length === 0 || !(mouse.buttons & Qt.LeftButton)) return;
+                            if (Math.abs(mouse.x - pressedAt.x) + Math.abs(mouse.y - pressedAt.y) < 12) return;
+                            pulled = true;
+                            page.dragOut(row, row.local, Rclone.icon(row.modelData));
+                        }
                         onContainsMouseChanged: if (containsMouse) restTimer.restart(); else restTimer.stop()
-                        onClicked: mouse => { if (mouse.button === Qt.RightButton && row.modelData.dir) page.askFolder(row.modelData); else page.choose(row.modelData); }
-                        Timer { id: restTimer; interval: 350; onTriggered: page.rest(row.modelData) }
+                        onClicked: mouse => {
+                            if (pulled) return;
+                            if (mouse.button === Qt.RightButton && row.modelData.dir) page.askFolder(row.modelData); else page.choose(row.modelData);
+                        }
+                        Timer { id: restTimer; interval: 600; onTriggered: page.rest(row.modelData) }
                     }
-                    Item { id: dragGhost }
                 }
             }
             Text {

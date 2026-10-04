@@ -152,7 +152,12 @@ QtObject {
     }
     // The page is on screen (set by the page).
     property bool viewing: false
-    onViewingChanged: if (viewing) { if (!looked) detect(refreshStorage); else if (Date.now() - storageAt > 600000) { storageAt = Date.now(); refreshStorage(); } }
+    // (a moment after the page opened: the listing goes first, and two questions at once make a cloud's request limit more likely)
+    onViewingChanged: if (viewing && Date.now() - storageAt > 600000) soon.restart()
+    readonly property Timer soon: Timer {
+        interval: 4000
+        onTriggered: { if (!backend.viewing) return; backend.storageAt = Date.now(); if (backend.looked) backend.refreshStorage(); else backend.detect(backend.refreshStorage); }
+    }
     property real storageAt: 0
     readonly property Timer storageTimer: Timer {
         interval: backend.viewing ? 600000 : 3 * 3600000

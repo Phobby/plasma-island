@@ -120,6 +120,17 @@ Item {
         if (streamMaker === null) streamMaker = Qt.createComponent("StreamBridge.qml");
         return streamMaker.status === Component.Ready ? streamMaker.createObject(owner) : null;
     }
+    // A file dragged out of the island (the Cloud tab); made when first asked for. null with an older native module.
+    function fileDrag(): var {
+        dragLoader.active = true;
+        return dragLoader.item;
+    }
+    Loader {
+        id: dragLoader
+        active: false
+        source: "DragBridge.qml"
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old for dragging files out of the Cloud tab; run install.sh again")
+    }
     Loader {
         id: streamLoader
         active: false

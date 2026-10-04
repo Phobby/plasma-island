@@ -1058,5 +1058,6 @@ var table = {
     "rclone does not know %1 any more.": "rclone artık %1 uzağını tanımıyor.",
     "%1 has no room left.": "%1 bulutunda yer kalmadı.",
     "%1 is being asked too often right now and makes everyone wait. Try again in a moment.": "%1 şu anda çok sık sorgulanıyor ve herkesi bekletiyor. Biraz sonra yeniden dene.",
-    "why: Settings → Cloud": "nedeni: Ayarlar → Bulut"
+    "why: Settings → Cloud": "nedeni: Ayarlar → Bulut",
+    "Dragging out needs the island's native helper. Use Download.": "Dışarı sürüklemek için adanın yerel yardımcısı gerekir. İndir düğmesini kullan."
 };
