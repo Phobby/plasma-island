@@ -38,8 +38,8 @@ done
 if [ -n "$runner" ]; then
     [ -d native/build/qml ] && export QML_IMPORT_PATH="$HERE/native/build/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
     # (KDE's colour button asks for KDE's own i18n, which a bare QML engine does not have)
-    QT_QPA_PLATFORM=offscreen "$runner" -input tests -silent 2>&1 | grep -v -E "^(Testing|\*\*\*)|i18nc is not defined" || true
-    [ "${PIPESTATUS[0]}" -eq 0 ] || failed=1
+    out="$(QT_QPA_PLATFORM=offscreen "$runner" -input tests -silent 2>&1)" || failed=1
+    printf '%s\n' "$out" | grep -v -E "^(Testing|\*\*\*)|i18nc is not defined" || true
 else
     echo "qmltestrunner not found: skipped"
 fi

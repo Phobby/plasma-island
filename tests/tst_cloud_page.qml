@@ -90,7 +90,8 @@ Item {
             for (const text of texts)
                 tryVerify(() => find(item => item.visible === true && typeof item.text === "string" && item.text.indexOf(text) >= 0 && item.width > 0) !== null, 5000, "shown: " + text);
         }
-        function click(item) { mouseClick(item, item.width / 2, item.height / 2); }
+        // (a button that has just appeared is laid out a moment later)
+        function click(item) { tryVerify(() => item.visible && item.width > 0, 3000); wait(120); mouseClick(item, item.width / 2, item.height / 2); }
         function open() {
             expanded.active = true;
             expanded.jumpTo("cloud");
