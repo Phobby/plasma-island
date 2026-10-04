@@ -215,14 +215,15 @@ style's.)
 
 | | |
 |---|---|
-| Ready-made looks | Oxygen Metallic (the original), Breeze Dark, Breeze Light, Pure Glass (Minimal), High Contrast (text and status colours at 4.5:1 or more, controls and border at 3:1 or more, nothing translucent to read on). Choosing one keeps where the island sits and how large it is. "Reset to the preset" undoes the fine tuning |
+| Ready-made looks | Oxygen Metallic (the original), Breeze Dark, Breeze Light, Pure Glass (Minimal), High Contrast (text and status colours at 4.5:1 or more, controls and border at 3:1 or more, nothing translucent to read on), and four gradients: Aurora, Sunset, Ocean, Midnight Blue (every colour of them dark enough for the light text, 4.5:1 or more). Each card shows the look itself. Choosing one keeps where the island sits and how large it is. "Reset to the preset" undoes the fine tuning |
 | Opacity | 0–100 %, as set (independent of blur) |
 | Blur | On/off and a level. KWin blurs with one strength for the whole desktop (System Settings → Desktop Effects → Blur), so the level adds frosting over the blurred background |
 | Distance from top | 0–40 px (while following the system: the one in General) |
 | Horizontal position | −100…+100 px from the centre |
 | Size | 80–120 %: the whole island is scaled, text stays sharp |
 | Corner roundness | From sharp corners to a full capsule |
-| Colours | Background (or the system's accent colour), buttons and controls (or the accent colour; kept visible on the background), text (automatic by contrast, or your own) |
+| Background | One colour (or the system's accent colour), or a gradient: two or three colours, linear at any angle (0–360°, as in CSS: 0° runs upwards, 90° to the right) or radial from the middle. Opacity and blur apply to it as to a solid colour |
+| Colours | Buttons and controls (or the accent colour; kept visible on the background), text (automatic by contrast, or your own). On a gradient the automatic text colour is chosen against the gradient's average brightness, and everything that is kept readable is kept readable against that average; a gradient with both very light and very dark parts (under 3:1 somewhere for the text) gets a warning |
 | Border | On/off, 1–4 px, the look's own colour or yours |
 | Shadow | None / light / strong |
 
@@ -252,6 +253,8 @@ it (the choice is kept, `ambientGlow`). While it is on:
 - Paused, it stays as a dim, still light; without media it goes out.
   Switched off, everything fades out in 350 ms and nothing of it is left
   (the glow layer is not even created then).
+- With a gradient look the layers stay as they are: the look's gradient is
+  the base, the cover's colour is the changing light around and over it.
 
 **Colour:** the cover is drawn at 16×16 into a canvas and its pixels are
 sorted into 12 hue bins weighted by saturation × √brightness (grey and black
@@ -388,7 +391,8 @@ native/
                                LoopbackServer, LocalTools, PopupWatcher,
                                AudioLevels, IslandService (D-Bus API)
 tools/island-push, tools/notify-done.sh, tools/i18n-check, tools/habits-test
-tests/tst_habitsprovider.qml   the Habits provider under qmltestrunner (run by tools/habits-test)
+tools/run-tests                every check that needs no running island: the texts, the rules (node), tests/
+tests/tst_*.qml                QML tests under qmltestrunner, off screen (habits provider, appearance…)
 ```
 
 **Adding a new feature:** write a file under `providers/`. Define an

@@ -6,6 +6,8 @@
       drop shadow → body (a gradient for metal; translucent over KWin blur)
       → frosting → inner shadow → top gloss → border, brighter at the top.
     What a material does not have is simply transparent or zero wide.
+    A style with a gradient fill (Theme.gradientFill) has that as its body, at
+    any angle or radial, under the same frosting, gloss and border.
     Children are placed in a clipped, padded content item.
 
     Optional ambient glow (AmbientGlow.qml): a coloured light around the edge
@@ -15,6 +17,7 @@
 */
 import QtQuick
 import QtQuick.Effects
+import QtQuick.Shapes
 import org.kde.kirigami as Kirigami
 
 Item {
@@ -64,13 +67,68 @@ Item {
         shadow.color: shape.theme.dropShadow
     }
 
-    // Body
+    // Body of a gradient style: a shape of its own, because a Rectangle's gradient
+    // only runs straight down or across. The theme's gradient is the base layer;
+    // the cover's colour (the tint below) lies over it.
+    Loader {
+        anchors.fill: parent
+        active: shape.theme.gradientFill
+        sourceComponent: Shape {
+            id: fill
+            readonly property real r: Math.max(0.01, Math.min(shape.radius, width / 2, height / 2))
+            // CSS's angles: 0° runs upwards, 90° to the right; the line spans the whole surface.
+            readonly property real angle: shape.theme.gradientAngle * Math.PI / 180
+            readonly property real span: Math.abs(width * Math.sin(angle)) + Math.abs(height * Math.cos(angle))
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                strokeWidth: -1
+                fillGradient: shape.theme.gradientKind === "radial" ? radial : linear
+                startX: fill.r; startY: 0
+                PathLine { x: fill.width - fill.r; y: 0 }
+                PathArc { x: fill.width; y: fill.r; radiusX: fill.r; radiusY: fill.r }
+                PathLine { x: fill.width; y: fill.height - fill.r }
+                PathArc { x: fill.width - fill.r; y: fill.height; radiusX: fill.r; radiusY: fill.r }
+                PathLine { x: fill.r; y: fill.height }
+                PathArc { x: 0; y: fill.height - fill.r; radiusX: fill.r; radiusY: fill.r }
+                PathLine { x: 0; y: fill.r }
+                PathArc { x: fill.r; y: 0; radiusX: fill.r; radiusY: fill.r }
+            }
+            LinearGradient {
+                id: linear
+                x1: fill.width / 2 - Math.sin(fill.angle) * fill.span / 2
+                y1: fill.height / 2 + Math.cos(fill.angle) * fill.span / 2
+                x2: fill.width / 2 + Math.sin(fill.angle) * fill.span / 2
+                y2: fill.height / 2 - Math.cos(fill.angle) * fill.span / 2
+                GradientStop { position: 0; color: shape.theme.gradientBody[0] ?? "transparent" }
+                GradientStop { position: 0.5; color: shape.theme.gradientBody[1] ?? "transparent" }
+                GradientStop { position: 1; color: shape.theme.gradientBody[2] ?? "transparent" }
+            }
+            // From the middle outwards, to the corners.
+            RadialGradient {
+                id: radial
+                centerX: fill.width / 2
+                centerY: fill.height / 2
+                focalX: centerX
+                focalY: centerY
+                centerRadius: Math.sqrt(fill.width * fill.width + fill.height * fill.height) / 2
+                GradientStop { position: 0; color: shape.theme.gradientBody[0] ?? "transparent" }
+                GradientStop { position: 0.5; color: shape.theme.gradientBody[1] ?? "transparent" }
+                GradientStop { position: 1; color: shape.theme.gradientBody[2] ?? "transparent" }
+            }
+        }
+    }
+
+    // Body (for a gradient style only its border: the shape above is the fill)
     Rectangle {
         anchors.fill: parent
         radius: shape.radius
+        color: "transparent"
         border.width: shape.theme.borderWidth
         border.color: shape.theme.rimBottom
-        gradient: Gradient {
+        gradient: shape.theme.gradientFill ? null : bodyGradient
+        Gradient {
+            id: bodyGradient
             GradientStop { position: 0.0; color: shape.theme.bodyTop }
             GradientStop { position: 0.45; color: shape.theme.bodyMid }
             GradientStop { position: 1.0; color: shape.theme.bodyBottom }

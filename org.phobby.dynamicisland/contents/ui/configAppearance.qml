@@ -38,6 +38,7 @@ KCM.SimpleKCM {
     property int cfg_habitsColorSource
 
     readonly property bool custom: cfg_appearanceMode === 1
+    readonly property bool gradient: style.fill === "gradient"
     // The style being edited.
     property var style: Styles.defaults("oxygen")
     readonly property var profiles: Styles.parseProfiles(cfg_styleProfiles)
@@ -54,8 +55,22 @@ KCM.SimpleKCM {
     function set(key: string, value: var): void {
         if (style[key] === value) return;
         const next = Object.assign({}, style);
+        // A gradient nobody has touched yet starts from the solid colours: it follows them.
+        const untouched = JSON.stringify(style.gradientStops) === JSON.stringify(Styles.stopsFor(style));
         next[key] = value;
+        if (untouched && (key === "background" || key === "control")) next.gradientStops = Styles.stopsFor(next);
         use(next);
+    }
+    function setStop(index: int, hex: string): void {
+        const stops = style.gradientStops.slice();
+        stops[index] = hex;
+        set("gradientStops", stops);
+    }
+    // Two colours or three: the third comes in between, as the mix it replaces.
+    function setThirdStop(on: bool): void {
+        const stops = style.gradientStops;
+        if (on === (stops.length === 3)) return;
+        set("gradientStops", on ? [stops[0], Styles.mixHex(stops[0], stops[1], 0.5), stops[1]] : [stops[0], stops[2]]);
     }
     // A preset is a look: where the island sits and how large it is stay.
     function choosePreset(preset: string): void {
@@ -142,6 +157,9 @@ KCM.SimpleKCM {
         id: choice
         property int index
         Binding { target: choice; property: "currentIndex"; value: choice.index }
+        // A model whose texts change (the language is set after the page is made)
+        // starts again at its first entry: the choice is put back.
+        onModelChanged: Qt.callLater(() => { if (choice.currentIndex !== choice.index) choice.currentIndex = choice.index; })
     }
     component Hint: QQC2.Label {
         Layout.fillWidth: true
@@ -396,18 +414,77 @@ KCM.SimpleKCM {
             onMoved: value => page.set("radius", Math.round(value))
         }
         RowLayout {
-            Kirigami.FormData.label: Lang.i18n("Background colour:")
+            Kirigami.FormData.label: Lang.i18n("Background:")
             enabled: page.custom
+            Choice {
+                model: [Lang.i18n("Solid colour"), Lang.i18n("Gradient")]
+                index: page.gradient ? 1 : 0
+                onActivated: page.set("fill", currentIndex === 1 ? "gradient" : "solid")
+            }
             Swatch {
+                visible: !page.gradient
                 enabled: page.style.background !== "accent"
-                value: shown.base
+                value: page.style.background === "accent" ? shown.systemAccent : page.style.background
                 onPicked: hex => page.set("background", hex)
             }
             Check {
+                visible: !page.gradient
                 text: Lang.i18n("Use the system's accent colour")
                 on: page.style.background === "accent"
-                onToggled: page.set("background", checked ? "accent" : page.hex(shown.base))
+                onToggled: page.set("background", checked ? "accent" : page.hex(shown.systemAccent))
             }
+        }
+        RowLayout {
+            Kirigami.FormData.label: Lang.i18n("Gradient colours:")
+            visible: page.gradient
+            enabled: page.custom
+            // Three buttons that stay, not a Repeater: delegates that go away while
+            // this row is hidden (a solid look is chosen) crash the layout.
+            Swatch {
+                value: page.style.gradientStops[0]
+                onPicked: hex => page.setStop(0, hex)
+            }
+            Swatch {
+                visible: page.style.gradientStops.length === 3
+                value: page.style.gradientStops[1]
+                onPicked: hex => page.setStop(1, hex)
+            }
+            Swatch {
+                value: page.style.gradientStops[page.style.gradientStops.length - 1]
+                onPicked: hex => page.setStop(page.style.gradientStops.length - 1, hex)
+            }
+            Check {
+                text: Lang.i18n("Three colours")
+                on: page.style.gradientStops.length === 3
+                onToggled: page.setThirdStop(checked)
+            }
+        }
+        RowLayout {
+            Kirigami.FormData.label: Lang.i18n("Gradient type:")
+            visible: page.gradient
+            enabled: page.custom
+            Choice {
+                model: [Lang.i18n("Linear"), Lang.i18n("Radial (from the middle)")]
+                index: page.style.gradientType === "radial" ? 1 : 0
+                onActivated: page.set("gradientType", currentIndex === 1 ? "radial" : "linear")
+            }
+        }
+        ValueSlider {
+            Kirigami.FormData.label: Lang.i18n("Gradient angle:")
+            visible: page.gradient
+            enabled: page.custom && page.style.gradientType === "linear"
+            from: 0; to: 360
+            stepSize: 5
+            value: page.style.gradientAngle
+            valueText: Lang.i18n("%1°", page.style.gradientAngle)
+            onMoved: value => page.set("gradientAngle", Math.round(value))
+        }
+        Kirigami.InlineMessage {
+            Layout.fillWidth: true
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+            visible: page.custom && shown.gradientUneven
+            type: Kirigami.MessageType.Warning
+            text: Lang.i18n("This gradient has both very light and very dark parts: one text colour cannot be read well on all of it (the weakest contrast is %1:1). Bring the colours closer in brightness, or set the text colour yourself.", shown.gradientContrast.toFixed(1))
         }
         RowLayout {
             Kirigami.FormData.label: Lang.i18n("Buttons and controls:")

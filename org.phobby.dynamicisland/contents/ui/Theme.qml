@@ -46,7 +46,7 @@ QtObject {
     readonly property string material: follow ? "flat" : style.material
     // High contrast: nothing translucent that text has to be read on or with.
     readonly property bool strong: !follow && style.strong === true
-    readonly property color base: follow ? systemBackground : style.background === "accent" ? systemAccent : style.background
+    readonly property color base: follow ? systemBackground : gradientFill ? gradientAverage : style.background === "accent" ? systemAccent : style.background
     readonly property bool dark: luminance(base) < 0.179     // white reads better on it than black
     readonly property bool blurWanted: follow ? true : style.blur
     readonly property int blurLevel: follow ? 1 : style.blurLevel
@@ -58,6 +58,51 @@ QtObject {
     readonly property int shadowLevel: follow ? 1 : style.shadow
     // A corner radius under the roundness setting (100% = as designed, a full capsule).
     function rounded(radius: real): real { return radius * roundness; }
+
+    // ---- gradient fill ------------------------------------------------------------
+    // A custom style can fill the island with a gradient (2 or 3 colours; linear
+    // at any angle, or radial) instead of one colour: IslandShape draws it. What
+    // is derived from the background (dark or light, the automatic text colour,
+    // readable(), the frame) takes the gradient's average then, so text is
+    // chosen against the mean brightness of what it sits on.
+    readonly property bool gradientFill: !follow && style.fill === "gradient"
+    readonly property string gradientKind: gradientFill ? style.gradientType : ""
+    readonly property real gradientAngle: gradientFill ? style.gradientAngle : 0
+    function fromHex(text: string): color {
+        const n = parseInt(String(text).slice(1), 16);
+        return Qt.rgba(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1);
+    }
+    readonly property var gradientColors: gradientFill ? style.gradientStops.map(fromHex) : []
+    // The gradient at t (0..1) along its line.
+    function gradientAt(t: real): color {
+        const c = gradientColors, at = Math.max(0, Math.min(1, t)) * (c.length - 1);
+        const i = Math.min(c.length - 2, Math.floor(at));
+        return mix(c[i], c[i + 1], at - i);
+    }
+    // Its mean, taken in linear light: the colour whose luminance is the mean luminance.
+    readonly property color gradientAverage: {
+        if (gradientColors.length < 2) return "black";
+        const linear = v => v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        const display = v => v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+        const samples = 24;
+        let r = 0, g = 0, b = 0;
+        for (let i = 0; i < samples; ++i) {
+            const c = gradientAt((i + 0.5) / samples);
+            r += linear(c.r); g += linear(c.g); b += linear(c.b);
+        }
+        return Qt.rgba(display(r / samples), display(g / samples), display(b / samples), 1);
+    }
+    // What the shape draws: the colours at 0, ½ and 1, as translucent as the surface.
+    readonly property var gradientBody: gradientFill ? [0, 0.5, 1].map(t => { const c = gradientAt(t); return Qt.rgba(c.r, c.g, c.b, alpha); }) : []
+    // The text's contrast against the gradient's own colours, the worst of them
+    // (21 without a gradient). Under 3:1 a part of the island is too light or
+    // too dark for the one text colour: the settings warn.
+    readonly property real gradientContrast: {
+        let worst = 21;
+        for (const c of gradientColors) worst = Math.min(worst, contrast(text, c));
+        return worst;
+    }
+    readonly property bool gradientUneven: gradientFill && gradientContrast < 3
 
     // ---- metrics --------------------------------------------------------------
     readonly property real gu: Kirigami.Units.gridUnit          // ~18px @ 1x

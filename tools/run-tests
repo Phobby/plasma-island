@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# run-tests — every check of the repository that needs no running island.
+#
+#   tools/run-tests            the rules in JavaScript (node) and the QML tests
+#                              (qmltestrunner, off screen); the texts (i18n-check)
+#
+# Nothing here reads or changes the system's clock: the tests hand in their
+# own dates. QML tests that need the native module use the one built in
+# native/build (./install.sh builds it) and are skipped without it.
+set -uo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$HERE"
+failed=0
+
+echo "== texts"
+python3 tools/i18n-check --strict | sed -n '1,2p' || failed=1
+
+echo "== rules (node)"
+if command -v node >/dev/null 2>&1; then
+    node tools/habits-test --logic | tail -1 || failed=1
+    for t in tests/*.test.js; do
+        [ -e "$t" ] || continue
+        node "$t" | tail -1 || failed=1
+    done
+else
+    echo "node not found: skipped"
+fi
+
+echo "== QML (qmltestrunner)"
+runner="$(command -v qmltestrunner || true)"
+for candidate in /usr/lib/qt6/bin/qmltestrunner /usr/lib64/qt6/bin/qmltestrunner; do
+    [ -z "$runner" ] && [ -x "$candidate" ] && runner="$candidate"
+done
+if [ -n "$runner" ]; then
+    [ -d native/build/qml ] && export QML_IMPORT_PATH="$HERE/native/build/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
+    # (KDE's colour button asks for KDE's own i18n, which a bare QML engine does not have)
+    QT_QPA_PLATFORM=offscreen "$runner" -input tests -silent 2>&1 | grep -v -E "^(Testing|\*\*\*)|i18nc is not defined" || true
+    [ "${PIPESTATUS[0]}" -eq 0 ] || failed=1
+else
+    echo "qmltestrunner not found: skipped"
+fi
+
+[ $failed -eq 0 ] && echo "all passed" || echo "FAILED"
+exit $failed
