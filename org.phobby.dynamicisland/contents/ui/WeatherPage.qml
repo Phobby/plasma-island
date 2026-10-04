@@ -40,6 +40,10 @@ Item {
     // The search field has the keyboard: the island stays open and focused.
     property bool typing: false
     readonly property bool interacting: visible && typing
+    // The places a search found and a day's hours are lists the wheel scrolls:
+    // there it does not turn the island's page, not at a list's end either
+    // (that would close the search, or the day).
+    readonly property bool keepsWheel: visible && (view === "search" || day !== null)
     onVisibleChanged: if (!visible) { typing = false; shownDay = -1; if (view === "search") view = "now"; } else if (weather !== null) weather.refreshIfStale()
     Component.onCompleted: if (visible && weather !== null) weather.refreshIfStale()
     onReadyChanged: if (!ready) shownDay = -1

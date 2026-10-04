@@ -706,6 +706,10 @@ the weather's picture and, where the tab bar has room, the temperature.
   it feels like, the chance of precipitation, its amount (when there is any),
   humidity, wind speed and direction. The list scrolls; for today it starts
   at the current hour, which is highlighted. The arrow goes back.
+- **The wheel:** while a place is searched and while a day's hours are shown
+  the wheel scrolls that list and does not turn the island's page, not at
+  the list's end either (`keepsWheel` of the page, `tests/tst_wheel.qml`);
+  the tabs still do.
 - **Source:** [Open-Meteo](https://open-meteo.com) (`backend/WeatherBackend.qml`,
   `WeatherData.js`): its forecast service for the weather and its geocoding
   service for the search. Neither needs a key or an account. The data is

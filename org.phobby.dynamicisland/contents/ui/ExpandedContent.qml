@@ -34,9 +34,12 @@ Item {
     // True while the user types a reply: the island keeps keyboard focus
     // and does not collapse.
     property bool interacting: false
-    onActiveChanged: if (!active) { interacting = false; holding = false; wide = false; }
+    onActiveChanged: if (!active) { interacting = false; holding = false; wide = false; wheelKept = false; }
     // A page keeps the island open without the keyboard (e.g. while a menu it opened is shown).
     property bool holding: false
+    // A page keeps the wheel for a list of its own (e.g. the places a search
+    // found): it scrolls that list and does not turn the page.
+    property bool wheelKept: false
     // A page asks for the wider island (Theme.wideWidth). The header keeps its
     // usual width in the middle, so the tabs do not move from under the pointer.
     property bool wide: false
@@ -354,6 +357,8 @@ Item {
                         onPageInteractingChanged: expanded.interacting = pageInteracting
                         readonly property bool pageHolding: item !== null && item.holdOpen === true
                         onPageHoldingChanged: expanded.holding = pageHolding
+                        readonly property bool pageKeepsWheel: item !== null && item.keepsWheel === true
+                        onPageKeepsWheelChanged: expanded.wheelKept = pageKeepsWheel
                         readonly property bool pageWide: item !== null && item.wide === true
                         onPageWideChanged: expanded.wide = pageWide
                     }
@@ -364,8 +369,10 @@ Item {
                 // Mouse wheel or touchpad swipe pages; accumulate to debounce
                 // high-resolution touchpad deltas. Sliders handle their own wheel.
                 // Not while a page holds the island (e.g. editing the Controls
-                // buttons): there the wheel scrolls that page's list.
-                enabled: !expanded.holding
+                // buttons) or keeps the wheel (e.g. the places a search found):
+                // there the wheel scrolls that page's list. A list lets the
+                // wheel through at its end, so without this it would turn the page.
+                enabled: !expanded.holding && !expanded.wheelKept
                 property real acc: 0
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: event => {
