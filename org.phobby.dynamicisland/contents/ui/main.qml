@@ -468,6 +468,22 @@ PlasmoidItem {
             gapMinutes: root.cfg.suggestionGapMinutes
             lowBattery: root.cfg.lowBatteryThreshold
         }
+        // The AI tab's answer on its way (three dots) and "Answer ready"; loaded by name, only while the tab is on.
+        Loader {
+            id: aiActivity
+            readonly property bool wanted: root.aiBackend !== null
+            function reload(): void {
+                if (wanted) setSource("providers/AiActivityProvider.qml", { manager: activities, theme: root.islandTheme, ai: root.aiBackend });
+                else source = "";
+            }
+            onWantedChanged: reload()
+            Component.onCompleted: reload()
+            onLoaded: item.notify = Qt.binding(() => root.cfg.aiNotify)
+            Connections {
+                target: aiActivity.item
+                function onOpened() { island.openPage("ai"); }
+            }
+        }
         KdeConnectProvider {
             manager: activities
             backend: backend

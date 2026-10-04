@@ -4,13 +4,16 @@
     The AI tab and the island itself (the real Island with the real page and
     backend; a stand-in answers): the island grows taller for a conversation
     and gives the room back, and it stays open while an answer is written
-    even when the pointer leaves.
+    even when the pointer leaves. On the small island: three dots while an
+    answer is on its way and nobody looks, below every other activity; then
+    "Answer ready", which opens the tab; or nothing, when that is switched off.
 */
 import QtQuick
 import QtTest
 import "../org.phobby.dynamicisland/contents/ui"
 import "../org.phobby.dynamicisland/contents/ui/ai"
 import "../org.phobby.dynamicisland/contents/ui/backend"
+import "../org.phobby.dynamicisland/contents/ui/providers"
 
 Item {
     id: root
@@ -32,6 +35,22 @@ Item {
         }
     }
     AiBackend { id: backend; enabled: true }
+    AiActivityProvider {
+        id: onTheIsland
+        manager: activities
+        theme: islandTheme
+        ai: backend
+        onOpened: island.openPage("ai")
+    }
+    // (something else that is going on, to rank against)
+    Activity {
+        id: stopwatch
+        activityId: "stopwatch"
+        category: "timer"
+        icon: "chronometer"
+        title: "Stopwatch"
+        Component.onCompleted: activities.register(this)
+    }
     Component { id: aiPage; AiPage { theme: islandTheme; ai: backend } }
     Component { id: otherPage; Item {} }
 
@@ -79,11 +98,26 @@ Item {
             tryVerify(() => made !== null);
             backend.acknowledge(made.id);
         }
-        function init() { root.live = null; root.cancelled = 0; backend.newChat(); backend.draft = ""; }
+        function init() { root.live = null; root.cancelled = 0; backend.newChat(); backend.draft = ""; onTheIsland.notify = true; stopwatch.active = false; }
         function cleanup() {
             pointerAway();
             island.expanded = false;
+            backend.stop();
+            activities.queue = [];
+            if (activities.currentEvent) activities.dismissEvent();
             tryCompare(island, "needsLargeWindow", false, 3000);
+        }
+        // A question asked on the page, then the island let go and left: the answer is on its way, nobody looks.
+        function askAndLeave(text) {
+            pointerOn();
+            island.openPage("ai");
+            tryVerify(() => page() !== null);
+            tryCompare(page(), "visible", true);
+            compare(backend.send(text), "");
+            page().release();
+            pointerAway();
+            tryCompare(island, "expanded", false, 3000);
+            tryCompare(backend, "viewing", false);
         }
 
         function test_1_taller_for_a_conversation() {
@@ -150,6 +184,84 @@ Item {
             root.live.delta("Done.");
             root.live.finished({ ok: true, cut: false, problem: null });
             compare([backend.busy, backend.unseen, backend.messages[3].text], [false, true, "Done."]);
+        }
+
+        function test_3_three_dots_then_answer_ready() {
+            compare(activities.liveCount, 0);
+            pointerOn();
+            island.openPage("ai");
+            tryVerify(() => page() !== null);
+            tryCompare(page(), "visible", true);
+            compare(backend.send("What is the capital of France?"), "");
+            wait(50);
+            compare([backend.viewing, onTheIsland.waiting, activities.liveCount], [true, false, 0], "while its page is on screen nothing else says so");
+            page().release();
+            pointerAway();
+            tryCompare(island, "expanded", false, 3000);
+            // the small island: three dots
+            tryCompare(activities, "liveCount", 1);
+            compare([activities.primary.activityId, activities.primary.title, activities.primary.subtitle, island.mode], ["ai-thinking", "Thinking…", "Tool", "live"]);
+            tryVerify(() => find(item => item.objectName === "pillDots" && item.visible) !== null, 3000, "the dots are on the pill");
+            compare(find(item => item.objectName === "pillDots").running, true);
+
+            root.live.delta("## Paris\n\nThe capital of France is **Paris**.");
+            root.live.finished({ ok: true, cut: false, problem: null });
+            tryCompare(activities, "liveCount", 0);
+            tryVerify(() => activities.currentEvent !== null, 3000);
+            compare([activities.currentEvent.title, activities.currentEvent.subtitle, activities.currentEvent.trailing.text, island.mode, backend.unseen],
+                    ["Answer ready", "Paris", "Open", "event", true]);
+            tryVerify(() => find(item => item.objectName === "pillDots" && item.visible && item.running) === null, 3000, "the dots have stopped");
+            // a click on it opens the island on the tab
+            activities.activateEvent();
+            compare(island.expanded, true);
+            tryCompare(content(), "currentKey", "ai");
+            tryVerify(() => page() !== null && page().visible);
+            compare([backend.unseen, backend.viewing, activities.currentEvent], [false, true, null]);
+        }
+
+        function test_4_below_every_other_activity_and_stopped_from_its_card() {
+            stopwatch.active = true;
+            askAndLeave("A long one");
+            tryCompare(activities, "liveCount", 2);
+            compare([activities.primary.activityId, activities.secondary.activityId], ["stopwatch", "ai-thinking"], "whatever else is going on comes first");
+            const thinking = activities.byId("ai-thinking");
+            compare(thinking.actions.map(a => a.text), ["Stop"]);
+            thinking.actions[0].trigger();
+            compare([backend.busy, root.cancelled, activities.byId("ai-thinking").active], [false, 1, false]);
+            wait(300);
+            compare(activities.currentEvent, null, "stopped by the user: nothing to announce");
+            // a click on the card of the waiting answer opens the tab
+            stopwatch.active = false;
+            askAndLeave("Another one");
+            tryCompare(activities, "liveCount", 1);
+            activities.primary.clicked();
+            compare(island.expanded, true);
+            tryCompare(content(), "currentKey", "ai");
+        }
+
+        function test_5_switched_off_or_no_answer() {
+            // "Answer ready" switched off: the answer is there, the tab has its dot, the island says nothing
+            onTheIsland.notify = false;
+            askAndLeave("Quietly");
+            tryCompare(activities, "liveCount", 1);
+            root.live.delta("Here.");
+            root.live.finished({ ok: true, cut: false, problem: null });
+            tryCompare(activities, "liveCount", 0);
+            wait(500);
+            compare([activities.currentEvent, activities.queue.length, backend.unseen], [null, 0, true]);
+
+            // what went wrong is said the same way
+            onTheIsland.notify = true;
+            askAndLeave("Will this work?");
+            root.live.finished({ ok: false, cut: false, problem: { kind: "limit", detail: "" } });
+            tryVerify(() => activities.currentEvent !== null, 3000);
+            compare([activities.currentEvent.title, activities.currentEvent.subtitle], ["No answer", "A usage limit of Tool was reached. Try again later."]);
+            activities.dismissEvent();
+
+            // the tab is switched off: nothing of it on the island
+            onTheIsland.enabled = false;
+            compare(onTheIsland.waiting, false);
+            onTheIsland.enabled = true;
         }
     }
 }

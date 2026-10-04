@@ -210,6 +210,8 @@
       <max>20000</max>
     </entry>
     <entry name="aiKeepHistory" type="Bool"><default>false</default></entry>
+    <!-- "Answer ready" on the small island when an answer arrived while its page was not on screen -->
+    <entry name="aiNotify" type="Bool"><default>true</default></entry>
     <entry name="aiAcknowledged" type="String"><default>[]</default></entry>
 
     <!-- Modules -->

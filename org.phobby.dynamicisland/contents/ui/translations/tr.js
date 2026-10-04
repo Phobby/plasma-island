@@ -934,5 +934,8 @@ var table = {
     "In use": "Kullanımda",
     "Use": "Kullan",
     "AI": "Yapay Zeka",
-    "Quick questions to Claude Code, a local model or a service with a key": "Claude Code'a, yerel bir modele ya da anahtarlı bir hizmete hızlı sorular"
+    "Quick questions to Claude Code, a local model or a service with a key": "Claude Code'a, yerel bir modele ya da anahtarlı bir hizmete hızlı sorular",
+    "Thinking…": "Düşünüyor…",
+    "Answer ready": "Cevap hazır",
+    "No answer": "Cevap alınamadı"
 };
