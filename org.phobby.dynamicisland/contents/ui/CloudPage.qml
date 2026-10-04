@@ -87,6 +87,8 @@ Item {
         const mine = ++asked;
         current = id; path = Rclone.cleanPath(where);
         query = ""; searchField.text = "";
+        // what was shown is of another folder now: a click on it would be taken for one in the new folder
+        entries = []; more = false;
         loading = true; trouble = null;
         if (view !== "upload") view = "browse";
         cloud.list(id, path, fresh, result => {
@@ -122,6 +124,7 @@ Item {
     property var measured: null             // { count, bytes } of a folder
     function key(entry: var): string { return Rclone.target(current, Rclone.join(path, entry.name)); }
     function choose(entry: var): void {
+        if (loading) return;
         if (entry.dir) { open(current, Rclone.join(path, entry.name), false); return; }
         chosen = entry; saved = "";
         view = "file";

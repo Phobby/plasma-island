@@ -155,7 +155,12 @@ Item {
             compare(names(), ["b10.txt"]);
             p.query = "";
             // into a folder and back by the path on top
-            p.choose(p.shown[0]);
+            const folder = p.shown[0];
+            p.choose(folder);
+            // while the cloud is asked, the folder that was left is not shown any more: a second click cannot go into "itself"
+            compare([p.loading, named("entries").count, p.path], [true, 0, "Belgeler çğş"]);
+            p.choose(folder);
+            compare(p.path, "Belgeler çğş");
             tryVerify(() => named("entries").count === 1 && p.path === "Belgeler çğş", 20000);
             compare(names(), ["inner.txt"]);
             p.up(1);
