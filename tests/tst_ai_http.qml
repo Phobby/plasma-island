@@ -298,7 +298,7 @@ Item {
         function test_01_an_openai_compatible_service() {
             const service = openAi.createObject(root, { server: base + "/v1", secret: "wrong-key" });
             let r = call(service, "verify");
-            compare([r.ok, r.problem], [false, { kind: "auth", detail: "Incorrect API key provided." }]);
+            compare([r.ok, r.problem], [false, { kind: "auth", detail: "" }], "what the service says about the key is not repeated");
             compare(ask(service, "tiny-1").problem.kind, "auth");
 
             service.secret = key;
@@ -330,7 +330,7 @@ Item {
         function test_03_the_anthropic_api() {
             const claude = anthropic.createObject(root, { server: base + "/anthropic", secret: "wrong-key" });
             let r = call(claude, "verify");
-            compare([r.ok, r.problem], [false, { kind: "auth", detail: "invalid x-api-key" }]);
+            compare([r.ok, r.problem], [false, { kind: "auth", detail: "" }]);
             claude.secret = key;
             r = call(claude, "verify");
             compare([r.ok, r.models.slice(0, 2)], [true, [{ id: "claude-test-1", name: "Claude Test 1" }, { id: "claude-test-2", name: "Claude Test 2" }]], "in the service's own order, with its names");
@@ -383,7 +383,7 @@ Item {
             let made = null;
             ai.connect("anthropic", { key: "wrong-key" }, r => made = r);
             tryVerify(() => made !== null, 5000);
-            compare([made.ok, made.error], [false, "Anthropic API did not accept the key. (invalid x-api-key)"]);
+            compare([made.ok, made.error], [false, "Anthropic API did not accept the key."]);
             compare([ai.sourcesJson, Object.keys(nativeCore.entries).length], ["[]", 0], "a key that was refused is kept nowhere");
             made = null;
             ai.connect("openrouter", { key: "wrong-key" }, r => made = r);

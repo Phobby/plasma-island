@@ -185,6 +185,10 @@ learned" (asks first). A rule this system cannot make says so. What is
 changed there holds at once; see "Suggestions" below.
 **Notes** tab: the connected apps, where quick notes go, how often they are
 fetched, and "Carry on in the note that was being edited" (on by default).
+**AI** tab: the AI page's switch (off until switched on), what is connected
+to answer with its model and "Disconnect", which source answers by default,
+the longest answer and question, "Keep the chat in a file" and "Answer ready"
+on the island; see "AI" below.
 **Appearance** tab: besides the look itself, "Add New…" (a theme from a file
 or from the store), "Export Theme…" and the gradient controls; see
 "Appearance" below.
@@ -393,6 +397,13 @@ pages as they are, the theme store and the weather against answers served on
 takes the day or the moment as an argument. Tests that need the native
 module use the one in `native/build` and are skipped without it.
 
+The AI tab is tested the same way, without asking anybody: `tests/ai-server.py`
+stands in for the services (an OpenAI-compatible one and the Anthropic API:
+streams, a wrong key, limits, a cut connection, no answer at all) and
+`tests/fake-claude` for the `claude` command. `tools/ai-cli-check` is not part
+of `tools/run-tests`: it asks the real Claude Code through the tab's own
+provider (see "AI" below) and spends a little of the account's usage.
+
 ### Testing module by module
 
 | Module | How to trigger it |
@@ -417,6 +428,7 @@ module use the one in `native/build` and are skipped without it.
 | Weather | Expanded → Weather page: "Choose a Location", type a city, pick it; hover a day, click it for its hours, the arrow goes back. Settings → Weather: units |
 | Notes, carrying on | Open a note on the Notes page, move the pointer away so the island closes, open it again: the same note's editor. Lock a note in BetterNotes: "Open in BetterNotes" instead of its text |
 | Themes | Settings → Appearance → Custom: a gradient under Fine tuning; "Export Theme…", then "Add New…" → From a File with that file. The store needs its address first (see "Themes: files and the store") |
+| AI | Settings → Layout: switch "AI" on. Expanded → AI page: "Claude Code" (found by itself when installed and signed in), ask something; move the pointer away while it answers, press Escape and leave: three dots, then "Answer ready". `tools/ai-cli-check --user-memory --trace` for the checks with the real command |
 | Suggestions | Start a screen recording (Spectacle, OBS): the question with its three answers. Settings → Suggestions shows what each rule learned |
 | Habits | Expanded → Habits page: add habits, tick some; set the review time in Settings → Habits to a minute from now for the evening question. Its rules are checked without the clock: `tools/habits-test` |
 | Clipboard | Copy a text, a piece of code and an image (e.g. a Spectacle screenshot); they appear on the Clipboard page, a click copies one again |
@@ -458,6 +470,10 @@ org.phobby.dynamicisland/
     ├── ClipboardPage.qml                         clipboard history: copy again, search, star, edit, QR
     ├── HabitsPage.qml, Habits.js                 habits: checklist, calendar, review; the record's rules
     ├── Suggestions.js, Suggestion*.qml           suggestions: what is learned, the question's banner, the rules' names, the file
+    ├── AiPage.qml, AiMarkdown.js, AiDots.qml     the AI tab: conversation, connecting; an answer made ready to be shown
+    ├── ai/AiProvider.qml, ai/AiCatalog.qml       what every source of answers is, and the kinds there are
+    ├── ai/ClaudeCli*.{js,qml}, ai/HttpProvider.qml, ai/OpenAiProvider.qml, ai/AnthropicProvider.qml, ai/AiStream.js
+    │                                             the sources: Claude Code, OpenAI-compatible servers, the Anthropic API
     ├── NativeBridge.qml, BlurBridge.qml          import the native modules
     ├── Lang.qml, translations/tr.js, qmldir      the widget's own translations (singleton)
     ├── PageCatalog.qml                           the expanded pages and their default order
@@ -470,10 +486,11 @@ native/
                                PipeWireWatcher, DBusSignalWatcher, Launcher,
                                UpdatesChecker, DownloadWatcher, SecretStore,
                                LoopbackServer, LocalTools (commands, SQLite, small files), PopupWatcher,
-                               AudioLevels, IslandService (D-Bus API)
+                               AudioLevels, StreamProcess (a command read while it runs),
+                               IslandService (D-Bus API)
 catalog/                       the theme store: index.json, themes/*.islandtheme.json, the JSON Schema
 tools/island-push, tools/notify-done.sh, tools/i18n-check, tools/habits-test, tools/catalog-update,
-tools/weather-icons
+tools/weather-icons, tools/ai-cli-check
 tools/run-tests                every check that needs no running island: the texts, the rules (node), tests/
 tests/tst_*.qml                QML tests under qmltestrunner, off screen (habits provider, appearance…)
 ```
@@ -909,6 +926,126 @@ holds the learning and takes the moment it is asked about as an argument, so
 it never reads the clock; `tests/suggestions.test.js` and
 `tests/tst_suggestions.qml` check it with times of their own.
 
+## AI
+
+A tab for quick questions: text in, text out. It is **off** until it is
+switched on (Settings → Layout or AI), and while it is off none of it is
+loaded. A question is typed (Enter sends, Shift+Enter is a new line), the
+answer is shown while it is written, as Markdown, with code blocks in boxes of
+their own and "Copy"; a follow-up goes into the same chat; the button stops an
+answer; "New chat" starts over. It is a box for short questions, not for long
+work, and **not an agent**: no source is ever given a tool, a file or anything
+that was not typed. A question over the length limit is not sent (the Claude
+app or a terminal is named instead); no file, picture or drop is taken, and
+nothing of the clipboard, the screen, the notes or the calendar is added by
+itself. The rule-based suggestions stay what they are: nothing here feeds them.
+
+### What can answer
+
+Sources are connected on the page itself. What is found on this computer is
+offered first; a command that installs or starts something is only ever shown
+to be copied, never run.
+
+| Source | How it connects |
+|---|---|
+| **Claude Code** | The `claude` command of this computer (on the PATH or in `~/.local/bin`), already signed in: no key, and the island never sees an account. Found by itself. See below for what it is run with |
+| **Ollama** | `http://localhost:11434/v1`, found by itself: answering, installed but not running ("Start it": `ollama serve` to copy), or not found (the install command to copy). No account, no key; nothing leaves the device |
+| **Local model server** | Any server that speaks the OpenAI protocol at an address you give, e.g. LM Studio (`http://localhost:1234/v1`) or llama.cpp (`http://127.0.0.1:8080/v1`). An address that is not this computer is not called local: the form says where the text will go (and when the connection is not encrypted) and connects on the second press |
+| **Anthropic API** | A key from `platform.claude.com/settings/keys`; `GET /v1/models`, `POST /v1/messages` as a stream |
+| **OpenAI**, **OpenRouter**, **Groq**, **Google Gemini** | A key; each at its OpenAI-compatible address (`api.openai.com/v1`, `openrouter.ai/api/v1`, `api.groq.com/openai/v1`, `generativelanguage.googleapis.com/v1beta/openai`) |
+| **Another service** | Any other OpenAI-compatible service: its address and its key |
+
+- **Models** are never a list written down here. For a service it is its own
+  list (`/models`), with a field to search it or to type a name; for Claude
+  Code it is "its own choice", the names its `--help` gives as examples
+  (`fable`, `opus`, `sonnet` today), or a name typed in Settings → AI.
+- **Keys** live in KDE Wallet (folder "Dynamic Island", entry `ai:<id>`) and
+  nowhere else: not in the settings, a log, a message, an address or a
+  command line; in a request a key is a header. Connecting asks the service
+  first, so a key it refuses is stored nowhere. A key is read from the wallet
+  only when a question is asked, and deleted from it when its source is
+  disconnected (on the page or in the settings). Without the native module it
+  is kept only until the shell restarts.
+- **Before the first question** to a source its notice is shown once: where
+  the text goes (to Claude through Claude Code, to the named service, or
+  nowhere beyond this device) and that it uses up that account's usage. The
+  backend refuses to send before it was accepted.
+- **The longest answer** (2048 tokens unless changed) is sent to every source
+  as its limit; an answer cut off there says so.
+- **The chat** is in memory only: it survives the island closing, not a
+  restart of the shell. "Keep the chat in a file" (off) also writes it to
+  `~/.local/share/dynamicisland/ai-chat.json`, readable by the owner only;
+  switching it off deletes the file.
+- **What an answer contains is never acted on.** A link is opened only after
+  asking, and only a web address. A picture is not fetched: Qt's Markdown
+  would fetch it by itself the moment the answer is shown, so it is turned
+  into its link first. HTML is shown as text (`AiMarkdown.js`).
+
+### Claude Code: a question box, not an agent
+
+Three layers, the first two enforced, the third only asked. The options were
+found by running `claude --help` and trying them (2.1.289); `ai/ClaudeCli.js`
+holds them in one place.
+
+| Option | What it is for, and what was seen |
+|---|---|
+| `-p --output-format stream-json --verbose --include-partial-messages` | One answer, then exit, written as lines of JSON while it is made |
+| `--tools ""` | None of the built-in tools (files, commands, web, sub-agents, notebooks…) |
+| `--strict-mcp-config` | No MCP servers. Without it a server of the user's account stayed connected with its 8 tools, `--tools ""` or not |
+| `--setting-sources ""`, `--safe-mode`, `--restricted`, `--disable-slash-commands` | None of the user's or a project's settings, hooks, skills, plugins, commands, agents or `CLAUDE.md`. Without them a `CLAUDE.md` of the folder, of a folder above it and of the user each reached the answer; `--system-prompt` alone did not keep them out |
+| `--permission-mode dontAsk`, `--permission-prompts none` | What would ask for a permission is refused, never allowed |
+| `--max-turns 1` | The answer, then the end. Not in `--help`, but taken. **Not a guard by itself:** with a tool allowed on purpose, one call ran before the limit ended the run |
+| `--no-session-persistence` | Nothing of the chat is written under `~/.claude` |
+| `--system-prompt …` | The island's own instruction (text only, no tools, short) instead of the coding assistant's |
+
+- The command's first line says what it runs with. A tool, an MCP server or
+  another folder there ends it before a question is answered; a model that
+  reaches for a tool all the same ends it at that moment. A Claude Code that
+  does not know one of the options ends with an error and is **not** tried
+  again with fewer.
+- It always runs in `~/.local/share/dynamicisland/ai-sandbox`, an empty
+  folder of the island's own (made for the owner only), never where the shell
+  or a project is. The question goes to its standard input, not to an
+  argument, so it is not in the list of processes.
+- The island opens no file under `~/.claude`; the sign-in state is asked of
+  the command (`claude auth status`), and only "signed in or not" is read.
+- **A follow-up** carries the earlier messages along. Resuming a session
+  (`--resume`) works too, but it writes the chat to `~/.claude/projects/`;
+  telling it again keeps nothing on disk and is the same for every source.
+  All of the chat goes with every question, so a long one says so and offers
+  "New chat".
+- `--bare` would also switch most of this off, but it does not use the
+  subscription sign-in ("Not logged in").
+- **Other commands:** Antigravity's `agy` has a print mode but no option that
+  switches its tools off (only a terminal sandbox and a plan mode), so it is
+  not offered. `gemini`, `codex` and `ollama` were not installed here.
+
+`tools/ai-cli-check [--user-memory] [--trace]` asks the real Claude Code
+through this provider and checks: an answer in pieces, from the island's
+folder, the question in no argument; asked to list files, to make files and
+run a command, or to search the web, nothing is listed, made, run or
+searched; a `CLAUDE.md` of the user (made for the check, then removed) does
+not reach the answer; the island's own process opens no file under
+`~/.claude` (strace); the folder stays empty and no chat is kept.
+
+### On the island
+
+The page asks for a taller island while a conversation is shown. While an
+answer is written the island stays open without the pointer; Escape lets it
+go, and the answer goes on. Then, with the page not on screen: three dots as
+a quiet live activity, below every other one, and when the answer is
+complete the event "Answer ready" (a click opens the tab; it can be switched
+off, the dot on the tab stays). Nothing of the tab runs while no answer is on
+its way.
+
+### Adding a source
+
+A source is a file under `ai/` with `AiProvider` as its root (`detect`,
+`verify`, `listModels`, `send` with the answer in pieces, `cancel`) and an
+entry in `ai/AiCatalog.qml`. One that speaks the OpenAI protocol needs only
+the entry. `AiBackend` talks to nothing else, and what went wrong is said in
+the same words for every source (`ai/AiStream.js`).
+
 ## Clipboard
 
 A page with the history of Plasma's own clipboard (Klipper), so it shows the
@@ -1067,6 +1204,24 @@ OSD keeps appearing too. Pick one of them:
   not come through KDE Connect (it has no calendar plugin); it comes from
   Google/iCloud if the phone syncs there. An event may be pinned up to 20 s
   late.
+- **AI, Claude Code:** that it stays a question box rests on the command
+  honouring its own options; the island checks what the command says about
+  itself before every answer and stops it otherwise. Settings an
+  administrator manages for Claude Code still apply (the command says so); an
+  MCP server from there would make it refuse to answer here rather than run
+  with it. `--max-turns` is not in the command's help. Claude Code keeps its
+  own state (`~/.claude.json`), which is its business. Every question uses up
+  the account's usage; the model is the command's own choice unless another
+  is picked.
+- **AI, services with a key:** only a refused key and the services' answers
+  to it were tried against the real services; a chat with a real key was
+  tried against a stand-in. A service that only knows the length limit as
+  `max_completion_tokens` is asked again with that name when it says so.
+  Gemini is reached through Google's OpenAI-compatible address. No server-side
+  fallback, thinking or effort setting is sent to the Anthropic API.
+- **AI, keyboard:** the island takes the keyboard when the field is clicked
+  (as on the Notes page) and gives it back with Escape; while it has it, the
+  island stays open.
 - **Updates** are read from the PackageKit cache (apt/dnf packages). Flatpak
   updates are not counted.
 - **The D-Bus API** binds to only one island instance at a time (the first to

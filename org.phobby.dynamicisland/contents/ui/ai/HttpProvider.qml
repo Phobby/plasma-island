@@ -9,7 +9,8 @@
     A provider on top of this gives the headers (where its key goes), reads
     one event (interpret) and builds its addresses and bodies. The key is
     only ever put into a header: never into an address, and it is taken out
-    of whatever a service says before that is shown (clean).
+    of whatever a service says before that is shown (clean); what a service
+    says about a key it refused is not shown at all.
 */
 import QtQuick
 import "AiStream.js" as Stream
@@ -22,8 +23,9 @@ AiProvider {
     // One event's data → { text, cut, end, problem }, each only when it is there.
     function interpret(data: string): var { return {}; }
 
+    // What a service says about a refused key is not repeated at all: some name part of the key in it.
     function clean(problem: var): var {
-        return { kind: problem.kind, detail: Stream.scrub(problem.detail, secret) };
+        return { kind: problem.kind, detail: problem.kind === "auth" ? "" : Stream.scrub(problem.detail, secret) };
     }
 
     // ---- a question with a time limit ---------------------------------------------------
