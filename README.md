@@ -619,8 +619,8 @@ local service answers) and offers the ones it finds first.
     it later.
   - In the editor the title is a field above the plain-text content; both
     are saved 1.5 s after typing stops, when the field loses focus, or on
-    Ctrl+S. Rich formatting is not rebuilt here: a note with rich text, and
-    a locked note, is only shown.
+    Ctrl+S. Rich formatting is not rebuilt here: a note with rich text is
+    only shown. A locked note is not shown at all (see "Locked notes" below).
   - "Edit in BetterNotes" there, and the window button beside the title of
     any other note, show the note as its sticky window on the desktop with
     `betternotes open <id>` (BetterNotes 0.1.14 or newer, started in the
@@ -632,6 +632,23 @@ local service answers) and offers the ones it finds first.
     island ("Not saved" in the list).
   - The list follows changes at once (the data folder is watched). These
     notes stay on this computer and do not appear on other devices.
+- **Carrying on where you left off:** the note that is open in the editor is
+  remembered: its app and its id (`notesLastOpen` in the settings), never its
+  text. When the Notes page is opened again, after another tab, after the
+  island closed or after plasmashell restarted, it goes straight back into
+  that note's editor, with the unsaved draft if there is one (the same
+  protection as above). Going back to the list ends it. A note that was
+  deleted meanwhile, or whose app is not running or no longer connected,
+  leads to the list without a message.
+- **Locked notes (BetterNotes)** are never shown here, also not when carrying
+  on: instead of the editor the page says that the note is locked and offers
+  "Open in BetterNotes" (its window there asks for the master password) and
+  "Cancel" (back to the list). Nothing of the note is fetched. BetterNotes
+  0.1.14 encrypts a locked note's text (XChaCha20-Poly1305, the key derived
+  from the password with Argon2id) and its command cannot take the password:
+  neither `show` nor `update` has an option for it, and `update` refuses a
+  locked note. The island does not rebuild that encryption, so it never asks
+  for a password, and none is ever kept or written anywhere.
 - Tokens are stored in KDE Wallet (folder "Dynamic Island"), never in the
   configuration file, and are deleted when an app is disconnected.
 - Settings → Notes: connected apps (disconnect), the default app for quick

@@ -567,6 +567,9 @@ PlasmoidItem {
             theme: root.islandTheme
             notes: notesBackend
             onDefaultPicked: id => root.cfg.notesDefault = id
+            resume: root.cfg.notesResume
+            lastOpen: root.cfg.notesLastOpen
+            onLastOpenEdited: json => root.cfg.notesLastOpen = json
         }
     }
 

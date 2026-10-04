@@ -175,6 +175,10 @@
     <entry name="notesSources" type="String"><default>[]</default></entry>
     <entry name="notesDefault" type="String"><default></default></entry>
     <entry name="notesRefreshMinutes" type="Int"><default>2</default></entry>
+    <!-- Carry on where one left off: on/off, and (written by the widget) the note last open in the
+         editor: JSON { source, id, editing }. Never a note's text, never a password -->
+    <entry name="notesResume" type="Bool"><default>true</default></entry>
+    <entry name="notesLastOpen" type="String"><default></default></entry>
 
     <!-- Modules -->
     <entry name="showMediaModule" type="Bool">

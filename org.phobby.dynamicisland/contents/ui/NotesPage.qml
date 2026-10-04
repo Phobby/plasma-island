@@ -11,6 +11,13 @@
     stays (NotesBackend.drafts) and can be saved again.
     Notes apps are connected right here: the ones found on this computer are
     offered first.
+
+    Carrying on: the note that is open in the editor is remembered (its source
+    and id, in the settings), so the page comes back to it after the island
+    closed or the shell restarted, with the unsaved draft if there is one. A
+    note that is gone, or whose app cannot be reached, leads to the list
+    without a word. A locked note is never shown here: BetterNotes' command
+    cannot take the password, so the page only offers to open it there.
 */
 import QtQuick
 import QtQuick.Layouts
@@ -23,7 +30,7 @@ Item {
     required property var notes             // NotesBackend
     signal defaultPicked(string id)
 
-    // "list" | "note" (editor)
+    // "list" | "note" (editor) | "locked" (a locked note: only "open in BetterNotes")
     // | "sources" (connected apps, add one) | "form" (connect `formType`) | "install" (how to get BetterNotes)
     property string view: "list"
     property bool searching: false
@@ -39,6 +46,69 @@ Item {
     function arrive(): void {
         if (!visible) return;
         if (notes.available) notes.refreshIfStale(); else if (!detected) detect();
+        carryOn();
+    }
+
+    // ---- carrying on where one left off ---------------------------------------------
+    property bool resume: true
+    // JSON { source, id, editing }: the note last open in the editor, and whether it still was
+    // when the page was left. Kept in the settings (it outlives the shell); never its text.
+    property string lastOpen: ""
+    signal lastOpenEdited(string json)
+    function record(): var {
+        try { const r = JSON.parse(lastOpen || "null"); return r && typeof r === "object" ? r : null; } catch (e) { return null; }
+    }
+    function remember(n: var, editing: bool): void {
+        const before = record();
+        const next = n ? { source: n.source, id: n.id, editing: editing } : before ? { source: before.source, id: before.id, editing: false } : null;
+        const json = next ? JSON.stringify(next) : "";
+        if (json !== lastOpen) lastOpenEdited(json);
+    }
+    // Decided once for a page (a page lives while the island is open).
+    property bool carriedOn: false
+    function carryOn(): void {
+        if (carriedOn || !visible || view !== "list") return;
+        const r = record();
+        if (!resume || r === null || r.editing !== true) { carriedOn = true; return; }
+        // Its app is not connected any more: the list.
+        if (!notes.available) { carriedOn = true; remember(null, false); return; }
+        if (!notes.loaded) return;                                   // the list is still on its way
+        carriedOn = true;
+        // Its app cannot be reached right now: the list, without a word (and it is tried again another time).
+        if (notes.errors[r.source] !== undefined) return;
+        const n = notes.notes.find(x => x.source === r.source && x.id === r.id);
+        if (n === undefined) { remember(null, false); return; }     // the note is gone
+        open(n, true);
+    }
+    Connections {
+        target: page.notes
+        function onLoadedChanged() { page.carryOn(); }
+    }
+
+    // ---- a locked note --------------------------------------------------------------
+    // Nothing of its content is fetched or shown; BetterNotes asks for the password itself.
+    property var lockedNote: null
+    function showLocked(n: var): void {
+        autoSave.stop();
+        lockedNote = n; current = null; saveError = ""; loading = false; typing = false;
+        editor.text = ""; titleField.text = ""; savedText = "";
+        view = "locked";
+        remember(n, true);
+    }
+    function openLocked(): void {
+        if (lockedNote === null || opening) return;
+        if (!notes.betterNotesOpens) { notes.openBetterNotes(); leaveLocked(); return; }
+        opening = true;
+        notes.openNote(lockedNote, error => {
+            opening = false;
+            if (error.length > 0) say(error, true);
+            leaveLocked();
+        });
+    }
+    function leaveLocked(): void {
+        remember(lockedNote, false);
+        lockedNote = null;
+        view = "list";
     }
 
     readonly property var shown: {
@@ -108,10 +178,13 @@ Item {
             editor.text = i < 0 ? "" : text.slice(i + 1);
         } else editor.text = text;
     }
-    function open(n: var): void {
+    // `quiet`: the page came back to this note by itself; if it cannot be shown, the list, without a word.
+    function open(n: var, quiet: bool): void {
+        if (n && n.locked === true) { showLocked(n); return; }
         autoSave.stop();
         current = n; saveError = ""; loading = false;
         view = "note";
+        remember(n, n !== null && n !== undefined);
         const draft = page.notes.drafts[draftKey];
         const resume = () => {
             if (draft !== undefined && !readOnly) {
@@ -127,6 +200,7 @@ Item {
                 // The list may have been refreshed meanwhile: the same note is another object then.
                 if (!page.current || page.current.key !== n.key) return;
                 loading = false;
+                if (error && quiet) { editor.text = ""; page.remember(n, false); page.current = null; page.view = "list"; return; }
                 if (error) { page.saveError = error; editor.text = ""; savedText = page.composed(); return; }
                 // Also found by the search from now on. Plain text would lose rich formatting: only shown.
                 const fields = { text: page.current.title + "\n" + text, loaded: true };
@@ -156,17 +230,19 @@ Item {
             // The text stays in the editor (and in the backend's drafts): nothing is lost.
             if (!result.ok) { saveError = result.error; return; }
             current = result.note; savedText = text;
+            if (view === "note") remember(current, true);            // (a new note has its id now)
             // Typed on while it was being saved: save again.
             if (composed() !== text) autoSave.restart(); else if (then) then();
         };
         if (current) notes.save(current, text, finished); else notes.create(text, "", finished);
     }
     function closeNote(): void {
-        saveNote(() => { view = "list"; typing = false; });
+        saveNote(() => { remember(current, false); view = "list"; typing = false; });
     }
     // Back to the list without saving: the text stays as a draft of this note.
     function leaveNote(): void {
         if (dirty) notes.setDraft(draftKey, composed());
+        remember(current, false);
         autoSave.stop(); saveError = ""; view = "list"; typing = false;
     }
     Timer { id: autoSave; interval: 1500; onTriggered: page.saveNote(null) }
@@ -383,6 +459,55 @@ Item {
                 text: !page.notes.loaded ? Lang.i18n("Loading notes…") : page.searching && page.query.trim().length > 0 ? Lang.i18n("No note matches") : Lang.i18n("No notes yet")
                 color: page.theme.subText
                 font.pointSize: page.theme.fontSmall
+            }
+        }
+    }
+
+    // ---- a locked note: only where to open it ---------------------------------------------
+    ColumnLayout {
+        anchors.centerIn: parent
+        width: parent.width - 40
+        visible: page.view === "locked"
+        spacing: 6
+        Kirigami.Icon {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: 22
+            Layout.preferredHeight: 22
+            source: "object-locked-symbolic"
+            color: page.theme.subText
+            isMask: true
+        }
+        Text {
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            text: page.lockedNote !== null ? page.lockedNote.title : ""
+            color: page.theme.text
+            font.pointSize: page.theme.fontSmall
+            font.weight: Font.DemiBold
+            elide: Text.ElideRight
+        }
+        Text {
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.Wrap
+            text: Lang.i18n("This note is locked. BetterNotes asks for the password itself; it cannot be entered here.")
+            color: page.theme.subText
+            font.pointSize: page.theme.fontSmall * 0.9
+        }
+        RowLayout {
+            Layout.alignment: Qt.AlignHCenter
+            spacing: 6
+            PillButton {
+                theme: page.theme
+                primary: true
+                enabled: !page.opening
+                text: Lang.i18n("Open in BetterNotes")
+                onClicked: page.openLocked()
+            }
+            PillButton {
+                theme: page.theme
+                text: Lang.i18n("Cancel")
+                onClicked: page.leaveLocked()
             }
         }
     }

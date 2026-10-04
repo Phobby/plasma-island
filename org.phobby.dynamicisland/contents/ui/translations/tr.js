@@ -792,5 +792,7 @@ var table = {
     "@info wind from the south\u0004S": "G",
     "@info wind from the south-west\u0004SW": "GB",
     "@info wind from the west\u0004W": "B",
-    "@info wind from the north-west\u0004NW": "KB"
+    "@info wind from the north-west\u0004NW": "KB",
+    "This note is locked. BetterNotes asks for the password itself; it cannot be entered here.": "Bu not kilitli. Şifreyi BetterNotes kendisi sorar; burada girilemez.",
+    "Open in BetterNotes": "BetterNotes'ta aç"
 };
