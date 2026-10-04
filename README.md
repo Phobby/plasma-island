@@ -943,57 +943,97 @@ system's time.
 
 ## Suggestions
 
-At the right moment the island asks one short question and offers to do
-something for you. It is rule based and entirely local: no network, no
-model, nothing leaves the computer.
+Few, and only where they have proved welcome. At a rule's moment the island
+may ask one short question, do the thing by itself (saying so, with an Undo),
+keep the suggestion quietly for when the island is opened, or say nothing: it
+decides from what it has learned about that rule in that context. Rules and
+counting only, on this computer: no network, no model.
 
-| Moment | Question | What "Yes" does |
-|---|---|---|
-| A calendar event is about to start (the pinned, upcoming one) | "“Stand-up” starts soon. Turn on Do Not Disturb until it ends?" | Do Not Disturb until the event's end (Plasma switches it off then) |
-| Screen recording or screen sharing starts | "The screen is being recorded. Hide notifications while it lasts?" | Do Not Disturb while the recording lasts, off again when it stops |
-| An application starts using the microphone while media plays | "The microphone is in use. Pause the media?" | Pauses the player |
-| The battery reaches the low threshold (Alerts), not on the charger | "The battery is low (18 %). Switch to the power saving profile?" | The power saving profile (Undo: the one before) |
-| A Pomodoro focus round starts | "A focus round has started. Turn on Do Not Disturb until the break?" | Do Not Disturb until the round ends |
-| Headphones are connected (a Bluetooth headset, or the audio output becomes headphones) while the media is paused | "Headphones are connected. Carry on playing?" | Plays |
+| Rule | Moment | What it does | Taken back |
+|---|---|---|---|
+| Do Not Disturb before an event | The pinned calendar event is about to start | Do Not Disturb until the event ends | Plasma ends it at the event's end |
+| Pause media before a video meeting | …and it has a video link while something plays | Pauses the media | no |
+| Hide notifications while the screen is recorded | Screen recording or sharing starts | Do Not Disturb | when the recording stops |
+| Pause media when the microphone is used | An application takes the microphone while something plays | Pauses the media | plays again when the microphone is free |
+| Do Not Disturb in a focus round | A Pomodoro focus round starts | Do Not Disturb | at the break |
+| Save power when the battery is low | The battery reaches the low threshold of Alerts | Power saving profile | the profile it had, on the charger |
+| Pause media when the headphones go away | The audio output stops being headphones while something plays | Pauses the media | no |
+| Carry on playing with headphones (experimental, off) | Headphones are connected while the media is paused | Plays | no |
 
-A rule whose part of the system is missing or switched off never comes up:
-no Do Not Disturb, no power profiles, no native module (screen casts and the
-microphone are seen through it), the Calendar, Tools or Media page switched
-off… Nor does it when there is nothing to do: Do Not Disturb is on already,
-nothing plays, the power saving profile is active.
+A rule whose part of the system is missing or switched off never comes up
+(no battery: no battery rule). "Carry on playing" is marked experimental and
+off until it is switched on: headphones are told from a device's name and
+port, which can be wrong, and starting to play is the one thing here that
+makes noise.
 
-**The question** is a momentary event: one sentence and three buttons, **Yes**,
-**Not now**, **Never suggest this**. Without an answer it goes away after ten
-seconds and counts as not answered (the cross and a middle click count as
-"Not now"; the pointer on it keeps it there).
+**What it learns from.** The unit is (rule, context). A context is a few
+coarse buckets: weekday or weekend; morning, midday, evening or night; for an
+event the calendar's name, whether it is short, up to 90 minutes or long, and
+whether it has a video link; for the microphone rule whether the output is
+headphones or speakers. Never a window title, an application, an event's
+title, a text or a key press. Signals and their weights
+(`Suggestions.TUNING`, the one place every number is):
 
-**What it remembers,** per rule: how often the answer was yes and how often
-"not now" or none, how many of each in a row, when it was last suggested,
-and whether it is asking, automatic or off.
+| Signal | Weight |
+|---|---|
+| Yes | +1 |
+| Always (automatic there at once) | +3 |
+| Done by hand within two minutes of the rule's moment | +0.7 |
+| No | −1.5 |
+| Not now, the card closed | −0.4 |
+| No answer in time | −0.15 |
+| Undo of an automatic action, or switching it back by hand | −3 |
 
-- **Never suggest this:** the rule is off for good, until it is switched on
-  in the settings.
-- **"Not now" or no answer three times in a row:** the rule is suggested less
-  often: it waits an hour before the next time, then two; one yes ends that.
-  **Five in a row:** the rule is switched off and the island says so once:
-  "I will not show this suggestion any more · You can switch it on again in
-  Settings → Suggestions".
-- **Yes three times in a row:** the island asks once: "Shall I do this
-  automatically from now on?". With a yes the rule is automatic: it acts
-  without asking and says so each time, "Do Not Disturb is on · Done
-  automatically", with an **Undo** button. Undo takes the action back and
-  puts the rule back to asking.
-- At least five minutes (a setting) lie between two suggestions, of whatever
-  rule. Nothing is suggested while Do Not Disturb is on or the screen is
-  being recorded (the recording's own question comes at its start).
+Confidence is a = 1 + the positive weights, b = 1 + the negative ones,
+a / (a + b); each weight halves every 30 days. With less than about three
+answers' worth known about a context, its estimate is mixed with the rule's
+estimate over all contexts. Below 0.25 the rule stays silent there; from 0.8
+with at least four welcome signals on two different days, or after it was
+done by hand four times, the island asks once "shall I do this by myself?";
+accepted, it is automatic in that context.
 
-**Stored** as one small JSON file, `~/.local/share/dynamicisland/suggestions.json`
-(`SuggestionStore.qml`; in the widget's settings instead when the native
-module is missing): the counters above, nothing about what was on the screen
-or in the calendar. It outlives a restart of the shell. `Suggestions.js`
-holds the learning and takes the moment it is asked about as an argument, so
-it never reads the clock; `tests/suggestions.test.js` and
-`tests/tst_suggestions.qml` check it with times of their own.
+**How it comes.**
+
+- *A card* only for what is over within minutes, at most six a day, not
+  within a rule's wait (20 minutes after a card, doubled with every answer in
+  a row that was not a yes) nor within the pause between two cards. Yes ·
+  Always · No, and behind "⋯" Not now · Turn this rule off; under the question
+  a "Why?" line ("You said yes to 4 of the last 5 here."). Several things for
+  one moment are one card with a tick each, learned separately.
+- *A mark* on the pill's corner (in dot mode the dot pulses): the suggestion
+  waits as one line in the open island, at most three.
+- *Quietly*, the same without the mark: while Do Not Disturb is on, an
+  application is full screen, the screen is recorded or the microphone is in
+  use (the recording's and the microphone's own questions excepted).
+
+A suggestion whose moment has passed goes away by itself, and that and a
+suggestion nobody saw teach nothing. No answer is not a no.
+
+**Automatic, safely.** Only things that are local, small and can be taken
+back are ever done: Do Not Disturb, the power profile, pausing and resuming
+media. What a rule switched on is remembered as its own and taken back when
+its cause ends, and only that: Do Not Disturb the user had on already, or
+changed in between, is left alone. Each automatic action is said, with "Undo";
+an undo (or switching it back by hand) puts that context back to asking, and
+a second one closes the rule there, which is said once.
+
+**Settings → Suggestions:** how much it may interrupt (Quiet: silent below
+0.35, two cards a day, double waits · Balanced · Active: silent below 0.15,
+twelve cards, half waits), the cards a day, the waits and the half-life; each
+rule's mode (learns by itself, always asks, automatic, off); "What I learned":
+per rule and context what it does now and how sure it is, with "forget this
+context" and "reset this rule", and the last seven days in numbers; "Done
+automatically", the last 50; export and reset.
+
+**Kept** as one small JSON (`~/.local/share/dynamicisland/suggestions.json`,
+schema 2): per signal the rule, the context, the kind of signal and the
+moment, the last 200; older ones are folded into decayed sums. The first
+version's counters are carried over as what is known about a rule in general.
+Nothing polls: everything happens on a change of something.
+
+`tests/suggestions.test.js` simulates weeks of answers with dates handed in;
+`tests/tst_suggestions.qml` runs the provider on stand-ins with a clock of
+its own; `tests/tst_suggestions_island.qml` what the island shows.
 
 ## AI
 
