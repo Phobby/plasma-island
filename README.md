@@ -189,6 +189,11 @@ fetched, and "Carry on in the note that was being edited" (on by default).
 to answer with its model and "Disconnect", which source answers by default,
 the longest answer and question, "Keep the chat in a file" and "Answer ready"
 on the island; see "AI" below.
+**Cloud** tab: the Cloud page's switch (off until switched on) and its
+indicator, the clouds rclone knows (shown or hidden, a name of one's own, where
+the sync state comes from), storage thresholds, alerts and their pause, the
+question before an upload, the cache and "Clear cache", and how a cloud is
+added; see "Cloud" below.
 **Appearance** tab: besides the look itself, "Add New…" (a theme from a file
 or from the store), "Export Theme…" and the gradient controls; see
 "Appearance" below.
@@ -429,6 +434,7 @@ provider (see "AI" below) and spends a little of the account's usage.
 | Notes, carrying on | Open a note on the Notes page, move the pointer away so the island closes, open it again: the same note's editor. Lock a note in BetterNotes: "Open in BetterNotes" instead of its text |
 | Themes | Settings → Appearance → Custom: a gradient under Fine tuning; "Export Theme…", then "Add New…" → From a File with that file. The store needs its address first (see "Themes: files and the store") |
 | AI | Settings → Layout: switch "AI" on. Expanded → AI page: "Claude Code" (found by itself when installed and signed in), ask something; move the pointer away while it answers, press Escape and leave: three dots, then "Answer ready". `tools/ai-cli-check --user-memory --trace` for the checks with the real command |
+| Cloud | Needs `rclone` with at least one remote (`rclone config`). Settings → Layout: switch "Cloud" on. Expanded → Cloud page: go into a folder, rest the pointer on a small file and drag it to the desktop, drop a file on the list. Without rclone the page shows how to install it |
 | Suggestions | Start a screen recording (Spectacle, OBS): the question with its three answers. Settings → Suggestions shows what each rule learned |
 | Habits | Expanded → Habits page: add habits, tick some; set the review time in Settings → Habits to a minute from now for the evening question. Its rules are checked without the clock: `tools/habits-test` |
 | Clipboard | Copy a text, a piece of code and an image (e.g. a Spectacle screenshot); they appear on the Clipboard page, a click copies one again |
@@ -471,6 +477,9 @@ org.phobby.dynamicisland/
     ├── HabitsPage.qml, Habits.js                 habits: checklist, calendar, review; the record's rules
     ├── Suggestions.js, Suggestion*.qml           suggestions: what is learned, the question's banner, the rules' names, the file
     ├── AiPage.qml, AiMarkdown.js, AiDots.qml     the AI tab: conversation, connecting; an answer made ready to be shown
+    ├── CloudPage.qml, cloud/Rclone.js            the Cloud tab: folders by name, drag out, drop in; rclone's commands and answers
+    ├── cloud/CloudProvider.qml, cloud/RcloneProvider.qml, cloud/*Status.qml
+    │                                             what a cloud is, rclone as one, sync state from Syncthing and Dropbox
     ├── ai/AiProvider.qml, ai/AiCatalog.qml       what every source of answers is, and the kinds there are
     ├── ai/ClaudeCli*.{js,qml}, ai/HttpProvider.qml, ai/OpenAiProvider.qml, ai/AnthropicProvider.qml, ai/AiStream.js
     │                                             the sources: Claude Code, OpenAI-compatible servers, the Anthropic API
@@ -1046,6 +1055,64 @@ entry in `ai/AiCatalog.qml`. One that speaks the OpenAI protocol needs only
 the entry. `AiBackend` talks to nothing else, and what went wrong is said in
 the same words for every source (`ai/AiStream.js`).
 
+## Cloud
+
+A tab for the clouds of this computer, the counterpart of a menu bar's cloud
+icon: folders and files **by name** (with size and date), how full each cloud
+is, its sync state where something says it, alerts, a file dragged out to the
+desktop, files dropped in to upload. It is **off** until switched on (Settings
+→ Layout or Cloud); while it is off none of it is loaded.
+
+The clouds are the remotes of the user's **rclone** (Google Drive, OneDrive,
+Dropbox, Nextcloud/WebDAV, a server of one's own: whatever `rclone config`
+set up). The island only runs the `rclone` command and reads what it prints;
+rclone's configuration file, its tokens and passwords are never opened
+(checked with strace: the island's process opens no `rclone.conf`). Without
+rclone the page says so and shows the install command to be copied.
+
+- **What it can do to a cloud:** list a folder (one level, `lsjson`), ask how
+  full it is (`about`), measure a folder (`size`), copy from it and to it
+  (`copyto`, `copy`). It cannot delete, move, rename or sync, and it shows no
+  content: no preview, no thumbnail.
+- **Commands** are lists of arguments, never a shell line. A remote is only
+  one `rclone listremotes` named; it and the path go as one argument,
+  `remote:path`, after `--`, so a name that begins with a dash or holds `$`,
+  `;` or quotes is a name and nothing else (`cloud/Rclone.js`,
+  `tests/rclone.test.js`, `tests/tst_cloud.qml`).
+- **The folder:** one level at a time, kept for a minute (the refresh button
+  asks again), at most 2000 rows of which only those on screen exist; a
+  search over the open folder; ordered by name, date or size. A name is
+  shown as plain text, without control characters, cut when very long.
+- **Out:** a file has to be on this computer before it can be dragged, so it
+  is fetched into `~/.cache/dynamicisland/cloud` first: a small one (25 MB
+  unless changed) when the pointer rests on it, a larger one when asked;
+  then its row says "drag". A click on a file also offers Download (to the
+  Downloads folder, as "name (1)" rather than over a file that is there),
+  Show in folder and Copy path. A folder is measured first, asked about when
+  large and refused above 5 GB or 5000 files. The cache keeps to its limit
+  (500 MB) by dropping the oldest files; Settings → Cloud clears it.
+- **In:** files or folders dropped on the list (or chosen with "Upload…") are
+  copied into the open folder after a question: how many, how much, where.
+  A file that is there already is asked about: Keep both (a new name), Skip,
+  Overwrite; never silently. The files on this computer are only read.
+  Files dragged onto the small island open it on the tab. Copies show as the
+  island's transfers, with "Sent", or "Failed" and "Try again".
+- **How full:** `rclone about`, where the cloud answers it (not every kind
+  does; then nothing is shown). Asked every ten minutes while the page is on
+  screen, else every three hours and only if alerts are on.
+- **Sync state** is never made up. rclone copies when asked and keeps none.
+  A Dropbox remote takes it from the Dropbox client's own `dropbox status`;
+  Syncthing, found through its local interface, has a card of its own and
+  asks once for its API key (kept in KDE Wallet); every other cloud says
+  "Sync state unknown" and why. Asked every ten seconds, only while the page
+  or the indicator wants it and such a client exists.
+- **Alerts:** storage nearly full (90 %) or full (98 %), a sign-in that ran
+  out (with `rclone config reconnect NAME:` to be copied), a cloud that
+  cannot be reached, a sync error. Each is an event that opens the tab, is
+  said again only after its pause (6 hours), and ends with its cause.
+- **On the island:** while something syncs, a cloud with its progress, below
+  every other activity; "Synced" when done.
+
 ## Clipboard
 
 A page with the history of Plasma's own clipboard (Klipper), so it shows the
@@ -1222,6 +1289,14 @@ OSD keeps appearing too. Pick one of them:
 - **AI, keyboard:** the island takes the keyboard when the field is clicked
   (as on the Notes page) and gives it back with Escape; while it has it, the
   island stays open.
+- **Cloud:** dragging a file out of the island and dropping files onto it
+  (the page and the small island) are written the way Qt offers them and
+  tested inside one program; between the island and another program they
+  could not be tried here. "Download", "Show in folder", "Copy path" and
+  "Upload…" do the same without dragging. Sync state exists only where a
+  client says it: there is none for Google Drive, OneDrive or a Nextcloud
+  reached through rclone. Syncthing's and Dropbox's states were tried
+  against stand-ins, not the real clients.
 - **Updates** are read from the PackageKit cache (apt/dnf packages). Flatpak
   updates are not counted.
 - **The D-Bus API** binds to only one island instance at a time (the first to
