@@ -8,8 +8,8 @@
     conversation again. A plain question-and-answer box: text in, text out;
     no source is ever given a tool, a file or anything the user did not type.
 
-    `sourcesJson` is a JSON list of { id, kind, name, server, model } and is
-    stored in the widget configuration; the kinds are those of ai/AiCatalog.qml.
+    `sourcesJson` is a JSON list of { id, kind, server, model } and is stored
+    in the widget configuration; the kinds are those of ai/AiCatalog.qml.
     Keys live in KDE Wallet (native core) under "ai:<id>" and, without it,
     only in memory until the shell restarts; they are never written to the
     settings, a log, a message or a command line, are read from the wallet
@@ -66,7 +66,7 @@ QtObject {
         try { list = JSON.parse(sourcesJson || "[]"); } catch (e) { list = []; }
         if (!Array.isArray(list)) return [];
         return list.filter(s => s && typeof s.id === "string" && s.id.length > 0 && catalog.kind(s.kind) !== null)
-                   .map(s => ({ id: s.id, kind: s.kind, name: String(s.name || catalog.kind(s.kind).name), server: String(s.server || ""), model: String(s.model || "") }));
+                   .map(s => ({ id: s.id, kind: s.kind, name: catalog.kind(s.kind).name, server: String(s.server || ""), model: String(s.model || "") }));
     }
     readonly property bool available: enabled && sources.length > 0
     // Chosen on the page for now; "" = the default one.
@@ -74,7 +74,7 @@ QtObject {
     readonly property var current: sources.find(s => s.id === chosenId) || sources.find(s => s.id === defaultId) || sources[0] || null
     function source(id: string): var { return sources.find(s => s.id === id) || null; }
     function store(list: var): void {
-        sourcesJson = JSON.stringify(list.map(s => ({ id: s.id, kind: s.kind, name: s.name, server: s.server, model: s.model })));
+        sourcesJson = JSON.stringify(list.map(s => ({ id: s.id, kind: s.kind, server: s.server, model: s.model })));
     }
     function serverOf(s: var): string { return s.server.length > 0 ? s.server : String(catalog.kind(s.kind).server || ""); }
     // "cli", "device" or "remote": a server the user named counts as this device only when its address is.
@@ -235,7 +235,7 @@ QtObject {
             modelLists = lists;
             const stored = kept => {
                 const model = same && same.model.length > 0 ? same.model : info.modelOptional === true ? "" : pick(info, found);
-                const entry = { id: id, kind: kindName, name: info.name, server: server, model: model };
+                const entry = { id: id, kind: kindName, server: server, model: model };
                 store(same ? sources.map(s => s.id === id ? entry : s) : sources.concat([entry]));
                 done({ ok: true, id: id, error: "", kept: kept });
             };

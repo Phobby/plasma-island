@@ -193,7 +193,7 @@
     <entry name="suggestionsData" type="String"><default></default></entry>
 
     <!-- AI: quick questions to Claude Code on this computer, a local model server or a service with a key.
-         The sources: JSON list of { id, kind, name, server, model } (kinds: ui/ai/AiCatalog.qml). Keys are
+         The sources: JSON list of { id, kind, server, model } (kinds: ui/ai/AiCatalog.qml). Keys are
          kept in KWallet, never here. The longest answer (tokens) and question (characters); whether the
          chat is also kept in a file; and, written by the widget, the sources whose notice was accepted -->
     <entry name="aiSources" type="String"><default>[]</default></entry>

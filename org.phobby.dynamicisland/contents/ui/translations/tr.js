@@ -880,5 +880,6 @@ var table = {
     "The length limit was used up before an answer came. Raise it in the settings, or choose another model.": "Yanıt gelmeden uzunluk sınırı doldu. Sınırı ayarlardan yükselt ya da başka bir model seç.",
     "Something went wrong.": "Bir şeyler ters gitti.",
     "The source": "Kaynak",
-    "Claude Code's own choice": "Claude Code'un kendi seçimi"
+    "Claude Code's own choice": "Claude Code'un kendi seçimi",
+    "Local model server": "Yerel model sunucusu"
 };

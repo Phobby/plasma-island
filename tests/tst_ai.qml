@@ -145,7 +145,7 @@ Item {
             r = connect("keyed", { key: "  sk-test-1 \n" });
             compare([r.ok, r.kept, r.error], [true, true, ""]);
             compare(wallet.entries["ai:" + r.id], "sk-test-1", "the key is in the wallet, under the source's name");
-            compare(JSON.parse(ai.sourcesJson), [{ id: r.id, kind: "keyed", name: "Keyed", server: "", model: "best" }], "the settings hold the source and the model the kind prefers");
+            compare(JSON.parse(ai.sourcesJson), [{ id: r.id, kind: "keyed", server: "", model: "best" }], "the settings hold the source and the model the kind prefers");
             verify(ai.sourcesJson.indexOf("sk-test") < 0 && ai.acknowledgedJson.indexOf("sk-test") < 0, "never the key");
             compare(ai.whereOf(ai.current), "remote");
 
@@ -315,7 +315,7 @@ Item {
             compare([root.asked[0].model, root.asked[0].secret, wallet.reads.length], ["", "", 0]);
             ai.stop();
             // a source whose model was never chosen: its list is asked, the first is taken and remembered
-            ai.sourcesJson = JSON.stringify([{ id: "own-1", kind: "own", name: "Own server", server: "http://localhost:1/v1", model: "" }]);
+            ai.sourcesJson = JSON.stringify([{ id: "own-1", kind: "own", server: "http://localhost:1/v1", model: "" }]);
             ai.acknowledge("own-1");
             root.listed = 0;
             compare(ai.send("hi"), "");
