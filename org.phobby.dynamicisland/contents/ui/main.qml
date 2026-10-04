@@ -180,6 +180,34 @@ PlasmoidItem {
         function onAiSourcesChanged() { if (root.aiBackend !== null && root.aiBackend.sourcesJson !== root.cfg.aiSources) root.aiBackend.sourcesJson = root.cfg.aiSources; }
         function onAiAcknowledgedChanged() { if (root.aiBackend !== null && root.aiBackend.acknowledgedJson !== root.cfg.aiAcknowledged) root.aiBackend.acknowledgedJson = root.cfg.aiAcknowledged; }
     }
+    // The Cloud tab: the user's rclone remotes and what sync clients say. Loaded by name, only while it is on.
+    OptionalBackend {
+        id: cloudLoader
+        source: root.cfg.showCloud ? "backend/CloudBackend.qml" : ""
+        onLoaded: {
+            item.core = Qt.binding(() => root.core);
+            item.hub = transferHub;
+            item.enabled = Qt.binding(() => root.cfg.showCloud);
+            item.hiddenJson = Qt.binding(() => root.cfg.cloudHidden);
+            item.aliasesJson = Qt.binding(() => root.cfg.cloudAliases);
+            item.warnPercent = Qt.binding(() => root.cfg.cloudWarnPercent);
+            item.criticalPercent = Qt.binding(() => root.cfg.cloudCriticalPercent);
+            item.alerts = Qt.binding(() => root.cfg.cloudAlerts);
+            item.alertPauseHours = Qt.binding(() => root.cfg.cloudAlertPauseHours);
+            item.confirmUpload = Qt.binding(() => root.cfg.cloudConfirmUpload);
+            item.autoFetchMB = Qt.binding(() => root.cfg.cloudAutoFetchMB);
+            item.cacheMB = Qt.binding(() => root.cfg.cloudCacheMB);
+            item.indicator = Qt.binding(() => root.cfg.cloudIndicator);
+            item.alertedJson = root.cfg.cloudAlerted;
+            item.lastTarget = root.cfg.cloudLastTarget;
+        }
+    }
+    readonly property var cloudBackend: cloudLoader.item
+    Connections {
+        target: root.cloudBackend
+        function onAlertedJsonChanged() { if (root.cfg.cloudAlerted !== root.cloudBackend.alertedJson) root.cfg.cloudAlerted = root.cloudBackend.alertedJson; }
+        function onLastTargetChanged() { if (root.cfg.cloudLastTarget !== root.cloudBackend.lastTarget) root.cfg.cloudLastTarget = root.cloudBackend.lastTarget; }
+    }
     // Clipboard history: Plasma's own (Klipper), loaded only when the page is wanted.
     OptionalBackend { id: clipboardLoader; source: root.cfg.showClipboard ? "backend/ClipboardBackend.qml" : "" }
     OptionalBackend { id: kdeconnectLoader; source: root.cfg.showKdeConnect ? "backend/KdeConnectBackend.qml" : "" }
@@ -484,6 +512,21 @@ PlasmoidItem {
                 function onOpened() { island.openPage("ai"); }
             }
         }
+        // The Cloud tab's sync indicator and alerts; loaded by name, only while the tab is on.
+        Loader {
+            id: cloudActivity
+            readonly property bool wanted: root.cloudBackend !== null
+            function reload(): void {
+                if (wanted) setSource("providers/CloudActivityProvider.qml", { manager: activities, theme: root.islandTheme, cloud: root.cloudBackend });
+                else source = "";
+            }
+            onWantedChanged: reload()
+            Component.onCompleted: reload()
+            Connections {
+                target: cloudActivity.item
+                function onOpened(id) { island.openPage("cloud"); }
+            }
+        }
         KdeConnectProvider {
             manager: activities
             backend: backend
@@ -656,6 +699,17 @@ PlasmoidItem {
     }
 
     Component {
+        id: cloudPage
+        Loader {
+            readonly property bool interacting: item !== null && item.interacting
+            readonly property bool holdOpen: item !== null && item.holdOpen
+            readonly property bool keepsWheel: item !== null && item.keepsWheel
+            readonly property bool tall: item !== null && item.tall
+            Component.onCompleted: setSource("CloudPage.qml", { theme: root.islandTheme, cloud: root.cloudBackend })
+        }
+    }
+
+    Component {
         id: calendarPage
         CalendarPage {
             theme: root.islandTheme
@@ -733,6 +787,7 @@ PlasmoidItem {
                 showVolumeModule: root.cfg.showVolumeModule
                 showNotificationModule: root.cfg.showNotificationModule
                 pageOrder: root.cfg.pageOrder
+                dropPage: root.cfg.showCloud && root.cloudBackend !== null ? "cloud" : ""
                 ambientGlow: root.cfg.ambientGlow
                 onAmbientGlowToggled: root.cfg.ambientGlow = !root.cfg.ambientGlow
                 systemView: root.cfg.systemView === 0 ? "fixed" : "dynamic"
@@ -762,6 +817,9 @@ PlasmoidItem {
                     // The dot: an answer arrived while another page (or none) was shown.
                     { key: "ai", icon: "dialog-messages", title: Lang.i18n("AI"), component: aiPage, visible: root.cfg.showAi && root.aiBackend !== null,
                       dot: root.aiBackend !== null && root.aiBackend.unseen },
+                    // The dot: a cloud is nearly full, or a sync has an error.
+                    { key: "cloud", icon: "folder-cloud", title: Lang.i18n("Cloud"), component: cloudPage, visible: root.cfg.showCloud && root.cloudBackend !== null,
+                      dot: root.cloudBackend !== null && (root.cloudBackend.storageWarning || root.cloudBackend.syncError) },
                     { key: "clipboard", icon: "edit-paste", title: Lang.i18n("Clipboard"), component: clipboardPage,
                       visible: root.cfg.showClipboard && root.clipboardBackend !== null },
                     { key: "devices", icon: "network-bluetooth", title: Lang.i18n("Devices"), component: devicesPage,

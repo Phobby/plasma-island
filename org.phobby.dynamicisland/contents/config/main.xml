@@ -214,6 +214,26 @@
     <entry name="aiNotify" type="Bool"><default>true</default></entry>
     <entry name="aiAcknowledged" type="String"><default>[]</default></entry>
 
+    <!-- Cloud: the user's rclone remotes as folders of names, with sync state where a client on this
+         computer says it. Off until switched on. The remotes not shown and the names given to them
+         (JSON), the storage thresholds (percent), alerts and their pause (hours), the question before
+         an upload, up to which size a file is fetched when the pointer rests on it and how large the
+         cache may get (MB), the indicator on the small island; written by the widget: when each
+         alert was last said, and where the last upload went. Never a token or a password -->
+    <entry name="showCloud" type="Bool"><default>false</default></entry>
+    <entry name="cloudIndicator" type="Bool"><default>true</default></entry>
+    <entry name="cloudHidden" type="String"><default>[]</default></entry>
+    <entry name="cloudAliases" type="String"><default>{}</default></entry>
+    <entry name="cloudWarnPercent" type="Int"><default>90</default><min>50</min><max>100</max></entry>
+    <entry name="cloudCriticalPercent" type="Int"><default>98</default><min>50</min><max>100</max></entry>
+    <entry name="cloudAlerts" type="Bool"><default>true</default></entry>
+    <entry name="cloudAlertPauseHours" type="Int"><default>6</default><min>1</min><max>168</max></entry>
+    <entry name="cloudConfirmUpload" type="Bool"><default>true</default></entry>
+    <entry name="cloudAutoFetchMB" type="Int"><default>25</default><min>0</min><max>1000</max></entry>
+    <entry name="cloudCacheMB" type="Int"><default>500</default><min>50</min><max>20000</max></entry>
+    <entry name="cloudAlerted" type="String"><default>{}</default></entry>
+    <entry name="cloudLastTarget" type="String"><default></default></entry>
+
     <!-- Modules -->
     <entry name="showMediaModule" type="Bool">
       <default>true</default>
@@ -233,7 +253,7 @@
     </entry>
     <!-- Order of the expanded pages (Settings → Layout), comma-separated keys; see PageCatalog.qml -->
     <entry name="pageOrder" type="String">
-      <default>activities,media,control,weather,notifications,quicksettings,apps,tools,habits,calendar,notes,ai,clipboard,devices</default>
+      <default>activities,media,control,weather,notifications,quicksettings,apps,tools,habits,calendar,notes,ai,cloud,clipboard,devices</default>
     </entry>
     <!-- Ambient glow: the island's edge in the colour of the album cover, following the music (Media page) -->
     <entry name="ambientGlow" type="Bool"><default>false</default></entry>

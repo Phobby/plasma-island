@@ -54,6 +54,10 @@ Item {
     // Provider pages for the expanded view: [{ key, icon, title, component, visible }]
     property var extraPages: []
     property string pageOrder: ""
+    // A page that takes dropped files (the Cloud tab): files dragged onto the small island open it there,
+    // so that they can be dropped on the page. "" = the small island takes no drops.
+    property string dropPage: ""
+    function filesOver(): void { if (dropPage.length > 0 && !expanded) openPage(dropPage); }
 
     // ---- state ----------------------------------------------------------------
     property bool expanded: false
@@ -265,6 +269,14 @@ Item {
                 expandTimer.stop();
                 island.expanded = true;
             }
+        }
+        DropArea {
+            objectName: "islandDrop"
+            anchors.fill: parent
+            enabled: island.dropPage.length > 0 && !island.expanded
+            keys: ["text/uri-list"]
+            // not taken here: the island opens, and the page under the pointer takes the drop
+            onEntered: drag => { drag.accepted = false; island.filesOver(); }
         }
 
         // Every content layer is laid out at its *final* size and centered, so

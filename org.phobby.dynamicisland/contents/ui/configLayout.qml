@@ -35,6 +35,7 @@ KCM.SimpleKCM {
     property bool cfg_showApps
     property bool cfg_showHabits
     property bool cfg_showAi
+    property bool cfg_showCloud
     property alias cfg_showVolumeModule: volumeSwitch.checked
 
     // Tabs that are switched on (Activities comes and goes by itself and does not count).

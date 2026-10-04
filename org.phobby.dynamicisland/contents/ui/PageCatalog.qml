@@ -33,6 +33,8 @@ QtObject {
         { key: "notes", icon: "view-pim-notes", title: Lang.i18n("Notes"), config: "showNotes", hint: "" },
         { key: "ai", icon: "dialog-messages", title: Lang.i18n("AI"), config: "showAi",
           hint: Lang.i18n("Quick questions to Claude Code, a local model or a service with a key") },
+        { key: "cloud", icon: "folder-cloud", title: Lang.i18n("Cloud"), config: "showCloud",
+          hint: Lang.i18n("Your clouds through rclone: folders by name, drag out, drop in, sync state") },
         { key: "clipboard", icon: "edit-paste", title: Lang.i18n("Clipboard"), config: "showClipboard",
           hint: Lang.i18n("History of what was copied") },
         { key: "devices", icon: "network-bluetooth", title: Lang.i18n("Devices"), config: "showDevicesModule",
