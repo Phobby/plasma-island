@@ -197,6 +197,28 @@ Item {
             wait(400);
             compare(backend.readyPath("box", "Zeta.pdf", p.shown.find(e => e.name === "Zeta.pdf")), "");
             backend.autoFetchMB = 25;
+            // the open folder as a whole: at the cloud's top nothing is fetched by itself; a click asks, then downloads
+            compare([named("hereChip").visible, p.hereReady, find(i => i.text === "Download all") !== null], [true, false, true]);
+            wait(1800);
+            compare([p.hereReady, p.hereFetching], [false, false]);
+            // inside a small folder: fetched whole after a moment, and then it and its rows say "drag"
+            p.choose(p.shown[0]);
+            tryVerify(() => p.path === "Belgeler çğş" && !p.loading, 20000);
+            tryCompare(p, "hereReady", true, 20000);
+            shown("Folder · drag", "drag");
+            compare(backend.localOf("box", "Belgeler çğş/inner.txt", p.shown[0]), root.run + "/cache/box/Belgeler çğş/inner.txt");
+            click(named("hereChip"));
+            compare([p.view, p.chosen.self, p.chosen.name], ["folder", true, "Belgeler çğş"]);
+            shown("5 B in 1 file. Download the whole folder to the Downloads folder?");
+            p.view = "browse";
+            p.up(1);
+            tryVerify(() => named("entries").count === 6 && !p.loading, 20000);
+            // pulled before it is here: fetched now, said so
+            const zeta = p.shown.find(e => e.name === "Zeta.pdf");
+            backend.readyFolders = ({});
+            p.pulled(named("hereChip"), "Zeta.pdf", zeta);
+            shown("Fetching it first: pull again when it says “drag”.");
+            tryVerify(() => backend.localOf("box", "Zeta.pdf", zeta).length > 0, 20000);
             // a folder is measured first
             p.askFolder(p.shown[0]);
             compare(p.view, "folder");

@@ -1091,7 +1091,13 @@ rclone the page says so and shows the install command to be copied.
   then its row says "drag". A click on a file also offers Download (to the
   Downloads folder, as "name (1)" rather than over a file that is there),
   Show in folder and Copy path. A folder is measured first, asked about when
-  large and refused above 5 GB or 5000 files. The cache keeps to its limit
+  large and refused above 5 GB or 5000 files. **A whole folder:** a folder
+  one has opened is fetched whole by itself when it is small (up to four
+  times the single-file limit and 300 files; never the cloud's top), and
+  then it ("Folder · drag" beside the search) and every row in it can be
+  dragged out at once. A click on that chip ("Download all") downloads the
+  open folder to the Downloads folder. A row pulled before it is here is
+  fetched then, and can be pulled once it says "drag". The cache keeps to its limit
   (500 MB) by dropping the oldest files; Settings → Cloud clears it.
 - **In:** files or folders dropped on the list (or chosen with "Upload…") are
   copied into the open folder after a question: how many, how much, where.

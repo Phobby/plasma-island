@@ -93,12 +93,19 @@ Item {
         if (view !== "upload") view = "browse";
         cloud.list(id, path, fresh, result => {
             if (mine !== asked) return;
+            if (result.ok && path.length > 0) dwell.restart();
             loading = false;
             entries = result.ok ? result.entries : [];
             more = result.ok && result.more;
             trouble = result.ok ? null : result.problem;
         });
     }
+    // One has stayed in the folder a moment: it is fetched whole if it is small (never the cloud's top: that is all of it).
+    Timer { id: dwell; interval: 1500; onTriggered: if (page.visible && page.view === "browse" && page.path.length > 0 && page.trouble === null) page.cloud.prefetch(page.current, page.path) }
+    readonly property string hereKey: Rclone.target(current, path)
+    readonly property bool hereReady: here !== null && cloud.readyFolders !== null && cloud.folderReady(current, path)
+    readonly property bool hereFetching: cloud.fetchingFolders[hereKey] !== undefined
+    readonly property string hereName: crumbs.length > 0 ? crumbs[crumbs.length - 1] : here !== null ? here.name : ""
     function up(levels: int): void { open(current, crumbs.slice(0, crumbs.length - levels).join("/"), false); }
     Connections {
         target: page.cloud
@@ -129,15 +136,25 @@ Item {
         chosen = entry; saved = "";
         view = "file";
     }
+    function pathOf(entry: var): string { return entry.self === true ? path : Rclone.join(path, entry.name); }
     function download(entry: var): void {
-        cloud.download(current, Rclone.join(path, entry.name), entry, local => {
+        cloud.download(current, pathOf(entry), entry, local => {
             if (local.length > 0) { page.saved = local; page.say(Lang.i18n("Saved to %1", Rclone.baseName(page.cloud.downloadsFolder))); }
         });
     }
     function askFolder(entry: var): void {
         chosen = entry; measured = null; saved = "";
         view = "folder";
-        cloud.measure(current, Rclone.join(path, entry.name), result => { if (page.chosen === entry) page.measured = result.ok ? { count: result.count, bytes: result.bytes } : { count: -1, bytes: -1 }; });
+        cloud.measure(current, pathOf(entry), result => { if (page.chosen === entry) page.measured = result.ok ? { count: result.count, bytes: result.bytes } : { count: -1, bytes: -1 }; });
+    }
+    // The folder that is open, as a whole: asked about, then to the Downloads folder.
+    function askHere(): void { askFolder({ name: hereName, shown: Rclone.display(hereName), dir: true, size: -1, modified: 0, self: true }); }
+    // Pulled before it is here: it is fetched now, and can be pulled once it says "drag".
+    function pulled(from: Item, where: string, entry: var): void {
+        const local = cloud.localOf(current, where, entry);
+        if (local.length > 0) { dragOut(from, local, Rclone.icon(entry)); return; }
+        if (entry.dir) cloud.fetchFolder(current, where, false, null); else cloud.fetch(current, where, entry, false, null);
+        say(Lang.i18n("Fetching it first: pull again when it says “drag”."));
     }
     function showInFolder(local: string): void {
         if (cloud.core !== null) cloud.core.call(false, "org.freedesktop.FileManager1", "/org/freedesktop/FileManager1", "org.freedesktop.FileManager1", "ShowItems", [[Rclone.fileUrl(local)], ""], null);
@@ -466,6 +483,42 @@ Item {
                 text: (page.order === "name" ? Lang.i18n("Name") : page.order === "date" ? Lang.i18n("Date") : Lang.i18n("Size")) + (page.descending ? " ↓" : " ↑")
                 onClicked: page.nextOrder()
             }
+            // The folder that is open, whole: a click downloads it to the Downloads folder (after saying how
+            // much it is); pulled away it is dropped wherever one likes, once it is here ("drag").
+            Rectangle {
+                id: hereChip
+                objectName: "hereChip"
+                visible: page.here !== null && page.trouble === null
+                implicitWidth: hereLabel.implicitWidth + 18
+                implicitHeight: 22
+                radius: 11
+                color: hereMouse.pressed ? page.theme.pressedFill : hereMouse.containsMouse ? page.theme.over(page.theme.hoverFill, page.theme.over(page.theme.faint, page.theme.surface)) : page.theme.faint
+                Text {
+                    id: hereLabel
+                    anchors.centerIn: parent
+                    text: page.hereReady ? Lang.i18n("Folder · drag")
+                        : page.hereFetching ? Lang.i18n("Folder") + " " + (page.cloud.fetchingFolders[page.hereKey] >= 0 ? Lang.percent(Math.round(page.cloud.fetchingFolders[page.hereKey])) : "…")
+                        : Lang.i18n("Download all")
+                    color: page.hereReady ? page.theme.readable(page.theme.live, page.theme.surface) : page.theme.text
+                    font.pointSize: page.theme.fontSmall
+                    font.weight: Font.DemiBold
+                }
+                MouseArea {
+                    id: hereMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    property point pressedAt: Qt.point(0, 0)
+                    property bool pulled: false
+                    onPressed: mouse => { pressedAt = Qt.point(mouse.x, mouse.y); pulled = false; }
+                    onPositionChanged: mouse => {
+                        if (!pressed || pulled || Math.abs(mouse.x - pressedAt.x) + Math.abs(mouse.y - pressedAt.y) < 12) return;
+                        pulled = true;
+                        page.pulled(hereChip, page.path, { name: page.hereName, dir: true });
+                    }
+                    onClicked: if (!pulled) page.askHere()
+                }
+            }
             PillButton {
                 objectName: "uploadButton"
                 theme: page.theme
@@ -515,8 +568,9 @@ Item {
                     id: row
                     required property var modelData
                     readonly property string key: page.key(modelData)
-                    readonly property string local: page.cloud.readyPath(page.current, Rclone.join(page.path, modelData.name), modelData)
-                    readonly property bool fetching: page.cloud.fetching[key] !== undefined
+                    // here already: fetched by itself, or inside a folder that was fetched whole
+                    readonly property string local: (page.cloud.ready, page.cloud.readyFolders, page.cloud.localOf(page.current, Rclone.join(page.path, modelData.name), modelData))
+                    readonly property bool fetching: page.cloud.fetching[key] !== undefined || page.cloud.fetchingFolders[key] !== undefined
                     width: list.width
                     height: 24
                     radius: 8
@@ -544,7 +598,8 @@ Item {
                         // fetched: can be dragged; being fetched: how far
                         Text {
                             visible: row.fetching || row.local.length > 0
-                            text: row.local.length > 0 ? Lang.i18n("drag") : page.cloud.fetching[row.key] >= 0 ? Lang.percent(Math.round(page.cloud.fetching[row.key])) : "…"
+                            text: row.local.length > 0 ? Lang.i18n("drag")
+                                : (page.cloud.fetching[row.key] ?? page.cloud.fetchingFolders[row.key]) >= 0 ? Lang.percent(Math.round(page.cloud.fetching[row.key] ?? page.cloud.fetchingFolders[row.key])) : "…"
                             color: row.local.length > 0 ? page.theme.readable(page.theme.live, page.theme.surface) : page.theme.subText
                             font.pointSize: page.theme.fontSmall * 0.8
                         }
@@ -576,10 +631,10 @@ Item {
                         property bool pulled: false
                         onPressed: mouse => { pressedAt = Qt.point(mouse.x, mouse.y); pulled = false; }
                         onPositionChanged: mouse => {
-                            if (!pressed || pulled || row.local.length === 0 || !(mouse.buttons & Qt.LeftButton)) return;
+                            if (!pressed || pulled || !(mouse.buttons & Qt.LeftButton)) return;
                             if (Math.abs(mouse.x - pressedAt.x) + Math.abs(mouse.y - pressedAt.y) < 12) return;
                             pulled = true;
-                            page.dragOut(row, row.local, Rclone.icon(row.modelData));
+                            page.pulled(row, Rclone.join(page.path, row.modelData.name), row.modelData);
                         }
                         onContainsMouseChanged: if (containsMouse) restTimer.restart(); else restTimer.stop()
                         onClicked: mouse => {

@@ -325,6 +325,46 @@ QtObject {
         if (quiet) p.fetch(path, dest, s => mark(s.percent), finished);
         else track("download", c.name, "", entry.name, "", (progress, end) => p.fetch(path, dest, s => { mark(s.percent); progress(s); }, end), finished, null);
     }
+    // Whole folders fetched into the cache: "id:path" → local folder. Everything under one can be dragged out.
+    property var readyFolders: ({})
+    property var fetchingFolders: ({})      // "id:path" → percent while it is fetched
+    // The local copy of a file or folder if it is here (itself, or inside a fetched folder); else "".
+    function localOf(id: string, path: string, entry: var): string {
+        const clean = Rclone.cleanPath(path);
+        if (!entry.dir) { const own = readyPath(id, clean, entry); if (own.length > 0) return own; }
+        const parts = clean.length > 0 ? clean.split("/") : [];
+        for (let n = entry.dir ? parts.length : parts.length - 1; n >= 0; --n)
+            if (readyFolders[Rclone.target(id, parts.slice(0, n).join("/"))] !== undefined) return cachePath(id, clean);
+        return "";
+    }
+    function folderReady(id: string, path: string): bool { return localOf(id, path, { dir: true }).length > 0; }
+    // done(localFolder | ""): the folder with everything under it. quiet = no transfer on the island.
+    function fetchFolder(id: string, path: string, quiet: bool, done: var): void {
+        const p = provider(id), key = Rclone.target(id, path), c = cloud(id);
+        if (p === null || c === null || cacheFolder.length === 0) { if (done) done(""); return; }
+        if (folderReady(id, path)) { if (done) done(cachePath(id, path)); return; }
+        if (fetchingFolders[key] !== undefined) return;
+        const dest = cachePath(id, path);
+        const mark = v => { const f = Object.assign({}, fetchingFolders); if (v === null) delete f[key]; else f[key] = v; fetchingFolders = f; };
+        mark(-1);
+        const finished = result => {
+            mark(null);
+            if (result.ok) { const r = Object.assign({}, readyFolders); r[key] = dest; readyFolders = r; trimCache(); }
+            if (done) done(result.ok ? dest : "");
+        };
+        const name = Rclone.cleanPath(path).length > 0 ? Rclone.baseName(path) : c.name;
+        if (quiet) p.fetchFolder(path, dest, s => mark(s.percent), finished);
+        else track("download", c.name, "", name, "", (progress, end) => p.fetchFolder(path, dest, s => { mark(s.percent); progress(s); }, end), finished, null);
+    }
+    // The folder that was opened is measured and, when it is small enough, fetched quietly, so that it and
+    // what is in it can be dragged out at once. A larger one waits to be asked for.
+    readonly property var autoFolder: ({ bytes: autoFetchMB * 4 * 1048576, count: 300 })
+    function prefetch(id: string, path: string): void {
+        if (!enabled || autoFetchMB <= 0 || folderReady(id, path) || fetchingFolders[Rclone.target(id, path)] !== undefined) return;
+        measure(id, path, size => {
+            if (size.ok && size.count > 0 && size.bytes <= autoFolder.bytes && size.count <= autoFolder.count) fetchFolder(id, path, true, null);
+        });
+    }
     // To the Downloads folder, never over a file that is there: "name (1).ext". done(localPath | "")
     function download(id: string, path: string, entry: var, done: var): void {
         const p = provider(id), c = cloud(id);
@@ -353,11 +393,13 @@ QtObject {
             const files = out.split("\n").map(l => l.split("\t")).filter(f => f.length === 3).map(f => ({ at: Number(f[0]), size: Number(f[1]), path: f[2] }))
                              .sort((a, b) => a.at - b.at);
             let total = files.reduce((n, f) => n + f.size, 0);
-            // the oldest go first, until it fits
+            // the oldest go first, until it fits; what was thinned out does not count as fetched any more
+            let removed = false;
             for (const f of files) {
                 if (total <= cacheMB * 1048576) break;
-                if (f.path.indexOf(cacheFolder + "/") === 0 && local.removeFile(f.path)) total -= f.size;
+                if (f.path.indexOf(cacheFolder + "/") === 0 && local.removeFile(f.path)) { total -= f.size; removed = true; }
             }
+            if (removed) { ready = ({}); readyFolders = ({}); }
         });
     }
 
@@ -446,5 +488,5 @@ QtObject {
     }
     function reconnectCommand(id: string): string { return Rclone.reconnectCommand(id); }
 
-    onEnabledChanged: if (!enabled) { listings = ({}); looked = false; }
+    onEnabledChanged: if (!enabled) { listings = ({}); looked = false; readyFolders = ({}); }
 }

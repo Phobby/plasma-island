@@ -104,6 +104,10 @@ CloudProvider {
     function fetch(path: string, local: string, progress: var, done: var): var {
         return copy(Rclone.downloadArguments(remote, path, local, false).filter(a => a !== "--ignore-existing"), progress, done);
     }
+    // A whole folder into the cache, with everything under it.
+    function fetchFolder(path: string, local: string, progress: var, done: var): var {
+        return copy(Rclone.downloadArguments(remote, path, local, true).filter(a => a !== "--ignore-existing"), progress, done);
+    }
     function upload(local: string, path: string, folder: bool, overwrite: bool, progress: var, done: var): var {
         return copy(Rclone.uploadArguments(local, remote, path, folder, overwrite), progress, done);
     }

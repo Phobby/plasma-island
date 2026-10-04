@@ -25,7 +25,7 @@ public:
     explicit FileDrag(QObject *parent = nullptr);
 
     bool active() const;
-    // Starts dragging `path` (a regular file that exists) from `source`; false if one is running or there is no such file.
+    // Starts dragging `path` (a file or a folder that exists) from `source`; false if one is running or there is no such thing.
     Q_INVOKABLE bool start(QObject *source, const QString &path, const QString &iconName = QString());
 
 Q_SIGNALS:

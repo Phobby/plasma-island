@@ -247,12 +247,37 @@ Item {
             compare([root.local.readTextFile(root.box + "/Belgeler çğş/deep/a.txt"), cloud.lastTarget], ["the new a", "box:Belgeler çğş/deep"]);
         }
 
+        // A folder fetched whole: it, and everything in it, can be dragged out without asking for each file.
+        function test_062_a_whole_folder_for_dragging() {
+            fresh();
+            const top = list("box", ""), folder = top.entries.find(e => e.name === "Belgeler çğş");
+            const inner = list("box", folder.name).entries.find(e => e.name === "inner.txt");
+            compare([cloud.localOf("box", folder.name, folder), cloud.localOf("box", folder.name + "/inner.txt", inner), cloud.folderReady("box", folder.name)], ["", "", false]);
+            // opened and small: fetched by itself, quietly
+            cloud.prefetch("box", folder.name);
+            tryVerify(() => cloud.folderReady("box", folder.name), 20000);
+            const local = cloud.localOf("box", folder.name, folder);
+            compare([local, transferHub.count], [root.run + "/cache/box/Belgeler çğş", 0]);
+            compare([root.local.readTextFile(local + "/inner.txt"), root.local.readTextFile(local + "/deep/deeper.txt")], ["inner", "deeper"]);
+            // what is in it is here too: the file, and the folder under it
+            compare([cloud.localOf("box", folder.name + "/inner.txt", inner), cloud.localOf("box", folder.name + "/deep", { dir: true }), cloud.localOf("box", "a.txt", top.entries.find(e => e.name === "a.txt"))],
+                    [local + "/inner.txt", local + "/deep", ""]);
+            // a folder too large for that waits to be asked for
+            cloud.autoFetchMB = 0;
+            cloud.readyFolders = ({});
+            cloud.prefetch("box", folder.name);
+            wait(1500);
+            compare(cloud.folderReady("box", folder.name), false);
+            const asked = wait_(done => cloud.fetchFolder("box", folder.name, false, done));
+            compare([asked, cloud.folderReady("box", folder.name)], [local, true]);
+        }
+
         // The native helper that drags a file out: only a file that is there (the drag itself needs a hand on the mouse).
         function test_065_only_a_real_file_is_dragged() {
             const maker = Qt.createComponent("../org.phobby.dynamicisland/contents/ui/DragBridge.qml");
             compare(maker.status, Component.Ready, maker.errorString());
             const drag = maker.createObject(root);
-            compare([drag.active, drag.start(root, root.run + "/nothing-here.txt"), drag.start(root, root.box), drag.start(null, root.box + "/a.txt"), drag.active], [false, false, false, false, false]);
+            compare([drag.active, drag.start(root, root.run + "/nothing-here.txt"), drag.start(null, root.box + "/a.txt"), drag.start(null, root.box), drag.active], [false, false, false, false, false]);
             drag.destroy();
         }
 

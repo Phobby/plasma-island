@@ -1064,5 +1064,9 @@ var table = {
     "Opening…": "Açılıyor…",
     "Unlock": "Kilidi aç",
     "Also after the island closed or the shell restarted, with the unsaved draft. Only which note it was is remembered, never its text. A locked note asks for its password each time; the password is never kept.": "Ada kapandıktan ya da kabuk yeniden başladıktan sonra da, kaydedilmemiş taslakla birlikte. Yalnızca hangi not olduğu hatırlanır, metni asla. Kilitli bir not her seferinde parolasını sorar; parola hiçbir zaman saklanmaz.",
-    "This note is locked: its password is needed.": "Bu not kilitli: parolası gerekli."
+    "This note is locked: its password is needed.": "Bu not kilitli: parolası gerekli.",
+    "Fetching it first: pull again when it says “drag”.": "Önce getiriliyor: “sürükle” yazınca yeniden çek.",
+    "Folder · drag": "Klasör · sürükle",
+    "Folder": "Klasör",
+    "Download all": "Tümünü indir"
 };

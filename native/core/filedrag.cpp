@@ -21,7 +21,7 @@ bool FileDrag::active() const
 bool FileDrag::start(QObject *source, const QString &path, const QString &iconName)
 {
     const QFileInfo info(path);
-    if (m_active || !source || !info.isFile()) {
+    if (m_active || !source || !(info.isFile() || info.isDir())) {
         return false;
     }
     m_active = true;
