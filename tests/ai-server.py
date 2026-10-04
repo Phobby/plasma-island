@@ -13,6 +13,8 @@
 #   /v1/models, /v1/chat/completions     OpenAI compatible (Ollama, LM Studio,
 #                                        OpenAI, OpenRouter, Groq…), streamed
 #   /v1/key                              OpenRouter's "is this key valid"
+#   /open/v1/…                           the same, but anyone may read the list of
+#                                        models (as at OpenRouter)
 #   /anthropic/v1/models, …/v1/messages  the Anthropic API, streamed
 #   /pixel.png                           a picture nobody should ever fetch
 #
@@ -28,6 +30,7 @@
 #   limit, missing, boom   429, 404, 500
 #   long                   cut off at the length limit
 #   newparam               refuses `max_tokens`, wants `max_completion_tokens`
+#   leaky                  an error that repeats the key it was given
 #   claude-refuse          the model declines (stop_reason "refusal")
 #   claude-overloaded      an "overloaded" error inside the stream
 import argparse
@@ -45,7 +48,7 @@ parser.add_argument("--key", default="")
 parser.add_argument("--lifetime", type=float, default=60)
 args = parser.parse_args()
 
-MODELS = ["tiny-1", "tiny-2", "markdown", "slow", "hang", "silent", "drop", "midfail", "limit", "missing", "boom", "long", "newparam"]
+MODELS = ["tiny-1", "tiny-2", "markdown", "slow", "hang", "silent", "drop", "midfail", "limit", "missing", "boom", "long", "newparam", "leaky"]
 CLAUDE_MODELS = [("claude-test-1", "Claude Test 1"), ("claude-test-2", "Claude Test 2"), ("claude-refuse", "Claude Refuse"),
                  ("claude-overloaded", "Claude Overloaded"), ("claude-max", "Claude Max"), ("slow", "Slow")]
 MARKDOWN = ("## Answer\n\nTwo things, with **bold** and *italic*:\n\n- one\n- two\n\n"
@@ -119,13 +122,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         self.record(None)
         path = self.path.split("?")[0]
+        everyone = path.startswith("/open/")
+        if everyone:
+            path = path[len("/open"):]
         if path == "/__quit":
             self.answer(204, b"")
             threading.Thread(target=self.server.shutdown, daemon=True).start()
         elif path == "/pixel.png":
             self.answer(200, b"\x89PNG\r\n\x1a\n", "image/png")
         elif path == "/v1/models":
-            if self.keyed(False):
+            if everyone or self.keyed(False):
                 self.answer(200, {"object": "list", "data": [{"id": m, "object": "model"} for m in MODELS]})
         elif path == "/v1/key":
             if self.keyed(False):
@@ -148,6 +154,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             body = raw
         self.record(body)
         path = self.path.split("?")[0]
+        if path.startswith("/open/"):
+            path = path[len("/open"):]
         if not isinstance(body, dict):
             self.answer(400, {"error": {"message": "the body is not JSON"}})
         elif path == "/v1/chat/completions":
@@ -178,6 +186,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self.answer(404, {"error": {"message": "The model `%s` does not exist." % model, "type": "invalid_request_error", "code": "model_not_found"}})
         if model == "boom":
             return self.answer(500, {"error": {"message": "The server had an error."}})
+        if model == "leaky":
+            return self.answer(400, {"error": {"message": "Bad request made with the key " + self.headers.get("Authorization", "")[len("Bearer "):] + "."}})
         if model == "newparam" and "max_tokens" in body:
             return self.answer(400, {"error": {"message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
                                                "type": "invalid_request_error", "param": "max_tokens", "code": "unsupported_parameter"}})

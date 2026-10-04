@@ -881,5 +881,6 @@ var table = {
     "Something went wrong.": "Bir şeyler ters gitti.",
     "The source": "Kaynak",
     "Claude Code's own choice": "Claude Code'un kendi seçimi",
-    "Local model server": "Yerel model sunucusu"
+    "Local model server": "Yerel model sunucusu",
+    "Another service": "Başka bir hizmet"
 };

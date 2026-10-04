@@ -234,7 +234,10 @@ QtObject {
             lists[id] = found;
             modelLists = lists;
             const stored = kept => {
-                const model = same && same.model.length > 0 ? same.model : info.modelOptional === true ? "" : pick(info, found);
+                // the model: the one the kind prefers, or the only one there is; else it is for the user to choose
+                const want = String(info.prefer || "");
+                const model = same && same.model.length > 0 ? same.model : info.modelOptional === true ? ""
+                            : found.some(m => m.id === want) ? want : found.length === 1 ? found[0].id : "";
                 const entry = { id: id, kind: kindName, server: server, model: model };
                 store(same ? sources.map(s => s.id === id ? entry : s) : sources.concat([entry]));
                 done({ ok: true, id: id, error: "", kept: kept });

@@ -10,6 +10,12 @@
     AiLocal: a model server on this computer (ai/OpenAiProvider.qml without a
     key, as Ollama, LM Studio and llama.cpp are): found or not, an answer in
     pieces, Stop, a connection that is cut, what went wrong, no answer in time.
+
+    AiKeyed: services with a key (the same provider with one, and
+    ai/AnthropicProvider.qml): a wrong key is refused before anything is
+    stored, a right one connects; where the key travels (a header) and where
+    it never is (an address, the settings, a message, the chat); it leaves
+    the wallet with its source.
 */
 import QtQuick
 import QtTest
@@ -47,6 +53,14 @@ Item {
     Component {
         id: openAi
         OpenAiProvider {
+            core: nativeCore
+            onDelta: text => { root.written += text; root.pieces.push(text); }
+            onFinished: result => root.result = result
+        }
+    }
+    Component {
+        id: anthropic
+        AnthropicProvider {
             core: nativeCore
             onDelta: text => { root.written += text; root.pieces.push(text); }
             onFinished: result => root.result = result
@@ -111,7 +125,7 @@ Item {
             model.options = { command: "sh" };
             model.detect(r => found = r);
             tryVerify(() => found !== null, 5000);
-            compare([found.found, found.running, found.installed, found.models.length], [true, true, true, 13]);
+            compare([found.found, found.running, found.installed, found.models.length], [true, true, true, 14]);
 
             // installed, but nothing answers at its address: "not running"
             const idle = openAi.createObject(root, { server: "http://127.0.0.1:9/v1", options: { command: "sh" } });
@@ -217,7 +231,7 @@ Item {
             tryVerify(() => made !== null, 5000);
             compare([made.ok, made.kept, Object.keys(nativeCore.entries).length], [true, true, 0], "no key, nothing for the wallet");
             const s = ai.source(made.id);
-            compare([s.server, s.kind, ai.whereOf(s), ai.label(s), s.model], [base, "local", "device", "Local model server · 127.0.0.1", "boom"]);
+            compare([s.server, s.kind, ai.whereOf(s), ai.label(s), s.model], [base, "local", "device", "Local model server · 127.0.0.1", ""], "of several models none is chosen for the user");
             verify(ai.noticeText(s).indexOf("stays on this device") > 0);
 
             ai.setModel(made.id, "tiny-1");
@@ -248,6 +262,154 @@ Item {
                 tryCompare(failed, "count", 1, 6000);
                 compare([silent, ai.busy, ai.messages[0].problem.kind, ai.problemOf(ai.messages[0])], [silent, false, "timeout", "Local model server did not answer in time."]);
             }
+            ai.destroy();
+        }
+    }
+
+    TestCase {
+        name: "AiKeyed"
+        when: windowShown
+
+        property int port: 0
+        readonly property string key: "test-key-123-do-not-show"
+        readonly property string base: "http://127.0.0.1:" + port
+        function ask(provider, model, text, messages) {
+            root.reset();
+            provider.send(messages || [{ role: "user", text: text || "hello" }], model, { system: "SYS", maxTokens: 64 });
+            tryVerify(() => root.result !== null, 10000);
+            return root.result;
+        }
+        function call(provider, what) {
+            let answer = null;
+            provider[what](r => answer = r);
+            tryVerify(() => answer !== null, 5000);
+            return answer;
+        }
+        function last() { const all = root.sent("keyed"); return all[all.length - 1]; }
+
+        function initTestCase() {
+            if (root.local === null) skip("the native module is not built: ./install.sh");
+            Lang.setting = "en";
+            port = root.serve(this, "keyed", key);
+            verify(port > 0);
+        }
+        function cleanupTestCase() { root.quit(this, port); }
+
+        function test_01_an_openai_compatible_service() {
+            const service = openAi.createObject(root, { server: base + "/v1", secret: "wrong-key" });
+            let r = call(service, "verify");
+            compare([r.ok, r.problem], [false, { kind: "auth", detail: "Incorrect API key provided." }]);
+            compare(ask(service, "tiny-1").problem.kind, "auth");
+
+            service.secret = key;
+            r = call(service, "verify");
+            compare([r.ok, r.models.length], [true, 14]);
+            compare([ask(service, "tiny-1", "with a key").ok, root.written], [true, "REPLY[1]: with a key"]);
+            const request = last();
+            compare([request.headers["authorization"], request.path], ["Bearer " + key, "/v1/chat/completions"], "the key travels in a header");
+            verify(request.path.indexOf(key) < 0 && JSON.stringify(request.body).indexOf(key) < 0, "never in the address or the body");
+            // a service that repeats the key in its error: taken out before it is shown
+            const leaky = ask(service, "leaky");
+            compare([leaky.ok, leaky.problem.kind, leaky.problem.detail], [false, "unknown", "Bad request made with the key …."]);
+            service.destroy();
+        }
+
+        function test_02_a_service_whose_model_list_is_open() {
+            // (as OpenRouter: anyone may read the list, so the key is asked about itself)
+            const open = openAi.createObject(root, { server: base + "/open/v1", secret: "wrong-key", options: { keyCheck: "/key" } });
+            let r = call(open, "listModels");
+            compare(r.ok, true, "the list alone would take any key");
+            r = call(open, "verify");
+            compare([r.ok, r.problem.kind], [false, "auth"]);
+            open.secret = key;
+            r = call(open, "verify");
+            compare([r.ok, r.models.length], [true, 14]);
+            open.destroy();
+        }
+
+        function test_03_the_anthropic_api() {
+            const claude = anthropic.createObject(root, { server: base + "/anthropic", secret: "wrong-key" });
+            let r = call(claude, "verify");
+            compare([r.ok, r.problem], [false, { kind: "auth", detail: "invalid x-api-key" }]);
+            claude.secret = key;
+            r = call(claude, "verify");
+            compare([r.ok, r.models.slice(0, 2)], [true, [{ id: "claude-test-1", name: "Claude Test 1" }, { id: "claude-test-2", name: "Claude Test 2" }]], "in the service's own order, with its names");
+            let request = last();
+            compare([request.method, request.path, request.headers["x-api-key"], request.headers["anthropic-version"], request.headers["authorization"]],
+                    ["GET", "/anthropic/v1/models?limit=100", key, "2023-06-01", undefined]);
+
+            const text = "Merhaba, çğş 🙂";
+            r = ask(claude, "claude-test-1", text);
+            compare([r.ok, r.cut, r.problem, root.written], [true, false, null, "REPLY[1]: " + text]);
+            verify(root.written.indexOf("SECRET-THOUGHT") < 0, "what the model thinks is not shown");
+            request = last();
+            compare([request.path, request.headers["x-api-key"], request.headers["anthropic-version"], request.headers["content-type"]],
+                    ["/anthropic/v1/messages", key, "2023-06-01", "application/json;charset=UTF-8"]);
+            compare(request.body, { model: "claude-test-1", max_tokens: 64, stream: true, messages: [{ role: "user", content: text }], system: "SYS" });
+            compare(Object.keys(request.headers).filter(h => h.indexOf("beta") >= 0), [], "no beta header");
+
+            r = ask(claude, "claude-test-1", "", [{ role: "user", text: "one" }, { role: "assistant", text: "two" }, { role: "user", text: "three" }]);
+            compare([r.ok, root.written], [true, "REPLY[3]: three"]);
+
+            compare(ask(claude, "claude-max", "long one").cut, true, "cut off at the length limit");
+            r = ask(claude, "claude-refuse");
+            compare([r.ok, r.problem.kind, root.written], [false, "refused", ""]);
+            r = ask(claude, "claude-overloaded", "abcdefghijklmnop");
+            compare([r.ok, r.problem, root.written], [false, { kind: "server", detail: "Overloaded" }, "REPLY[1"], "an error in the middle: what came stays");
+            compare(ask(claude, "claude-limit").problem.kind, "limit");
+            compare(ask(claude, "claude-gone").problem.kind, "model");
+
+            // Stop
+            root.reset();
+            claude.send([{ role: "user", text: "a long one" }], "slow", { system: "", maxTokens: 64 });
+            tryVerify(() => root.pieces.length >= 3, 5000);
+            claude.cancel();
+            const had = root.pieces.length;
+            wait(600);
+            compare([root.pieces.length, root.result], [had, null]);
+            claude.destroy();
+        }
+
+        function test_04_the_key_lives_in_the_wallet_only() {
+            const ai = backendComponent.createObject(root);
+            nativeCore.entries = ({}); nativeCore.removed = [];
+            answered.target = ai; failed.target = ai; answered.clear(); failed.clear();
+            // the kinds of the catalog, with the stand-in's address in place of the services'
+            const kinds = Object.assign({}, ai.catalog.kinds);
+            kinds.anthropic = Object.assign({}, kinds.anthropic, { server: base + "/anthropic", prefer: "claude-test-2" });
+            kinds.openrouter = Object.assign({}, kinds.openrouter, { server: base + "/open/v1" });
+            ai.catalog.kinds = kinds;
+
+            let made = null;
+            ai.connect("anthropic", { key: "wrong-key" }, r => made = r);
+            tryVerify(() => made !== null, 5000);
+            compare([made.ok, made.error], [false, "Anthropic API did not accept the key. (invalid x-api-key)"]);
+            compare([ai.sourcesJson, Object.keys(nativeCore.entries).length], ["[]", 0], "a key that was refused is kept nowhere");
+            made = null;
+            ai.connect("openrouter", { key: "wrong-key" }, r => made = r);
+            tryVerify(() => made !== null, 5000);
+            compare([made.ok, ai.sourcesJson], [false, "[]"]);
+
+            made = null;
+            ai.connect("anthropic", { key: key }, r => made = r);
+            tryVerify(() => made !== null, 5000);
+            compare([made.ok, made.kept, nativeCore.entries["ai:" + made.id]], [true, true, key]);
+            const s = ai.source(made.id);
+            compare([s.model, s.server, ai.whereOf(s), ai.catalog.kind(s.kind).paid], ["claude-test-2", "", "remote", true], "the model the kind prefers, as the service lists it");
+            verify(ai.noticeText(s).indexOf("may cost money") > 0 && ai.noticeText(s).indexOf("127.0.0.1") > 0);
+
+            ai.acknowledge(made.id);
+            ai.maxTokens = 333;
+            compare(ai.send("What is the key?"), "");
+            tryCompare(answered, "count", 1, 5000);
+            compare([ai.messages[1].text, last().body.max_tokens, last().headers["x-api-key"]], ["REPLY[1]: What is the key?", 333, key]);
+            // an error that names the key
+            const everything = () => [ai.sourcesJson, ai.acknowledgedJson, JSON.stringify(ai.messages), JSON.stringify(ai.modelLists)].join("\n");
+            verify(everything().indexOf(key) < 0, "the key is in no setting and in no message");
+
+            const id = made.id;
+            ai.disconnect(id);
+            compare([nativeCore.removed, nativeCore.entries["ai:" + id], ai.secrets[id], ai.sources.length], [["ai:" + id], undefined, undefined, 0], "disconnecting takes it out of the wallet");
             ai.destroy();
         }
     }
