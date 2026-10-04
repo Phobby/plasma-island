@@ -237,6 +237,58 @@ Everything goes through `Theme.qml`: a look is plain data (`Styles.qml`) and
 every colour and size there is a binding of it. The ambient glow sits on top of
 whatever look is chosen.
 
+### Themes: files and the store
+
+A custom look can leave the settings as a file and come back from one.
+
+- **Export Theme…** (Settings → Appearance) writes the look being edited, under
+  a name you give it, as one `*.islandtheme.json` file where you choose. It
+  holds every Appearance setting of the custom look and nothing else: no code,
+  no QML, no images. The format is `catalog/islandtheme.schema.json`.
+- **Add New…** (top right of the looks) opens two tabs. *From a File*: choose
+  a file or drop it on the area. *Browse the Store*: the themes of this
+  repository's `catalog/` folder as cards (name, author, description, preview,
+  Download). Either way the theme is checked, joins the list of looks under
+  its own name with all of its settings, and is shown with a preview; it only
+  becomes the island's look with **Apply** (or a click on its card). When a
+  look of that name exists already you are asked: overwrite, or add it under
+  another name.
+- A theme you exported brings back everything, also where the island sits
+  and how large it is. A theme that says nothing about those (`top`,
+  `offsetX`, `scale`; the store's themes do not) leaves them as they are.
+- Themes you added are kept as files in `~/.local/share/dynamicisland/themes/`
+  and can be deleted from the list (the bin on their card, asks once more).
+  The ready-made looks cannot.
+- What is refused: a file over 64 kB, one that is not valid JSON, one whose
+  known fields are not what the schema allows (unknown fields are ignored),
+  and a download whose SHA-256 is not the one the catalog lists. The message
+  says which it was. Reading a theme never runs anything.
+
+**Where the store looks.** One constant, `CATALOG_URL` at the top of
+`contents/ui/ThemeFile.js`, holds the published address of `catalog/`:
+
+```js
+const CATALOG_URL = "https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/catalog";
+```
+
+As it comes it is a placeholder (`OWNER/REPOSITORY/BRANCH`): the store then
+says that it has no address yet and asks nothing. Replace the three words
+with the repository's owner, its name and the branch the catalog is published
+from (the result is the address under which
+`…/catalog/index.json` opens in a browser), and install again.
+
+**Privacy.** The store makes a request only when you open its tab (the list:
+`index.json`) and when you press Download (that one theme file). They are
+plain GETs to raw.githubusercontent.com: no account, no cookies, no
+telemetry, no check in the background, nothing while the settings are closed.
+Without a connection the tab says so and offers to try again.
+
+Adding a theme to the catalog: [CONTRIBUTING.md](CONTRIBUTING.md)
+(`tools/catalog-update` writes `index.json` with the checksums).
+
+Theme files need the native module (it reads, writes and deletes them);
+without it the two buttons are disabled.
+
 ### Ambient glow
 
 Off by default; the wave button at the top right of the Media page switches
@@ -370,6 +422,8 @@ org.phobby.dynamicisland/
     │                          KdeConnectTransfer, RemovableTransfer, BrowserDownload
     ├── TransferActivity.qml, TransferHub.qml, TransfersCard.qml   shared transfer activity
     ├── Styles.qml                 the looks: presets and a custom style as data (singleton)
+    ├── ThemeFile.js, ThemeLibrary.qml, ThemeStore.qml, Theme*Dialog.qml, ThemePreview.qml
+    │                              theme files: format and checks, the user's themes, the store
     ├── Theme.qml, IslandShape.qml, ActivityCompact/Minimal/Card.qml, EventBanner.qml,
     │   BatteryGlyph.qml, MiniRing.qml, …        shared visual language
     ├── *Module.qml, *Page.qml                    expanded pages
@@ -388,9 +442,10 @@ native/
 └── core/                      org.phobby.dynamicisland.core:
                                PipeWireWatcher, DBusSignalWatcher, Launcher,
                                UpdatesChecker, DownloadWatcher, SecretStore,
-                               LoopbackServer, LocalTools, PopupWatcher,
+                               LoopbackServer, LocalTools (commands, SQLite, small files), PopupWatcher,
                                AudioLevels, IslandService (D-Bus API)
-tools/island-push, tools/notify-done.sh, tools/i18n-check, tools/habits-test
+catalog/                       the theme store: index.json, themes/*.islandtheme.json, the JSON Schema
+tools/island-push, tools/notify-done.sh, tools/i18n-check, tools/habits-test, tools/catalog-update
 tools/run-tests                every check that needs no running island: the texts, the rules (node), tests/
 tests/tst_*.qml                QML tests under qmltestrunner, off screen (habits provider, appearance…)
 ```

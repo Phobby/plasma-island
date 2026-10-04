@@ -2,3 +2,4 @@ native/build/
 lib/
 *.qmlc
 *.jsc
+tests/.run/

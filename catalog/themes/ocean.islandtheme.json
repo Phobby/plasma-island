@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "name": "Ocean",
+  "author": "Dynamic Island",
+  "description": "Teal at the surface, deep blue below.",
+  "style": {
+    "preset": "ocean",
+    "material": "flat",
+    "strong": false,
+    "opacity": 90,
+    "blur": true,
+    "blurLevel": 1,
+    "radius": 100,
+    "fill": "gradient",
+    "background": "#165a9f",
+    "gradientType": "linear",
+    "gradientAngle": 180,
+    "gradientStops": [
+      "#0e7490",
+      "#1e40af"
+    ],
+    "control": "#67e8f9",
+    "text": "",
+    "border": true,
+    "borderWidth": 1,
+    "borderColor": "",
+    "shadow": 1
+  }
+}

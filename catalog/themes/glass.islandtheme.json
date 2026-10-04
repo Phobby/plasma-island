@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "name": "Pure Glass (Minimal)",
+  "author": "Dynamic Island",
+  "description": "Clear glass over the blurred desktop, with a hairline of light.",
+  "style": {
+    "preset": "glass",
+    "material": "glass",
+    "strong": false,
+    "opacity": 30,
+    "blur": true,
+    "blurLevel": 2,
+    "radius": 100,
+    "fill": "solid",
+    "background": "#14161a",
+    "gradientType": "linear",
+    "gradientAngle": 135,
+    "gradientStops": [
+      "#14161a",
+      "#7e7f81"
+    ],
+    "control": "#ffffff",
+    "text": "",
+    "border": true,
+    "borderWidth": 1,
+    "borderColor": "",
+    "shadow": 1
+  }
+}

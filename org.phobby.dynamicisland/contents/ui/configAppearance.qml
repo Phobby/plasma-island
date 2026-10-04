@@ -2,7 +2,9 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 
     Settings → Appearance: follow the system's colours, or a custom style made
-    from a ready-made preset and fine tuning, kept as named profiles.
+    from a ready-made preset and fine tuning, kept as named profiles. A look
+    can be exported as a theme file and themes can be added from files or from
+    the store ("Add New…"): they join the ready-made looks as cards of their own.
 
     Every change shows on the island at once: while the page is open it writes
     its working values to the widget's configuration as a preview (the settings
@@ -72,6 +74,21 @@ KCM.SimpleKCM {
         if (on === (stops.length === 3)) return;
         set("gradientStops", on ? [stops[0], Styles.mixHex(stops[0], stops[1], 0.5), stops[1]] : [stops[0], stops[2]]);
     }
+    // ---- theme files ----------------------------------------------------------------
+    // The user's own themes are files (ThemeLibrary); reading and writing them needs the native helper.
+    Loader { id: localTools; source: "LocalBridge.qml" }
+    ThemeLibrary { id: library; local: localTools.status === Loader.Ready ? localTools.item : null }
+    ThemeStore { id: store }
+    property alias themeLibrary: library
+    property alias themeStore: store
+    property alias themeDialog: addDialog
+    // The own theme whose settings the edited style is, if any.
+    readonly property var activeTheme: library.themes.find(t => Styles.same(library.applied(t, style), style)) ?? null
+    // A theme's settings become the edited style; where it says nothing about
+    // the island's place and size, those stay.
+    function applyTheme(theme: var): void { use(library.applied(theme, style)); }
+    property string confirmRemove: ""       // the file of the own theme asked about
+
     // A preset is a look: where the island sits and how large it is stay.
     function choosePreset(preset: string): void {
         const next = Styles.defaults(preset);
@@ -136,6 +153,93 @@ KCM.SimpleKCM {
         systemScheme: page.systemScheme
         style: page.style
         blurActive: true
+    }
+
+    // A look as a card: the island in that style, its name; an own theme can be deleted.
+    component LookCard: QQC2.AbstractButton {
+        id: card
+        property var look
+        property string title
+        property bool current: false
+        property bool removable: false
+        property bool asking: false
+        signal removeRequested()
+        signal removeConfirmed()
+        signal removeCancelled()
+        width: Kirigami.Units.gridUnit * 7.5
+        height: column.implicitHeight + Kirigami.Units.smallSpacing * 2
+        Accessible.name: title
+        background: Rectangle {
+            radius: Kirigami.Units.cornerRadius
+            color: card.current ? Qt.alpha(Kirigami.Theme.highlightColor, 0.18) : card.hovered ? Qt.alpha(Kirigami.Theme.textColor, 0.06) : "transparent"
+            border.width: card.current ? 2 : 1
+            border.color: card.current ? Kirigami.Theme.highlightColor : Qt.alpha(Kirigami.Theme.textColor, 0.15)
+        }
+        contentItem: ColumnLayout {
+            id: column
+            spacing: Kirigami.Units.smallSpacing
+            ThemePreview {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Kirigami.Units.gridUnit * 3
+                Layout.margins: Kirigami.Units.smallSpacing
+                style: card.look
+                systemScheme: page.systemScheme
+                // an own theme: delete it (asks once more)
+                QQC2.ToolButton {
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    visible: card.removable && !card.asking && (card.hovered || hovered)
+                    icon.name: "edit-delete"
+                    display: QQC2.AbstractButton.IconOnly
+                    text: Lang.i18n("Delete")
+                    onClicked: card.removeRequested()
+                }
+            }
+            QQC2.Label {
+                Layout.fillWidth: true
+                visible: !card.asking
+                horizontalAlignment: Text.AlignHCenter
+                text: card.title
+                font: Kirigami.Theme.smallFont
+                elide: Text.ElideRight
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                visible: card.asking
+                spacing: 0
+                QQC2.Label { text: Lang.i18n("Delete?"); font: Kirigami.Theme.smallFont }
+                QQC2.ToolButton {
+                    icon.name: "edit-delete"
+                    display: QQC2.AbstractButton.IconOnly
+                    text: Lang.i18n("Delete")
+                    onClicked: card.removeConfirmed()
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.text: text
+                }
+                QQC2.ToolButton {
+                    icon.name: "dialog-cancel"
+                    display: QQC2.AbstractButton.IconOnly
+                    text: Lang.i18n("Cancel")
+                    onClicked: card.removeCancelled()
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.text: text
+                }
+            }
+        }
+    }
+
+    ThemeAddDialog {
+        id: addDialog
+        library: library
+        store: store
+        systemScheme: page.systemScheme
+        onChosen: theme => page.applyTheme(theme)
+    }
+    ThemeExportDialog {
+        id: exportDialog
+        library: library
+        style: page.style
+        suggestedName: page.activeTheme !== null ? page.activeTheme.name : page.activeProfile !== null ? page.activeProfile.name : ""
     }
 
     component Swatch: KQC.ColorButton {
@@ -224,6 +328,26 @@ KCM.SimpleKCM {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: Lang.i18n("Ready-made looks")
         }
+        // Themes from files and from the store join the list below.
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 30
+            QQC2.Label {
+                Layout.fillWidth: true
+                visible: !library.available
+                wrapMode: Text.Wrap
+                font: Kirigami.Theme.smallFont
+                opacity: 0.7
+                text: Lang.i18n("Theme files need the native helper (install.sh builds it).")
+            }
+            Item { Layout.fillWidth: true; visible: library.available }
+            QQC2.Button {
+                enabled: page.custom && library.available
+                icon.name: "list-add"
+                text: Lang.i18n("Add New…")
+                onClicked: addDialog.open()
+            }
+        }
         Flow {
             Layout.fillWidth: true
             Layout.maximumWidth: Kirigami.Units.gridUnit * 30
@@ -232,73 +356,46 @@ KCM.SimpleKCM {
             opacity: enabled ? 1 : 0.45
             Repeater {
                 model: Styles.order
-                delegate: QQC2.AbstractButton {
-                    id: card
+                delegate: LookCard {
                     required property string modelData
-                    readonly property bool current: page.style.preset === modelData
-                    width: Kirigami.Units.gridUnit * 7.5
-                    height: column.implicitHeight + Kirigami.Units.smallSpacing * 2
+                    look: Styles.defaults(modelData)
+                    title: Styles.title(modelData)
+                    current: page.style.preset === modelData && page.activeTheme === null
                     onClicked: page.choosePreset(modelData)
-                    Accessible.name: Styles.title(modelData)
-                    background: Rectangle {
-                        radius: Kirigami.Units.cornerRadius
-                        color: card.current ? Qt.alpha(Kirigami.Theme.highlightColor, 0.18) : card.hovered ? Qt.alpha(Kirigami.Theme.textColor, 0.06) : "transparent"
-                        border.width: card.current ? 2 : 1
-                        border.color: card.current ? Kirigami.Theme.highlightColor : Qt.alpha(Kirigami.Theme.textColor, 0.15)
-                    }
-                    contentItem: ColumnLayout {
-                        id: column
-                        spacing: Kirigami.Units.smallSpacing
-                        // The preset itself, small, on something to see through it.
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: Kirigami.Units.gridUnit * 3
-                            Layout.margins: Kirigami.Units.smallSpacing
-                            radius: 6
-                            clip: true
-                            gradient: Gradient {
-                                orientation: Gradient.Horizontal
-                                GradientStop { position: 0.0; color: "#5b8def" }
-                                GradientStop { position: 0.5; color: "#c86dd7" }
-                                GradientStop { position: 1.0; color: "#f5a25d" }
-                            }
-                            Theme {
-                                id: sample
-                                follow: false
-                                systemScheme: page.systemScheme
-                                style: Styles.defaults(card.modelData)
-                                blurActive: true
-                            }
-                            IslandShape {
-                                anchors.centerIn: parent
-                                theme: sample
-                                width: parent.width - 22
-                                height: 24
-                                radius: height / 2
-                                Row {
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    Rectangle { width: 8; height: 8; radius: 4; color: sample.control; anchors.verticalCenter: parent.verticalCenter }
-                                    Text { text: "12:45"; color: sample.text; font.pointSize: sample.fontSmall; font.weight: Font.DemiBold }
-                                }
-                            }
-                        }
-                        QQC2.Label {
-                            Layout.fillWidth: true
-                            horizontalAlignment: Text.AlignHCenter
-                            text: Styles.title(card.modelData)
-                            font: Kirigami.Theme.smallFont
-                            elide: Text.ElideRight
-                        }
-                    }
+                }
+            }
+            // The user's own themes: all of their settings, as they were saved.
+            Repeater {
+                model: library.themes
+                delegate: LookCard {
+                    required property var modelData
+                    look: modelData.style
+                    title: modelData.name
+                    current: page.activeTheme !== null && page.activeTheme.file === modelData.file
+                    removable: true
+                    asking: page.confirmRemove === modelData.file
+                    onClicked: page.applyTheme(modelData)
+                    onRemoveRequested: page.confirmRemove = modelData.file
+                    onRemoveCancelled: page.confirmRemove = ""
+                    onRemoveConfirmed: { page.confirmRemove = ""; library.remove(modelData.file); }
+                    QQC2.ToolTip.visible: hovered && (modelData.author.length > 0 || modelData.description.length > 0)
+                    QQC2.ToolTip.text: (modelData.author.length > 0 ? Lang.i18n("by %1", modelData.author) : "") + (modelData.author.length > 0 && modelData.description.length > 0 ? "\n" : "") + modelData.description
                 }
             }
         }
-        QQC2.Button {
-            enabled: page.custom && !Styles.same(page.style, Styles.defaults(page.style.preset))
-            icon.name: "edit-undo"
-            text: Lang.i18n("Reset to the preset")
-            onClicked: page.use(Styles.defaults(page.style.preset))
+        RowLayout {
+            QQC2.Button {
+                enabled: page.custom && !Styles.same(page.style, Styles.defaults(page.style.preset))
+                icon.name: "edit-undo"
+                text: Lang.i18n("Reset to the preset")
+                onClicked: page.use(Styles.defaults(page.style.preset))
+            }
+            QQC2.Button {
+                enabled: page.custom && library.available
+                icon.name: "document-export"
+                text: Lang.i18n("Export Theme…")
+                onClicked: exportDialog.open()
+            }
         }
 
         // ---- profiles ---------------------------------------------------------------

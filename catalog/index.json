@@ -1,0 +1,175 @@
+{
+  "schema": 1,
+  "themes": [
+    {
+      "id": "aurora",
+      "name": "Aurora",
+      "author": "Dynamic Island",
+      "description": "A northern light: green through teal to violet, on the slant.",
+      "path": "themes/aurora.islandtheme.json",
+      "sha256": "0ed143f09559efccdabaa5b0945ccc0b849c277c884b5af629869e7c2db7877d",
+      "preview": {
+        "preset": "aurora",
+        "material": "flat",
+        "strong": false,
+        "opacity": 90,
+        "radius": 100,
+        "fill": "gradient",
+        "background": "#0e6f74",
+        "gradientType": "linear",
+        "gradientAngle": 120,
+        "gradientStops": [
+          "#047857",
+          "#0e7490",
+          "#6d28d9"
+        ],
+        "control": "#5eead4",
+        "text": "",
+        "border": true,
+        "borderWidth": 1,
+        "borderColor": ""
+      }
+    },
+    {
+      "id": "glass",
+      "name": "Pure Glass (Minimal)",
+      "author": "Dynamic Island",
+      "description": "Clear glass over the blurred desktop, with a hairline of light.",
+      "path": "themes/glass.islandtheme.json",
+      "sha256": "df1a490d005e05ac3fa2a15aed37327541b9a9b73983b7d4b32df5faddda5bdf",
+      "preview": {
+        "preset": "glass",
+        "material": "glass",
+        "strong": false,
+        "opacity": 30,
+        "radius": 100,
+        "fill": "solid",
+        "background": "#14161a",
+        "gradientType": "linear",
+        "gradientAngle": 135,
+        "gradientStops": [
+          "#14161a",
+          "#7e7f81"
+        ],
+        "control": "#ffffff",
+        "text": "",
+        "border": true,
+        "borderWidth": 1,
+        "borderColor": ""
+      }
+    },
+    {
+      "id": "midnight",
+      "name": "Midnight Blue",
+      "author": "Dynamic Island",
+      "description": "A navy glow in the middle that fades into the night.",
+      "path": "themes/midnight.islandtheme.json",
+      "sha256": "8bd72695bb49817d7e21681d8c7c7b0ec62113bce2f98e1b728f016b2fc7d00e",
+      "preview": {
+        "preset": "midnight",
+        "material": "flat",
+        "strong": false,
+        "opacity": 92,
+        "radius": 100,
+        "fill": "gradient",
+        "background": "#141f52",
+        "gradientType": "radial",
+        "gradientAngle": 0,
+        "gradientStops": [
+          "#1e3a8a",
+          "#0b1026"
+        ],
+        "control": "#93c5fd",
+        "text": "",
+        "border": true,
+        "borderWidth": 1,
+        "borderColor": ""
+      }
+    },
+    {
+      "id": "ocean",
+      "name": "Ocean",
+      "author": "Dynamic Island",
+      "description": "Teal at the surface, deep blue below.",
+      "path": "themes/ocean.islandtheme.json",
+      "sha256": "3155a65c962ea008ed005dc9bd2d521c10e7736ab3332ae3b971e7f505b4aba5",
+      "preview": {
+        "preset": "ocean",
+        "material": "flat",
+        "strong": false,
+        "opacity": 90,
+        "radius": 100,
+        "fill": "gradient",
+        "background": "#165a9f",
+        "gradientType": "linear",
+        "gradientAngle": 180,
+        "gradientStops": [
+          "#0e7490",
+          "#1e40af"
+        ],
+        "control": "#67e8f9",
+        "text": "",
+        "border": true,
+        "borderWidth": 1,
+        "borderColor": ""
+      }
+    },
+    {
+      "id": "oxygen",
+      "name": "Oxygen Metallic",
+      "author": "Dynamic Island",
+      "description": "The original: graphite metal with a silver rim and a top highlight.",
+      "path": "themes/oxygen.islandtheme.json",
+      "sha256": "0b8904c0b91df60a962279d705edcc388b067b85338ee00406a8ae12357baa5e",
+      "preview": {
+        "preset": "oxygen",
+        "material": "metal",
+        "strong": false,
+        "opacity": 82,
+        "radius": 100,
+        "fill": "solid",
+        "background": "#1a1b1d",
+        "gradientType": "linear",
+        "gradientAngle": 135,
+        "gradientStops": [
+          "#1a1b1d",
+          "#134a83"
+        ],
+        "control": "#0a84ff",
+        "text": "",
+        "border": true,
+        "borderWidth": 1,
+        "borderColor": ""
+      }
+    },
+    {
+      "id": "sunset",
+      "name": "Sunset",
+      "author": "Dynamic Island",
+      "description": "Orange through magenta to purple, from left to right.",
+      "path": "themes/sunset.islandtheme.json",
+      "sha256": "5e436475af71512dcffd7d06bcdd5c7c42d1735f958cdb6777b377fd9811d3a2",
+      "preview": {
+        "preset": "sunset",
+        "material": "flat",
+        "strong": false,
+        "opacity": 90,
+        "radius": 100,
+        "fill": "gradient",
+        "background": "#a52a4a",
+        "gradientType": "linear",
+        "gradientAngle": 90,
+        "gradientStops": [
+          "#c2410c",
+          "#be185d",
+          "#6b21a8"
+        ],
+        "control": "#fdba74",
+        "text": "",
+        "border": true,
+        "borderWidth": 1,
+        "borderColor": ""
+      }
+    }
+  ]
+}

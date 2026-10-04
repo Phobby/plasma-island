@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QProcess>
+#include <QSaveFile>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
@@ -51,6 +52,48 @@ QString LocalTools::readTextFile(const QString &path, int maxBytes) const
         return QString();
     }
     return QString::fromUtf8(file.read(qMax(0, maxBytes)));
+}
+
+double LocalTools::fileSize(const QString &path) const
+{
+    const QFileInfo info(expand(path));
+    return info.isFile() ? double(info.size()) : -1;
+}
+
+bool LocalTools::writeTextFile(const QString &path, const QString &text) const
+{
+    const QString full = expand(path);
+    if (!QDir().mkpath(QFileInfo(full).absolutePath())) {
+        return false;
+    }
+    // Written beside it and moved over it: never a half-written file.
+    QSaveFile file(full);
+    if (!file.open(QIODevice::WriteOnly)) {
+        return false;
+    }
+    const QByteArray bytes = text.toUtf8();
+    return file.write(bytes) == bytes.size() && file.commit();
+}
+
+bool LocalTools::removeFile(const QString &path) const
+{
+    const QFileInfo info(expand(path));
+    return info.isFile() && QFile::remove(info.absoluteFilePath());
+}
+
+QStringList LocalTools::listFiles(const QString &directory, const QString &suffix) const
+{
+    QStringList names;
+    const QDir dir(expand(directory));
+    if (!dir.exists()) {
+        return names;
+    }
+    for (const QString &name : dir.entryList(QDir::Files | QDir::Readable, QDir::Name)) {
+        if (suffix.isEmpty() || name.endsWith(suffix)) {
+            names.append(name);
+        }
+    }
+    return names;
 }
 
 void LocalTools::run(const QString &program, const QStringList &arguments, const QJSValue &callback)

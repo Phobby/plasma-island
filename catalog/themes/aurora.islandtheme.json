@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "name": "Aurora",
+  "author": "Dynamic Island",
+  "description": "A northern light: green through teal to violet, on the slant.",
+  "style": {
+    "preset": "aurora",
+    "material": "flat",
+    "strong": false,
+    "opacity": 90,
+    "blur": true,
+    "blurLevel": 1,
+    "radius": 100,
+    "fill": "gradient",
+    "background": "#0e6f74",
+    "gradientType": "linear",
+    "gradientAngle": 120,
+    "gradientStops": [
+      "#047857",
+      "#0e7490",
+      "#6d28d9"
+    ],
+    "control": "#5eead4",
+    "text": "",
+    "border": true,
+    "borderWidth": 1,
+    "borderColor": "",
+    "shadow": 1
+  }
+}

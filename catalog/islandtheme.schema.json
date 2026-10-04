@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Dynamic Island theme (*.islandtheme.json)",
+  "description": "A look of the Dynamic Island plasmoid as data only: no code, no QML, no images. Fields that are not listed here are ignored; a listed field with a value outside what is allowed makes the file invalid. A file is at most 64 kB.",
+  "type": "object",
+  "required": ["schema", "name", "style"],
+  "properties": {
+    "schema": {
+      "description": "Version of this format. 1 is the only one so far; a file with a higher one is refused by an island that does not know it.",
+      "type": "integer",
+      "const": 1
+    },
+    "name": {
+      "description": "The theme's name, as it is shown in the list of looks.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]*[^\\s\\u0000-\\u001f\\u007f][^\\u0000-\\u001f\\u007f]*$"
+    },
+    "author": { "type": "string", "maxLength": 80, "pattern": "^[^\\u0000-\\u001f\\u007f]*$" },
+    "description": { "type": "string", "maxLength": 300, "pattern": "^[^\\u0000-\\u001f\\u007f]*$" },
+    "style": {
+      "description": "The Appearance settings. A field that is left out takes the value of the `preset` the style starts from (Oxygen Metallic when that is left out too).",
+      "type": "object",
+      "properties": {
+        "preset": {
+          "description": "The ready-made look this style starts from; \"Reset to the preset\" goes back to it.",
+          "enum": ["oxygen", "breezeDark", "breezeLight", "glass", "contrast", "aurora", "sunset", "ocean", "midnight"]
+        },
+        "material": { "description": "metal: gradient, silver rim and gloss; flat: one surface; glass: clear with a hairline.", "enum": ["metal", "flat", "glass"] },
+        "strong": { "description": "High contrast: nothing translucent to read on or with.", "type": "boolean" },
+        "opacity": { "description": "Percent.", "type": "integer", "minimum": 0, "maximum": 100 },
+        "blur": { "description": "Blur what is behind the island (needs the native helper and KWin's Blur effect).", "type": "boolean" },
+        "blurLevel": { "description": "Frosting over the blurred background: 0 low, 1 medium, 2 high.", "type": "integer", "minimum": 0, "maximum": 2 },
+        "top": { "description": "Distance from the top of the screen, px.", "type": "integer", "minimum": 0, "maximum": 40 },
+        "offsetX": { "description": "Horizontal position from the centre, px.", "type": "integer", "minimum": -100, "maximum": 100 },
+        "scale": { "description": "Size of the whole island, percent.", "type": "integer", "minimum": 80, "maximum": 120 },
+        "radius": { "description": "Corner roundness, percent of a full capsule.", "type": "integer", "minimum": 0, "maximum": 100 },
+        "fill": { "description": "What the background is: one colour (`background`) or a gradient (`gradient*`).", "enum": ["solid", "gradient"] },
+        "background": { "description": "The solid background: a colour, or \"accent\" for the system's accent colour.", "anyOf": [{ "$ref": "#/$defs/color" }, { "const": "accent" }] },
+        "gradientType": { "enum": ["linear", "radial"] },
+        "gradientAngle": { "description": "Degrees, as in CSS: 0 runs upwards, 90 to the right. Linear gradients only.", "type": "integer", "minimum": 0, "maximum": 360 },
+        "gradientStops": { "description": "Two or three colours, evenly spread along the gradient.", "type": "array", "minItems": 2, "maxItems": 3, "items": { "$ref": "#/$defs/color" } },
+        "control": { "description": "Buttons, fields, selections: a colour, or \"accent\".", "anyOf": [{ "$ref": "#/$defs/color" }, { "const": "accent" }] },
+        "text": { "description": "The text colour; \"\" chooses it by contrast with the background.", "anyOf": [{ "$ref": "#/$defs/color" }, { "const": "" }] },
+        "border": { "type": "boolean" },
+        "borderWidth": { "description": "px.", "type": "integer", "minimum": 1, "maximum": 4 },
+        "borderColor": { "description": "\"\" is the material's own border colour.", "anyOf": [{ "$ref": "#/$defs/color" }, { "const": "" }] },
+        "shadow": { "description": "0 none, 1 light, 2 strong.", "type": "integer", "minimum": 0, "maximum": 2 }
+      }
+    }
+  },
+  "$defs": {
+    "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+  }
+}

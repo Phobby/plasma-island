@@ -14,6 +14,9 @@
  * (a .desktop entry), read its SQLite database (strictly read-only) and
  * notice when its files change. Its own command writes the notes
  * (`betternotes update … --body -` reads the content from standard input).
+ *
+ * Also the island's own small files under the user's data directory (theme
+ * files, what the suggestions learned): written, listed and deleted here.
  */
 class LocalTools : public QObject
 {
@@ -31,6 +34,14 @@ public:
     Q_INVOKABLE QString dataHome() const;
     // The first `maxBytes` of a text file ("~/" = home); "" if it cannot be read.
     Q_INVOKABLE QString readTextFile(const QString &path, int maxBytes = 65536) const;
+    // Size of a file in bytes; -1 if there is none.
+    Q_INVOKABLE double fileSize(const QString &path) const;
+    // Writes a text file (UTF-8) in one piece, making its directory; false if it could not.
+    Q_INVOKABLE bool writeTextFile(const QString &path, const QString &text) const;
+    // Deletes a file; false if there was none or it could not be deleted.
+    Q_INVOKABLE bool removeFile(const QString &path) const;
+    // Names of the files in a directory that end with `suffix`, sorted; [] if there is no such directory.
+    Q_INVOKABLE QStringList listFiles(const QString &directory, const QString &suffix = QString()) const;
     // Runs a program without a shell; callback(exitCode, stdout, stderr), exitCode -1 = could not run / timed out.
     Q_INVOKABLE void run(const QString &program, const QStringList &arguments, const QJSValue &callback);
     // The same, with `input` (UTF-8) on the program's standard input.

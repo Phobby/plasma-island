@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+# catalog-update — the theme catalog's list, made from its theme files.
+#
+#   tools/catalog-update                 check every catalog/themes/*.islandtheme.json and
+#                                        write catalog/index.json (id, name, author,
+#                                        description, path, sha256, preview)
+#   tools/catalog-update --check         only check: exit 1 when a theme is not valid or
+#                                        index.json is not what the files say
+#   tools/catalog-update --sha256 FILE   print a file's SHA-256 checksum
+#
+# The id of a theme is its file name without ".islandtheme.json": lower-case
+# letters, digits and "-". The rules a theme file has to keep are the ones of
+# catalog/islandtheme.schema.json (and of contents/ui/ThemeFile.js, which is
+# what the island checks a file with).
+import hashlib
+import json
+import os
+import re
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+CATALOG = os.path.join(HERE, "..", "catalog")
+THEMES = os.path.join(CATALOG, "themes")
+INDEX = os.path.join(CATALOG, "index.json")
+SUFFIX = ".islandtheme.json"
+MAX_BYTES = 64 * 1024
+
+PRESETS = ["oxygen", "breezeDark", "breezeLight", "glass", "contrast", "aurora", "sunset", "ocean", "midnight"]
+NUMBERS = {"opacity": (0, 100), "blurLevel": (0, 2), "top": (0, 40), "offsetX": (-100, 100), "scale": (80, 120), "radius": (0, 100),
+           "borderWidth": (1, 4), "shadow": (0, 2), "gradientAngle": (0, 360)}
+BOOLEANS = ["blur", "border", "strong"]
+CHOICES = {"preset": PRESETS, "material": ["metal", "flat", "glass"], "fill": ["solid", "gradient"], "gradientType": ["linear", "radial"]}
+COLORS = {"background": ["accent"], "control": ["accent"], "text": [""], "borderColor": [""]}
+# What a card of the store is drawn from: the look, not where the island sits.
+PREVIEW = ["preset", "material", "strong", "opacity", "radius", "fill", "background", "gradientType", "gradientAngle", "gradientStops",
+           "control", "text", "border", "borderWidth", "borderColor"]
+
+
+def is_color(v):
+    return isinstance(v, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", v) is not None
+
+
+def is_text(v, longest):
+    return isinstance(v, str) and len(v) <= longest and not re.search(r"[\x00-\x1f\x7f]", v)
+
+
+def problems(data):
+    """What is wrong with a theme file's bytes: a list of messages, empty when it is valid."""
+    if len(data) > MAX_BYTES:
+        return [f"larger than {MAX_BYTES} bytes"]
+    try:
+        theme = json.loads(data.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError) as e:
+        return [f"not UTF-8 JSON: {e}"]
+    if not isinstance(theme, dict):
+        return ["not a JSON object"]
+    out = []
+    if theme.get("schema") != 1 or isinstance(theme.get("schema"), bool):
+        out.append('"schema" has to be 1')
+    if not is_text(theme.get("name"), 60) or not theme["name"].strip():
+        out.append('"name" has to be a text of 1 to 60 characters')
+    for key, longest in (("author", 80), ("description", 300)):
+        if key in theme and not is_text(theme[key], longest):
+            out.append(f'"{key}" has to be a text of at most {longest} characters')
+    style = theme.get("style")
+    if not isinstance(style, dict):
+        return out + ['"style" has to be an object']
+    for key, v in style.items():
+        if key in NUMBERS:
+            good = isinstance(v, int) and not isinstance(v, bool) and NUMBERS[key][0] <= v <= NUMBERS[key][1]
+        elif key in BOOLEANS:
+            good = isinstance(v, bool)
+        elif key in CHOICES:
+            good = v in CHOICES[key]
+        elif key in COLORS:
+            good = is_color(v) or v in COLORS[key]
+        elif key == "gradientStops":
+            good = isinstance(v, list) and len(v) in (2, 3) and all(is_color(c) for c in v)
+        else:
+            continue                                  # unknown: ignored by the island
+        if not good:
+            out.append(f'"style.{key}" is not what the schema allows: {json.dumps(v)}')
+    return out
+
+
+def entry(name, data):
+    theme = json.loads(data.decode("utf-8"))
+    out = {"id": name[:-len(SUFFIX)], "name": theme["name"].strip()}
+    for key in ("author", "description"):
+        if theme.get(key, "").strip():
+            out[key] = theme[key].strip()
+    out["path"] = "themes/" + name
+    out["sha256"] = hashlib.sha256(data).hexdigest()
+    out["preview"] = {k: theme["style"][k] for k in PREVIEW if k in theme["style"]}
+    return out
+
+
+def main():
+    if "--sha256" in sys.argv:
+        path = sys.argv[sys.argv.index("--sha256") + 1]
+        print(hashlib.sha256(open(path, "rb").read()).hexdigest())
+        return 0
+    check = "--check" in sys.argv
+    themes, failed = [], False
+    for name in sorted(os.listdir(THEMES)):
+        if not name.endswith(SUFFIX):
+            print(f"{name}: not a theme file (its name has to end with {SUFFIX})")
+            failed = True
+            continue
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,47}", name[:-len(SUFFIX)]):
+            print(f"{name}: the name before {SUFFIX} has to be lower-case letters, digits and '-'")
+            failed = True
+            continue
+        data = open(os.path.join(THEMES, name), "rb").read()
+        wrong = problems(data)
+        for message in wrong:
+            print(f"{name}: {message}")
+        if wrong:
+            failed = True
+            continue
+        themes.append(entry(name, data))
+    names = [t["name"].lower() for t in themes]
+    for n in sorted(set(n for n in names if names.count(n) > 1)):
+        print(f'two themes are called "{n}"')
+        failed = True
+    if failed:
+        return 1
+    text = json.dumps({"schema": 1, "themes": themes}, indent=2, ensure_ascii=False) + "\n"
+    current = open(INDEX, encoding="utf-8").read() if os.path.exists(INDEX) else ""
+    if check:
+        if current != text:
+            print("catalog/index.json is not what the theme files say; run tools/catalog-update")
+            return 1
+        print(f"catalog: {len(themes)} themes, index.json matches")
+        return 0
+    if current != text:
+        open(INDEX, "w", encoding="utf-8").write(text)
+    print(f"catalog/index.json: {len(themes)} themes" + ("" if current != text else " (unchanged)"))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

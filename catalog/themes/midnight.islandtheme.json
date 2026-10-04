@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "name": "Midnight Blue",
+  "author": "Dynamic Island",
+  "description": "A navy glow in the middle that fades into the night.",
+  "style": {
+    "preset": "midnight",
+    "material": "flat",
+    "strong": false,
+    "opacity": 92,
+    "blur": true,
+    "blurLevel": 1,
+    "radius": 100,
+    "fill": "gradient",
+    "background": "#141f52",
+    "gradientType": "radial",
+    "gradientAngle": 0,
+    "gradientStops": [
+      "#1e3a8a",
+      "#0b1026"
+    ],
+    "control": "#93c5fd",
+    "text": "",
+    "border": true,
+    "borderWidth": 1,
+    "borderColor": "",
+    "shadow": 2
+  }
+}
