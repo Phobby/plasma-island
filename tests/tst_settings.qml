@@ -19,6 +19,8 @@ Item {
     Loader { id: weather; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configWeather.qml" }
     Loader { id: suggestions; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configSuggestions.qml" }
     Loader { id: notes; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configNotes.qml" }
+    Loader { id: layout; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configLayout.qml" }
+    PageCatalog { id: pages }
     QtObject { id: stored; property string suggestionsData: ""; property string suggestionsAvailable: "" }
 
     TestCase {
@@ -124,6 +126,30 @@ Item {
             compare(page.cfg_notesResume, true);
             page.cfg_notesResume = false;
             compare(page.cfg_notesResume, false);
+        }
+
+        // The AI tab among the tabs: off until switched on, in its place, movable like the others.
+        function test_layout_the_ai_tab() {
+            compare(pages.pages.find(p => p.key === "ai").config, "showAi");
+            // an order saved before the tab existed: it takes its place after Notes
+            compare(pages.normalize("media,control,notes,clipboard,devices").join(","),
+                    "activities,media,control,weather,notifications,quicksettings,apps,tools,habits,calendar,notes,ai,clipboard,devices");
+            // and where the user put it, it stays
+            const moved = pages.normalize("ai,media,notes");
+            verify(moved.indexOf("ai") < moved.indexOf("media") && moved.indexOf("media") < moved.indexOf("notes"), moved.join(","));
+            if (layout.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = layout.item;
+            compare(page.cfg_showAi, false, "off until the user switches it on");
+            page.cfg_showMediaModule = true;
+            const before = page.shownTabs;
+            page.cfg_showAi = true;
+            compare(page.shownTabs, before + 1);
+            page.cfg_pageOrder = "ai,media,control";
+            compare(page.cfg_pageOrder, "ai,media,control");
+            compare(page.info("ai").title, "AI");
+            page.cfg_showAi = false;
+            compare(page.shownTabs, before);
+            wait(100);
         }
 
         // Export the look, reset the settings, bring the file back with "Add New…".

@@ -151,6 +151,35 @@ PlasmoidItem {
         target: root.cfg
         function onNotesSourcesChanged() { if (notesBackend.sourcesJson !== root.cfg.notesSources) notesBackend.sourcesJson = root.cfg.notesSources; }
     }
+    // The AI tab: quick questions to Claude Code on this computer, a local model or a service
+    // with a key. Only a page, and loaded by name only when it is switched on: while it is off
+    // nothing of it is read, and while no question is being answered nothing of it runs.
+    OptionalBackend {
+        id: aiLoader
+        source: root.cfg.showAi ? "backend/AiBackend.qml" : ""
+        onLoaded: {
+            item.core = Qt.binding(() => root.core);
+            item.enabled = Qt.binding(() => root.cfg.showAi);
+            item.defaultId = Qt.binding(() => root.cfg.aiDefault);
+            item.maxTokens = Qt.binding(() => root.cfg.aiMaxTokens);
+            item.maxChars = Qt.binding(() => root.cfg.aiMaxChars);
+            item.keepHistory = Qt.binding(() => root.cfg.aiKeepHistory);
+            item.sourcesJson = root.cfg.aiSources;
+            item.acknowledgedJson = root.cfg.aiAcknowledged;
+        }
+    }
+    readonly property var aiBackend: aiLoader.item
+    // What the island changes reaches the settings, and what the settings window changes reaches the island.
+    Connections {
+        target: root.aiBackend
+        function onSourcesJsonChanged() { if (root.cfg.aiSources !== root.aiBackend.sourcesJson) root.cfg.aiSources = root.aiBackend.sourcesJson; }
+        function onAcknowledgedJsonChanged() { if (root.cfg.aiAcknowledged !== root.aiBackend.acknowledgedJson) root.cfg.aiAcknowledged = root.aiBackend.acknowledgedJson; }
+    }
+    Connections {
+        target: root.cfg
+        function onAiSourcesChanged() { if (root.aiBackend !== null && root.aiBackend.sourcesJson !== root.cfg.aiSources) root.aiBackend.sourcesJson = root.cfg.aiSources; }
+        function onAiAcknowledgedChanged() { if (root.aiBackend !== null && root.aiBackend.acknowledgedJson !== root.cfg.aiAcknowledged) root.aiBackend.acknowledgedJson = root.cfg.aiAcknowledged; }
+    }
     // Clipboard history: Plasma's own (Klipper), loaded only when the page is wanted.
     OptionalBackend { id: clipboardLoader; source: root.cfg.showClipboard ? "backend/ClipboardBackend.qml" : "" }
     OptionalBackend { id: kdeconnectLoader; source: root.cfg.showKdeConnect ? "backend/KdeConnectBackend.qml" : "" }
@@ -595,6 +624,22 @@ PlasmoidItem {
     }
 
     Component {
+        id: aiPage
+        // The page itself is loaded by name, like its backend; what the island asks of a page is handed on.
+        Loader {
+            readonly property bool interacting: item !== null && item.interacting
+            readonly property bool holdOpen: item !== null && item.holdOpen
+            readonly property bool keepsWheel: item !== null && item.keepsWheel
+            readonly property bool tall: item !== null && item.tall
+            Component.onCompleted: setSource("AiPage.qml", { theme: root.islandTheme, ai: root.aiBackend })
+            Connections {
+                target: item
+                function onDefaultPicked(id) { root.cfg.aiDefault = id; }
+            }
+        }
+    }
+
+    Component {
         id: calendarPage
         CalendarPage {
             theme: root.islandTheme
@@ -626,8 +671,8 @@ PlasmoidItem {
     readonly property real windowWidth: (island.needsWideWindow ? theme.wideWidth
                                          : island.needsLargeWindow ? Math.max(theme.expandedWidth, theme.notificationWidth, theme.eventWidth)
                                          : 2 * theme.smallHalfWidth) + 2 * theme.windowSidePad
-    readonly property real windowHeight: (island.needsLargeWindow
-                                          ? Math.max(theme.expandedHeight, theme.notificationHeight)
+    readonly property real windowHeight: (island.needsTallWindow ? theme.tallHeight
+                                          : island.needsLargeWindow ? Math.max(theme.expandedHeight, theme.notificationHeight)
                                           : theme.pillHeight) + theme.windowTopPad + theme.windowBottomPad
 
     Connections {
@@ -698,6 +743,9 @@ PlasmoidItem {
                     { key: "calendar", icon: "view-calendar", title: Lang.i18n("Calendar"), component: calendarPage,
                       visible: root.cfg.showCalendar && calendarProviderLoader.item !== null },
                     { key: "notes", icon: "view-pim-notes", title: Lang.i18n("Notes"), component: notesPage, visible: root.cfg.showNotes },
+                    // The dot: an answer arrived while another page (or none) was shown.
+                    { key: "ai", icon: "dialog-messages", title: Lang.i18n("AI"), component: aiPage, visible: root.cfg.showAi && root.aiBackend !== null,
+                      dot: root.aiBackend !== null && root.aiBackend.unseen },
                     { key: "clipboard", icon: "edit-paste", title: Lang.i18n("Clipboard"), component: clipboardPage,
                       visible: root.cfg.showClipboard && root.clipboardBackend !== null },
                     { key: "devices", icon: "network-bluetooth", title: Lang.i18n("Devices"), component: devicesPage,

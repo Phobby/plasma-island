@@ -193,9 +193,10 @@
     <entry name="suggestionsData" type="String"><default></default></entry>
 
     <!-- AI: quick questions to Claude Code on this computer, a local model server or a service with a key.
-         The sources: JSON list of { id, kind, server, model } (kinds: ui/ai/AiCatalog.qml). Keys are
+         The page is off until the user switches it on (Settings → Layout or AI). The sources: JSON list of { id, kind, server, model } (kinds: ui/ai/AiCatalog.qml). Keys are
          kept in KWallet, never here. The longest answer (tokens) and question (characters); whether the
          chat is also kept in a file; and, written by the widget, the sources whose notice was accepted -->
+    <entry name="showAi" type="Bool"><default>false</default></entry>
     <entry name="aiSources" type="String"><default>[]</default></entry>
     <entry name="aiDefault" type="String"><default></default></entry>
     <entry name="aiMaxTokens" type="Int">
@@ -230,7 +231,7 @@
     </entry>
     <!-- Order of the expanded pages (Settings → Layout), comma-separated keys; see PageCatalog.qml -->
     <entry name="pageOrder" type="String">
-      <default>activities,media,control,weather,notifications,quicksettings,apps,tools,habits,calendar,notes,clipboard,devices</default>
+      <default>activities,media,control,weather,notifications,quicksettings,apps,tools,habits,calendar,notes,ai,clipboard,devices</default>
     </entry>
     <!-- Ambient glow: the island's edge in the colour of the album cover, following the music (Media page) -->
     <entry name="ambientGlow" type="Bool"><default>false</default></entry>

@@ -34,7 +34,7 @@ Item {
     // True while the user types a reply: the island keeps keyboard focus
     // and does not collapse.
     property bool interacting: false
-    onActiveChanged: if (!active) { interacting = false; holding = false; wide = false; wheelKept = false; }
+    onActiveChanged: if (!active) { interacting = false; holding = false; wide = false; tall = false; wheelKept = false; }
     // A page keeps the island open without the keyboard (e.g. while a menu it opened is shown).
     property bool holding: false
     // A page keeps the wheel for a list of its own (e.g. the places a search
@@ -43,6 +43,8 @@ Item {
     // A page asks for the wider island (Theme.wideWidth). The header keeps its
     // usual width in the middle, so the tabs do not move from under the pointer.
     property bool wide: false
+    // A page asks for the taller island (Theme.tallHeight): a conversation needs the room.
+    property bool tall: false
     readonly property real headerWidth: wide ? Math.max(0, width - (theme.wideWidth - theme.expandedWidth)) : width
 
     // Live activities that have no page of their own (media has one).
@@ -361,6 +363,8 @@ Item {
                         onPageKeepsWheelChanged: expanded.wheelKept = pageKeepsWheel
                         readonly property bool pageWide: item !== null && item.wide === true
                         onPageWideChanged: expanded.wide = pageWide
+                        readonly property bool pageTall: item !== null && item.tall === true
+                        onPageTallChanged: expanded.tall = pageTall
                     }
                 }
             }

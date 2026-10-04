@@ -276,6 +276,11 @@ QtObject {
     property string busySource: ""          // id of the source that is answering
     // The page is on screen (set by the page): nobody has to be told that an answer is ready.
     property bool viewing: false
+    onViewingChanged: if (viewing) unseen = false
+    // An answer (or what went wrong) arrived while the page was not on screen: a dot on its tab.
+    property bool unseen: false
+    // What is typed and not sent yet: the page is made anew each time the island opens.
+    property string draft: ""
     signal answered(string text)
     signal failed(var problem)
 
@@ -388,6 +393,7 @@ QtObject {
             list.push({ role: "assistant", text: done.text, source: done.source, cut: result.cut === true });
             messages = list;
             save();
+            unseen = !viewing;
             answered(done.text);
             return;
         }
@@ -397,6 +403,7 @@ QtObject {
         else list[list.length - 1] = Object.assign({}, list[list.length - 1], { problem: problem });
         messages = list;
         save();
+        unseen = !viewing;
         failed(problem);
     }
     // "Stop": what was written so far stays.

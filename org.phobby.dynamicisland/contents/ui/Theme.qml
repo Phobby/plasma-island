@@ -115,6 +115,8 @@ QtObject {
     readonly property real expandedHeight: Math.round(gu * 11.5)
     // A page that needs the room (the Habits year) widens the expanded island to this.
     readonly property real wideWidth: Math.round(gu * 36)
+    // And one that needs it downwards (the AI tab's conversation) makes it this tall.
+    readonly property real tallHeight: Math.round(gu * 20)
     readonly property real expandedRadius: rounded(28)
     readonly property real notificationRadius: rounded(26)
     // Transient system events (charging, Bluetooth, volume…): a wide pill.

@@ -31,6 +31,8 @@ QtObject {
         { key: "calendar", icon: "view-calendar", title: Lang.i18n("Calendar"), config: "showCalendar",
           hint: Lang.i18n("Also the upcoming-event activity") },
         { key: "notes", icon: "view-pim-notes", title: Lang.i18n("Notes"), config: "showNotes", hint: "" },
+        { key: "ai", icon: "dialog-messages", title: Lang.i18n("AI"), config: "showAi",
+          hint: Lang.i18n("Quick questions to Claude Code, a local model or a service with a key") },
         { key: "clipboard", icon: "edit-paste", title: Lang.i18n("Clipboard"), config: "showClipboard",
           hint: Lang.i18n("History of what was copied") },
         { key: "devices", icon: "network-bluetooth", title: Lang.i18n("Devices"), config: "showDevicesModule",

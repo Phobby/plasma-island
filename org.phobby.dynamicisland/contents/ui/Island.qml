@@ -76,13 +76,16 @@ Item {
     // A page may ask for a wider island (the Habits year).
     readonly property bool wide: expanded && expandedContent.wide
     readonly property real expandedWidth: wide ? theme.wideWidth : theme.expandedWidth
+    // Or for a taller one (the AI tab's conversation).
+    readonly property bool tall: expanded && expandedContent.tall
+    readonly property real expandedHeight: tall ? theme.tallHeight : theme.expandedHeight
     readonly property real targetWidth: mode === "expanded" ? expandedWidth
                                       : mode === "notification" ? theme.notificationWidth
                                       : mode === "event" ? (currentEvent.width || theme.eventWidth)
                                       : mode === "split" ? theme.splitMainWidth
                                       : mode === "live" ? liveWidth
                                       : theme.pillWidth
-    readonly property real targetHeight: mode === "expanded" ? theme.expandedHeight
+    readonly property real targetHeight: mode === "expanded" ? expandedHeight
                                        : mode === "notification" ? theme.notificationHeight
                                        : mode === "event" ? (currentEvent.height || theme.eventHeight)
                                        : theme.pillHeight
@@ -100,7 +103,10 @@ Item {
     // island is small again, so it is never resized in the middle of a morph.
     property bool needsWideWindow: false
     onWideChanged: if (wide) needsWideWindow = true
-    onNeedsLargeWindowChanged: if (!needsLargeWindow) needsWideWindow = false
+    // The same downwards.
+    property bool needsTallWindow: false
+    onTallChanged: if (tall) needsTallWindow = true
+    onNeedsLargeWindowChanged: if (!needsLargeWindow) { needsWideWindow = false; needsTallWindow = false; }
     // Geometry of the glass surfaces in window coordinates (for the blur region).
     readonly property rect surfaceRect: Qt.rect(surface.x, surface.y, surface.width, surface.height)
     readonly property real surfaceRadius: surface.radius
@@ -387,7 +393,7 @@ Item {
         Layer {
             layerMode: "expanded"
             width: island.expandedWidth
-            height: island.theme.expandedHeight
+            height: island.expandedHeight
 
             ExpandedContent {
                 id: expandedContent
