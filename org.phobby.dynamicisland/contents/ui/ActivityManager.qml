@@ -17,7 +17,8 @@
         duration (ms), notification (for kind "notification"), activate: function,
         key (coalesce repeats), live (feedback like volume: dropped instead of
         queued when it cannot be shown right away), force (shown even above a
-        higher-priority live activity, e.g. an incoming call) }
+        higher-priority live activity, e.g. an incoming call),
+        closed: function (the user closed it without acting on it) }
 */
 import QtQuick
 
@@ -144,6 +145,13 @@ Item {
         eventTimer.stop();
         currentEvent = null;
         if (queue.length > 0) gapTimer.restart();
+    }
+
+    // Closed by the user (the cross, a middle click), not by its time running out.
+    function closeEvent(): void {
+        const ev = currentEvent;
+        dismissEvent();
+        if (ev && typeof ev.closed === "function") ev.closed();
     }
 
     function activateEvent(): void {

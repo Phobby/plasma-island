@@ -34,6 +34,8 @@ KCM.SimpleKCM {
     property bool cfg_blurEnabled
     property int cfg_themeMode
     property int cfg_topMargin
+    // The Habits calendar: 0 = GitHub's greens, 1 = the system's accent colour (also in Habits).
+    property int cfg_habitsColorSource
 
     readonly property bool custom: cfg_appearanceMode === 1
     // The style being edited.
@@ -472,6 +474,21 @@ KCM.SimpleKCM {
             model: [Lang.i18n("None"), Lang.i18n("Light"), Lang.i18n("Strong")]
             index: page.style.shadow
             onActivated: page.set("shadow", currentIndex)
+        }
+
+        // ---- the Habits calendar (whatever the look above is) -------------------------
+        Kirigami.Separator {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: Lang.i18n("Habits")
+        }
+        Check {
+            Kirigami.FormData.label: Lang.i18n("Calendar:")
+            text: Lang.i18n("Use the system's accent colour")
+            on: page.cfg_habitsColorSource === 1
+            onToggled: page.cfg_habitsColorSource = checked ? 1 : 0
+        }
+        Hint {
+            text: Lang.i18n("The days of the Habits calendar are shaded in GitHub's green otherwise.")
         }
     }
 }

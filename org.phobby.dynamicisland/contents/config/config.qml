@@ -54,6 +54,11 @@ ConfigModel {
         source: "configTools.qml"
     }
     ConfigCategory {
+        name: Lang.i18n("Habits")
+        icon: "view-calendar-tasks"
+        source: "configHabits.qml"
+    }
+    ConfigCategory {
         name: Lang.i18n("Language")
         icon: "preferences-desktop-locale"
         source: "configLanguage.qml"

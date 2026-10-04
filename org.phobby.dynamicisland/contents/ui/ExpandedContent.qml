@@ -34,13 +34,17 @@ Item {
     // True while the user types a reply: the island keeps keyboard focus
     // and does not collapse.
     property bool interacting: false
-    onActiveChanged: if (!active) { interacting = false; holding = false; }
+    onActiveChanged: if (!active) { interacting = false; holding = false; wide = false; }
     // A page keeps the island open without the keyboard (e.g. while a menu it opened is shown).
     property bool holding: false
+    // A page asks for the wider island (Theme.wideWidth). The header keeps its
+    // usual width in the middle, so the tabs do not move from under the pointer.
+    property bool wide: false
+    readonly property real headerWidth: wide ? Math.max(0, width - (theme.wideWidth - theme.expandedWidth)) : width
 
     // Live activities that have no page of their own (media has one).
     readonly property var listedActivities: manager.live.concat(manager.indicators).filter(a => a.listed)
-    // Extra pages contributed by providers: [{ key, icon, title, component, visible }]
+    // Extra pages contributed by providers: [{ key, icon, title, component, visible, label, dot }]
     property var extraPages: []
     // The user's order of the pages (Settings → Layout): comma-separated keys.
     property string pageOrder: ""
@@ -79,6 +83,13 @@ Item {
     function showPage(key: string): void {
         if (key === currentKey || visibleKeys.indexOf(key) < 0) return;
         slide = true;
+        currentKey = key;
+    }
+
+    // Straight to a page, without the slide (the island was opened for it).
+    function jumpTo(key: string): void {
+        if (visibleKeys.indexOf(key) < 0) return;
+        slide = false;
         currentKey = key;
     }
 
@@ -125,6 +136,8 @@ Item {
         // Header
         RowLayout {
             Layout.fillWidth: true
+            Layout.maximumWidth: expanded.headerWidth
+            Layout.alignment: Qt.AlignHCenter
             spacing: 4
 
             // Tabs shrink to fit: a row wider than the island would widen
@@ -227,6 +240,18 @@ Item {
                                     font.weight: Font.Bold
                                 }
                             }
+                            // Something is waiting on that page (e.g. a day of the habits not reviewed)
+                            Rectangle {
+                                visible: tab.modelData.dot === true
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.rightMargin: 3
+                                anchors.topMargin: 3
+                                width: 6
+                                height: 6
+                                radius: 3
+                                color: expanded.theme.orange
+                            }
                             MouseArea {
                                 id: tabMouse
                                 anchors.fill: parent
@@ -316,6 +341,8 @@ Item {
                         onPageInteractingChanged: expanded.interacting = pageInteracting
                         readonly property bool pageHolding: item !== null && item.holdOpen === true
                         onPageHoldingChanged: expanded.holding = pageHolding
+                        readonly property bool pageWide: item !== null && item.wide === true
+                        onPageWideChanged: expanded.wide = pageWide
                     }
                 }
             }

@@ -26,6 +26,8 @@ QtObject {
           hint: Lang.i18n("Shortcuts to the applications you choose") },
         { key: "tools", icon: "chronometer", title: Lang.i18n("Tools"), config: "showTools",
           hint: Lang.i18n("Timer, stopwatch, Pomodoro, alarm") },
+        { key: "habits", icon: "view-calendar-tasks", title: Lang.i18n("Habits"), config: "showHabits",
+          hint: Lang.i18n("Daily checklist, the evening review and its calendar") },
         { key: "calendar", icon: "view-calendar", title: Lang.i18n("Calendar"), config: "showCalendar",
           hint: Lang.i18n("Also the upcoming-event activity") },
         { key: "notes", icon: "view-pim-notes", title: Lang.i18n("Notes"), config: "showNotes", hint: "" },

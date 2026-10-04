@@ -38,6 +38,12 @@ Item {
     signal downloadFinished(string id, string finalPath, bool success)
 
     signal screenUnlocked()
+    // The lock screen is up: asked once at the start, then followed by ScreenSaver's ActiveChanged.
+    property bool screenLocked: false
+    // Awake again after suspend or hibernation (logind's PrepareForSleep).
+    signal resumed()
+    Component.onCompleted: launcher.call(false, "org.freedesktop.ScreenSaver", "/ScreenSaver", "org.freedesktop.ScreenSaver", "GetActive", [],
+                                         (error, values) => { if (!error && values && values.length > 0) bridge.screenLocked = values[0] === true; })
     // The system's colour scheme or accent colour was changed (System Settings,
     // a global theme, plasma-apply-colorscheme): KDE announces it on D-Bus.
     signal colorSchemeChanged()
@@ -123,7 +129,20 @@ Item {
         path: "/ScreenSaver"
         iface: "org.freedesktop.ScreenSaver"
         member: "ActiveChanged"
-        onTriggered: (args) => { if (args.length > 0 && args[0] === false) bridge.screenUnlocked(); }
+        onTriggered: (args) => {
+            if (args.length === 0) return;
+            bridge.screenLocked = args[0] === true;
+            if (args[0] === false) bridge.screenUnlocked();
+        }
+    }
+    Core.DBusSignalWatcher {
+        systemBus: true
+        service: "org.freedesktop.login1"
+        path: "/org/freedesktop/login1"
+        iface: "org.freedesktop.login1.Manager"
+        member: "PrepareForSleep"
+        // (start): true = about to sleep, false = awake again
+        onTriggered: (args) => { if (args.length > 0 && args[0] === false) bridge.resumed(); }
     }
     Core.DBusSignalWatcher {
         path: "/KGlobalSettings"

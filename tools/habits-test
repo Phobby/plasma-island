@@ -1,0 +1,344 @@
+#!/usr/bin/env node
+// habits-test — the Habits page's rules, checked without touching the clock.
+//
+//   tools/habits-test            the rules (contents/ui/Habits.js) and, when
+//                                qmltestrunner is installed, the provider
+//                                (tests/tst_habitsprovider.qml: the evening
+//                                question after a restart, a lock, a sleep)
+//   tools/habits-test --logic    the rules only
+//
+// Habits.js takes the day or the moment it is asked about as an argument, so
+// every case below names its own dates (Monday is 5 October 2026); the
+// system's time is never read or changed.
+"use strict";
+const fs = require("fs");
+const path = require("path");
+const { spawnSync } = require("child_process");
+
+const ROOT = path.join(__dirname, "..");
+const SOURCE = path.join(ROOT, "org.phobby.dynamicisland", "contents", "ui", "Habits.js");
+
+// A QML JavaScript library is not a node module: its functions are collected here.
+function load(file) {
+    const source = fs.readFileSync(file, "utf8").replace(/^\.pragma library\s*$/m, "");
+    const names = Array.from(source.matchAll(/^function (\w+)\(/gm), m => m[1]);
+    return new Function(source + "\nreturn { " + names.join(", ") + " };")();
+}
+const H = load(SOURCE);
+
+let failed = 0, checked = 0;
+function check(what, got, want) {
+    ++checked;
+    const g = JSON.stringify(got), w = JSON.stringify(want);
+    if (g === w) return;
+    ++failed;
+    console.log("    FAILED: " + what + "\n      got  " + g + "\n      want " + w);
+}
+function test(name, body) {
+    const before = failed;
+    body();
+    console.log((failed === before ? "  ok    " : "  FAIL  ") + name);
+}
+
+// October 2026: the 5th is a Monday.
+const at = (day, hour, minute) => new Date(2026, 9, day, hour === undefined ? 12 : hour, minute || 0);
+const MON = "2026-10-05", TUE = "2026-10-06", WED = "2026-10-07", THU = "2026-10-08", FRI = "2026-10-09";
+const FIVE = ["Çiçekleri sula", "Yürüyüş yap", "Günlük yaz", "Gitar çalış", "Erken kalk"];
+const withHabits = (names, date) => names.reduce((s, n) => H.addHabit(s, n, date), H.empty());
+const names = (state, key) => H.items(state, key).map(i => i.name);
+const refOf = (state, key, name) => H.items(state, key).find(i => i.name === name).ref;
+const tick = (state, key, list) => list.reduce((s, n) => H.setDone(s, key, refOf(s, key, n), true), state);
+const TIME = "21:30";
+
+console.log("Habits.js");
+
+test("five habits, three done: level 3", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    check("the list", names(s, MON), FIVE);
+    check("nothing done yet", H.cell(s, MON), { listed: true, done: 0, total: 5, level: 0, reviewed: false, known: false });
+    s = tick(s, MON, ["Çiçekleri sula", "Günlük yaz", "Erken kalk"]);
+    check("3/5", H.counts(s, MON), { done: 3, total: 5 });
+    check("level", H.cell(s, MON).level, 3);
+    check("shown before the evening review", H.cell(s, MON).known, true);
+    // unticking is possible at any moment
+    s = H.setDone(s, MON, refOf(s, MON, "Günlük yaz"), false);
+    check("2/5 is level 2", H.cell(s, MON).level, 2);
+});
+
+test("the five shades", () => {
+    const levels = [[0, 5, 0], [1, 100, 1], [1, 5, 1], [1, 4, 1], [13, 50, 2], [2, 5, 2], [1, 2, 2], [51, 100, 3], [3, 5, 3],
+                    [3, 4, 3], [76, 100, 4], [4, 5, 4], [5, 5, 4], [0, 0, 0]];
+    for (const [done, total, want] of levels) check(done + "/" + total, H.level(done, total), want);
+});
+
+test("not reviewed is not level 0", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    check("no data yet", H.cell(s, MON).known, false);
+    s = H.review(s, MON);
+    check("reviewed, nothing done: level 0", [H.cell(s, MON).known, H.cell(s, MON).level], [true, 0]);
+    check("a day without a list", H.cell(s, "2026-09-01"), { listed: false, done: 0, total: 0, level: 0, reviewed: false, known: false });
+});
+
+test("an extra added on Monday evening is on Tuesday's list, and asked about once", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    s = H.addExtra(s, "Pazara git", H.keyShift(MON, 1));
+    check("not on Monday's list", names(s, MON), FIVE);
+    s = H.roll(s, at(6, 0, 0));
+    check("on Tuesday's list", names(s, TUE), FIVE.concat(["Pazara git"]));
+    check("as an extra", H.items(s, TUE)[5].extra, true);
+    check("counted", H.counts(s, TUE).total, 6);
+    check("to ask on Tuesday evening", H.unasked(s, TUE), [{ index: 0, name: "Pazara git" }]);
+    const answered = H.answerExtra(s, TUE, 0, false);
+    check("asked once", H.unasked(answered, TUE), []);
+    check("a second answer changes nothing", H.answerExtra(answered, TUE, 0, true), answered);
+});
+
+test("answer no: gone, and never asked again", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    s = H.roll(H.addExtra(s, "Pazara git", TUE), at(6, 8));
+    s = H.review(H.answerExtra(s, TUE, 0, false), TUE);
+    for (const [day, key] of [[7, WED], [8, THU], [9, FRI]]) {
+        s = H.roll(s, at(day, 0, 1));
+        check("not listed on " + key, names(s, key), FIVE);
+        check("nothing to ask on " + key, H.unasked(s, key), []);
+    }
+    check("not a habit", H.hasHabit(s, "Pazara git"), false);
+    check("Tuesday still has it", names(s, TUE), FIVE.concat(["Pazara git"]));
+});
+
+test("answer yes: a permanent habit from Wednesday on", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    s = H.roll(H.addExtra(s, "Pazara git", TUE), at(6, 8));
+    s = H.review(H.answerExtra(s, TUE, 0, true), TUE);
+    check("a habit now", H.hasHabit(s, "Pazara git"), true);
+    check("Tuesday keeps it as the extra it was", H.items(s, TUE)[5], { ref: "x0", name: "Pazara git", done: false, extra: true, asked: true });
+    for (const [day, key] of [[7, WED], [8, THU], [20, "2026-10-20"]]) {
+        s = H.roll(s, at(day, 0, 1));
+        const item = H.items(s, key).find(i => i.name === "Pazara git");
+        check("listed on " + key + " as a habit", item && item.extra, false);
+        check("nothing to ask on " + key, H.unasked(s, key), []);
+    }
+    check("six habits", H.active(s).length, 6);
+});
+
+test("yes in a late review (Tuesday's, asked on Wednesday): on Wednesday's list at once", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    s = H.roll(H.addExtra(s, "Pazara git", TUE), at(6, 8));
+    s = H.roll(s, at(7, 8));
+    check("Wednesday's list was made without it", names(s, WED), FIVE);
+    s = H.answerExtra(s, TUE, 0, true);
+    check("now with it", names(s, WED), FIVE.concat(["Pazara git"]));
+    check("as a habit", H.items(s, WED)[5].extra, false);
+});
+
+test("the same extra typed again the next evening: permanent, whatever the case and spaces", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    s = H.roll(H.addExtra(s, "Pazara git", TUE), at(6, 8));
+    // Tuesday evening: no answer to the question, typed again for Wednesday
+    s = H.addExtra(s, "  pazara   GİT ", WED);
+    check("a habit", H.hasHabit(s, "Pazara git"), true);
+    s = H.roll(s, at(7, 0, 1));
+    check("on Wednesday's list as a habit", H.items(s, WED).filter(i => H.fold(i.name) === "pazaragit").map(i => i.extra), [false]);
+    check("the counter is gone", s.runs, {});
+    check("fold", [H.fold("PAZARA GIT"), H.fold("pazara gıt"), H.fold(" Pazara\tGİT ")], ["pazaragit", "pazaragit", "pazaragit"]);
+});
+
+test("extras on days that are not in a row start counting again", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    s = H.roll(H.addExtra(s, "Pazara git", TUE), at(6, 8));
+    check("counter", s.runs.pazaragit, { last: TUE, n: 1 });
+    s = H.review(H.answerExtra(s, TUE, 0, false), TUE);
+    s = H.roll(s, at(7, 8));
+    // Wednesday evening: added for Thursday (Wednesday did not have it)
+    s = H.addExtra(s, "Pazara git", THU);
+    check("not a habit", H.hasHabit(s, "Pazara git"), false);
+    check("counter from one", s.runs.pazaragit, { last: THU, n: 1 });
+    s = H.roll(s, at(8, 8));
+    check("an extra on Thursday", H.items(s, THU)[5], { ref: "x0", name: "Pazara git", done: false, extra: true, asked: false });
+    // and the day after it in a row: permanent
+    s = H.addExtra(s, "pazara git", FRI);
+    check("a habit after two days in a row", H.hasHabit(s, "Pazara git"), true);
+});
+
+test("an extra is added once, and a habit's name is no extra", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    const once = H.addExtra(s, "Pazara git", TUE);
+    check("twice for the same day", H.addExtra(once, "PAZARA GİT", TUE), once);
+    check("a habit's name", H.addExtra(s, "yürüyüş yap", TUE), s);
+    check("an empty name", H.addExtra(s, "   ", TUE), s);
+    check("taken back", H.text(H.dropExtra(once, "pazara git", TUE)), H.text(s));
+});
+
+test("the shell was not running at the review time: asked at the next start, written to its own day", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    s = tick(s, MON, ["Yürüyüş yap", "Günlük yaz"]);
+    check("before the time", H.due(s, at(5, 21, 29), TIME), "");
+    check("at the time", H.due(s, at(5, 21, 30), TIME), MON);
+    // …but nothing ran then. The next start is Tuesday 08:10.
+    const start = at(6, 8, 10);
+    s = H.roll(s, start);
+    check("Tuesday has its list", names(s, TUE), FIVE);
+    check("Monday is asked", H.due(s, start, TIME), MON);
+    // the answer: one more was done
+    s = H.review(H.setDone(s, MON, refOf(s, MON, "Erken kalk"), true), MON);
+    check("written to Monday", H.cell(s, MON), { listed: true, done: 3, total: 5, level: 3, reviewed: true, known: true });
+    check("Tuesday untouched", H.cell(s, TUE), { listed: true, done: 0, total: 5, level: 0, reviewed: false, known: false });
+    check("nothing more to ask in the morning", H.due(s, start, TIME), "");
+    check("Tuesday is asked in its own evening", H.due(s, at(6, 21, 30), TIME), TUE);
+});
+
+test("asleep or locked over midnight: still Monday's review, until Tuesday's time", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    check("Monday 23:59", H.due(s, at(5, 23, 59), TIME), MON);
+    s = H.roll(s, at(6, 0, 0));
+    check("Tuesday 00:00", H.due(s, at(6, 0, 0), TIME), MON);
+    check("Tuesday 21:29", H.due(s, at(6, 21, 29), TIME), MON);
+    check("Tuesday 21:30: Tuesday's", H.due(s, at(6, 21, 30), TIME), TUE);
+    check("another time", [H.due(s, at(6, 6, 59), "07:00"), H.due(s, at(6, 7, 0), "07:00")], [MON, TUE]);
+    check("a time that cannot be read is 21:30", [H.minutesOf("x"), H.minutesOf("25:00"), H.minutesOf("07:05")], [1290, 1290, 425]);
+});
+
+test("three days missed: only the latest is asked, the others stay not reviewed", () => {
+    let s = withHabits(FIVE, at(8, 9));                       // Thursday
+    s = H.review(tick(s, THU, FIVE), THU);
+    const FRI = "2026-10-09", SAT = "2026-10-10", SUN = "2026-10-11", MON2 = "2026-10-12";
+    const start = at(12, 9);                                  // off on Friday, Saturday, Sunday; Monday 09:00
+    s = H.roll(s, start);
+    check("the missed days have their lists", [FRI, SAT, SUN, MON2].map(k => H.counts(s, k).total), [5, 5, 5, 5]);
+    check("only Sunday is asked", H.due(s, start, TIME), SUN);
+    s = H.review(tick(s, SUN, ["Yürüyüş yap"]), SUN);
+    check("nothing else is asked", H.due(s, start, TIME), "");
+    check("Friday and Saturday stay not reviewed", [FRI, SAT].map(k => H.cell(s, k).known), [false, false]);
+    check("Sunday", [H.cell(s, SUN).reviewed, H.cell(s, SUN).level], [true, 1]);
+    // filled in later from the calendar
+    s = H.review(tick(s, FRI, ["Yürüyüş yap", "Günlük yaz", "Gitar çalış", "Erken kalk"]), FRI);
+    check("Friday filled in", [H.cell(s, FRI).known, H.cell(s, FRI).level], [true, 4]);
+    check("Saturday still open", H.cell(s, SAT).known, false);
+});
+
+test("taken off today's list only: back the next day, and not counted today", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    s = tick(s, MON, ["Günlük yaz", "Gitar çalış", "Erken kalk"]);
+    s = H.dropFromDay(s, MON, refOf(s, MON, "Yürüyüş yap"));
+    check("off Monday's list", names(s, MON), ["Çiçekleri sula", "Günlük yaz", "Gitar çalış", "Erken kalk"]);
+    check("3/4 is level 3", [H.counts(s, MON), H.cell(s, MON).level], [{ done: 3, total: 4 }, 3]);
+    check("still a habit", H.hasHabit(s, "Yürüyüş yap"), true);
+    s = H.roll(s, at(6, 0, 0));
+    check("back on Tuesday", names(s, TUE), FIVE);
+});
+
+test("a deleted habit: earlier days keep their lists and shades", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    s = H.review(tick(s, MON, ["Yürüyüş yap", "Günlük yaz", "Erken kalk"]), MON);
+    s = H.roll(s, at(6, 8));
+    s = H.review(tick(s, TUE, ["Yürüyüş yap"]), TUE);
+    s = H.roll(s, at(7, 8));
+    const before = [MON, TUE].map(k => JSON.stringify([H.cell(s, k), H.items(s, k)]));
+    const sport = s.habits.find(h => h.name === "Yürüyüş yap").id;
+    s = H.deleteHabit(s, sport, at(7, 10));
+    check("Monday and Tuesday unchanged", [MON, TUE].map(k => JSON.stringify([H.cell(s, k), H.items(s, k)])), before);
+    check("Monday's shade", H.cell(s, MON).level, 3);
+    check("off today's list", names(s, WED), ["Çiçekleri sula", "Günlük yaz", "Gitar çalış", "Erken kalk"]);
+    s = H.roll(s, at(8, 8));
+    check("never listed again", names(s, THU).indexOf("Yürüyüş yap"), -1);
+    check("not a habit any more", [H.hasHabit(s, "Yürüyüş yap"), H.active(s).length], [false, 4]);
+    // a year later no day names it: its record goes too
+    s = H.roll(s, new Date(2027, 11, 1, 9));
+    check("forgotten when no day names it", s.habits.length, 4);
+});
+
+test("a past day corrected: its shade follows", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    s = H.review(tick(s, MON, ["Yürüyüş yap"]), MON);
+    s = H.roll(s, at(9, 8));
+    check("level 1", H.cell(s, MON).level, 1);
+    s = tick(s, MON, ["Günlük yaz", "Gitar çalış", "Erken kalk"]);
+    check("4/5 is level 4", [H.counts(s, MON), H.cell(s, MON).level], [{ done: 4, total: 5 }, 4]);
+    s = H.setDone(s, MON, refOf(s, MON, "Yürüyüş yap"), false);
+    check("3/5 is level 3", H.cell(s, MON).level, 3);
+    check("other days untouched", [TUE, WED, THU, FRI].map(k => H.cell(s, k).done), [0, 0, 0, 0]);
+});
+
+test("after the evening review the day stays editable", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    s = H.review(tick(s, MON, ["Yürüyüş yap", "Günlük yaz"]), MON);
+    check("level 2", H.cell(s, MON).level, 2);
+    s = tick(s, MON, ["Gitar çalış", "Erken kalk"]);
+    check("level 4 at once", [H.cell(s, MON).level, H.cell(s, MON).reviewed], [4, true]);
+    check("not asked again", H.due(s, at(5, 23), TIME), "");
+});
+
+test("a habit added during the day: on today's list and after, not on earlier days", () => {
+    let s = withHabits(["Yürüyüş yap"], at(5, 9));
+    s = H.roll(s, at(7, 9));
+    s = H.addHabit(s, "Günlük yaz", at(7, 15));
+    check("Monday and Tuesday without it", [names(s, MON), names(s, TUE)], [["Yürüyüş yap"], ["Yürüyüş yap"]]);
+    check("today with it", names(s, WED), ["Yürüyüş yap", "Günlük yaz"]);
+    check("the same name again", H.addHabit(s, " günlük  YAZ", at(7, 16)), s);
+    // added after days nobody was there for: those do not get it
+    let late = H.addHabit(withHabits(["Yürüyüş yap"], at(5, 9)), "Günlük yaz", at(8, 9));
+    check("the missed days", [names(late, TUE), names(late, WED), names(late, THU)], [["Yürüyüş yap"], ["Yürüyüş yap"], ["Yürüyüş yap", "Günlük yaz"]]);
+});
+
+test("the new day's list is made at midnight, or at the first start after it", () => {
+    let s = withHabits(FIVE, at(5, 9));
+    check("no list before midnight", [H.items(s, TUE).length, H.roll(s, at(5, 23, 59)) === s], [0, true]);
+    const atMidnight = H.roll(s, at(6, 0, 0));
+    check("made at 00:00", [names(atMidnight, TUE), atMidnight.last], [FIVE, TUE]);
+    check("made once", H.roll(atMidnight, at(6, 0, 1)), atMidnight);
+    check("nothing made before the first habit", H.roll(H.empty(), at(5, 9)), H.empty());
+});
+
+test("renaming and ordering the habits", () => {
+    let s = withHabits(["Yürüyüş yap", "Günlük yaz", "Gitar çalış"], at(5, 9));
+    const [a, b, c] = s.habits.map(h => h.id);
+    s = H.orderHabits(s, [c, a, b]);
+    check("order", names(s, MON), ["Gitar çalış", "Yürüyüş yap", "Günlük yaz"]);
+    s = H.renameHabit(s, a, "Balkona çık");
+    check("renamed", names(s, MON), ["Gitar çalış", "Balkona çık", "Günlük yaz"]);
+    check("not to the name of another one", H.renameHabit(s, a, "günlük yaz"), s);
+});
+
+test("the calendar's weeks: Monday to Sunday, today in the last one", () => {
+    let s = withHabits(FIVE, at(7, 9));                       // Wednesday
+    const weeks = H.weeks(s, at(7, 9), 53);
+    check("53 weeks of 7 days", [weeks.length, weeks.every(w => w.length === 7)], [53, true]);
+    const last = weeks[52];
+    check("the last week", last.map(d => d ? d.key : null), [MON, TUE, WED, null, null, null, null]);
+    check("the first day shown", weeks[0][0].key, "2025-10-06");
+    check("at least 365 days", weeks.reduce((n, w) => n + w.filter(d => d !== null).length, 0) >= 365, true);
+    check("today's cell", [last[2].total, last[2].known], [5, false]);
+});
+
+test("what is stored: one small text, the last year only", () => {
+    let s = withHabits(FIVE, new Date(2025, 0, 1, 9));
+    // two years of days, each reviewed with three done
+    for (let i = 0; i < 730; ++i) {
+        const day = new Date(2025, 0, 1 + i, 9), key = H.dayKey(day);
+        s = H.review(tick(H.roll(s, day), key, ["Yürüyüş yap", "Günlük yaz", "Erken kalk"]), key);
+    }
+    const stored = H.text(s);
+    check("read back the same", H.text(H.parse(stored)), stored);
+    check("the last year is kept", Object.keys(s.days).length, 371);
+    check("under 20 kB", stored.length < 20000, true);
+    check("a broken text is an empty record", H.parse("{not json"), H.empty());
+    check("an empty text too", H.parse(""), H.empty());
+    const year = H.summary(s, new Date(2026, 11, 31, 9), 365);
+    check("the year's summary", [year.days, Math.round(year.average * 100)], [365, 60]);
+});
+
+console.log(failed === 0 ? `${checked} checks passed` : `${failed} of ${checked} checks FAILED`);
+if (failed > 0) process.exit(1);
+if (process.argv.includes("--logic")) process.exit(0);
+
+// ---- the provider, in QML ---------------------------------------------------------
+const runner = ["qmltestrunner", "/usr/lib/qt6/bin/qmltestrunner", "/usr/lib64/qt6/bin/qmltestrunner"]
+    .find(p => spawnSync(p, ["-help"], { stdio: "ignore" }).error === undefined);
+const suite = path.join(ROOT, "tests", "tst_habitsprovider.qml");
+if (!runner) {
+    console.log("qmltestrunner not found: the provider tests were skipped");
+    process.exit(0);
+}
+console.log("\nHabitsProvider.qml");
+const run = spawnSync(runner, ["-input", suite, "-silent"], { stdio: "inherit", env: Object.assign({}, process.env, { QT_QPA_PLATFORM: "offscreen" }) });
+process.exit(run.status === null ? 1 : run.status);

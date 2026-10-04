@@ -29,7 +29,8 @@ quick settings: Do Not Disturb, Night Light, power profile, Bluetooth,
 Wi-Fi, updates, airplane mode, VPN, hotspot, screen recording, KDE Connect…;
 hold one to change them; volume and screen brightness sliders below),
 **Weather** (now and the next days), **Apps** (shortcuts to applications of
-your choice), **Tools** (timer, stopwatch, Pomodoro with statistics, alarm), **Calendar** (month view, the
+your choice), **Tools** (timer, stopwatch, Pomodoro with statistics, alarm), **Habits** (a daily
+checklist, an evening review and a GitHub-style calendar of how the days went), **Calendar** (month view, the
 events of the selected day and their details; calendars are connected right
 on this page), **Notes** (quick notes and the notes of Joplin, Simplenote and
 Memos), **Clipboard** (what was copied recently: texts, code, images, files),
@@ -43,6 +44,10 @@ the island for as long as it lasts) or a **momentary event** (`flash()`, a few
 seconds). Default priority (can be changed in Settings → Activities):
 
 `privacy > call > screen recording > momentary events > timer/Pomodoro/calendar > file jobs/custom activities > media > idle`
+
+An activity whose category is not in this list ranks below all of them: the
+habits' waiting evening review does, so it only shows when nothing else does
+(or as the second, split-off activity).
 
 - Momentary events temporarily cover an ongoing activity of lower priority.
   While a higher one is shown (e.g. screen recording) they wait in a queue;
@@ -60,7 +65,8 @@ seconds). Default priority (can be changed in Settings → Activities):
 **Why a paged layout?** Stacking four modules turns the island into a panel
 about 360 px tall that covers the top of the screen. With pages the island
 always keeps the same compact size (~430×207) and feels like a single "card",
-as on iOS. Pages are switched with the tabs, the mouse wheel or a touchpad
+as on iOS (one page asks for more room: the year of the Habits calendar widens
+it to ~650 px for as long as it is shown). Pages are switched with the tabs, the mouse wheel or a touchpad
 swipe. When the island opens, the Media page is shown if media is playing,
 otherwise the System page. The System page only shows status; everything
 adjustable (volume, brightness, buttons) is on the Controls page.
@@ -126,8 +132,8 @@ room); the switch next to it shows or hides it (these are the same settings
 as before: showMediaModule, showTools…; Media also turns the media live
 activity on or off, Calendar also the upcoming-event activity). Activities has
 no switch: it appears while something is going on. "Restore default order"
-goes back to Activities, Media, System, Notifications, Controls, Tools,
-Calendar, Notes, Clipboard, Devices. The order is stored as `pageOrder`
+goes back to Activities, Media, System, Weather, Notifications, Controls,
+Apps, Tools, Habits, Calendar, Notes, Clipboard, Devices. The order is stored as `pageOrder`
 (comma-separated page keys) and applies as soon as the settings are applied.
 This order only places the tabs; which live activity the small island shows
 first is the priority list of the Activities tab, so privacy indicators,
@@ -170,6 +176,10 @@ to take it out of the tab bar altogether. The last tab that is on cannot be
 switched off ("At least one tab has to stay on"). *Modules*: the parts inside
 a page that can be switched (the volume slider in Controls).
 **Weather** tab: the place and the alert; see "Weather" below.
+**Habits** tab: the permanent habits (rename, delete, drag into order), the
+time of the evening review, its reminder on/off, the calendar's colours
+(GitHub green / the system's accent colour, also in Appearance) and "Reset
+all data" (asks first); see "Habits" below.
 **Language** tab: Automatic (Turkish when the system is Turkish, English
 otherwise), Türkçe or English. Applies at once, to the island and the
 settings, without restarting Plasma; see "Translations" below.
@@ -327,6 +337,7 @@ Notification service on DBus` is normal). Try those in the real environment
 | File job | Copy a large file with Dolphin or extract an archive with `ark --batch` (`kioclient` does not use the job tracker and is not shown) |
 | Download | Download a large file in a browser (Flatpak/Snap browsers only show size and speed) |
 | Timer etc. | Expanded → Tools page (a 1-minute timer is the quickest test) |
+| Habits | Expanded → Habits page: add habits, tick some; set the review time in Settings → Habits to a minute from now for the evening question. Its rules are checked without the clock: `tools/habits-test` |
 | Clipboard | Copy a text, a piece of code and an image (e.g. a Spectacle screenshot); they appear on the Clipboard page, a click copies one again |
 | Notes | Start Joplin, enable its Web Clipper service, paste the token on the island's Notes page; add a quick note and check that it appears in Joplin |
 | Calendar | Connect a calendar on the island's Calendar page (gear button), create an event 20 minutes from now; it is pinned to the island 15 minutes before |
@@ -351,7 +362,7 @@ org.phobby.dynamicisland/
     ├── backend/*.qml          ┘ these two places (each optional through a Loader)
     ├── providers/*.qml        every feature: Media, Notification, Power, Bluetooth, Osd,
     │                          Keyboard, Network, Dnd, Recording, Privacy, Jobs, Timer,
-    │                          Stopwatch, Pomodoro, Alarm, Calendar, KdeConnect,
+    │                          Stopwatch, Pomodoro, Alarm, Habits, Calendar, KdeConnect,
     │                          Thermal, Updates, Dbus, Unlock; for transfers
     │                          KdeConnectTransfer, RemovableTransfer, BrowserDownload
     ├── TransferActivity.qml, TransferHub.qml, TransfersCard.qml   shared transfer activity
@@ -362,6 +373,7 @@ org.phobby.dynamicisland/
     ├── Calendar*.qml                             calendar page, connect wizard, accounts, new event
     ├── NotesPage.qml                             notes list, quick note, editor, connecting apps
     ├── ClipboardPage.qml                         clipboard history: copy again, search, star, edit, QR
+    ├── HabitsPage.qml, Habits.js                 habits: checklist, calendar, review; the record's rules
     ├── NativeBridge.qml, BlurBridge.qml          import the native modules
     ├── Lang.qml, translations/tr.js, qmldir      the widget's own translations (singleton)
     ├── PageCatalog.qml                           the expanded pages and their default order
@@ -375,7 +387,8 @@ native/
                                UpdatesChecker, DownloadWatcher, SecretStore,
                                LoopbackServer, LocalTools, PopupWatcher,
                                AudioLevels, IslandService (D-Bus API)
-tools/island-push, tools/notify-done.sh, tools/i18n-check
+tools/island-push, tools/notify-done.sh, tools/i18n-check, tools/habits-test
+tests/tst_habitsprovider.qml   the Habits provider under qmltestrunner (run by tools/habits-test)
 ```
 
 **Adding a new feature:** write a file under `providers/`. Define an
@@ -624,6 +637,83 @@ The numbers are a small JSON text in the widget's own settings
 streak) — no database, no file of its own. `PomodoroStats.js` does the
 counting and takes the day as an argument, so it never reads the clock.
 Settings → Tools resets them, after asking.
+
+## Habits
+
+The habits you want to build, a checklist for every day, an evening review
+and a calendar that shades each day like GitHub's contribution graph.
+
+- **First time:** the page asks for the habits (it comes with none and
+  suggests none) and then for the time of the evening review (21:30 unless
+  changed). Those are the *permanent* habits: on every day's list until
+  deleted.
+- **During the day** the page shows today's list: a click ticks or unticks an
+  entry at any moment. Under the pointer an entry can be taken off today's
+  list only (it is back tomorrow and does not count today) or the habit
+  deleted for good (asks first); "+" adds a new permanent habit. The day
+  stays editable after the evening review, until midnight and afterwards from
+  the calendar; its box follows at once.
+- **Evening review:** at the review time the island asks, as a momentary
+  event: "How was today? 3/5 checked" with a *Review* button. It opens the
+  Habits page on three steps: (1) the day's list, with what was ticked during
+  the day; (2) for every one-time extra on that list, once: "Shall I add
+  '…' for tomorrow as well?"; (3) "Is there an extra activity you want to
+  add for tomorrow?", one or more, or *None*. Ignored, the question waits as
+  a live activity of the lowest priority; closed (the cross, or "Not now"),
+  only a dot stays on the Habits tab.
+- **Nobody there at that time:** the review of a day is due from its time
+  until the next day's, so one that was missed is asked later and written to
+  the day it belongs to (Monday's, answered on Tuesday morning, is
+  Monday's). The question is never shown into a locked screen; it comes at
+  the unlock. After a start of the shell or a wake-up the same check runs.
+  When several days were missed only the latest is asked; the earlier ones
+  stay "not reviewed" and can be filled in from the calendar.
+  The signals: the lock screen is `org.freedesktop.ScreenSaver`
+  (`GetActive` at the start, then `ActiveChanged`; KWin provides it on
+  Plasma), the wake-up is logind's `PrepareForSleep(false)` on the system
+  bus, both through the native core (`NativeBridge.qml`: `screenLocked`,
+  `screenUnlocked`, `resumed`). A shell that was not running needs no
+  signal: at its start, and every half minute, the provider compares
+  wall-clock times. Without the native core the lock is not known and the
+  question is asked when its time has come.
+- **Extras:** an extra added in the evening is on the next day's list only.
+  That evening it is asked about once. *No:* it is let go and never asked
+  again. *Yes:* it is added for the day after too, and being added two days
+  in a row makes it a permanent habit ("'Go to the market' is a permanent habit
+  now."). Typing the same extra again instead of answering does the same;
+  names are compared without regard to case and spaces. Days that are not in
+  a row start counting again.
+- **Shades:** a day's share is done / listed (habits + that day's extras;
+  what was taken off the day does not count). Level 0 is 0 %, 1 up to 25 %,
+  2 up to 50 %, 3 up to 75 %, 4 above. A day that was neither reviewed nor
+  touched is an empty outlined box, not level 0: "no data" is not "did
+  nothing". GitHub's greens by default, the system's accent colour as an
+  option.
+- **Calendar:** columns are weeks (Monday at the top), today at the far
+  right; as many of the last weeks as fit beside the list (about 3½ months).
+  The day under the pointer is named below ("12 October · 3/5"; the island
+  has no tooltips). A click opens the day: what was done and what was not,
+  to be corrected; an earlier day that is corrected counts as reviewed. "All
+  year" shows the last 53 weeks in a wider island.
+- **A deleted habit** stays in the days already recorded (its name is kept
+  for as long as one of them lists it): their lists and shades do not
+  change, only today and the days to come.
+
+**Storage:** like the Pomodoro statistics, one small JSON text in the
+widget's own settings (`habitsData`), no database and no file of its own:
+the habits (id, name), for every day the ids done and not done, its one-time
+extras and whether it was reviewed, the extras planned for a day not yet
+begun, and how many days in a row each extra was listed. A day costs about
+45 bytes; the last year is kept (about 17 kB with five habits). A new day's
+list is made at local midnight, or at the first start after it; days the
+computer was off get theirs then, not reviewed.
+
+`Habits.js` holds every rule and takes the day or the moment it is asked
+about as an argument, so it never reads the clock; the provider's only
+reading of it is one replaceable function. `tools/habits-test` checks the
+rules with dates of its own (and, with `qmltestrunner`, the provider: the
+evening question after a restart, a lock, a sleep) without touching the
+system's time.
 
 ## Clipboard
 

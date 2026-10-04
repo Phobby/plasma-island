@@ -73,7 +73,10 @@ Item {
                                  : "idle"
 
     readonly property real liveWidth: primary && primary.compactWidth > 0 ? primary.compactWidth : theme.liveWidth
-    readonly property real targetWidth: mode === "expanded" ? theme.expandedWidth
+    // A page may ask for a wider island (the Habits year).
+    readonly property bool wide: expanded && expandedContent.wide
+    readonly property real expandedWidth: wide ? theme.wideWidth : theme.expandedWidth
+    readonly property real targetWidth: mode === "expanded" ? expandedWidth
                                       : mode === "notification" ? theme.notificationWidth
                                       : mode === "event" ? (currentEvent.width || theme.eventWidth)
                                       : mode === "split" ? theme.splitMainWidth
@@ -93,6 +96,11 @@ Item {
     readonly property bool needsLargeWindow: mode === "expanded" || mode === "notification" || mode === "event"
                                              || surface.height > theme.pillHeight + 1
                                              || surface.width / 2 > theme.smallHalfWidth - theme.privacyAreaWidth
+    // The window widens when a page first asks for it and stays so until the
+    // island is small again, so it is never resized in the middle of a morph.
+    property bool needsWideWindow: false
+    onWideChanged: if (wide) needsWideWindow = true
+    onNeedsLargeWindowChanged: if (!needsLargeWindow) needsWideWindow = false
     // Geometry of the glass surfaces in window coordinates (for the blur region).
     readonly property rect surfaceRect: Qt.rect(surface.x, surface.y, surface.width, surface.height)
     readonly property real surfaceRadius: surface.radius
@@ -183,6 +191,16 @@ Item {
             expandedContent.selectDefaultPage();
             if (!hovered) unattendedCollapseTimer.restart();
         }
+    }
+    // Expanded on a page of its choice (an event leads there, e.g. the habits' evening review).
+    function openPage(key: string): void {
+        expandTimer.stop();
+        if (expanded) {
+            expandedContent.showPage(key);
+            return;
+        }
+        expanded = true;
+        expandedContent.jumpTo(key);
     }
 
     // ---- morph animation ------------------------------------------------------
@@ -332,7 +350,7 @@ Item {
                 theme: island.theme
                 event: island.mode === "event" ? island.currentEvent : null
                 onActivated: island.manager.activateEvent()
-                onDismissed: island.manager.dismissEvent()
+                onDismissed: island.manager.closeEvent()
             }
         }
 
@@ -356,7 +374,7 @@ Item {
         // expanded
         Layer {
             layerMode: "expanded"
-            width: island.theme.expandedWidth
+            width: island.expandedWidth
             height: island.theme.expandedHeight
 
             ExpandedContent {

@@ -378,6 +378,16 @@ PlasmoidItem {
             sound: root.sound
             enabled: root.cfg.showTools
         }
+        HabitsProvider {
+            id: habitsProvider
+            manager: activities
+            theme: theme
+            cfg: root.cfg
+            core: root.core
+            enabled: root.cfg.showHabits
+            // The evening question's button, or the waiting activity: the island opens on the review.
+            onOpened: island.openPage("habits")
+        }
         WhenAvailable {
             id: calendarProviderLoader
             dependency: root.calendarBackend
@@ -496,6 +506,15 @@ PlasmoidItem {
     }
 
     Component {
+        id: habitsPage
+        HabitsPage {
+            theme: root.islandTheme
+            habits: habitsProvider
+            accentColors: root.cfg.habitsColorSource === 1
+        }
+    }
+
+    Component {
         id: weatherPage
         WeatherPage {
             theme: root.islandTheme
@@ -580,8 +599,8 @@ PlasmoidItem {
 
     // The island is laid out at its designed size and scaled as a whole (the size
     // setting); the window and the blur region are that much larger or smaller.
-    readonly property real windowWidth: (island.needsLargeWindow
-                                         ? Math.max(theme.expandedWidth, theme.notificationWidth, theme.eventWidth)
+    readonly property real windowWidth: (island.needsWideWindow ? theme.wideWidth
+                                         : island.needsLargeWindow ? Math.max(theme.expandedWidth, theme.notificationWidth, theme.eventWidth)
                                          : 2 * theme.smallHalfWidth) + 2 * theme.windowSidePad
     readonly property real windowHeight: (island.needsLargeWindow
                                           ? Math.max(theme.expandedHeight, theme.notificationHeight)
@@ -649,6 +668,9 @@ PlasmoidItem {
                     { key: "apps", icon: "view-app-grid-symbolic", title: Lang.i18n("Apps"), component: appsPage, visible: root.cfg.showApps && root.appsBackend !== null },
                     { key: "quicksettings", icon: "configure", title: Lang.i18n("Controls"), component: quickSettingsPage, visible: root.cfg.showQuickSettings },
                     { key: "tools", icon: "chronometer", title: Lang.i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },
+                    // The dot: a day's evening review is waiting.
+                    { key: "habits", icon: "view-calendar-tasks", title: Lang.i18n("Habits"), component: habitsPage, visible: root.cfg.showHabits,
+                      dot: habitsProvider.pending !== "" },
                     { key: "calendar", icon: "view-calendar", title: Lang.i18n("Calendar"), component: calendarPage,
                       visible: root.cfg.showCalendar && calendarProviderLoader.item !== null },
                     { key: "notes", icon: "view-pim-notes", title: Lang.i18n("Notes"), component: notesPage, visible: root.cfg.showNotes },

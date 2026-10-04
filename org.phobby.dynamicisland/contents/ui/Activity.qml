@@ -17,7 +17,8 @@ QtObject {
     id: activity
 
     property string activityId
-    // privacy | call | recording | timer | transfer | media (ordering: ActivityManager.order)
+    // privacy | call | recording | timer | transfer | media (ordering: ActivityManager.order);
+    // one that is not in that order ranks below all of them (habits)
     property string category: "transfer"
     // Tie-break inside a category, higher wins.
     property int priority: 0
