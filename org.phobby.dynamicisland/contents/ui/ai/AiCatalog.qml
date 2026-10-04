@@ -15,14 +15,21 @@
       probe      looked for by itself when the tab has nothing connected
       paid       using it may cost money (said on its card)
       keyUrl     where a key is made (shown, opened only when asked)
+      modelOptional  it has a model of its own choice; one need not be named
+      install    the command that installs it (shown to be copied, never run)
 */
 import QtQuick
 import ".."
 
 QtObject {
-    property var kinds: ({})
+    property var kinds: ({
+        // Claude Code, already signed in on this computer: asked through its command, with every
+        // tool switched off (see ClaudeCli.js). `install` is only ever shown, never run.
+        "claude-cli": { name: "Claude Code", driver: "ClaudeCliProvider.qml", where: "cli", probe: true, modelOptional: true,
+                        install: "curl -fsSL https://claude.ai/install.sh | bash" }
+    })
     // The order the cards are shown in.
-    property var order: []
+    property var order: ["claude-cli"]
 
     function kind(name: string): var { return kinds[name] || null; }
 }

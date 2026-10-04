@@ -49,6 +49,9 @@ public:
     Q_INVOKABLE void run(const QString &program, const QStringList &arguments, const QJSValue &callback);
     // The same, with `input` (UTF-8) on the program's standard input.
     Q_INVOKABLE void runWithInput(const QString &program, const QStringList &arguments, const QString &input, const QJSValue &callback);
+    // run() in a directory of its own, made (for the owner only) when it is missing: for a command
+    // that must never look at the directory the shell happens to be in.
+    Q_INVOKABLE void runIn(const QString &directory, const QString &program, const QStringList &arguments, const QJSValue &callback);
     // Rows of a SELECT on an SQLite file opened read-only, as a list of { column: value }.
     // An empty list also means "could not be read".
     Q_INVOKABLE QVariantList sqliteQuery(const QString &databasePath, const QString &sql) const;
@@ -61,7 +64,7 @@ Q_SIGNALS:
     void pathChanged();
 
 private:
-    void start(const QString &program, const QStringList &arguments, const QByteArray *input, const QJSValue &callback);
+    void start(const QString &program, const QStringList &arguments, const QByteArray *input, const QJSValue &callback, const QString &directory = QString());
     bool write(const QString &path, const QString &text, bool ownerOnly) const;
 
     QFileSystemWatcher m_watcher;

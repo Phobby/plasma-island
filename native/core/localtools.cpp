@@ -120,9 +120,21 @@ void LocalTools::runWithInput(const QString &program, const QStringList &argumen
     start(program, arguments, &bytes, callback);
 }
 
-void LocalTools::start(const QString &program, const QStringList &arguments, const QByteArray *input, const QJSValue &callback)
+void LocalTools::runIn(const QString &directory, const QString &program, const QStringList &arguments, const QJSValue &callback)
+{
+    const QString full = expand(directory);
+    if (!full.isEmpty() && !QDir(full).exists() && QDir().mkpath(full)) {
+        QFile::setPermissions(full, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+    }
+    start(program, arguments, nullptr, callback, full);
+}
+
+void LocalTools::start(const QString &program, const QStringList &arguments, const QByteArray *input, const QJSValue &callback, const QString &directory)
 {
     auto *process = new QProcess(this);
+    if (!directory.isEmpty()) {
+        process->setWorkingDirectory(directory);
+    }
     auto *answered = new bool(false);
     const auto answer = [process, answered, callback](int code) {
         if (*answered) {
