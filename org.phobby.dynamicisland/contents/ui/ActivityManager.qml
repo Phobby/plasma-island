@@ -18,7 +18,11 @@
         key (coalesce repeats), live (feedback like volume: dropped instead of
         queued when it cannot be shown right away), force (shown even above a
         higher-priority live activity, e.g. an incoming call),
-        closed: function (the user closed it without acting on it) }
+        closed: function (the user closed it without acting on it),
+        shown: function (it is on the island now; a waiting event may never be),
+        expired: function (its time ran out without the user acting on it),
+        buttons: [{ text, primary, trigger: function }] (a question: the banner
+        shows them under the title; see SuggestionBanner), height }
 */
 import QtQuick
 
@@ -139,6 +143,7 @@ Item {
         currentEvent = queue.splice(i, 1)[0];
         eventTimer.interval = durationOf(currentEvent);
         eventTimer.restart();
+        if (typeof currentEvent.shown === "function") currentEvent.shown();
     }
 
     function dismissEvent(): void {
@@ -147,6 +152,18 @@ Item {
         if (queue.length > 0) gapTimer.restart();
     }
 
+    // Its time ran out.
+    function expireEvent(): void {
+        const ev = currentEvent;
+        dismissEvent();
+        if (ev && typeof ev.expired === "function") ev.expired();
+    }
+    // One of the event's buttons was pressed.
+    function chooseEvent(index: int): void {
+        const ev = currentEvent;
+        dismissEvent();
+        if (ev && ev.buttons && ev.buttons[index] && typeof ev.buttons[index].trigger === "function") ev.buttons[index].trigger();
+    }
     // Closed by the user (the cross, a middle click), not by its time running out.
     function closeEvent(): void {
         const ev = currentEvent;
@@ -164,7 +181,7 @@ Item {
 
     Timer {
         id: eventTimer
-        onTriggered: manager.hovered ? restart() : manager.dismissEvent()
+        onTriggered: manager.hovered ? restart() : manager.expireEvent()
     }
     // Small gap so consecutive events visibly "pulse" back and forth.
     Timer {

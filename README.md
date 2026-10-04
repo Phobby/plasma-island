@@ -17,6 +17,7 @@ Tested on: Kubuntu, Plasma 6.6.6, Qt 6.10.2, Wayland.
 | Split island | Two ongoing activities at once | The first in the main pill, the second in a circle that splits off to its right like a droplet (minimal view) |
 | Notification | A new notification arrives | App icon (phone badge for KDE Connect), app name, title, first line of the text. Left click runs the default action, middle click dismisses |
 | Momentary event | Charging, Bluetooth, volume, Caps Lock… | Wide pill: icon, title, and a ring / battery / slider / button on the right. After 2–4 s the island returns to where it was |
+| Suggestion | A moment a rule knows (see "Suggestions") | A sentence and its answers as buttons: Yes · Not now · Never suggest this; gone after 10 s |
 | Expanded | Mouse hover or click | Pages (below) |
 | Privacy dots | Microphone / camera in use | Orange (microphone) / green (camera) dot to the right of the island, visible in every state |
 
@@ -418,7 +419,7 @@ org.phobby.dynamicisland/
     ├── backend/*.qml          ┘ these two places (each optional through a Loader)
     ├── providers/*.qml        every feature: Media, Notification, Power, Bluetooth, Osd,
     │                          Keyboard, Network, Dnd, Recording, Privacy, Jobs, Timer,
-    │                          Stopwatch, Pomodoro, Alarm, Habits, Calendar, KdeConnect,
+    │                          Stopwatch, Pomodoro, Alarm, Habits, Suggestion, Calendar, KdeConnect,
     │                          Thermal, Updates, Dbus, Unlock; for transfers
     │                          KdeConnectTransfer, RemovableTransfer, BrowserDownload
     ├── TransferActivity.qml, TransferHub.qml, TransfersCard.qml   shared transfer activity
@@ -432,6 +433,7 @@ org.phobby.dynamicisland/
     ├── NotesPage.qml                             notes list, quick note, editor, connecting apps
     ├── ClipboardPage.qml                         clipboard history: copy again, search, star, edit, QR
     ├── HabitsPage.qml, Habits.js                 habits: checklist, calendar, review; the record's rules
+    ├── Suggestions.js, Suggestion*.qml           suggestions: what is learned, the question's banner, the rules' names, the file
     ├── NativeBridge.qml, BlurBridge.qml          import the native modules
     ├── Lang.qml, translations/tr.js, qmldir      the widget's own translations (singleton)
     ├── PageCatalog.qml                           the expanded pages and their default order
@@ -823,6 +825,60 @@ reading of it is one replaceable function. `tools/habits-test` checks the
 rules with dates of its own (and, with `qmltestrunner`, the provider: the
 evening question after a restart, a lock, a sleep) without touching the
 system's time.
+
+## Suggestions
+
+At the right moment the island asks one short question and offers to do
+something for you. It is rule based and entirely local: no network, no
+model, nothing leaves the computer.
+
+| Moment | Question | What "Yes" does |
+|---|---|---|
+| A calendar event is about to start (the pinned, upcoming one) | "“Stand-up” starts soon. Turn on Do Not Disturb until it ends?" | Do Not Disturb until the event's end (Plasma switches it off then) |
+| Screen recording or screen sharing starts | "The screen is being recorded. Hide notifications while it lasts?" | Do Not Disturb while the recording lasts, off again when it stops |
+| An application starts using the microphone while media plays | "The microphone is in use. Pause the media?" | Pauses the player |
+| The battery reaches the low threshold (Alerts), not on the charger | "The battery is low (18 %). Switch to the power saving profile?" | The power saving profile (Undo: the one before) |
+| A Pomodoro focus round starts | "A focus round has started. Turn on Do Not Disturb until the break?" | Do Not Disturb until the round ends |
+| Headphones are connected (a Bluetooth headset, or the audio output becomes headphones) while the media is paused | "Headphones are connected. Carry on playing?" | Plays |
+
+A rule whose part of the system is missing or switched off never comes up:
+no Do Not Disturb, no power profiles, no native module (screen casts and the
+microphone are seen through it), the Calendar, Tools or Media page switched
+off… Nor does it when there is nothing to do: Do Not Disturb is on already,
+nothing plays, the power saving profile is active.
+
+**The question** is a momentary event: one sentence and three buttons, **Yes**,
+**Not now**, **Never suggest this**. Without an answer it goes away after ten
+seconds and counts as not answered (the cross and a middle click count as
+"Not now"; the pointer on it keeps it there).
+
+**What it remembers,** per rule: how often the answer was yes and how often
+"not now" or none, how many of each in a row, when it was last suggested,
+and whether it is asking, automatic or off.
+
+- **Never suggest this:** the rule is off for good, until it is switched on
+  in the settings.
+- **"Not now" or no answer three times in a row:** the rule is suggested less
+  often: it waits an hour before the next time, then two; one yes ends that.
+  **Five in a row:** the rule is switched off and the island says so once:
+  "I will not show this suggestion any more · You can switch it on again in
+  Settings → Suggestions".
+- **Yes three times in a row:** the island asks once: "Shall I do this
+  automatically from now on?". With a yes the rule is automatic: it acts
+  without asking and says so each time, "Do Not Disturb is on · Done
+  automatically", with an **Undo** button. Undo takes the action back and
+  puts the rule back to asking.
+- At least five minutes (a setting) lie between two suggestions, of whatever
+  rule. Nothing is suggested while Do Not Disturb is on or the screen is
+  being recorded (the recording's own question comes at its start).
+
+**Stored** as one small JSON file, `~/.local/share/dynamicisland/suggestions.json`
+(`SuggestionStore.qml`; in the widget's settings instead when the native
+module is missing): the counters above, nothing about what was on the screen
+or in the calendar. It outlives a restart of the shell. `Suggestions.js`
+holds the learning and takes the moment it is asked about as an argument, so
+it never reads the clock; `tests/suggestions.test.js` and
+`tests/tst_suggestions.qml` check it with times of their own.
 
 ## Clipboard
 

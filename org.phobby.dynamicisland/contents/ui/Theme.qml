@@ -120,6 +120,8 @@ QtObject {
     // Transient system events (charging, Bluetooth, volume…): a wide pill.
     readonly property real eventWidth: Math.round(gu * 19)
     readonly property real eventHeight: Math.round(gu * 2.9)
+    // An event that asks something: a sentence and its buttons under it.
+    readonly property real questionHeight: Math.round(gu * 4.7)
     // Split island: main pill + detached "minimal" bubble on the right.
     readonly property real splitMainWidth: Math.round(gu * 11.5)
     readonly property real splitGap: 7

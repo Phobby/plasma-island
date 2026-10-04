@@ -84,11 +84,11 @@ Item {
                                       : theme.pillWidth
     readonly property real targetHeight: mode === "expanded" ? theme.expandedHeight
                                        : mode === "notification" ? theme.notificationHeight
-                                       : mode === "event" ? theme.eventHeight
+                                       : mode === "event" ? (currentEvent.height || theme.eventHeight)
                                        : theme.pillHeight
     readonly property real targetRadius: mode === "expanded" ? theme.expandedRadius
                                        : mode === "notification" ? theme.notificationRadius
-                                       : mode === "event" ? theme.rounded(theme.eventHeight / 2)
+                                       : mode === "event" ? theme.rounded(Math.min((currentEvent.height || theme.eventHeight) / 2, 26))
                                        : theme.rounded(theme.pillHeight / 2)
 
     // The window has to stay large while the surface is still bigger than
@@ -341,15 +341,27 @@ Item {
 
         // transient system event
         Layer {
+            id: eventLayer
             layerMode: "event"
+            // an event that asks something has buttons of its own
+            readonly property bool asking: island.mode === "event" && Array.isArray(island.currentEvent.buttons)
             width: island.currentEvent?.width || island.theme.eventWidth
-            height: island.theme.eventHeight
+            height: island.currentEvent?.height || island.theme.eventHeight
 
             EventBanner {
                 anchors.fill: parent
+                visible: !eventLayer.asking
                 theme: island.theme
-                event: island.mode === "event" ? island.currentEvent : null
+                event: island.mode === "event" && !eventLayer.asking ? island.currentEvent : null
                 onActivated: island.manager.activateEvent()
+                onDismissed: island.manager.closeEvent()
+            }
+            SuggestionBanner {
+                anchors.fill: parent
+                visible: eventLayer.asking
+                theme: island.theme
+                event: eventLayer.asking ? island.currentEvent : null
+                onChosen: index => island.manager.chooseEvent(index)
                 onDismissed: island.manager.closeEvent()
             }
         }

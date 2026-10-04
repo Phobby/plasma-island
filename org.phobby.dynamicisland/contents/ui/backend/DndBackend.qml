@@ -28,6 +28,13 @@ Item {
         now = new Date();
     }
 
+    // On until a moment (an event's end): Plasma switches it off by itself then.
+    function setActiveUntil(until: date): void {
+        settings.notificationsInhibitedUntil = until;
+        settings.save();
+        now = new Date();
+    }
+
     NotificationManager.Settings {
         id: settings
         live: true

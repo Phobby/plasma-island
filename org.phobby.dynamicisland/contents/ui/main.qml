@@ -418,6 +418,27 @@ PlasmoidItem {
                 onAnnouncedEdited: text => root.cfg.weatherAnnounced = text
             }
         }
+        // What a suggestion needs of the other parts; a part that is off or missing takes its rule with it.
+        SuggestionProvider {
+            id: suggestionProvider
+            manager: activities
+            theme: theme
+            cfg: root.cfg
+            backend: backend
+            core: root.core
+            dnd: root.dndBackend
+            power: root.powerBackend
+            bluetooth: root.bluetoothBackend
+            pomodoro: root.cfg.showTools ? pomodoroProvider : null
+            calendar: root.cfg.showCalendar ? calendarProviderLoader.item : null
+            recordingWatched: root.cfg.showRecording
+            microphoneWatched: root.cfg.showPrivacy
+            powerWatched: root.cfg.showPowerEvents
+            mediaWatched: root.cfg.showMediaModule
+            enabled: root.cfg.suggestionsEnabled
+            gapMinutes: root.cfg.suggestionGapMinutes
+            lowBattery: root.cfg.lowBatteryThreshold
+        }
         KdeConnectProvider {
             manager: activities
             backend: backend
