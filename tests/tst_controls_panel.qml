@@ -25,7 +25,7 @@ Item {
         property var busy: ({})
         property string failure: ""
         property var devices: [
-            { address: "AA:01", name: "Buds", connected: true, paired: true, battery: { percentage: 80 } },
+            { address: "AA:01", name: "Buds Air Pro 4+", connected: true, paired: true, battery: { percentage: 80 } },
             { address: "AA:02", name: "Mouse", connected: false, paired: true, battery: null },
             { address: "AA:03", name: "Speaker", connected: false, paired: false, battery: null },
             { address: "AA:04", name: "AA-BB-CC-DD-EE-FF", connected: false, paired: false, battery: null }
@@ -100,10 +100,10 @@ Item {
         function named(name) { return find(item => item.objectName === name); }
         function text(t) { return find(item => item.visible === true && typeof item.text === "string" && item.text === t && item.width > 0); }
         function click(item) { tryVerify(() => item !== null && item.visible && item.width > 0, 3000); wait(120); mouseClick(item, item.width / 2, item.height / 2); }
-        // The round button above a label.
-        function hold(label) {
-            tryVerify(() => text(label) !== null, 3000, label);
-            const tile = text(label).parent.children[0];
+        // The round button of a tile.
+        function hold(key) {
+            tryVerify(() => named("tile_" + key) !== null && named("tile_" + key).width > 0, 3000, key);
+            const tile = named("tile_" + key).children[0];
             mousePress(tile, 20, 20);
             wait(700);
             mouseRelease(tile, 20, 20);
@@ -114,15 +114,15 @@ Item {
         function cleanup() { page.detail = ""; page.editing = false; radio.toggled = []; net.asked = []; nativeCore.started = []; }
 
         function test_another_button_still_edits() {
-            hold("Focus");
+            hold("dnd");
             compare([page.editing, page.detail, page.holdOpen], [true, "", true]);
         }
 
         function test_bluetooth_devices_scan_and_add() {
-            hold("Bluetooth");
+            hold("bluetooth");
             compare([page.editing, page.detail, page.holdOpen, page.tall], [false, "bluetooth", true, true]);
             // connected first with its battery, then paired, then the new one; the nameless one is left out
-            compare(rowNames(), ["Buds|80%", "Mouse|", "Speaker|New"]);
+            compare(rowNames(), ["Buds Air Pro 4+|Connected · 80%", "Mouse|", "Speaker|New"]);
             click(text("Speaker"));
             compare(radio.toggled, ["AA:03"]);
             click(named("panelScan"));
@@ -133,21 +133,39 @@ Item {
             // leaving ends the search this page started
             click(named("panelBack"));
             compare([page.detail, radio.discovering, page.holdOpen], ["", false, false]);
-            tryVerify(() => text("Bluetooth") !== null);
+            tryVerify(() => named("tile_bluetooth").visible);
+        }
+
+        // The buttons are named after what they are connected to.
+        function label(key) { let found = null; const walk = item => { if (found === null && item.objectName === "tileLabel") found = item; for (const c of item.children) walk(c); }; walk(named("tile_" + key)); return found; }
+        function test_names_of_what_is_connected() {
+            const devices = radio.devices, vpns = net.vpns;
+            compare([label("bluetooth").text, label("wifi").text, label("vpn").text], ["Buds Air Pro 4+ 80%", "Home", "VPN"]);
+            // too long for its place: it runs through it, and stays inside
+            tryVerify(() => label("bluetooth").parent.x < 0, 4000);
+            compare(label("bluetooth").parent.parent.clip, true);
+            compare(label("wifi").parent.x, 0);
+            radio.devices = devices.map(d => Object.assign({}, d, { connected: d.paired }));
+            compare(label("bluetooth").text, "2 devices connected");
+            radio.devices = devices.map(d => Object.assign({}, d, { connected: false }));
+            compare(label("bluetooth").text, "Bluetooth");
+            net.vpns = [Object.assign({}, vpns[0], { active: true })];
+            compare(label("vpn").text, "Work");
+            radio.devices = devices; net.vpns = vpns;
         }
 
         function test_bluetooth_off_offers_to_turn_it_on() {
             radio.enabled = false;
-            hold("Bluetooth");
+            hold("bluetooth");
             verify(text("Bluetooth is off") !== null);
             click(named("panelTurnOn"));
             compare(radio.enabled, true);
-            tryVerify(() => text("Buds") !== null);
+            tryVerify(() => text("Buds Air Pro 4+") !== null);
         }
 
         function test_wifi_networks_and_a_password() {
             const before = net.scans;
-            hold("Wi-Fi");
+            hold("wifi");
             compare([page.detail, net.scans], ["wifi", before + 1]);
             compare(rowNames(), ["Home|Connected", "Cafe|", "Open|"]);
             click(text("Open"));
@@ -168,7 +186,7 @@ Item {
         }
 
         function test_vpn_connections() {
-            hold("VPN");
+            hold("vpn");
             compare(page.detail, "vpn");
             compare(named("panelScan").visible, false);
             click(text("Work"));

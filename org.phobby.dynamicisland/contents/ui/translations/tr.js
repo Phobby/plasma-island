@@ -490,6 +490,7 @@ var table = {
     "No devices yet. Scan to find one nearby.": "Henüz cihaz yok. Yakındakileri bulmak için tara.",
     "No networks in range": "Kapsama alanında ağ yok",
     "No VPN set up yet": "Henüz VPN kurulmamış",
+    "%1 devices connected": "%1 cihaz bağlı",
     "Connects the VPN used last": "En son kullanılan VPN'e bağlanır",
     "Hotspot": "Erişim noktası",
     "Share this computer's connection over Wi-Fi": "Bu bilgisayarın bağlantısını Wi-Fi ile paylaş",

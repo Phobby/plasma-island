@@ -10,6 +10,9 @@
     offered below to add (Settings → Controls also orders them); the island
     stays open meanwhile. A button
     whose part is missing (no Bluetooth, no VPN…) is dimmed.
+    Bluetooth, Wi-Fi and VPN are named after what they are connected to (the
+    device with its battery, or how many devices; the network; the VPN): a
+    name too long for the button runs through its place like a ticker.
     Holding Bluetooth, Wi-Fi or VPN opens its panel instead (ConnectionPanel):
     the devices / networks / connections, "Scan" and "Add new".
 */
@@ -100,7 +103,7 @@ Item {
                     const busy = bt.busy[d.address] === true, battery = bt.batteryOf(d);
                     return { key: d.address, icon: bt.iconFor(d), name: d.name, active: d.connected, busy: busy,
                              detail: busy ? Lang.i18n("Connecting…")
-                                   : d.connected ? (battery >= 0 ? Lang.percent(battery) : Lang.i18n("Connected"))
+                                   : d.connected ? (battery >= 0 ? Lang.i18n("Connected") + " · " + Lang.percent(battery) : Lang.i18n("Connected"))
                                    : d.paired ? "" : Lang.i18n("New") };
                 });
         }
@@ -160,11 +163,18 @@ Item {
             s.checked = s.available && bluetooth.enabled;
             s.icon = s.checked ? "network-bluetooth-activated" : "network-bluetooth-inactive";
             s.badge = s.available && bluetooth.connectedDevices.length > 0 ? String(bluetooth.connectedDevices.length) : "";
+            if (s.checked && bluetooth.connectedDevices.length === 1) {
+                const device = bluetooth.connectedDevices[0], battery = bluetooth.batteryOf(device);
+                s.label = battery >= 0 ? device.name + " " + Lang.percent(battery) : device.name;
+            } else if (s.checked && bluetooth.connectedDevices.length > 1) {
+                s.label = Lang.i18n("%1 devices connected", bluetooth.connectedDevices.length);
+            }
             s.act = () => bluetooth.setEnabled(!bluetooth.enabled); break;
         case "wifi":
             s.available = network !== null && network.wirelessAvailable;
             s.checked = s.available && network.wirelessEnabled;
             s.icon = s.checked ? "network-wireless" : "network-wireless-off";
+            if (s.checked) { const wifi = network.wifis.find(w => w.active); if (wifi) s.label = wifi.name; }
             s.act = () => network.setWireless(!network.wirelessEnabled); break;
         case "updates":
             s.available = showUpdates && core !== null && core.updatesAvailable;
@@ -351,13 +361,48 @@ Item {
                 NumberAnimation { to: 0; duration: 110 }
             }
         }
-        Text {
+        // The name; one that does not fit runs through its place, round and round.
+        Item {
+            id: labelBox
             Layout.fillWidth: true
-            horizontalAlignment: Text.AlignHCenter
-            text: toggle.label
-            color: page.theme.text
-            font.pointSize: page.theme.fontSmall * 0.95
-            elide: Text.ElideRight
+            implicitHeight: labelText.implicitHeight
+            clip: true
+            readonly property real gap: 18
+            readonly property bool runs: !toggle.editing && width > 0 && labelText.implicitWidth > width + 1
+            onRunsChanged: if (!runs) ticker.x = 0
+            Row {
+                id: ticker
+                spacing: labelBox.gap
+                Text {
+                    id: labelText
+                    objectName: "tileLabel"
+                    width: labelBox.runs ? implicitWidth : labelBox.width
+                    horizontalAlignment: Text.AlignHCenter
+                    text: toggle.label
+                    color: page.theme.text
+                    font.pointSize: page.theme.fontSmall * 0.95
+                    elide: labelBox.runs ? Text.ElideNone : Text.ElideRight
+                    onImplicitWidthChanged: if (run.running) run.restart()
+                }
+                Text {
+                    visible: labelBox.runs
+                    text: toggle.label
+                    color: labelText.color
+                    font: labelText.font
+                }
+            }
+            SequentialAnimation {
+                id: run
+                running: labelBox.runs && page.visible
+                loops: Animation.Infinite
+                PropertyAction { target: ticker; property: "x"; value: 0 }
+                PauseAnimation { duration: 1200 }
+                NumberAnimation {
+                    target: ticker; property: "x"
+                    to: -(labelText.implicitWidth + labelBox.gap)
+                    duration: (labelText.implicitWidth + labelBox.gap) * 35
+                }
+            }
         }
     }
 
@@ -400,6 +445,7 @@ Item {
                 delegate: Toggle {
                     required property string modelData
                     required property int index
+                    objectName: "tile_" + modelData
                     slot: index
                     readonly property var state_: page.tileState(modelData)
                     icon: state_.icon
