@@ -13,6 +13,9 @@
       key        it needs a key (kept in KDE Wallet, never in the settings)
       server     its address; needsServer = the user gives it
       probe      looked for by itself when the tab has nothing connected
+      quiet      offered only when it was found (no card that says "not found")
+      texts      a command's own words: { notice, auth, tools, version, missing }
+                 (see AiBackend.noticeText and problemText); Claude Code's are there
       paid       using it may cost money (said on its card)
       keyUrl     where a key is made (shown, opened only when asked)
       prefer     the model taken when the service lists it and none was chosen
@@ -34,10 +37,26 @@ QtObject {
         // tool switched off (see ClaudeCli.js). `install` is only ever shown, never run.
         "claude-cli": { name: "Claude Code", driver: "ClaudeCliProvider.qml", where: "cli", probe: true, modelOptional: true,
                         install: "curl -fsSL https://claude.ai/install.sh | bash" },
+        // Antigravity's command, already signed in on this computer. It cannot be started without
+        // its tools: what keeps them unused, and what is not as tight as with Claude Code, is in
+        // AntigravityProvider.qml, and the notice says it before the first question.
+        "antigravity-cli": { name: "Antigravity", driver: "AntigravityProvider.qml", where: "cli", probe: true, quiet: true, modelOptional: true,
+                             command: "agy", texts: {
+            notice: Lang.i18n("What you write here is sent to Google, through the Antigravity on this computer and the account it is signed in with. Every question uses up some of that account's usage and is kept in Antigravity's own history. Antigravity cannot be started without its tools: it is stopped the moment it reaches for one."),
+            auth: Lang.i18n("Antigravity is not signed in. Run “agy” in a terminal, sign in, then ask again."),
+            tools: Lang.i18n("Antigravity reached for a tool. It was stopped at once; this box only takes text answers."),
+            version: Lang.i18n("This Antigravity would use its tools without asking, so it is not used."),
+            missing: Lang.i18n("Antigravity could not be started.") } },
         // A model on this computer: no account, no key, nothing leaves the device. Ollama is looked
         // for by itself (its command, and whether it answers); it is never started from here.
         "ollama": { name: "Ollama", driver: "OpenAiProvider.qml", where: "device", probe: true, server: "http://localhost:11434/v1",
                     command: "ollama", install: "curl -fsSL https://ollama.com/install.sh | sh", start: "ollama serve" },
+        // Other model servers, looked for at the address each one listens on unless told otherwise;
+        // offered only while one answers there with a list of models.
+        "lmstudio": { name: "LM Studio", driver: "OpenAiProvider.qml", where: "device", probe: true, quiet: true, server: "http://localhost:1234/v1" },
+        "llamacpp": { name: "llama.cpp", driver: "OpenAiProvider.qml", where: "device", probe: true, quiet: true, server: "http://127.0.0.1:8080/v1" },
+        "jan": { name: "Jan", driver: "OpenAiProvider.qml", where: "device", probe: true, quiet: true, server: "http://localhost:1337/v1" },
+        "koboldcpp": { name: "KoboldCpp", driver: "OpenAiProvider.qml", where: "device", probe: true, quiet: true, server: "http://localhost:5001/v1" },
         // Any other server that speaks the OpenAI protocol, at the address the user gives.
         "local": { name: Lang.i18n("Local model server"), driver: "OpenAiProvider.qml", where: "device", needsServer: true,
                    examples: "LM Studio  http://localhost:1234/v1\nllama.cpp  http://127.0.0.1:8080/v1" },
@@ -59,7 +78,7 @@ QtObject {
         "compatible": { name: Lang.i18n("Another service"), driver: "OpenAiProvider.qml", where: "remote", key: true, paid: true, needsServer: true }
     })
     // The order the cards are shown in.
-    property var order: ["claude-cli", "ollama", "local", "anthropic", "openai", "openrouter", "groq", "gemini", "compatible"]
+    property var order: ["claude-cli", "antigravity-cli", "ollama", "lmstudio", "llamacpp", "jan", "koboldcpp", "local", "anthropic", "openai", "openrouter", "groq", "gemini", "compatible"]
 
     function kind(name: string): var { return kinds[name] || null; }
 }

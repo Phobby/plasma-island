@@ -37,7 +37,10 @@ HttpProvider {
         const local = core !== null ? core.local : null, command = String(options.command || "");
         const installed = local !== null && command.length > 0 && local.findExecutable(command).length > 0;
         get(server + "/models", (status, text) => {
-            const running = status === 200;
+            // (a list of models, not just any program that answers at this address)
+            let listed = false;
+            try { const o = JSON.parse(text); listed = o !== null && typeof o === "object" && (Array.isArray(o.data) || Array.isArray(o)); } catch (e) { listed = false; }
+            const running = status === 200 && listed;
             done({ found: running || installed, running: running, installed: installed, models: running ? Stream.openAiModels(text) : [] });
         });
     }

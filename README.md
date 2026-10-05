@@ -1069,7 +1069,9 @@ to be copied, never run.
 | Source | How it connects |
 |---|---|
 | **Claude Code** | The `claude` command of this computer (on the PATH or in `~/.local/bin`), already signed in: no key, and the island never sees an account. Found by itself. See below for what it is run with |
+| **Antigravity** | The `agy` command of this computer, already signed in: no key. Offered only when it is found. It cannot be started without its tools; see below for what is done about that |
 | **Ollama** | `http://localhost:11434/v1`, found by itself: answering, installed but not running ("Start it": `ollama serve` to copy), or not found (the install command to copy). No account, no key; nothing leaves the device |
+| **LM Studio**, **llama.cpp**, **Jan**, **KoboldCpp** | Looked for at the address each listens on unless told otherwise (`localhost:1234`, `127.0.0.1:8080`, `localhost:1337`, `localhost:5001`, each `/v1`); offered only while one answers there with a list of models. No account, no key |
 | **Local model server** | Any server that speaks the OpenAI protocol at an address you give, e.g. LM Studio (`http://localhost:1234/v1`) or llama.cpp (`http://127.0.0.1:8080/v1`). An address that is not this computer is not called local: the form says where the text will go (and when the connection is not encrypted) and connects on the second press |
 | **Anthropic API** | A key from `platform.claude.com/settings/keys`; `GET /v1/models`, `POST /v1/messages` as a stream |
 | **OpenAI**, **OpenRouter**, **Groq**, **Google Gemini** | A key; each at its OpenAI-compatible address (`api.openai.com/v1`, `openrouter.ai/api/v1`, `api.groq.com/openai/v1`, `generativelanguage.googleapis.com/v1beta/openai`) |
@@ -1136,9 +1138,22 @@ holds them in one place.
   "New chat".
 - `--bare` would also switch most of this off, but it does not use the
   subscription sign-in ("Not logged in").
-- **Other commands:** Antigravity's `agy` has a print mode but no option that
-  switches its tools off (only a terminal sandbox and a plan mode), so it is
-  not offered. `gemini`, `codex` and `ollama` were not installed here.
+- **Antigravity (`agy`)** is offered since it was asked for, with less than
+  the above: its print mode has no option that switches its tools off (its
+  first line lists some sixty: files, commands, a browser, the web), none
+  for an instruction of its own and none for keeping nothing. What is done
+  instead (`ai/AntigravityProvider.qml`, `ai/Antigravity.js`): it is started
+  in the island's empty folder with `--sandbox --disable-slash-commands`,
+  never with `--dangerously-skip-permissions`; started this way it refuses
+  by itself whatever needs a permission (seen with 1.2.17: reading
+  `/etc/hostname` was refused); its first line must say that it asks
+  (`request-review`) and that it is in the island's folder, else it is
+  stopped before an answer; and the first step that is not text stops it at
+  once. A tool that needs no permission, or one allowed in Antigravity's own
+  settings, may have run by the time it is stopped. The instruction goes in
+  front of the question, and Antigravity keeps every question in its own
+  history (`~/.gemini/antigravity-cli`). The notice before the first
+  question says so. `gemini`, `codex` and `ollama` were not installed here.
 
 `tools/ai-cli-check [--user-memory] [--trace]` asks the real Claude Code
 through this provider and checks: an answer in pieces, from the island's
@@ -1404,6 +1419,13 @@ OSD keeps appearing too. Pick one of them:
   own state (`~/.claude.json`), which is its business. Every question uses up
   the account's usage; the model is the command's own choice unless another
   is picked.
+- **AI, Antigravity:** not as tight as Claude Code (see "Claude Code: a
+  question box, not an agent"): its tools exist and are only refused or
+  stopped, and its history keeps the questions. Tried with the real command
+  (1.2.17): connecting, two questions, a refused file read.
+- **AI, model servers found by themselves:** LM Studio, llama.cpp, Jan and
+  KoboldCpp were not installed here; only that nothing is offered when
+  nothing answers was seen.
 - **AI, services with a key:** only a refused key and the services' answers
   to it were tried against the real services; a chat with a real key was
   tried against a stand-in. A service that only knows the length limit as

@@ -41,6 +41,7 @@ KCM.SimpleKCM {
         } catch (e) { return []; }
     }
     readonly property bool hasClaudeCode: sources.some(s => s.kind === "claude-cli")
+    readonly property bool hasAntigravity: sources.some(s => s.kind === "antigravity-cli")
     function label(s: var): string {
         const a = Stream.address(String(s.server || ""));
         return a.ok ? Lang.i18n("%1 · %2", catalog.kind(s.kind).name, a.host) : catalog.kind(s.kind).name;
@@ -195,6 +196,16 @@ KCM.SimpleKCM {
             type: Kirigami.MessageType.Information
             showCloseButton: false
             text: Lang.i18n("Claude Code: tools are off, text answers only. It is started in an empty folder of the island's own, without your settings, hooks, MCP servers, skills or CLAUDE.md files, for one turn, and keeps nothing of the chat. If it starts with a tool anyway, or the model reaches for one, it is stopped at once. This cannot be changed here.")
+        }
+
+        // Antigravity cannot be started without its tools: what is done about it, said.
+        Kirigami.InlineMessage {
+            objectName: "antigravityNote"
+            Layout.fillWidth: true
+            visible: page.hasAntigravity
+            type: Kirigami.MessageType.Information
+            showCloseButton: false
+            text: Lang.i18n("Antigravity: it cannot be started without its tools. It is started in an empty folder of the island's own, where it refuses whatever needs a permission, and it is stopped at once when it reaches for a tool. It keeps every question in its own history. This cannot be changed here.")
         }
     }
 }

@@ -1,0 +1,64 @@
+#!/bin/sh
+# A stand-in for Antigravity's `agy` command, for tests/tst_ai_agy.qml: it
+# prints what `agy -p= --output-format stream-json` prints, without asking
+# anybody. What it was started with is written to tests/.run/fake-agy/ (args,
+# one per line; cwd; stdin). The scene is chosen with --model:
+#
+#   (none)      an answer in two pieces            whole      no pieces, only the result
+#   yolo        it would not ask before a tool     elsewhere  it starts in another folder
+#   reaches     the model reaches for a tool (and, left alone, would make a file)
+#   denied      a tool was refused by the command itself
+#   signedout   not authenticated                  limit      the quota
+#   oldcli      it does not know an option
+here="$(cd "$(dirname "$0")" && pwd)"
+box="$here/.run/fake-agy"
+mkdir -p "$box"
+
+case "$1" in
+    --version) echo "9.9.9"; exit 0 ;;
+    models)
+        pwd > "$box/models-cwd"
+        if [ -e "$box/signed-out" ]; then echo "Error: not authenticated. Run agy to sign in." >&2; exit 1; fi
+        echo "Fetching available models..."
+        printf 'flash-low\tFlash (Low)\n'
+        printf 'pro-high\tPro (High)\n'
+        exit 0 ;;
+esac
+
+: > "$box/args"
+scene=""
+previous=""
+for arg in "$@"; do
+    printf '%s\n' "$arg" >> "$box/args"
+    [ "$previous" = "--model" ] && scene="$arg"
+    previous="$arg"
+done
+pwd > "$box/cwd"
+cat > "$box/stdin"
+
+init() {    # permission mode, cwd
+    printf '{"event":"init","conversation_id":"c1","init":{"model":"fake","cwd":"%s","tools":["run_command","view_file","write_to_file"],"permission_mode":"%s"}}\n' "$2" "$1"
+    printf '{"event":"step_update","step_update":{"conversation_id":"c1","step_index":0,"state":"DONE","step_type":"user_input"}}\n'
+}
+piece() { printf '{"event":"step_update","step_update":{"conversation_id":"c1","step_index":1,"state":"ACTIVE","step_type":"agent_response","text_delta":"%s"}}\n' "$1"; }
+result() {  # status, response, error, denied
+    printf '{"event":"result","result":{"conversation_id":"c1","status":"%s","response":"%s","error":"%s","num_turns":1,"denied_actions":%s}}\n' "$1" "$2" "$3" "${4:-[]}"
+}
+
+case "$scene" in
+    yolo)      init "skip-all" "$PWD"; piece "leaked"; result SUCCESS "leaked" "" ;;
+    elsewhere) init "request-review" "/home/someone/project"; piece "leaked"; result SUCCESS "leaked" "" ;;
+    whole)     init "request-review" "$PWD"; result SUCCESS "All at once." "" ;;
+    reaches)
+        init "request-review" "$PWD"
+        piece "Let me look. "
+        printf '{"event":"step_update","step_update":{"conversation_id":"c1","step_index":2,"state":"ACTIVE","step_type":"tool","tool_name":"run_command","tool_info":{"name":"run_command"}}}\n'
+        sleep 3
+        echo made > "$PWD/made-by-a-tool"
+        result SUCCESS "done" "" ;;
+    denied)    init "request-review" "$PWD"; result SUCCESS "" "" '[{"action":"read_file","display_name":"ViewFile"}]' ;;
+    signedout) init "request-review" "$PWD"; result ERROR "" "not authenticated: sign in first"; exit 1 ;;
+    limit)     init "request-review" "$PWD"; result ERROR "" "RESOURCE_EXHAUSTED: quota exceeded for today"; exit 1 ;;
+    oldcli)    echo "flag provided but not defined: -input-format" >&2; exit 2 ;;
+    *)         init "request-review" "$PWD"; piece "2+2 "; piece "is 4."; result SUCCESS "2+2 is 4." "" ;;
+esac

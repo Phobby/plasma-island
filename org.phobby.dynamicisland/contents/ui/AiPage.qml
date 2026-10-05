@@ -179,10 +179,14 @@ Item {
         // several models and none preferred: the user chooses
         if (s !== null && s.model.length === 0 && info(kind).modelOptional !== true) showModels(); else view = "chat";
     }
+    // A command is there when it was found, a model server when it answers.
+    function here(kind: string, state: var): bool {
+        return info(kind).where === "cli" ? state.found === true : state.running === true;
+    }
     // A kind that needs nothing typed (Claude Code, Ollama): connect, or say how to get it.
     function pickCard(kind: string): void {
         const state = found[kind] || {};
-        if (kind === "claude-cli" ? state.found !== true : state.running !== true) { helpKind = kind; view = "install"; return; }
+        if (!here(kind, state)) { helpKind = kind; view = "install"; return; }
         if (connecting) return;
         connecting = true;
         ai.connect(kind, {}, result => {
@@ -810,14 +814,15 @@ Item {
         RowLayout {
             spacing: 6
             Repeater {
-                // what is looked for by itself and not connected yet, then "add another"
-                model: page.ai.catalog.order.filter(k => page.info(k).probe === true && !page.ai.sources.some(s => s.kind === k)).concat(["+"])
+                // what is looked for by itself and not connected yet (a quiet kind only once it was found), then "add another"
+                model: page.ai.catalog.order.filter(k => page.info(k).probe === true && !page.ai.sources.some(s => s.kind === k)
+                                                         && (page.info(k).quiet !== true || page.here(k, page.found[k] || {}))).concat(["+"])
                 delegate: Rectangle {
                     id: card
                     required property string modelData
                     readonly property bool more: modelData === "+"
                     readonly property var state: page.found[modelData] || ({})
-                    readonly property bool here: !more && (modelData === "claude-cli" ? state.found === true : state.running === true)
+                    readonly property bool here: !more && page.here(modelData, state)
                     objectName: "card-" + modelData
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -853,7 +858,7 @@ Item {
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             text: card.more ? Lang.i18n("A key, or a model server of your own")
-                                : card.modelData === "claude-cli" ? (card.here ? Lang.i18n("Found · no key needed") : card.state.helper === false ? Lang.i18n("Needs the island's helper")
+                                : page.info(card.modelData).where === "cli" ? (card.here ? Lang.i18n("Found · no key needed") : card.state.helper === false ? Lang.i18n("Needs the island's helper")
                                                                       : page.detected ? Lang.i18n("Not found · Install") : Lang.i18n("Already signed in, no key"))
                                 : card.here ? Lang.i18n("On this device, no account")
                                 : card.state.installed === true ? Lang.i18n("Not running · Start it")
@@ -1096,7 +1101,7 @@ Item {
                 onClicked: page.ai.detect(result => {
                     page.found = result; page.detected = true;
                     const state = result[page.helpKind] || {};
-                    if (page.helpKind === "claude-cli" ? state.found === true : state.running === true) page.pickCard(page.helpKind);
+                    if (page.here(page.helpKind, state)) page.pickCard(page.helpKind);
                 })
             }
         }

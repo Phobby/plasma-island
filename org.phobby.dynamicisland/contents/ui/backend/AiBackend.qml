@@ -221,7 +221,7 @@ QtObject {
         d.verify(result => {
             if (!result.ok) {
                 d.destroy();
-                done({ ok: false, id: "", error: problemText(result.problem, info.where, info.name), kept: false });
+                done({ ok: false, id: "", error: problemText(result.problem, info.where, info.name, info.texts), kept: false });
                 return;
             }
             const same = sources.find(s => s.kind === kindName && s.server === server);
@@ -263,7 +263,8 @@ QtObject {
     }
     // What is said once before the first message to a source.
     function noticeText(s: var): string {
-        const where = whereOf(s), host = Stream.address(serverOf(s)).host;
+        const where = whereOf(s), host = Stream.address(serverOf(s)).host, own = catalog.kind(s.kind).texts;
+        if (own && own.notice) return own.notice;
         if (where === "cli") return Lang.i18n("What you write here is sent to Claude, through the Claude Code on this computer and the account it is signed in with. Every question uses up some of that account's usage.");
         if (where === "device") return Lang.i18n("What you write here goes to the model server on this computer (%1) and stays on this device. No account, no key.", host);
         return Lang.i18n("What you write here is sent to %1 (%2). Every question uses up your quota there and may cost money.", s.name, host);
@@ -436,10 +437,12 @@ QtObject {
         save();
     }
 
-    // What went wrong, in words a user can act on. where: "cli" | "device" | "remote".
-    function problemText(problem: var, where: string, name: string): string {
+    // What went wrong, in words a user can act on. where: "cli" | "device" | "remote";
+    // own: the words a kind has of its own for some of it (AiCatalog `texts`).
+    function problemText(problem: var, where: string, name: string, own: var): string {
         const kind = problem ? problem.kind : "unknown", detail = problem ? String(problem.detail || "") : "";
         const said = text => detail.length > 0 ? Lang.i18n("%1 (%2)", text, detail) : text;
+        if (own && own[kind] && (kind !== "auth" || where === "cli")) return kind === "version" ? said(own[kind]) : own[kind];
         switch (kind) {
         case "auth": return where === "cli" ? Lang.i18n("Claude Code is not signed in. Run “claude” in a terminal, sign in, then ask again.")
                                              : said(Lang.i18n("%1 did not accept the key.", name));
@@ -461,7 +464,7 @@ QtObject {
     }
     function problemOf(message: var): string {
         const s = source(message.source);
-        return problemText(message.problem, s ? whereOf(s) : "remote", s ? s.name : Lang.i18n("The source"));
+        return problemText(message.problem, s ? whereOf(s) : "remote", s ? s.name : Lang.i18n("The source"), s ? catalog.kind(s.kind).texts : null);
     }
 
     // ---- kept on disk, only when asked for ---------------------------------------------
