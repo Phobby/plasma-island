@@ -30,7 +30,6 @@ KCM.SimpleKCM {
     property bool cfg_showCalendar
     property bool cfg_showNotes
     property bool cfg_showClipboard
-    property bool cfg_showDevicesModule
     property bool cfg_showWeather
     property bool cfg_showApps
     property bool cfg_showHabits

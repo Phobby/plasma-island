@@ -576,24 +576,6 @@ PlasmoidItem {
         }
     }
 
-    // Everything shown on the "Devices" page: Bluetooth devices + phones.
-    readonly property var deviceList: {
-        const list = [];
-        const bt = root.bluetoothBackend;
-        if (bt) {
-            for (const d of bt.connectedDevices) {
-                list.push({ icon: bt.iconFor(d), name: d.name, battery: bt.batteryOf(d), charging: false, detail: Lang.i18n("Bluetooth") });
-            }
-        }
-        const kc = root.kdeconnectBackend;
-        if (kc) {
-            for (const p of kc.phones) {
-                list.push({ icon: p.icon, name: p.name, battery: p.charge, charging: p.charging, detail: Lang.i18n("KDE Connect") });
-            }
-        }
-        return list;
-    }
-
     Component {
         id: quickSettingsPage
         QuickSettingsPage {
@@ -653,15 +635,6 @@ PlasmoidItem {
             shortcuts: root.cfg.appShortcuts
             onEdited: json => root.cfg.appShortcuts = json
             onLaunched: island.expanded = false
-        }
-    }
-
-    Component {
-        id: devicesPage
-        DevicesPage {
-            theme: root.islandTheme
-            devices: root.deviceList
-            lowBattery: root.cfg.deviceBatteryThreshold
         }
     }
 
@@ -841,9 +814,7 @@ PlasmoidItem {
                     { key: "cloud", icon: "folder-cloud", title: Lang.i18n("Cloud"), component: cloudPage, visible: root.cfg.showCloud && root.cloudBackend !== null,
                       dot: root.cloudBackend !== null && (root.cloudBackend.storageWarning || root.cloudBackend.syncError) },
                     { key: "clipboard", icon: "edit-paste", title: Lang.i18n("Clipboard"), component: clipboardPage,
-                      visible: root.cfg.showClipboard && root.clipboardBackend !== null },
-                    { key: "devices", icon: "network-bluetooth", title: Lang.i18n("Devices"), component: devicesPage,
-                      visible: root.cfg.showDevicesModule && ((root.bluetoothBackend && root.bluetoothBackend.available) || root.deviceList.length > 0) }
+                      visible: root.cfg.showClipboard && root.clipboardBackend !== null }
                 ]
             }
         }

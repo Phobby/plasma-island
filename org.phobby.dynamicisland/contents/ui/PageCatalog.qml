@@ -36,9 +36,7 @@ QtObject {
         { key: "cloud", icon: "folder-cloud", title: Lang.i18n("Cloud"), config: "showCloud",
           hint: Lang.i18n("Your clouds through rclone: folders by name, drag out, drop in, sync state") },
         { key: "clipboard", icon: "edit-paste", title: Lang.i18n("Clipboard"), config: "showClipboard",
-          hint: Lang.i18n("History of what was copied") },
-        { key: "devices", icon: "network-bluetooth", title: Lang.i18n("Devices"), config: "showDevicesModule",
-          hint: Lang.i18n("Bluetooth devices and phones") }
+          hint: Lang.i18n("History of what was copied") }
     ]
     readonly property var defaultOrder: pages.map(p => p.key)
 

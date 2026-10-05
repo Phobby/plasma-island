@@ -97,7 +97,6 @@
     <entry name="showKeyboardEvents" type="Bool"><default>true</default></entry>
     <entry name="showNetworkEvents" type="Bool"><default>true</default></entry>
     <entry name="showDndEvents" type="Bool"><default>true</default></entry>
-    <entry name="showDevicesModule" type="Bool"><default>true</default></entry>
     <entry name="showRecording" type="Bool"><default>true</default></entry>
     <entry name="showPrivacy" type="Bool"><default>true</default></entry>
     <entry name="showUnlock" type="Bool"><default>true</default></entry>
@@ -273,7 +272,7 @@
     </entry>
     <!-- Order of the expanded pages (Settings → Layout), comma-separated keys; see PageCatalog.qml -->
     <entry name="pageOrder" type="String">
-      <default>activities,media,control,weather,notifications,quicksettings,apps,tools,habits,calendar,notes,ai,cloud,clipboard,devices</default>
+      <default>activities,media,control,weather,notifications,quicksettings,apps,tools,habits,calendar,notes,ai,cloud,clipboard</default>
     </entry>
     <!-- Ambient glow: the island's edge in the colour of the album cover, following the music (Media page) -->
     <entry name="ambientGlow" type="Bool"><default>false</default></entry>

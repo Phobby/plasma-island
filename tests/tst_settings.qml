@@ -145,7 +145,7 @@ Item {
             compare(pages.pages.find(p => p.key === "ai").config, "showAi");
             // an order saved before the tab existed: it takes its place after Notes
             compare(pages.normalize("media,control,notes,clipboard,devices").join(","),
-                    "activities,media,control,weather,notifications,quicksettings,apps,tools,habits,calendar,notes,ai,cloud,clipboard,devices");
+                    "activities,media,control,weather,notifications,quicksettings,apps,tools,habits,calendar,notes,ai,cloud,clipboard");
             // and where the user put it, it stays
             const moved = pages.normalize("ai,media,notes");
             verify(moved.indexOf("ai") < moved.indexOf("media") && moved.indexOf("media") < moved.indexOf("notes"), moved.join(","));

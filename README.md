@@ -92,8 +92,7 @@ your choice), **Tools** (timer, stopwatch, Pomodoro with statistics, alarm), **H
 checklist, an evening review and a GitHub-style calendar of how the days went), **Calendar** (month view, the
 events of the selected day and their details; calendars are connected right
 on this page), **Notes** (quick notes and the notes of Joplin, Simplenote and
-Memos), **Clipboard** (what was copied recently: texts, code, images, files),
-**Devices** (Bluetooth devices and phones, with their batteries).
+Memos), **Clipboard** (what was copied recently: texts, code, images, files).
 
 ### Activity manager and priority
 
@@ -192,7 +191,7 @@ as before: showMediaModule, showTools…; Media also turns the media live
 activity on or off, Calendar also the upcoming-event activity). Activities has
 no switch: it appears while something is going on. "Restore default order"
 goes back to Activities, Media, System, Weather, Notifications, Controls,
-Apps, Tools, Habits, Calendar, Notes, Clipboard, Devices. The order is stored as `pageOrder`
+Apps, Tools, Habits, Calendar, Notes, Clipboard. The order is stored as `pageOrder`
 (comma-separated page keys) and applies as soon as the settings are applied.
 This order only places the tabs; which live activity the small island shows
 first is the priority list of the Activities tab, so privacy indicators,
@@ -204,7 +203,13 @@ edits them there too: the buttons wiggle; drag one sideways to move it (the
 others make room; holding and dragging works in one go), "−" takes one away,
 the others are offered below as round icons to add (the name of the one
 under the pointer is shown above them; the wheel scrolls them), "Done" ends
-it. The island stays open while editing. Stored as `controlTiles`. Available:
+it. The island stays open while editing. Stored as `controlTiles`. Holding
+**Bluetooth**, **Wi-Fi** or **VPN** opens its panel instead: the paired
+devices (with their battery) / the networks in range / the VPN connections;
+a click connects or lets go, a new Wi-Fi network asks for its password
+there. "Scan" looks for Bluetooth devices nearby (a click on a found one
+pairs it) or for networks again; "Add new" opens Plasma's pairing wizard or
+its connection editor. Available:
 Focus (Do Not Disturb), Night Light, power profile, Bluetooth, Wi-Fi,
 updates, airplane mode (the same switch as Plasma's network applet), VPN
 (connects the one used last, shows the active one's name), hotspot, record

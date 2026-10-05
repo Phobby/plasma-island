@@ -10,6 +10,8 @@
     offered below to add (Settings → Controls also orders them); the island
     stays open meanwhile. A button
     whose part is missing (no Bluetooth, no VPN…) is dimmed.
+    Holding Bluetooth, Wi-Fi or VPN opens its panel instead (ConnectionPanel):
+    the devices / networks / connections, "Scan" and "Add new".
 */
 import QtQuick
 import QtQuick.Layouts
@@ -40,8 +42,8 @@ Item {
     property bool editing: false
     // While editing the island stays open even with the pointer away; Done (or
     // another page) ends it and the island closes as usual.
-    readonly property bool holdOpen: visible && editing
-    onVisibleChanged: if (!visible) editing = false; else if (schemes) schemes.refresh()
+    readonly property bool holdOpen: visible && (editing || detail.length > 0)
+    onVisibleChanged: if (!visible) { editing = false; detail = ""; } else if (schemes) schemes.refresh()
     onEditingChanged: if (!editing) { dragFrom = -1; dragTo = -1; dragDx = 0; }
     function remove(key: string): void { tilesEdited(chosen.filter(k => k !== key).join(",")); }
     // Editing: a button dragged sideways takes a new place; the others make room.
@@ -63,6 +65,72 @@ Item {
         return 0;
     }
     function add(key: string): void { if (chosen.length < catalog.maximum) tilesEdited(chosen.concat([key]).join(",")); }
+
+    // The panel that holding Bluetooth, Wi-Fi or VPN opens ("" = none). The page
+    // is taller meanwhile, and typing a Wi-Fi password takes the keyboard.
+    property string detail: ""
+    readonly property bool tall: visible && detail.length > 0
+    readonly property bool interacting: visible && detailPanel.typing
+    function hasDetail(key: string): bool {
+        return key === "bluetooth" ? bluetooth !== null && bluetooth.available
+             : key === "wifi" ? network !== null
+             : key === "vpn" ? network !== null : false;
+    }
+    // A search for Bluetooth devices this page started ends with its panel.
+    property bool searching: false
+    function setSearching(on: bool): void {
+        if (searching === on || bluetooth === null) return;
+        searching = on;
+        bluetooth.setDiscovering(on);
+    }
+    onDetailChanged: {
+        if (detail !== "bluetooth") setSearching(false);
+        if (detail === "wifi" && network.wirelessEnabled) network.scan();
+    }
+    Component.onDestruction: setSearching(false)
+
+    // The rows of the open panel (ConnectionPanel.rows).
+    readonly property var detailRows: {
+        if (detail === "bluetooth") {
+            const bt = bluetooth, order = d => d.connected ? 2 : d.paired ? 1 : 0;
+            // A device found nearby that tells no name shows up as its address: left out.
+            return Array.from(bt.devices).filter(d => d.paired || d.connected || !/^([0-9a-f]{2}[-:]){5}[0-9a-f]{2}$/i.test(d.name))
+                .sort((a, b) => order(b) - order(a) || a.name.localeCompare(b.name))
+                .map(d => {
+                    const busy = bt.busy[d.address] === true, battery = bt.batteryOf(d);
+                    return { key: d.address, icon: bt.iconFor(d), name: d.name, active: d.connected, busy: busy,
+                             detail: busy ? Lang.i18n("Connecting…")
+                                   : d.connected ? (battery >= 0 ? Lang.percent(battery) : Lang.i18n("Connected"))
+                                   : d.paired ? "" : Lang.i18n("New") };
+                });
+        }
+        if (detail === "wifi")
+            return network.wifis.map(w => ({
+                key: w.specific + w.connection, icon: network.signalIcon(w.strength), name: w.name, active: w.active, busy: w.activating,
+                detail: w.active ? Lang.i18n("Connected") : w.activating ? Lang.i18n("Connecting…") : "",
+                locked: w.secure && !w.saved, needsPassword: w.needsPassword }));
+        if (detail === "vpn")
+            return network.vpns.map(v => ({
+                key: v.connection, icon: "network-vpn-symbolic", name: v.name, active: v.active, busy: v.activating,
+                detail: v.active ? Lang.i18n("Connected") : v.activating ? Lang.i18n("Connecting…") : "" }));
+        return [];
+    }
+    function detailClicked(key: string, password: string): void {
+        if (detail === "bluetooth") {
+            bluetooth.toggleDevice(Array.from(bluetooth.devices).find(d => d.address === key));
+        } else if (detail === "wifi") {
+            const w = network.wifis.find(x => x.specific + x.connection === key);
+            if (w) network.toggleWifi(w, password);
+        } else if (detail === "vpn") {
+            const v = network.vpns.find(x => x.connection === key);
+            if (v) network.setVpn(v, !v.active && !v.activating);
+        }
+    }
+    // "Add new": Plasma's own windows (pairing wizard, connection editor).
+    function detailAdd(): void {
+        if (detail === "bluetooth") run("bluedevil-wizard", []);
+        else run("kcmshell6", ["kcm_networkmanagement"]);
+    }
 
     // Programs some buttons start; a missing one dims its button.
     function has(program: string): bool { return !core || !core.local || core.local.findExecutable(program).length > 0; }
@@ -297,7 +365,33 @@ Item {
         anchors.fill: parent
         spacing: 8
 
+        ConnectionPanel {
+            id: detailPanel
+            objectName: "detailPanel"
+            visible: page.detail.length > 0
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            theme: page.theme
+            title: visible ? catalog.info(page.detail).title : ""
+            rows: page.detailRows
+            canScan: page.detail !== "vpn"
+            scanning: page.detail === "bluetooth" ? page.bluetooth.discovering : page.detail === "wifi" && page.network.scanning
+            off: page.detail === "bluetooth" ? !page.bluetooth.enabled
+               : page.detail === "wifi" && page.network.wirelessAvailable && !page.network.wirelessEnabled
+            offText: page.detail === "bluetooth" ? Lang.i18n("Bluetooth is off") : Lang.i18n("Wi-Fi is off")
+            emptyText: page.detail === "bluetooth" ? Lang.i18n("No devices yet. Scan to find one nearby.")
+                     : page.detail === "wifi" ? Lang.i18n("No networks in range")
+                     : Lang.i18n("No VPN set up yet")
+            failure: page.detail === "bluetooth" ? page.bluetooth.failure : visible ? page.network.failure : ""
+            onClosed: page.detail = ""
+            onScanClicked: if (page.detail === "bluetooth") page.setSearching(!page.searching); else page.network.scan()
+            onAddClicked: page.detailAdd()
+            onTurnOnClicked: if (page.detail === "bluetooth") page.bluetooth.setEnabled(true); else page.network.setWireless(true)
+            onRowClicked: (key, password) => page.detailClicked(key, password)
+        }
+
         RowLayout {
+            visible: page.detail.length === 0
             Layout.alignment: Qt.AlignHCenter
             spacing: 6
 
@@ -316,7 +410,7 @@ Item {
                     available: state_.available
                     editing: page.editing
                     onClicked: state_.act()
-                    onHeld: page.editing = true
+                    onHeld: if (page.hasDetail(modelData)) page.detail = modelData; else page.editing = true
                     onRemoveClicked: page.remove(modelData)
                 }
             }
@@ -410,7 +504,7 @@ Item {
 
         // Adjustable controls
         Flickable {
-            visible: !page.editing
+            visible: !page.editing && page.detail.length === 0
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
