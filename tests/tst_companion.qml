@@ -535,6 +535,53 @@ Item {
             compare([cat.loop, mind.timer.running, mind.nextDue], ["breath", false, -1], "asleep: the slow breath, and no timer of the mind");
         }
 
+        // ---- the island itself is as it was ------------------------------------------------------------
+        // With the cat and without it, in every form: the same shape in the same place, the same
+        // region for the pointer, the same bubble, the privacy dots where they were.
+        function test_26_the_island_is_the_same_with_and_without_the_cat() {
+            const look = () => {
+                settled();
+                // (the split island's bubble comes out on a spring: until that has come to rest)
+                for (let was = -1, n = 0; n < 40 && Math.abs(island.bubbleRect.x - was) > 0.001; ++n) { was = island.bubbleRect.x; wait(120); }
+                const r = q => [Math.round(q.x * 10), Math.round(q.y * 10), Math.round(q.width * 10), Math.round(q.height * 10)];
+                return JSON.stringify([island.mode, r(island.surfaceRect), r(island.hitRect), Math.round(island.hitRadius * 10), r(island.bubbleRect),
+                                       island.needsLargeWindow, island.hovered, island.expanded]);
+            };
+            const forms = {
+                idle: () => {},
+                live: () => { stopwatch.active = true; },
+                split: () => { stopwatch.active = true; transfer.active = true; mic.active = true; },
+                event: () => { activities.flash({ title: "Charging", icon: "battery", duration: 8000 }); },
+                expanded: () => { island.expanded = true; },
+                dot: () => { island.dot = true; }
+            };
+            for (const form in forms) {
+                const seen = {};
+                for (const on of [false, true]) {
+                    companion.enabled = on;
+                    companion.dotBehaviour = 1;
+                    forms[form]();
+                    tryCompare(island, "mode", form);
+                    seen[on] = look();
+                    stopwatch.active = false; transfer.active = false; mic.active = false;
+                    if (activities.currentEvent) activities.dismissEvent();
+                    island.expanded = false; island.dot = false;
+                    wait(80); settled();
+                }
+                compare(seen[true], seen[false], form);
+            }
+            // and what it does with the pointer: hovering opens it, leaving closes it, a click makes the dot
+            companion.enabled = true;
+            const [px, py] = onPill();
+            mouseMove(root, px - 4, py); mouseMove(root, px, py);
+            tryCompare(island, "expanded", true);
+            away();
+            tryCompare(island, "expanded", false, 2000);
+            wait(350); settled();
+            mouseClick(root, px, py);
+            compare(island.dot, true);
+        }
+
         // ---- what it costs ---------------------------------------------------------------------------
         // Frames drawn in a while (ms), once what was on its way has come to rest.
         function drawn(ms) { wait(900); const from = root.frames; wait(ms); return root.frames - from; }
