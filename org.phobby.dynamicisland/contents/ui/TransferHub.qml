@@ -58,6 +58,7 @@ Item {
             Object.assign(event, {
                 icon: sent ? "document-send-symbolic" : "dialog-ok-apply-symbolic",
                 color: theme.live,
+                feel: "done",
                 title: t.doneTitle.length > 0 ? t.doneTitle : sent ? Lang.i18n("Sent") : fetched ? Lang.i18n("Downloaded") : Lang.i18n("Completed"),
                 trailing: t.openUrl ? { type: "button", text: folder ? Lang.i18n("Open folder") : Lang.i18n("Open") } : null,
                 activate: t.openUrl ? (() => Qt.openUrlExternally(t.openUrl)) : undefined

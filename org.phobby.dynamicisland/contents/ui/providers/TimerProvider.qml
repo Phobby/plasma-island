@@ -51,6 +51,7 @@ Item {
         manager.flash({
             key: "timer-done",
             shake: true,
+            feel: "done",
             icon: "chronometer",
             color: theme.orange,
             title: Lang.i18n("Timer done"),

@@ -53,7 +53,7 @@ Item {
                 if (p <= t && provider.lastWarned > t) {
                     provider.lastWarned = t;
                     provider.batteryEvent(Lang.i18n("Low battery"), provider.theme.red, false,
-                                          { icon: "battery-010-symbolic", pulse: true, critical: true, subtitle: Lang.i18n("%1% remaining", p), duration: 5000 });
+                                          { icon: "battery-010-symbolic", pulse: true, critical: true, feel: "low", subtitle: Lang.i18n("%1% remaining", p), duration: 5000 });
                     return;
                 }
             }

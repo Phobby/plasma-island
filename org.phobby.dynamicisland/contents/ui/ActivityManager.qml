@@ -22,7 +22,10 @@
         shown: function (it is on the island now; a waiting event may never be),
         expired: function (its time ran out without the user acting on it),
         buttons: [{ text, primary, trigger: function }] (a question: the banner
-        shows them under the title; see SuggestionBanner), height }
+        shows them under the title; see SuggestionBanner), height,
+        feel: "done" (something the user waited for is finished), "low" (something
+        runs out), "ask" (a question without buttons): for who watches the island
+        and reacts to it (the companion); the island itself does nothing with it }
 */
 import QtQuick
 

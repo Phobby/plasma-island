@@ -693,6 +693,7 @@ PlasmoidItem {
         Loader {
             readonly property bool interacting: item !== null && item.interacting
             readonly property bool holdOpen: item !== null && item.holdOpen
+            readonly property bool asking: item !== null && item.asking === true
             readonly property bool tall: item !== null && item.tall
             Component.onCompleted: setSource("AiPage.qml", { theme: root.islandTheme, ai: root.aiBackend })
             Connections {
@@ -707,6 +708,7 @@ PlasmoidItem {
         Loader {
             readonly property bool interacting: item !== null && item.interacting
             readonly property bool holdOpen: item !== null && item.holdOpen
+            readonly property bool asking: item !== null && item.asking === true
             readonly property bool tall: item !== null && item.tall
             Component.onCompleted: setSource("CloudPage.qml", { theme: root.islandTheme, cloud: root.cloudBackend })
         }
@@ -859,6 +861,7 @@ PlasmoidItem {
                     sleepSeconds: root.cfg.catSleepSeconds
                     dotBehaviour: root.cfg.catDot
                     reduceMotion: root.cfg.catReduceMotion
+                    ai: root.aiBackend
                     spaceLeft: (dialog.x + dialog.width / 2 - root.screenRect.x) / root.islandTheme.scale
                     spaceRight: (root.screenRect.x + root.screenRect.width - dialog.x - dialog.width / 2) / root.islandTheme.scale
                     onHideRequested: root.cfg.catEnabled = false

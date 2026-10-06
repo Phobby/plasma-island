@@ -35,6 +35,7 @@ QtObject {
     property string trailingText
     property real progress: -1        // 0..1; -1 = none; -2 = indeterminate (unknown total)
     property bool pulse: false        // blinking leading icon (recording)
+    property bool asks: false         // it waits for an answer of the user (the habits' evening question)
     property real compactWidth: 0     // 0 → Theme.liveWidth
 
     property Component compact

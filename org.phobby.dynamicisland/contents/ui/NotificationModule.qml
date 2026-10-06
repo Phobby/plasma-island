@@ -19,6 +19,8 @@ Item {
     property var replyTarget: null     // { id, summary }
     onActiveChanged: if (!active) { replyTarget = null; confirmingClear = false; }
     property bool confirmingClear: false
+    // A question waits for an answer ("Clear all?").
+    readonly property bool asking: visible && confirmingClear
     readonly property int count: backend.notificationCount
     function requestClear(): void { confirmingClear = true; }
     function confirmClear(): void {

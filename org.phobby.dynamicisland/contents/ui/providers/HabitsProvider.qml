@@ -81,6 +81,7 @@ Item {
         if (!enabled || !ready || !reminder || key === "" || record.told === key || locked || !manager.warm) return;
         manager.flash({
             key: "habits",
+            feel: "ask",
             icon: "view-calendar-tasks",
             color: tone,
             title: question(key),
@@ -196,6 +197,7 @@ Item {
     Activity {
         activityId: "habits"
         category: "habits"
+        asks: true
         priority: -10
         active: provider.enabled && provider.reminder && provider.pending !== "" && provider.record.shut !== provider.pending
         icon: "view-calendar-tasks"

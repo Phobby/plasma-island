@@ -44,6 +44,8 @@ Item {
     // A text field has the keyboard: the island stays open and focused.
     property bool typing: false
     readonly property bool interacting: visible && typing
+    // A question waits for an answer (the evening review, "Delete for good?").
+    readonly property bool asking: visible && (mode === "review" || confirmDelete >= 0)
     // The year needs the wider island; a day opened from it keeps it.
     readonly property bool wide: visible && record.setup === 1 && (view === "year" || view === "day" && fromYear)
     // The page's width in the island's usual size: all but the year's calendar

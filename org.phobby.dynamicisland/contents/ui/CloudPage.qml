@@ -38,6 +38,8 @@ Item {
     property bool typing: false
     readonly property bool interacting: visible && typing
     readonly property bool holdOpen: visible && (dropping || view === "upload" || picking || dragging)
+    // A question waits for an answer ("Upload here?").
+    readonly property bool asking: visible && view === "upload"
     readonly property bool tall: visible && view !== "missing" && view !== "empty"
 
     Binding { target: page.cloud; property: "viewing"; value: page.visible; restoreMode: Binding.RestoreNone }

@@ -58,8 +58,10 @@ Item {
     property real spaceLeft: 100000
     property real spaceRight: 100000
 
-    // What goes on is told to this (CompanionFeed).
+    // The AI tab's backend (AiBackend), or null: whether an answer is on its way.
+    property var ai: null
     readonly property alias mind: controller
+    readonly property alias feed: feed
     readonly property alias character: figure
     signal hideRequested()
     signal settingsRequested()
@@ -129,6 +131,15 @@ Item {
         sleepAfter: Math.max(1, companion.sleepSeconds) * 1000
         sulkFor: Math.max(1, companion.sulkSeconds) * 1000
         onGesture: name => figure.gesture(name)
+    }
+
+    // What goes on, read from the island and its activities (nothing is written back).
+    CompanionFeed {
+        id: feed
+        mind: controller
+        manager: companion.island.manager
+        island: companion.island
+        ai: companion.ai
     }
 
     Item {

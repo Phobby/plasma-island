@@ -25,6 +25,8 @@ Item {
     property string status: ""
     property var target: null               // the row being edited, shown as a QR code or as an image
     readonly property bool interacting: visible && (typing || view === "edit")
+    // A question waits for an answer ("Clear the history?"): for who watches the island (the companion).
+    readonly property bool asking: visible && confirmClear
     // Klipper's actions menu ("open with…") is open: the island stays open
     // until something is chosen in it or it is closed.
     readonly property bool holdOpen: visible && awaitingMenu

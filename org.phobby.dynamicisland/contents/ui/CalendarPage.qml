@@ -54,6 +54,8 @@ Item {
                                       : overlay === "google" ? googleLoader.item !== null && googleLoader.item.interacting
                                       : overlay === "account" || overlay === "event"
 
+    // A question waits for an answer ("Delete this event?").
+    readonly property bool asking: visible && confirmDelete
     function newEvent(): void {
         eventAfterAccount = !writable;
         // Without an account: connect one first (the wizard asks which).

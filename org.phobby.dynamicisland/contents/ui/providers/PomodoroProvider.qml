@@ -65,6 +65,7 @@ Item {
             manager.flash({
                 key: "pomodoro",
                 shake: true,
+                feel: "done",
                 icon: next === "work" ? "view-task" : "kteatime",
                 color: next === "work" ? theme.red : theme.live,
                 title: next === "work" ? Lang.i18n("Time to focus") : Lang.i18n("Time for a break"),

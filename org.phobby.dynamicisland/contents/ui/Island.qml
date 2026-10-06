@@ -57,6 +57,8 @@ Item {
     // For who stands beside the island (the companion): the music's beats, while the glow follows
     // them anyway (nobody else starts the listening), and how far what is right of the pill
     // (the split island's bubble, the privacy dots) reaches beyond its edge.
+    // The open page asks something and waits for the answer.
+    readonly property bool asking: expanded && expandedContent.asking
     readonly property bool musicBeats: glow.following
     signal musicBeat(real strength)
     Connections {

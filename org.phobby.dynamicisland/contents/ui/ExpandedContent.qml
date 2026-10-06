@@ -40,9 +40,11 @@ Item {
     // True while the user types a reply: the island keeps keyboard focus
     // and does not collapse.
     property bool interacting: false
-    onActiveChanged: if (!active) { interacting = false; holding = false; wide = false; tall = false; }
+    onActiveChanged: if (!active) { interacting = false; holding = false; wide = false; tall = false; asking = false; }
     // A page keeps the island open without the keyboard (e.g. while a menu it opened is shown).
     property bool holding: false
+    // A page asks something and waits for the answer (a confirmation, the habits' evening review).
+    property bool asking: false
     // A page asks for the wider island (Theme.wideWidth). The header keeps its
     // usual width in the middle, so the tabs do not move from under the pointer.
     property bool wide: false
@@ -414,6 +416,8 @@ Item {
                         onPageInteractingChanged: expanded.interacting = pageInteracting
                         readonly property bool pageHolding: item !== null && item.holdOpen === true
                         onPageHoldingChanged: expanded.holding = pageHolding
+                        readonly property bool pageAsking: item !== null && item.asking === true
+                        onPageAskingChanged: expanded.asking = pageAsking
                         readonly property bool pageWide: item !== null && item.wide === true
                         onPageWideChanged: expanded.wide = pageWide
                         readonly property bool pageTall: item !== null && item.tall === true
