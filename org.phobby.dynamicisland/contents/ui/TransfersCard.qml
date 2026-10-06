@@ -1,7 +1,9 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
-    Expanded view of running transfers: "source → target: file", percentage,
-    speed, remaining time (only when known), pause / cancel when supported.
+    Expanded view of running transfers: "source → target: file", the stage,
+    "412 MB / 1.8 GB" ("412 MB / unknown" when the size is not known), the
+    percentage, the speed, the remaining time (only when the size is known; "—"
+    while it cannot be told), the time so far; pause / cancel when supported.
 */
 import QtQuick
 import QtQuick.Layouts
@@ -14,6 +16,11 @@ Rectangle {
     required property var activity
     required property Theme theme
     readonly property var transfers: activity?.transfers ?? []
+    // Sizes in the language's own form ("1,8 GB" in Turkish).
+    function size(bytes: real): string { return Fmt.bytes(bytes, Lang.language === "tr"); }
+    // The time passed is counted here, once a second, only while the card is shown.
+    property real now: Date.now()
+    Timer { interval: 1000; repeat: true; running: card.visible && card.transfers.length > 0; triggeredOnStart: true; onTriggered: card.now = Date.now() }
 
     implicitHeight: column.implicitHeight + 16
     radius: 14
@@ -54,15 +61,32 @@ Rectangle {
                             font.weight: Font.DemiBold
                             elide: Text.ElideMiddle
                         }
+                        // the stage, and how much of how much
                         Text {
+                            objectName: "transferAmount"
                             Layout.fillWidth: true
-                            text: [row.t.detail,
-                                   row.t.speed > 0 ? Fmt.bytes(row.t.speed) + "/s" : "",
-                                   row.t.percent < 0 && row.t.processedBytes > 0 ? Fmt.bytes(row.t.processedBytes) : "",
-                                   row.t.remaining > 0 ? Lang.i18nc("@info remaining time m:ss", "%1 left", Fmt.eta(row.t.remaining)) : "",
-                                   row.t.suspended ? Lang.i18n("Paused") : ""].filter(s => s).join(" · ")
+                            text: [row.t.suspended ? Lang.i18n("Paused") : row.t.stalled > 60 ? Lang.i18n("Stalled") : row.t.stalled > 5 ? Lang.i18n("Waiting") : row.t.detail,
+                                   row.t.totalKnown ? Lang.i18nc("@info bytes done / bytes in all", "%1 / %2", card.size(row.t.processedBytes), card.size(row.t.totalBytes))
+                                   : row.t.processedBytes > 0 ? Lang.i18nc("@info bytes done / bytes in all", "%1 / %2", card.size(row.t.processedBytes), Lang.i18n("unknown")) : ""
+                                  ].filter(s => s).join(" · ")
                             color: card.theme.subText
                             font.pointSize: card.theme.fontSmall
+                            font.features: { "tnum": 1 }
+                            elide: Text.ElideRight
+                        }
+                        // how fast, how long still (only where the size is known), how long so far
+                        Text {
+                            objectName: "transferPace"
+                            Layout.fillWidth: true
+                            readonly property real elapsed: row.t.startedAt > 0 ? Math.max(0, (card.now - row.t.startedAt) / 1000) : -1
+                            text: [row.t.speed > 0 ? Lang.i18nc("@info bytes per second", "%1/s", card.size(row.t.speed)) : "",
+                                   row.t.remaining > 0 ? Lang.i18nc("@info remaining time m:ss", "%1 left", Fmt.eta(row.t.remaining))
+                                   : row.t.totalKnown ? "—" : "",
+                                   elapsed >= 1 ? Lang.i18nc("@info time passed m:ss", "%1 so far", Fmt.duration(elapsed)) : ""].filter(s => s).join(" · ")
+                            visible: text.length > 0
+                            color: card.theme.subText
+                            font.pointSize: card.theme.fontSmall * 0.95
+                            font.features: { "tnum": 1 }
                             elide: Text.ElideRight
                         }
                     }

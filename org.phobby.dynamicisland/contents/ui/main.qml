@@ -404,7 +404,28 @@ PlasmoidItem {
             jobs: root.jobsBackend
             hub: transferHub
             core: root.core
-            enabled: root.cfg.showJobs && root.cfg.watchDownloads
+            enabled: root.cfg.showJobs && root.cfg.trackDownloads && root.cfg.watchDownloads
+            minSeconds: root.cfg.trackMinSeconds
+            announce: root.cfg.trackAnnounceEnd
+        }
+        Binding {
+            target: root.core; when: root.core !== null; property: "downloadDirectories"; restoreMode: Binding.RestoreNone
+            value: String(root.cfg.trackFolders || "").split("\n").map(s => s.trim()).filter(s => s.length > 0)
+        }
+        Binding { target: root.core; when: root.core !== null; property: "downloadSettleTime"; value: Math.max(1, root.cfg.trackSettleSeconds) * 1000; restoreMode: Binding.RestoreNone }
+        CommandTransferProvider {                            // apt, PackageKit, git clone, wget, curl, pip…
+            hub: transferHub
+            core: root.core
+            enabled: root.cfg.showJobs && root.cfg.trackDownloads
+            packages: root.cfg.trackPackages
+            clones: root.cfg.trackGit
+            tools: root.cfg.trackTools
+            background: root.cfg.trackBackground
+            minSeconds: root.cfg.trackMinSeconds
+            minBytes: root.cfg.trackMinKilobytes * 1024
+            addedCommands: root.cfg.trackCommandsAdded
+            removedCommands: root.cfg.trackCommandsRemoved
+            announce: root.cfg.trackAnnounceEnd
         }
         TimerProvider {
             id: timerProvider

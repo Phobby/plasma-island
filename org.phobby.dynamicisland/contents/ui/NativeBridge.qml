@@ -33,9 +33,30 @@ Item {
     property bool downloadsEnabled: true
     property var downloadDirectories: []
     onDownloadDirectoriesChanged: if (downloads.item) downloads.item.directories = downloadDirectories
+    // How long a partial file that vanished is waited for under its final name (ms).
+    property int downloadSettleTime: 3000
     signal downloadStarted(string id, string fileName, string application)
-    signal downloadProgress(string id, real bytes, real speed)
-    signal downloadFinished(string id, string finalPath, bool success)
+    signal downloadRenamed(string id, string fileName)
+    signal downloadProgress(string id, real bytes, real speed, int stalled)
+    // outcome: "done" | "cancelled"; host: where it came from when the browser noted it, else ""
+    signal downloadFinished(string id, string finalPath, string outcome, real bytes, string host)
+
+    // Downloads made by commands (apt, git clone, wget…) and by PackageKit: made when first
+    // asked for, so nothing looks at /proc while the feature is off. null with an older native module.
+    function commandWatcher(): var { commandLoader.active = true; return commandLoader.item; }
+    function packageKitWatcher(): var { packageKitLoader.active = true; return packageKitLoader.item; }
+    Loader {
+        id: commandLoader
+        active: false
+        source: "CommandBridge.qml"
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old for command downloads; run install.sh again")
+    }
+    Loader {
+        id: packageKitLoader
+        active: false
+        source: "PackageKitBridge.qml"
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old for PackageKit progress; run install.sh again")
+    }
 
     signal screenUnlocked()
     // The lock screen is up: asked once at the start, then followed by ScreenSaver's ActiveChanged.
@@ -80,6 +101,7 @@ Item {
         onLoaded: {
             item.enabled = Qt.binding(() => bridge.downloadsEnabled);
             if (bridge.downloadDirectories.length > 0) item.directories = bridge.downloadDirectories;
+            if (item.settleTime !== undefined) item.settleTime = Qt.binding(() => bridge.downloadSettleTime);
         }
         onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old for download watching; run install.sh again")
     }
@@ -146,8 +168,12 @@ Item {
         target: downloads.item
         ignoreUnknownSignals: true
         function onStarted(id, fileName, app) { bridge.downloadStarted(id, fileName, app); }
-        function onProgress(id, bytes, speed) { bridge.downloadProgress(id, bytes, speed); }
-        function onFinished(id, finalPath, ok) { bridge.downloadFinished(id, finalPath, ok); }
+        function onRenamed(id, fileName) { bridge.downloadRenamed(id, fileName); }
+        function onProgress(id, bytes, speed, stalled) { bridge.downloadProgress(id, bytes, speed, stalled || 0); }
+        // (an older native module says only whether it went well)
+        function onFinished(id, finalPath, outcome, bytes, host) {
+            bridge.downloadFinished(id, finalPath, outcome === true || outcome === "done" ? "done" : "cancelled", bytes || 0, host || "");
+        }
     }
     Core.UpdatesChecker {
         id: updates

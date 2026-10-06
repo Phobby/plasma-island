@@ -59,9 +59,59 @@ function eta(seconds) {
     return m + ":" + (ss < 10 ? "0" : "") + ss;
 }
 
-function bytes(b) {
+// 432013312 → "412 MB"; 1932735283 → "1.8 GB", or "1,8 GB" with `comma` (Turkish).
+function bytes(b, comma) {
     const units = ["B", "KB", "MB", "GB", "TB"];
     let v = Math.max(0, b), i = 0;
     while (v >= 1024 && i < units.length - 1) { v /= 1024; ++i; }
-    return (i === 0 ? Math.round(v) : v.toFixed(v >= 10 ? 0 : 1)) + " " + units[i];
+    const number = i === 0 ? String(Math.round(v)) : v.toFixed(v >= 10 ? 0 : 1);
+    return (comma ? number.replace(".", ",") : number) + " " + units[i];
+}
+
+// 8 → "0:08", 95 → "1:35", 3725 → "1:02:05"
+function duration(seconds) {
+    if (!(seconds >= 0) || !isFinite(seconds)) return "";
+    const s = Math.round(seconds), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
+    const two = n => (n < 10 ? "0" : "") + n;
+    return h > 0 ? h + ":" + two(m) + ":" + two(ss) : m + ":" + two(ss);
+}
+
+// An exponential moving average: the speed shown does not jump with every sample.
+function smooth(previous, sample, weight) {
+    const w = weight > 0 && weight <= 1 ? weight : 0.3;
+    return previous > 0 ? previous * (1 - w) + sample * w : sample;
+}
+
+// The commands looked for by default: name → what it is. `actions`: only these sub-commands
+// are downloads ("apt list" is not); none: every run.
+const COMMANDS = [
+    { name: "apt", kind: "packages", actions: ["update", "upgrade", "full-upgrade", "dist-upgrade", "install", "reinstall", "download", "source", "build-dep"] },
+    { name: "apt-get", kind: "packages", actions: ["update", "upgrade", "dist-upgrade", "install", "reinstall", "download", "source", "build-dep"] },
+    { name: "aptitude", kind: "packages", actions: ["update", "upgrade", "safe-upgrade", "full-upgrade", "install", "reinstall", "download"] },
+    { name: "unattended-upgr", kind: "packages", actions: [] },
+    { name: "git", kind: "clone", actions: ["clone"] },
+    { name: "wget", kind: "download", actions: [] },
+    { name: "curl", kind: "download", actions: [] },
+    { name: "aria2c", kind: "download", actions: [] },
+    { name: "yt-dlp", kind: "download", actions: [] },
+    { name: "pip", kind: "download", actions: ["install", "download", "wheel"] },
+    { name: "pip3", kind: "download", actions: ["install", "download", "wheel"] },
+    { name: "npm", kind: "download", actions: ["install", "i", "ci", "update", "add"] },
+    { name: "cargo", kind: "download", actions: ["install", "build", "fetch", "update", "run"] },
+    { name: "docker", kind: "download", actions: ["pull"] },
+    { name: "flatpak", kind: "download", actions: ["install", "update"] },
+    { name: "snap", kind: "download", actions: ["install", "refresh"] }
+];
+
+// The table the watcher is given: the defaults of the kinds that are switched on, without the
+// names in `removed`, with the user's own (`added`: "name" per line; they count as downloads).
+function commandTable(packages, clone, tools, added, removed) {
+    const names = text => String(text || "").split(/[\n,]/).map(s => s.trim()).filter(s => /^[A-Za-z0-9._+-]{1,40}$/.test(s));
+    const out = [], gone = names(removed);
+    for (const c of COMMANDS) {
+        if (gone.indexOf(c.name) >= 0) continue;
+        if (c.kind === "packages" ? packages : c.kind === "clone" ? clone : tools) out.push(c);
+    }
+    if (tools) for (const n of names(added)) if (!out.some(c => c.name === n) && !COMMANDS.some(c => c.name === n)) out.push({ name: n, kind: "download", actions: [] });
+    return out;
 }

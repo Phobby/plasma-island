@@ -1,11 +1,50 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "downloadwatcher.h"
 
+#include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
+#include <QRegularExpression>
 #include <QStandardPaths>
+#include <QUrl>
 
-static const QStringList s_suffixes = {QStringLiteral(".part"), QStringLiteral(".crdownload"), QStringLiteral(".download"), QStringLiteral(".partial")};
+#include <sys/stat.h>
+#include <sys/xattr.h>
+
+static const QStringList s_suffixes = {QStringLiteral(".part"), QStringLiteral(".crdownload"), QStringLiteral(".opdownload"),
+                                       QStringLiteral(".download"), QStringLiteral(".partial")};
+
+static bool isPartialName(const QString &name)
+{
+    for (const QString &s : s_suffixes) {
+        if (name.endsWith(s)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static QString withoutSuffix(const QString &name)
+{
+    for (const QString &s : s_suffixes) {
+        if (name.endsWith(s)) {
+            return name.chopped(s.size());
+        }
+    }
+    return name;
+}
+
+static quint64 inodeOf(const QString &path, qint64 *size = nullptr)
+{
+    struct stat st;
+    if (::lstat(QFile::encodeName(path).constData(), &st) != 0 || !S_ISREG(st.st_mode)) {
+        return 0;
+    }
+    if (size) {
+        *size = st.st_size;
+    }
+    return st.st_ino;
+}
 
 DownloadWatcher::DownloadWatcher(QObject *parent)
     : QObject(parent)
@@ -35,21 +74,38 @@ void DownloadWatcher::setDirectories(const QStringList &dirs)
     rewatch();
 }
 
+void DownloadWatcher::setSampleInterval(int ms)
+{
+    ms = qMax(50, ms);
+    if (ms == m_sampler.interval()) {
+        return;
+    }
+    m_sampler.setInterval(ms);
+    Q_EMIT sampleIntervalChanged();
+}
+
 void DownloadWatcher::rewatch()
 {
     if (!m_watcher.directories().isEmpty()) {
         m_watcher.removePaths(m_watcher.directories());
     }
+    const bool had = !m_partials.isEmpty();
     m_partials.clear();
     m_sampler.stop();
+    if (had) {
+        Q_EMIT countChanged();
+    }
     if (m_enabled) {
         QStringList dirs = m_directories;
         if (dirs.isEmpty()) {
             dirs << QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
         }
-        for (const QString &d : std::as_const(dirs)) {
+        for (QString d : std::as_const(dirs)) {
+            if (d == QLatin1String("~") || d.startsWith(QLatin1String("~/"))) {
+                d = QDir::homePath() + d.mid(1);
+            }
             if (QFileInfo(d).isDir()) {
-                m_watcher.addPath(d);
+                m_watcher.addPath(QDir(d).absolutePath());
             }
         }
         scan();
@@ -57,14 +113,34 @@ void DownloadWatcher::rewatch()
     Q_EMIT directoriesChanged();
 }
 
-QString DownloadWatcher::finalPathFor(const QString &partialPath)
+QString DownloadWatcher::displayName(const QString &directory, const QString &partialName)
 {
-    for (const QString &s : s_suffixes) {
-        if (partialPath.endsWith(s)) {
-            return partialPath.chopped(s.size());
+    const QString name = withoutSuffix(partialName);
+    static const QRegularExpression unconfirmed(QStringLiteral("^Unconfirmed \\d+$"));
+    if (unconfirmed.match(name).hasMatch()) {
+        return {};
+    }
+    // Firefox: "name.<8 random characters>.ext.part" beside an empty "name.ext"
+    static const QRegularExpression token(QStringLiteral("^(.+)\\.[A-Za-z0-9_-]{8}(\\.[^.]+)?$"));
+    const auto m = token.match(name);
+    if (m.hasMatch()) {
+        const QString plain = m.captured(1) + m.captured(2);
+        if (QFileInfo::exists(QDir(directory).filePath(plain))) {
+            return plain;
         }
     }
-    return partialPath;
+    return name;
+}
+
+QString DownloadWatcher::originHost(const QString &path)
+{
+    char buffer[4096];
+    const ssize_t n = ::getxattr(QFile::encodeName(path).constData(), "user.xdg.origin.url", buffer, sizeof(buffer));
+    if (n <= 0) {
+        return {};
+    }
+    // Only the host is taken; the rest of the address (path, query, credentials) is dropped here.
+    return QUrl(QString::fromUtf8(buffer, n).trimmed()).host();
 }
 
 // Which process has the file open (e.g. "zen", "firefox", "chrome").
@@ -100,62 +176,150 @@ QString DownloadWatcher::applicationFor(const QString &path)
     return {};
 }
 
+void DownloadWatcher::end(Partial &p, const QString &finalPath, const QString &outcome)
+{
+    qint64 size = p.bytes;
+    if (outcome == QLatin1String("done")) {
+        inodeOf(finalPath, &size);
+    }
+    Q_EMIT finished(p.id, finalPath, outcome, size, outcome == QLatin1String("done") ? originHost(finalPath) : QString());
+}
+
 void DownloadWatcher::scan()
 {
-    QHash<QString, bool> present;
-    for (const QString &d : m_watcher.directories()) {
-        const QDir dir(d);
+    const int before = m_partials.size();
+    // The partial files that are there now, by their file (inode).
+    QHash<quint64, QString> partialFiles;
+    const QStringList dirs = m_watcher.directories();
+    for (const QString &d : dirs) {
         QStringList filters;
         for (const QString &s : s_suffixes) {
             filters << QLatin1Char('*') + s;
         }
-        const auto files = dir.entryInfoList(filters, QDir::Files | QDir::Hidden);
+        const auto files = QDir(d).entryInfoList(filters, QDir::Files | QDir::Hidden);
         for (const QFileInfo &fi : files) {
-            const QString path = fi.absoluteFilePath();
-            present.insert(path, true);
-            if (!m_partials.contains(path)) {
-                Partial p;
-                p.finalPath = finalPathFor(path);
-                p.bytes = fi.size();
-                p.clock.start();
-                m_partials.insert(path, p);
-                QString app = applicationFor(path);
-                if (app.isEmpty()) {
-                    app = path.endsWith(QLatin1String(".crdownload")) ? QStringLiteral("Chromium") : QString();
-                }
-                Q_EMIT started(path, QFileInfo(p.finalPath).fileName(), app);
+            const quint64 inode = inodeOf(fi.absoluteFilePath());
+            if (inode != 0) {
+                partialFiles.insert(inode, fi.absoluteFilePath());
             }
         }
     }
-    // Partial files that went away: renamed to the final name (done) or deleted (cancelled).
+
     for (auto it = m_partials.begin(); it != m_partials.end();) {
-        if (!present.contains(it.key())) {
-            const QFileInfo final(it->finalPath);
-            const bool success = final.exists() && final.size() > 0;
-            Q_EMIT finished(it.key(), it->finalPath, success);
-            it = m_partials.erase(it);
-        } else {
+        Partial &p = *it;
+        const QString directory = QFileInfo(p.path).absolutePath();
+        const auto still = partialFiles.constFind(p.inode);
+        if (still != partialFiles.constEnd()) {
+            // there, perhaps under another partial name
+            if (*still != p.path) {
+                p.path = *still;
+            }
+            p.gone.invalidate();
+            const QString name = displayName(directory, QFileInfo(p.path).fileName());
+            if (name != p.name) {
+                p.name = name;
+                Q_EMIT renamed(p.id, name);
+            }
+            partialFiles.remove(p.inode);
             ++it;
+            continue;
         }
+        // Not a partial file any more. The same file under another name: that is the download.
+        QString final;
+        QFileInfoList others;
+        if (dirs.contains(directory)) {
+            others = QDir(directory).entryInfoList(QDir::Files | QDir::Hidden);
+        }
+        for (const QFileInfo &fi : std::as_const(others)) {
+            if (!isPartialName(fi.fileName()) && inodeOf(fi.absoluteFilePath()) == p.inode) {
+                final = fi.absoluteFilePath();
+                break;
+            }
+        }
+        if (final.isEmpty()) {
+            // Written anew under its final name? A file of at least the size seen, not older than
+            // the download, named like it ("name.ext", "name(1).ext", "name (1).ext").
+            const QFileInfo shown(p.name);
+            const QString stem = shown.completeBaseName(), ext = shown.suffix().isEmpty() ? QString() : QLatin1Char('.') + shown.suffix();
+            const QRegularExpression like(QLatin1Char('^') + QRegularExpression::escape(stem) + QStringLiteral("( ?\\(\\d+\\))?")
+                                          + QRegularExpression::escape(ext) + QLatin1Char('$'));
+            for (const QFileInfo &fi : std::as_const(others)) {
+                if (!p.name.isEmpty() && !isPartialName(fi.fileName()) && fi.size() > 0 && fi.size() >= p.bytes
+                    && fi.lastModified().toMSecsSinceEpoch() >= p.startedAt - 2000 && like.match(fi.fileName()).hasMatch()) {
+                    final = fi.absoluteFilePath();
+                    break;
+                }
+            }
+        }
+        if (!final.isEmpty()) {
+            end(p, final, QStringLiteral("done"));
+            it = m_partials.erase(it);
+            continue;
+        }
+        if (!p.gone.isValid()) {
+            p.gone.start();
+        }
+        if (p.gone.elapsed() >= m_settleTime) {
+            end(p, QString(), QStringLiteral("cancelled"));
+            it = m_partials.erase(it);
+            continue;
+        }
+        ++it;
     }
+
+    // Partial files nobody follows yet.
+    for (auto it = partialFiles.constBegin(); it != partialFiles.constEnd(); ++it) {
+        const QFileInfo fi(it.value());
+        Partial p;
+        p.id = QString::number(m_next++);
+        p.path = it.value();
+        p.inode = it.key();
+        p.bytes = fi.size();
+        p.name = displayName(fi.absolutePath(), fi.fileName());
+        p.startedAt = QDateTime::currentMSecsSinceEpoch();
+        p.clock.start();
+        p.still.start();
+        m_partials.append(p);
+        QString app = applicationFor(p.path);
+        if (app.isEmpty() && p.path.endsWith(QLatin1String(".crdownload"))) {
+            app = QStringLiteral("Chromium");
+        }
+        Q_EMIT started(p.id, p.name, app);
+    }
+
     if (m_partials.isEmpty()) {
         m_sampler.stop();
     } else if (!m_sampler.isActive()) {
         m_sampler.start();
     }
+    if (m_partials.size() != before) {
+        Q_EMIT countChanged();
+    }
 }
 
 void DownloadWatcher::sample()
 {
-    for (auto it = m_partials.begin(); it != m_partials.end(); ++it) {
-        const qint64 size = QFileInfo(it.key()).size();
-        const qint64 ms = qMax<qint64>(1, it->clock.restart());
-        const qint64 instant = qMax<qint64>(0, (size - it->bytes) * 1000 / ms);
-        // Smooth the rate a little so the text does not jump every second.
-        it->speed = it->speed == 0 ? instant : (it->speed * 2 + instant) / 3;
-        it->bytes = size;
-        Q_EMIT progress(it.key(), size, it->speed);
+    for (Partial &p : m_partials) {
+        if (p.gone.isValid()) {
+            continue;
+        }
+        qint64 size = p.bytes;
+        if (inodeOf(p.path, &size) == 0) {
+            continue;       // renamed since the last look: scan() below finds it
+        }
+        const qint64 ms = qMax<qint64>(1, p.clock.restart());
+        const double instant = qMax<qint64>(0, size - p.bytes) * 1000.0 / ms;
+        // An exponential moving average, so the number does not jump every second.
+        p.speed = p.speed <= 0 ? instant : p.speed * 0.7 + instant * 0.3;
+        if (size != p.bytes) {
+            p.still.restart();
+        } else if (p.still.elapsed() > 3000) {
+            p.speed = 0;
+        }
+        p.bytes = size;
+        Q_EMIT progress(p.id, size, qint64(p.speed), int(p.still.elapsed() / 1000));
     }
-    // inotify may miss a rename between two samples on some filesystems.
+    // inotify may miss a rename between two samples on some filesystems; and a file that
+    // vanished is waited for here.
     scan();
 }

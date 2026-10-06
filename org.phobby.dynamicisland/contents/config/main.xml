@@ -102,6 +102,18 @@
     <entry name="showUnlock" type="Bool"><default>true</default></entry>
     <entry name="showJobs" type="Bool"><default>true</default></entry>
     <entry name="watchDownloads" type="Bool"><default>true</default></entry>
+    <entry name="trackDownloads" type="Bool"><default>true</default></entry>
+    <entry name="trackPackages" type="Bool"><default>true</default></entry>
+    <entry name="trackGit" type="Bool"><default>true</default></entry>
+    <entry name="trackTools" type="Bool"><default>true</default></entry>
+    <entry name="trackBackground" type="Bool"><default>false</default></entry>
+    <entry name="trackAnnounceEnd" type="Bool"><default>true</default></entry>
+    <entry name="trackMinSeconds" type="Int"><default>1</default></entry>
+    <entry name="trackMinKilobytes" type="Int"><default>1024</default></entry>
+    <entry name="trackSettleSeconds" type="Int"><default>3</default></entry>
+    <entry name="trackFolders" type="String"><default></default></entry>
+    <entry name="trackCommandsAdded" type="String"><default></default></entry>
+    <entry name="trackCommandsRemoved" type="String"><default></default></entry>
     <entry name="showKdeConnect" type="Bool"><default>true</default></entry>
     <entry name="showQuickSettings" type="Bool"><default>true</default></entry>
     <entry name="showUpdates" type="Bool"><default>true</default></entry>

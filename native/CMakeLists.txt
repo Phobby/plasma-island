@@ -54,6 +54,8 @@ qt_add_qml_module(dynamicislandcore
         core/updateschecker.h core/updateschecker.cpp
         core/islandservice.h core/islandservice.cpp
         core/downloadwatcher.h core/downloadwatcher.cpp
+        core/commandwatcher.h core/commandwatcher.cpp
+        core/packagekitwatcher.h core/packagekitwatcher.cpp
         core/secretstore.h core/secretstore.cpp
         core/loopbackserver.h core/loopbackserver.cpp
         core/localtools.h core/localtools.cpp

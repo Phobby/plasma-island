@@ -30,6 +30,11 @@ ConfigModel {
         source: "configActivities.qml"
     }
     ConfigCategory {
+        name: Lang.i18n("Download tracking")
+        icon: "download"
+        source: "configDownloads.qml"
+    }
+    ConfigCategory {
         name: Lang.i18n("Alerts")
         icon: "dialog-warning"
         source: "configAlerts.qml"

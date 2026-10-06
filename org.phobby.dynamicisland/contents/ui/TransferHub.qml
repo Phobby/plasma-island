@@ -5,10 +5,13 @@
       * one Live Activity for all running transfers: icon + progress ring
         (indeterminate when no percentage is known), count when several;
       * expanded card listing each transfer (TransfersCard);
-      * when a transfer ends: "Completed"/"Sent" (with file name, open button)
-        or a red "Failed" event, then it is removed.
+      * when a transfer ends: "Downloaded"/"Completed"/"Sent" (what, how
+        large, how long, a button to open it), a red "Failed", a plain
+        "Cancelled", or a plain "Finished" when nothing says how it ended;
+        then it is removed.
 */
 import QtQuick
+import "TransferFormat.js" as Fmt
 
 Item {
     id: hub
@@ -28,37 +31,54 @@ Item {
 
     function add(t: TransferActivity): void {
         if (transfers.indexOf(t) >= 0) return;
+        if (t.startedAt <= 0) t.startedAt = clock();
         transfers = transfers.concat([t]);
     }
 
-    // Called by providers when a transfer ends (state already set on `t`).
-    function finish(t: TransferActivity): void {
+    // The time (ms) transfers are stamped with; a test hands in its own.
+    property var clock: () => Date.now()
+    readonly property bool comma: Lang.language === "tr"
+    function size(bytes: real): string { return Fmt.bytes(bytes, comma); }
+
+    // Called by providers when a transfer ends (state already set on `t`): "Downloaded" /
+    // "Completed" / "Sent" in green with what it was, how large and how long it took; a red
+    // "Failed" only where something says so; a plain "Cancelled"; and a plain "Finished"
+    // where nothing tells how it ended (state "unknown"). `quiet`: taken off without a word.
+    function finish(t: TransferActivity, quiet: bool): void {
         transfers = transfers.filter(x => x !== t);
-        if (!enabled) return;
+        if (!enabled || quiet === true) return;
+        if (t.endedAt <= 0) t.endedAt = clock();
         const sent = t.kind === "upload" || t.kind === "send";
+        const fetched = t.kind === "download" || t.kind === "clone" || t.kind === "receive";
+        const bytes = t.totalBytes > 0 ? t.totalBytes : t.processedBytes;
+        const facts = [t.headline, bytes > 0 ? size(bytes) : "", t.elapsedSeconds >= 1 ? Fmt.duration(t.elapsedSeconds) : ""].filter(s => s).join(" · ");
+        const event = { key: "transfer-" + t.transferId, subtitle: facts };
         if (t.state === "done") {
-            manager.flash({
-                key: "transfer-" + t.transferId,
+            const folder = t.openUrl.length > 0 && t.openIsFolder;
+            Object.assign(event, {
                 icon: sent ? "document-send-symbolic" : "dialog-ok-apply-symbolic",
                 color: theme.live,
-                title: sent ? Lang.i18n("Sent") : Lang.i18n("Completed"),
-                subtitle: t.headline,
-                trailing: t.openUrl ? { type: "button", text: Lang.i18n("Open") } : null,
+                title: t.doneTitle.length > 0 ? t.doneTitle : sent ? Lang.i18n("Sent") : fetched ? Lang.i18n("Downloaded") : Lang.i18n("Completed"),
+                trailing: t.openUrl ? { type: "button", text: folder ? Lang.i18n("Open folder") : Lang.i18n("Open") } : null,
                 activate: t.openUrl ? (() => Qt.openUrlExternally(t.openUrl)) : undefined
             });
-        } else {
-            manager.flash({
-                key: "transfer-" + t.transferId,
+        } else if (t.state === "failed") {
+            Object.assign(event, {
                 icon: "dialog-error-symbolic",
                 color: theme.red,
                 title: Lang.i18n("Failed"),
-                subtitle: t.state === "cancelled" ? Lang.i18n("Cancelled · %1", t.headline)
-                        : t.errorText ? t.headline + " · " + t.errorText : t.headline,
-                trailing: t.state === "failed" && t.retryFn ? { type: "button", text: Lang.i18n("Try again") } : null,
-                activate: t.state === "failed" && t.retryFn ? t.retryFn : undefined,
+                subtitle: t.errorText ? t.headline + " · " + t.errorText : t.headline,
+                trailing: t.retryFn ? { type: "button", text: Lang.i18n("Try again") } : null,
+                activate: t.retryFn ? t.retryFn : undefined,
                 duration: 5000
             });
+        } else if (t.state === "cancelled") {
+            Object.assign(event, { icon: "dialog-cancel-symbolic", color: theme.subText, title: Lang.i18n("Cancelled"), subtitle: t.headline });
+        } else {
+            // it ended, and nothing says how
+            Object.assign(event, { icon: "dialog-information-symbolic", color: theme.subText, title: Lang.i18n("Finished") });
         }
+        manager.flash(event);
     }
 
     Activity {
@@ -74,7 +94,8 @@ Item {
         color: hub.theme.blue
         title: hub.count > 1 ? Lang.i18np("%1 transfer", "%1 transfers", hub.count) : (first ? first.headline : "")
         subtitle: first ? first.detail : ""
-        trailingText: hub.count > 1 ? String(hub.count) : ""
+        // several: how many; one whose size is not known: how much has arrived
+        trailingText: hub.count > 1 ? String(hub.count) : first && first.percent < 0 && first.processedBytes > 0 ? hub.size(first.processedBytes) : ""
         progress: hub.indeterminate ? -2 : hub.totalProgress
         expanded: Component { TransfersCard {} }
         Component.onCompleted: hub.manager.register(this)
