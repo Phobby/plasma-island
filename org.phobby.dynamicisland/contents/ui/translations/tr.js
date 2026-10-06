@@ -1187,5 +1187,7 @@ var table = {
     "“%1” starts soon.": "“%1” birazdan başlıyor.",
     "You did this by hand the last %1 times: %2. Shall I do it by myself?": "Son %1 seferde bunu elle yaptın: %2. Otomatik yapayım mı?",
     "Shall I do this by myself from now on? %1": "Bundan sonra bunu senin yerine yapayım mı? %1",
-    "I will not do this here any more": "Bunu bu durumda artık yapmayacağım"
+    "I will not do this here any more": "Bunu bu durumda artık yapmayacağım",
+    "Hide the cat": "Kediyi gizle",
+    "Cat settings": "Kedi ayarları"
 };

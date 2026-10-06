@@ -26,6 +26,7 @@ import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
 import "providers"
 import "backend"
+import "companion"
 
 PlasmoidItem {
     id: root
@@ -740,9 +741,10 @@ PlasmoidItem {
 
     // The island is laid out at its designed size and scaled as a whole (the size
     // setting); the window and the blur region are that much larger or smaller.
+    // (with a companion beside it the window keeps room for it on both sides, so the island stays in the middle)
     readonly property real windowWidth: (island.needsWideWindow ? theme.wideWidth
                                          : island.needsLargeWindow ? Math.max(theme.expandedWidth, theme.notificationWidth, theme.eventWidth)
-                                         : 2 * theme.smallHalfWidth) + 2 * theme.windowSidePad
+                                         : 2 * theme.smallHalfWidth) + 2 * theme.windowSidePad + 2 * companion.reserve
     readonly property real windowHeight: (island.needsTallWindow ? theme.tallHeight
                                           : island.needsLargeWindow ? Math.max(theme.expandedHeight, theme.notificationHeight)
                                           : theme.pillHeight) + theme.windowTopPad + theme.windowBottomPad
@@ -835,6 +837,33 @@ PlasmoidItem {
                     { key: "clipboard", icon: "edit-paste", title: Lang.i18n("Clipboard"), component: clipboardPage,
                       visible: root.cfg.showClipboard && root.clipboardBackend !== null }
                 ]
+
+                // The companion: a cat beside the pill (contents/ui/companion). It reads from the island and
+                // the activities; it changes nothing of them, keeps nothing and asks nothing of the network.
+                Companion {
+                    id: companion
+                    island: island
+                    theme: root.islandTheme
+                    enabled: root.cfg.catEnabled
+                    sideSetting: root.cfg.catSide
+                    sizePercent: root.cfg.catSize
+                    fur: root.cfg.catFur
+                    furColor: root.cfg.catFurColor
+                    music: root.cfg.catMusic
+                    thoughts: root.cfg.catThoughts
+                    events: root.cfg.catEvents
+                    petting: root.cfg.catPetting
+                    clicks: root.cfg.catClicks
+                    noAnger: root.cfg.catNoAnger
+                    sulkSeconds: root.cfg.catSulkSeconds
+                    sleepSeconds: root.cfg.catSleepSeconds
+                    dotBehaviour: root.cfg.catDot
+                    reduceMotion: root.cfg.catReduceMotion
+                    spaceLeft: (dialog.x + dialog.width / 2 - root.screenRect.x) / root.islandTheme.scale
+                    spaceRight: (root.screenRect.x + root.screenRect.width - dialog.x - dialog.width / 2) / root.islandTheme.scale
+                    onHideRequested: root.cfg.catEnabled = false
+                    onSettingsRequested: Plasmoid.internalAction("configure").trigger()
+                }
             }
         }
     }
@@ -852,6 +881,8 @@ PlasmoidItem {
             item.region = Qt.binding(() => scaled(island.hitRect));
             item.radius = Qt.binding(() => island.hitRadius * theme.scale);
             item.region2 = Qt.binding(() => scaled(island.bubbleRect));
+            // the companion's body (a module from before it: the cat is only looked at)
+            if (item.shapes !== undefined) item.shapes = Qt.binding(() => companion.maskShapes.map(scaled));
             item.enabled = true;
         }
         onStatusChanged: if (status === Loader.Error) {
@@ -877,6 +908,35 @@ PlasmoidItem {
         }
         onStatusChanged: if (status === Loader.Error) {
             console.info("org.phobby.dynamicisland: native blur helper not installed, using opaque fallback");
+        }
+    }
+
+    // ---- the cat's poses, to look at (DYNAMICISLAND_CAT_GALLERY=1 when the shell starts) ---------
+    Loader {
+        active: root.core !== null && root.core.local !== null && typeof root.core.local.environment === "function"
+                && root.core.local.environment("DYNAMICISLAND_CAT_GALLERY").length > 0
+        sourceComponent: Window {
+            visible: true
+            width: 1180
+            height: 760
+            title: "Dynamic Island: cat poses"
+            color: theme.surface
+            IslandFlickable {
+                anchors.fill: parent
+                anchors.margins: 12
+                contentHeight: gallery.height
+                CatGallery {
+                    id: gallery
+                    width: parent.width
+                    fur: root.cfg.catFur
+                    furColor: root.cfg.catFurColor
+                    accent: theme.accent
+                    labelColor: theme.text
+                    bubbleFill: theme.surface
+                    bubbleRim: theme.mix(theme.surface, theme.text, 0.3)
+                    bubbleInk: theme.text
+                }
+            }
         }
     }
 

@@ -261,6 +261,29 @@
     <entry name="cloudAlerted" type="String"><default>{}</default></entry>
     <entry name="cloudLastTarget" type="String"><default></default></entry>
 
+    <!-- The companion: a cat beside the island (Settings → Cat; contents/ui/companion). What it feels is never kept. -->
+    <entry name="catEnabled" type="Bool"><default>true</default></entry>
+    <!-- 0 = automatic (the side that is free), 1 = left, 2 = right -->
+    <entry name="catSide" type="Int"><default>0</default></entry>
+    <!-- its height, in per cent of the pill's -->
+    <entry name="catSize" type="Int"><default>130</default><min>100</min><max>180</max></entry>
+    <!-- grey | orange | black | white | tuxedo | custom (then catFurColor) -->
+    <entry name="catFur" type="String"><default>grey</default></entry>
+    <entry name="catFurColor" type="String"><default>#c9a27c</default></entry>
+    <!-- what it reacts to: music (headphones), the AI and questions (bubbles), events -->
+    <entry name="catMusic" type="Bool"><default>true</default></entry>
+    <entry name="catThoughts" type="Bool"><default>true</default></entry>
+    <entry name="catEvents" type="Bool"><default>true</default></entry>
+    <!-- what may be done to it -->
+    <entry name="catPetting" type="Bool"><default>true</default></entry>
+    <entry name="catClicks" type="Bool"><default>true</default></entry>
+    <entry name="catNoAnger" type="Bool"><default>false</default></entry>
+    <entry name="catSulkSeconds" type="Int"><default>10</default><min>3</min><max>120</max></entry>
+    <entry name="catSleepSeconds" type="Int"><default>20</default><min>5</min><max>3600</max></entry>
+    <!-- while the island is a dot: 0 = hidden, 1 = asleep beside the dot -->
+    <entry name="catDot" type="Int"><default>0</default></entry>
+    <entry name="catReduceMotion" type="Bool"><default>false</default></entry>
+
     <!-- Not in the settings window: draws the outline of where the island takes the pointer (also with
          the environment variable DYNAMICISLAND_DEBUG_REGION) -->
     <entry name="debugInputRegion" type="Bool"><default>false</default></entry>

@@ -54,6 +54,17 @@ Item {
         enabled: island.ambientGlow && !island.dot
         backend: island.backend
     }
+    // For who stands beside the island (the companion): the music's beats, while the glow follows
+    // them anyway (nobody else starts the listening), and how far what is right of the pill
+    // (the split island's bubble, the privacy dots) reaches beyond its edge.
+    readonly property bool musicBeats: glow.following
+    signal musicBeat(real strength)
+    Connections {
+        target: glow
+        function onBeat(strength) { island.musicBeat(strength); }
+    }
+    readonly property real besideRight: (split ? theme.splitGap + theme.bubbleSize : 0)
+        + (privacyDots.visible && manager.indicators.length > 0 ? 8 + manager.indicators.length * (theme.privacyDotSize + privacyDots.spacing) + 2 : 0)
     // Provider pages for the expanded view: [{ key, icon, title, component, visible }]
     property var extraPages: []
     property string pageOrder: ""

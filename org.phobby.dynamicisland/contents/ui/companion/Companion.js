@@ -291,6 +291,17 @@ function hover(s, ctx, now, inside) {
     return came && s.mood === "sulk" ? ["shoo"] : [];
 }
 
+// ---- where it sits ---------------------------------------------------------------------------
+// The side of the island: setting 0 = by itself, 1 = left, 2 = right. By itself is the left: what
+// the island puts beside itself (the split island's bubble, the privacy dots) is on the right.
+// Where the side wanted has no room on the screen and the other has (roomLeft, roomRight: from
+// the open island's edge to the screen's; need: the cat and its bubble), it is the other.
+function sideFor(setting, roomLeft, roomRight, need) {
+    const want = setting === 2 ? "right" : "left";
+    const room = want === "left" ? roomLeft : roomRight, across = want === "left" ? roomRight : roomLeft;
+    return room >= need || across < need ? want : want === "left" ? "right" : "left";
+}
+
 // ---- telling a stroke from a pointer passing by ----------------------------------------
 // The pointer's x over the cat, as it moves. A stroke goes back and forth: a turn is counted
 // when the pointer has come back T.petDistance (of the cat's width) from where it last turned.

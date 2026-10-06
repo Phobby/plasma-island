@@ -47,6 +47,9 @@ Item {
     }
     Binding { target: levels.item; property: "active"; value: glow.listening; when: levels.item !== null }
     Binding { target: levels.item; property: "target"; value: glow.audioTarget; when: levels.item !== null }
+    // The music is really followed (the native module is there): its beats are handed on.
+    readonly property bool following: listening && levels.item !== null
+    signal beat(real strength)
     readonly property real level: levels.item && glow.listening ? levels.item.level : 0
     readonly property real bass: levels.item && glow.listening ? levels.item.bass : 0
 
@@ -69,6 +72,7 @@ Item {
             if (!glow.listening) return;
             popAnim.peak = 0.5 + 0.5 * strength;
             popAnim.restart();
+            glow.beat(strength);
         }
     }
 

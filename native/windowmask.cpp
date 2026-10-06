@@ -74,6 +74,16 @@ void WindowMask::setRegion2(const QRectF &region)
     scheduleApply();
 }
 
+void WindowMask::setShapes(const QVariantList &shapes)
+{
+    if (m_shapes == shapes) {
+        return;
+    }
+    m_shapes = shapes;
+    Q_EMIT shapesChanged();
+    scheduleApply();
+}
+
 void WindowMask::setEnabled(bool enabled)
 {
     if (m_enabled == enabled) {
@@ -122,6 +132,15 @@ void WindowMask::apply()
         const qreal r2 = qMin(m_region2.width(), m_region2.height()) / 2.0;
         second.addRoundedRect(m_region2, r2, r2);
         region += QRegion(second.toFillPolygon().toPolygon());
+    }
+    for (const QVariant &shape : std::as_const(m_shapes)) {
+        const QRectF box = shape.toRectF();
+        if (box.width() < 1 || box.height() < 1) {
+            continue;
+        }
+        QPainterPath ellipse;
+        ellipse.addEllipse(box);
+        region += QRegion(ellipse.toFillPolygon().toPolygon());
     }
     m_window->setMask(region);
     ++m_applied;

@@ -33,6 +33,9 @@ public:
     Q_INVOKABLE QString findExecutable(const QString &name) const;
     // The user's data directory ($XDG_DATA_HOME, else ~/.local/share).
     Q_INVOKABLE QString dataHome() const;
+    // An environment variable of the shell's ("" when it is not set): hidden switches for looking
+    // at things (DYNAMICISLAND_CAT_GALLERY).
+    Q_INVOKABLE QString environment(const QString &name) const;
     // The first `maxBytes` of a text file ("~/" = home); "" if it cannot be read.
     Q_INVOKABLE QString readTextFile(const QString &path, int maxBytes = 65536) const;
     // Size of a file in bytes; -1 if there is none.

@@ -45,6 +45,11 @@ QString LocalTools::dataHome() const
     return QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
 }
 
+QString LocalTools::environment(const QString &name) const
+{
+    return qEnvironmentVariable(name.toUtf8().constData());
+}
+
 QString LocalTools::readTextFile(const QString &path, int maxBytes) const
 {
     QFile file(expand(path));
