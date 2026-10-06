@@ -55,6 +55,13 @@ if [ -n "$runner" ]; then
     # (KDE's colour button asks for KDE's own i18n, which a bare QML engine does not have)
     out="$(QT_QPA_PLATFORM=offscreen "$runner" -input tests -silent 2>&1)" || failed=1
     printf '%s\n' "$out" | grep -v -E "^(Testing|\*\*\*)|i18nc is not defined" || true
+    # The companion with the desktop's own animations switched off: Plasma's units read that from
+    # the desktop's configuration, so this one file runs again with a configuration that has them off.
+    still="$(mktemp -d)"
+    printf '[KDE]\nAnimationDurationFactor=0\n' > "$still/kdeglobals"
+    out="$(XDG_CONFIG_HOME="$still" QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME=kde XDG_CURRENT_DESKTOP=KDE "$runner" -input tests/still/tst_companion_still.qml -silent 2>&1)" || failed=1
+    printf '%s\n' "$out" | grep -E "^(FAIL|SKIP|   |Totals)" | sed 's/^Totals/Totals (animations off)/' || true
+    rm -rf "$still"
 else
     echo "qmltestrunner not found: skipped"
 fi

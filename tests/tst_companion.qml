@@ -12,6 +12,7 @@
     The times are shortened here (the controller's `tuning`), never the clock.
 */
 import QtQuick
+import QtQuick.Window
 import QtTest
 import "../org.phobby.dynamicisland/contents/ui"
 import "../org.phobby.dynamicisland/contents/ui/companion"
@@ -22,6 +23,12 @@ Item {
     id: root
     width: 900
     height: 320
+
+    // Frames the window drew, and (with the native module) this process's memory.
+    property int frames: 0
+    Connections { target: root.Window.window; function onFrameSwapped() { root.frames += 1; } }
+    Loader { id: tools; source: "../org.phobby.dynamicisland/contents/ui/LocalBridge.qml" }
+    readonly property var local: tools.status === Loader.Ready ? tools.item : null
 
     Theme { id: islandTheme; follow: false }
     ActivityManager { id: activities; maxEventAge: 400 }
@@ -526,6 +533,77 @@ Item {
             asleep();
             tryCompare(cat, "quick", false, 3000);
             compare([cat.loop, mind.timer.running, mind.nextDue], ["breath", false, -1], "asleep: the slow breath, and no timer of the mind");
+        }
+
+        // ---- what it costs ---------------------------------------------------------------------------
+        // Frames drawn in a while (ms), once what was on its way has come to rest.
+        function drawn(ms) { wait(900); const from = root.frames; wait(ms); return root.frames - from; }
+        // (the island's clock may tick over in that while: a frame or two are nobody's)
+        readonly property int stray: 2
+        function test_24_frames() {
+            // (chance says "as late as can be": no fidget falls into the measuring)
+            mind.random = () => 0.999;
+            companion.enabled = false; companion.enabled = true;
+            // (the island's own first moments are not the cat's)
+            tryVerify(() => drawn(300) === 0, 8000, "the island comes to rest");
+            companion.enabled = false; companion.enabled = true;        // (its fidgets are counted from now)
+            let n = drawn(2000);
+            verify(n <= stray, "sitting still: nothing is drawn (" + n + " frames in 2 s)");
+            // asleep: a breath in steps, the letters of sleep; a few frames a second
+            asleep();
+            tryCompare(find("companionCat"), "quick", false, 3000);
+            n = drawn(4000);
+            verify(n >= 6 && n <= 20, "asleep: " + n + " frames in 4 s");
+            companion.reduceMotion = true;
+            n = drawn(2000);
+            verify(n <= stray, "asleep, motion reduced: none (" + n + ")");
+            companion.reduceMotion = false;
+            // nodding to music with no beat to follow: the steps of the nod, not the screen's rate
+            mind.sleepAfter = 600000;
+            media.active = true;
+            tryCompare(mind, "body", "listen", 3000);
+            tryCompare(mind, "bubble", "", 3000);
+            n = drawn(3000);
+            verify(n >= 40 && n <= 75, "nodding: " + n + " frames in 3 s");
+            media.active = false;
+            tryCompare(mind, "accessory", "");
+            // hidden: nothing at all
+            island.dot = true;
+            tryCompare(spot(), "visible", false);
+            settled();
+            n = drawn(2000);
+            verify(n <= stray, "hidden: nothing is drawn (" + n + ")");
+            mind.random = () => Math.random();
+        }
+        // A thousand changes of everything: no object is left behind, and the memory stays where it was.
+        function test_25_a_thousand_changes_leave_nothing_behind() {
+            const count = () => { let n = 0; const walk = o => { ++n; for (const c of o.children) walk(c); if (o.contentItem && typeof o.flick === "function") walk(o.contentItem); }; walk(island); return n; };
+            const rss = () => root.local !== null ? Number(/VmRSS:\s+(\d+)/.exec(root.local.readTextFile("/proc/self/status", 8000))[1]) / 1024 : 0;
+            const cat = find("companionCat");
+            const round = i => {
+                media.active = i % 2 === 0;
+                fakeAi.busy = i % 3 === 0;
+                habit.active = i % 5 === 0;
+                if (i % 4 === 0) mind.clicked();
+                if (i % 6 === 0) { for (let k = 0; k < 8; ++k) mind.pointerAt(k % 2 ? 4 : 30, 44); }
+                mind.hovered(i % 2 === 1);
+                if (i % 7 === 0) mind.notice(["perk", "cheer", "tired", "answer"][i % 4]);
+                cat.gesture(["blink", "tail", "ear", "hop", "lick", "yawn", "shoo"][i % 7]);
+                if (i % 50 === 0) { companion.sideSetting = companion.sideSetting === 2 ? 0 : 2; island.dot = !island.dot; }
+                if (i % 20 === 0) wait(25); else wait(2);
+            };
+            mind.sulkFor = 60;
+            for (let i = 0; i < 150; ++i) round(i);
+            gc(); wait(300); gc();
+            const objects = count(), before = rss();
+            const bodies = {};
+            for (let i = 150; i < 1150; ++i) { round(i); bodies[mind.body] = true; }
+            gc(); wait(300); gc();
+            verify(Object.keys(bodies).length >= 6, "it went through its poses: " + Object.keys(bodies));
+            compare(count(), objects, "no item was left behind");
+            if (root.local === null) skip("the native module is not built (./install.sh): the memory was not read");
+            const grown = rss() - before;
+            verify(grown < 4, "memory grew by " + grown.toFixed(1) + " MB over a thousand changes (" + before.toFixed(1) + " MB before)");
         }
     }
 }

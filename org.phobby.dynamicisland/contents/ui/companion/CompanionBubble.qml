@@ -53,7 +53,7 @@ Item {
 
     // ---- steps ---------------------------------------------------------------------
     // [one round (ms), steps in it]
-    readonly property var pace: drawn === "dots" ? [1200, 4] : drawn === "zzz" ? [3200, 4] : drawn === "heart" ? [1500, 15] : drawn === "hiss" ? [240, 2] : [0, 0]
+    readonly property var pace: drawn === "dots" ? [1400, 4] : drawn === "zzz" ? [4000, 4] : drawn === "heart" ? [1500, 15] : drawn === "hiss" ? [240, 2] : [0, 0]
     property int step: 0
     readonly property real phase: fixedPhase >= 0 ? fixedPhase : pace[1] > 0 ? (step % pace[1]) / pace[1] : 0
     Timer {

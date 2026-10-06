@@ -86,30 +86,30 @@ const INTO = { sleep: 520, purr: 260, wake: 380, sit: 320, sulk: 360, angry: 170
 function into(name, from) { return from === "sleep" || from === "purr" || from === "wake" ? Math.max(360, INTO[name] || 280) : INTO[name] || 280; }
 
 // ---- what happens once: a gesture, g from 0 to 1 --------------------------------------------
-// [how long (ms), what it adds to the pose at g]
+// [how long (ms), what it adds to the pose at g, frames a second it is worth (default: all there are)]
 const bump = g => Math.sin(Math.PI * g);
 const GESTURES = {
-    tail: [900, g => ({ sway: Math.sin(g * Math.PI * 3) * (1 - g) })],
+    tail: [900, g => ({ sway: Math.sin(g * Math.PI * 3) * (1 - g) }), 15],
     // "go away": two sharp flicks
-    shoo: [620, g => ({ sway: 1.7 * Math.sin(g * Math.PI * 4) * (1 - 0.5 * g) })],
-    ear: [420, g => ({ earR: 24 * Math.abs(Math.sin(g * Math.PI * 2)) * (1 - 0.4 * g) })],
-    perk: [320, g => ({ ky: -1.6 * bump(g), earH: 0.1 * bump(g) })],
+    shoo: [620, g => ({ sway: 1.7 * Math.sin(g * Math.PI * 4) * (1 - 0.5 * g) }), 15],
+    ear: [420, g => ({ earR: 24 * Math.abs(Math.sin(g * Math.PI * 2)) * (1 - 0.4 * g) }), 15],
+    perk: [320, g => ({ ky: -1.6 * bump(g), earH: 0.1 * bump(g) }), 20],
     hop: [400, g => ({ dy: -4.6 * bump(g), sy: g > 0.86 ? -0.07 * bump((g - 0.86) / 0.14) : 0.05 * bump(Math.min(1, g / 0.86)),
                        sx: g > 0.86 ? 0.07 * bump((g - 0.86) / 0.14) : 0 })],
-    flinch: [340, g => ({ jx: 1.5 * Math.sin(g * Math.PI * 5) * (1 - g), ky: 1.2 * bump(g), krot: -4 * bump(g) })],
-    turn: [300, g => ({ sx: -0.1 * bump(g) })],
-    yawn: [950, g => { const o = Math.pow(bump(g), 0.6); return { mouth: 0.95 * o, eyeTimes: 1 - o, krot: -5 * o, ky: -1 * o, earL: 10 * o, earR: 10 * o }; }],
-    stretch: [820, g => { const o = Math.pow(bump(g), 0.7); return { mouth: 0.6 * o, sx: 0.05 * o, plx: -2 * o, prx: -2 * o, hy: -1.2 * o }; }],
+    flinch: [340, g => ({ jx: 1.5 * Math.sin(g * Math.PI * 5) * (1 - g), ky: 1.2 * bump(g), krot: -4 * bump(g) }), 24],
+    turn: [300, g => ({ sx: -0.1 * bump(g) }), 15],
+    yawn: [950, g => { const o = Math.pow(bump(g), 0.6); return { mouth: 0.95 * o, eyeTimes: 1 - o, krot: -5 * o, ky: -1 * o, earL: 10 * o, earR: 10 * o }; }, 20],
+    stretch: [820, g => { const o = Math.pow(bump(g), 0.7); return { mouth: 0.6 * o, sx: 0.05 * o, plx: -2 * o, prx: -2 * o, hy: -1.2 * o }; }, 20],
     // a paw to the mouth, three licks
     lick: [1900, g => {
         const up = Math.min(1, g / 0.16, (1 - g) / 0.14);
         const e = up * up * (3 - 2 * up), licks = Math.sin(g * Math.PI * 6);
         return { plx: (34.2 - SIT.plx) * e, ply: (35.6 + 1.1 * licks - SIT.ply) * e, ky: 2.4 * e, krot: -7 * e, eyeTimes: 1 - e, mouth: 0.24 * e * (licks > 0 ? 1 : 0.3) };
-    }]
+    }, 20]
 };
-// The eyes shut and open again.
-const BLINK = 230;
-function blink(g) { return 1 - 0.96 * Math.pow(bump(g), 0.5); }
+// The eyes shut and open again: too quick for anything in between, two frames in all.
+const BLINK = 140;
+function blink(g) { return 0.04; }
 // A nod on a beat of the music.
 const NOD = 270;
 function nod(g, strength) { const d = bump(Math.pow(g, 0.6)) * (0.6 + 0.4 * strength); return { ky: 1.5 * d, krot: 3.2 * d, try_: -0.3 * d }; }
@@ -118,19 +118,20 @@ function nod(g, strength) { const d = bump(Math.pow(g, 0.6)) * (0.6 + 0.4 * stre
 // [one round (ms), how many steps of it a second, what it adds at p]
 const wave = p => Math.sin(p * Math.PI * 2);
 const LOOPS = {
-    // asleep: the slowest breath, in a few steps
-    breath: [3400, 2.4, p => ({ try_: 0.5 * wave(p), trx: 0.35 * wave(p), ky: -0.3 * wave(p), hry: 0.25 * wave(p) })],
+    // asleep: the slowest breath, in a few steps. (Squash and lift only: what moves a part as a
+    // whole costs one frame a step, what changes a shape's outline costs more.)
+    breath: [3600, 2, p => ({ sy: 0.035 * wave(p), sx: 0.012 * wave(p), ky: -0.35 * wave(p) })],
     // no beat to follow: a calm nod, 80 to the minute
-    bob: [750, 22, p => { const d = Math.pow(Math.max(0, wave(p)), 1.4); return { ky: 1.5 * d, krot: 3.2 * d + 2.2 * Math.sin(p * Math.PI), sway: 0.25 * wave(p) }; }],
+    bob: [750, 20, p => { const d = Math.pow(Math.max(0, wave(p)), 1.4); return { ky: 1.5 * d, krot: 3.2 * d + 2.2 * Math.sin(p * Math.PI) }; }],
     // sulking: the tail sweeps
-    swish: [1700, 12, p => ({ sway: 0.9 * wave(p) })],
+    swish: [1700, 10, p => ({ sway: 0.9 * wave(p) })],
     // annoyed, angry: it lashes
-    lash: [520, 18, p => ({ sway: 0.8 * wave(p) })],
-    bristle: [520, 18, p => ({ sway: 0.35 * wave(p), jx: 0.32 * (Math.floor(p * 10) % 2 ? 1 : -1) })],
+    lash: [520, 16, p => ({ sway: 0.8 * wave(p) })],
+    bristle: [520, 16, p => ({ sway: 0.35 * wave(p), jx: 0.32 * (Math.floor(p * 8) % 2 ? 1 : -1) })],
     // stroked: a purr one can see, and the tail waves
-    purr: [1300, 24, p => ({ jx: 0.3 * (Math.floor(p * 30) % 2 ? 1 : -1), sway: 0.55 * wave(p), ky: 0.25 * wave(p * 2) })],
-    snore: [1300, 24, p => ({ jx: 0.24 * (Math.floor(p * 30) % 2 ? 1 : -1), try_: 0.3 * wave(p) })],
-    wag: [640, 20, p => ({ sway: 0.9 * wave(p) })]
+    purr: [1300, 20, p => ({ jx: 0.3 * (Math.floor(p * 26) % 2 ? 1 : -1), sway: 0.55 * wave(p), ky: 0.25 * wave(p * 2) })],
+    snore: [1300, 20, p => ({ jx: 0.24 * (Math.floor(p * 26) % 2 ? 1 : -1), sy: 0.02 * wave(p) })],
+    wag: [640, 16, p => ({ sway: 0.9 * wave(p) })]
 };
 // Which motion a body has (beats: the music's own beat is followed instead of the calm nod).
 function loopOf(body, beats) {
@@ -168,6 +169,8 @@ function ear(m, side, turned) {
              i2x: bx + ux * half * 0.52 + ax * 1.5, i2y: by + uy * half * 0.52 + ay * 1.5,
              itx: bx + ax * tall * 0.72, ity: by + ay * tall * 0.72 };
 }
+// (one and the same empty list, so that nothing is told of a change where there is none)
+const NONE = [];
 // The fur on end: tufts standing out from its sides and shoulders (none where it sits).
 function spikes(m) {
     const points = [], n = 9, cx = m.hx, cy = (m.ty + m.hy) / 2 + 1.5, rx = m.hrx + 0.6, ry = (m.hy + m.hry - (m.ty - m.try_)) / 2 + 0.4;
@@ -205,7 +208,7 @@ function compose(a, b, t, o) {
     m.t2x += 2.6 * m.sway;
     m.left = ear(m, -1, m.earL);
     m.right = ear(m, 1, m.earR);
-    m.spikes = m.puff > 0.02 ? spikes(m) : [];
+    m.spikes = m.puff > 0.02 ? spikes(m) : NONE;
     return m;
 }
 

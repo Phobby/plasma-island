@@ -153,14 +153,17 @@ Item {
     onLoopChanged: loopStart = clock
     readonly property real loopAt: loop === "" ? 0 : ((clock - loopStart) % Poses.LOOPS[loop][0]) / Poses.LOOPS[loop][0]
 
-    // Something is on its way that needs frames, and how many a second.
-    readonly property bool quick: poseAt < 1 || act !== "" || blinkAt >= 0 || nodAt >= 0 || clock - tiltStart < 280 || clock - phonesStart < 300
-    readonly property bool moving: !still && (quick || loop !== "")
+    // Something is on its way that needs frames, and how many a second: all of them for a change
+    // of pose or a nod, fewer for a flick of the tail, a few for a blink or a slow motion.
+    readonly property bool quick: poseAt < 1 || nodAt >= 0 || clock - tiltStart < 280 || clock - phonesStart < 300
+    readonly property bool moving: !still && (quick || act !== "" || blinkAt >= 0 || loop !== "")
+    readonly property real rate: quick ? fps
+        : Math.max(act !== "" ? Math.min(fps, Poses.GESTURES[act][2] || fps) : 0, blinkAt >= 0 ? 12 : 0, loop !== "" ? Poses.LOOPS[loop][1] : 0, 1)
     Timer {
         id: ticker
         repeat: true
         running: cat.running && cat.fixed === null && cat.moving
-        interval: Math.round(1000 / (cat.quick || cat.loop === "" ? cat.fps : Poses.LOOPS[cat.loop][1]))
+        interval: Math.round(1000 / cat.rate)
         onRunningChanged: cat.last = Date.now()
         onTriggered: {
             const now = Date.now();
