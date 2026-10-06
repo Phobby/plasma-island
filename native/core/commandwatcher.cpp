@@ -142,6 +142,11 @@ void CommandWatcher::consider(const Process &p)
         return;
     }
     QStringList args = arguments(p.pid);
+    // Ended and not buried yet (a zombie), or gone since the list was read: a
+    // name without a command line. (It may get one still: not put aside for good.)
+    if (args.isEmpty()) {
+        return;
+    }
     QString name = p.name;
     // A script: the process is named after what runs it ("node …/npm-cli.js", "python3 /usr/bin/pip").
     static const QRegularExpression runner(QStringLiteral("^(python[0-9.]*|node|nodejs)$"));

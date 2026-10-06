@@ -289,6 +289,22 @@ Item {
             compare([root.log.length, titles()], [2, []]);
         }
 
+        // A process that has ended and is not buried yet (a zombie), or one that ends while it is
+        // looked at, has a name and no command line: there is nothing to read, and nothing breaks.
+        function test_6b_a_process_without_a_command_line() {
+            process(80, "wget", "", 10);
+            process(81, "git", "", 10);
+            process(82, "apt", "", 10);
+            process(83, "python3", "", 10);
+            look();
+            look();
+            compare([root.log, root.watcher.count], [[], 0]);
+            // the watcher still works
+            process(84, "wget", "wget|-q|https://files.example.org/big.iso", 10);
+            look();
+            compare(root.log, ["start wget download [] files.example.org "]);
+        }
+
         function test_7_switched_off_nothing_is_looked_at() {
             provider.tools = false; provider.clones = false;
             tryVerify(() => root.watcher.commands.every(c => c.kind === "packages"));
