@@ -54,14 +54,26 @@ Item {
     readonly property bool interacting: visible && typing && (view === "chat" || view === "form" || view === "models")
     readonly property bool holdOpen: visible && ai.busy && !letGo
     // The conversation and the lists scroll with the wheel; an empty chat lets it turn the page.
-    readonly property bool keepsWheel: visible && (view === "chat" ? ai.messages.length > 0 || ai.busy
+    // A conversation scrolled to its end holds there: the wheel that brought it there does not
+    // turn the page. Let go and scrolled on from the end, it does (`wheelFree`).
+    property bool wheelFree: false
+    // One scroll: wheel steps with less than this between them (ms).
+    property int wheelPause: 350
+    readonly property Timer wheelRest: Timer { interval: page.wheelPause; onTriggered: page.wheelFree = false }
+    // A wheel step over the conversation, before it is scrolled by it. down: towards the end.
+    function wheeled(down: bool, atEdge: bool): void {
+        if (!wheelRest.running) wheelFree = atEdge;
+        wheelRest.restart();
+    }
+    readonly property bool keepsWheel: visible && (view === "chat" ? (ai.messages.length > 0 || ai.busy) && !wheelFree
                                                    : view === "models" || view === "sources" || view === "kinds" || view === "form")
     // A conversation needs more room than the other pages: the taller island.
     readonly property bool tall: visible && (view === "chat" ? ai.messages.length > 0 || ai.busy || typing : view !== "cards")
 
     Binding { target: page.ai; property: "viewing"; value: page.visible; restoreMode: Binding.RestoreNone }
     Component.onDestruction: ai.viewing = false
-    onVisibleChanged: if (visible) arrive(); else typing = false
+    // (arrived at by the wheel: what is left of that scroll does not go on to the next page)
+    onVisibleChanged: { wheelFree = false; if (visible) { wheelRest.restart(); arrive(); } else typing = false; }
     Component.onCompleted: arrive()
     function arrive(): void {
         if (!visible) return;
@@ -484,6 +496,16 @@ Item {
             onContentHeightChanged: toEnd()
             onHeightChanged: toEnd()
             onMovementEnded: stick = atYEnd
+            // Sees every wheel step and takes none: the conversation scrolls as it does.
+            WheelHandler {
+                blocking: false
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                onWheel: event => {
+                    if (event.angleDelta.y === 0) return;
+                    const down = event.angleDelta.y < 0;
+                    page.wheeled(down, down ? scroll.atYEnd : scroll.atYBeginning);
+                }
+            }
 
             Column {
                 id: column

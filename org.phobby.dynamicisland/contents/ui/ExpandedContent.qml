@@ -46,6 +46,16 @@ Item {
     // A page keeps the wheel for a list of its own (e.g. the places a search
     // found): it scrolls that list and does not turn the page.
     property bool wheelKept: false
+    // Only the page that is shown is asked: a page that is left gives the wheel
+    // up a moment after the one arrived at has taken it.
+    function refreshWheel(): void {
+        let kept = false;
+        for (let i = 0; i < pageLoaders.count; ++i) {
+            const loader = pageLoaders.itemAt(i);
+            if (loader && loader.pos === currentIndex && loader.pageKeepsWheel) kept = true;
+        }
+        wheelKept = kept;
+    }
     // A page asks for the wider island (Theme.wideWidth). The header keeps its
     // usual width in the middle, so the tabs do not move from under the pointer.
     property bool wide: false
@@ -83,7 +93,7 @@ Item {
         const i = visibleKeys.indexOf(currentKey);
         return i >= 0 ? i : Math.max(0, Math.min(lastIndex, visibleKeys.length - 1));
     }
-    onCurrentIndexChanged: if (visibleKeys.indexOf(currentKey) >= 0) lastIndex = currentIndex
+    onCurrentIndexChanged: { if (visibleKeys.indexOf(currentKey) >= 0) lastIndex = currentIndex; refreshWheel(); }
     // The current page itself disappeared: settle on its neighbour.
     onVisibleKeysChanged: if (currentKey !== "" && visibleKeys.length > 0 && visibleKeys.indexOf(currentKey) < 0) {
         currentKey = visibleKeys[Math.max(0, Math.min(lastIndex, visibleKeys.length - 1))];
@@ -352,6 +362,7 @@ Item {
                 }
 
                 Repeater {
+                    id: pageLoaders
                     model: expanded.allKeys
                     delegate: Loader {
                         id: pageLoader
@@ -378,7 +389,7 @@ Item {
                         readonly property bool pageHolding: item !== null && item.holdOpen === true
                         onPageHoldingChanged: expanded.holding = pageHolding
                         readonly property bool pageKeepsWheel: item !== null && item.keepsWheel === true
-                        onPageKeepsWheelChanged: expanded.wheelKept = pageKeepsWheel
+                        onPageKeepsWheelChanged: expanded.refreshWheel()
                         readonly property bool pageWide: item !== null && item.wide === true
                         onPageWideChanged: expanded.wide = pageWide
                         readonly property bool pageTall: item !== null && item.tall === true
@@ -394,6 +405,7 @@ Item {
                 // buttons) or keeps the wheel (e.g. the places a search found):
                 // there the wheel scrolls that page's list. A list lets the
                 // wheel through at its end, so without this it would turn the page.
+                // (The AI chat gives the wheel back for a scroll that starts at its end.)
                 enabled: !expanded.holding && !expanded.wheelKept
                 property real acc: 0
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad

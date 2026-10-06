@@ -53,6 +53,8 @@ Item {
     }
     Component { id: aiPage; AiPage { theme: islandTheme; ai: backend } }
     Component { id: otherPage; Item {} }
+    // (a page that keeps the wheel for a list of its own while it is shown)
+    Component { id: keeperPage; Item { readonly property bool keepsWheel: visible } }
 
     Island {
         id: island
@@ -65,10 +67,11 @@ Item {
         showNotificationModule: false
         hoverDelay: 60
         collapseDelay: 200
-        pageOrder: "ai,other"
+        pageOrder: "ai,other,keeper"
         extraPages: [
             { key: "ai", icon: "dialog-messages", title: "AI", component: aiPage, visible: true },
-            { key: "other", icon: "chronometer", title: "Other", component: otherPage, visible: true }
+            { key: "other", icon: "chronometer", title: "Other", component: otherPage, visible: true },
+            { key: "keeper", icon: "view-list-details", title: "Keeper", component: keeperPage, visible: true }
         ]
     }
 
@@ -118,6 +121,62 @@ Item {
             pointerAway();
             tryCompare(island, "expanded", false, 3000);
             tryCompare(backend, "viewing", false);
+        }
+
+        // The wheel in a conversation: it scrolls it, holds at its end, and turns the page
+        // only for a scroll that starts there.
+        function notch(item, direction) {
+            const at = item.mapToItem(root, item.width / 2, item.height / 2);
+            mouseWheel(root, at.x, at.y, 0, 120 * direction);
+        }
+        function test_0_the_wheel_holds_at_the_end_of_a_conversation() {
+            pointerOn();
+            island.openPage("ai");
+            tryVerify(() => page() !== null);
+            const p = page(), c = content();
+            tryCompare(p, "visible", true);
+            let lines = "";
+            for (let i = 1; i <= 60; ++i) lines += "Line " + i + " of a long answer.\n\n";
+            backend.messages = [{ role: "user", text: "Tell me a lot.", source: backend.sources[0].id }, { role: "assistant", text: lines, source: backend.sources[0].id }];
+            const scroll = find(item => item.objectName === "conversation");
+            tryVerify(() => scroll.contentHeight > scroll.height * 2, 3000);
+            tryCompare(island, "tall", true);
+            wait(600);
+            scroll.contentY = 0;
+            wait(p.wheelPause + 150);
+            compare([c.wheelKept, scroll.atYBeginning], [true, true]);
+
+            // one scroll, all the way down and on: the end holds it
+            let steps = 0;
+            while (!scroll.atYEnd && steps++ < 200) { notch(scroll, -1); wait(40); }
+            verify(scroll.atYEnd, "scrolled to the end");
+            for (let i = 0; i < 6; ++i) { notch(scroll, -1); wait(40); }
+            compare([c.currentKey, scroll.atYEnd], ["ai", true], "the scroll that reached the end does not turn the page");
+            // let go, then scrolled on: the next page
+            wait(p.wheelPause + 150);
+            notch(scroll, -1);
+            tryCompare(c, "currentKey", "other", 2000);
+            wait(500);
+
+            // back, and up from the end: that scrolls the conversation
+            c.showPage("ai");
+            tryCompare(p, "visible", true);
+            wait(p.wheelPause + 500);
+            verify(scroll.atYEnd);
+            notch(scroll, 1);
+            wait(300);
+            compare([c.currentKey, scroll.atYEnd], ["ai", false]);
+
+            // a page that kept the wheel is left for the conversation: the wheel stays kept
+            c.showPage("keeper");
+            wait(600);
+            compare(c.wheelKept, true);
+            c.showPage("ai");
+            wait(600 + p.wheelPause);
+            compare([c.currentKey, c.wheelKept], ["ai", true], "the page that was left does not give the wheel away");
+            c.showPage("other");
+            wait(600);
+            compare(c.wheelKept, false);
         }
 
         function test_1_taller_for_a_conversation() {
