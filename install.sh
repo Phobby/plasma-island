@@ -35,6 +35,7 @@ done
 if [[ $remove -eq 1 ]]; then
     kpackagetool6 -t Plasma/Applet -r "$ID" || true
     rm -rf "$QML_DIR/org/phobby/dynamicisland"
+    rmdir "$QML_DIR/org/phobby" "$QML_DIR/org" 2>/dev/null || true     # only when nothing else is in them
     rm -f "$ENV_FILE"
     rm -f "$BIN_DIR/island-push"
     echo "Removed. Restart plasmashell: systemctl --user restart plasma-plasmashell"
