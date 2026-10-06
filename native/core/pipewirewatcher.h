@@ -4,6 +4,7 @@
 #include <QHash>
 #include <QJsonObject>
 #include <QObject>
+#include <QElapsedTimer>
 #include <QProcess>
 #include <QTimer>
 #include <QtQml/qqmlregistration.h>
@@ -46,6 +47,7 @@ Q_SIGNALS:
 private:
     void start();
     void stop();
+    void ended();
     void readOutput();
     void applyChunk(const QByteArray &json);
     void recompute();
@@ -66,5 +68,7 @@ private:
     QHash<int, Object> m_objects;
     QTimer m_recompute;
     QTimer m_restart;
+    QElapsedTimer m_lifetime; // of the running pw-dump
+    int m_retryDelay = 0;     // ms until it is started again
     QStringList m_mic, m_camera, m_screen;
 };

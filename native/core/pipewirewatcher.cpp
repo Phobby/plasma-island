@@ -6,6 +6,13 @@
 #include <QSet>
 #include <QStandardPaths>
 
+namespace
+{
+const int s_firstRetry = 3000;      // ms
+const int s_lastRetry = 5 * 60000;
+const int s_settled = 30000;        // a pw-dump that lived this long had a PipeWire to talk to
+}
+
 PipeWireWatcher::PipeWireWatcher(QObject *parent)
     : QObject(parent)
 {
@@ -13,23 +20,34 @@ PipeWireWatcher::PipeWireWatcher(QObject *parent)
     m_recompute.setInterval(120);
     connect(&m_recompute, &QTimer::timeout, this, &PipeWireWatcher::recompute);
 
-    // pw-dump exits if PipeWire restarts: come back after a short delay.
+    // pw-dump exits if PipeWire restarts: come back after a short delay (see ended()).
     m_restart.setSingleShot(true);
-    m_restart.setInterval(3000);
+    m_retryDelay = s_firstRetry;
     connect(&m_restart, &QTimer::timeout, this, &PipeWireWatcher::start);
 
     connect(&m_process, &QProcess::readyReadStandardOutput, this, &PipeWireWatcher::readOutput);
     connect(&m_process, &QProcess::stateChanged, this, &PipeWireWatcher::runningChanged);
-    connect(&m_process, &QProcess::finished, this, [this] {
-        m_objects.clear();
-        m_buffer.clear();
-        m_chunk.clear();
-        recompute();
-        if (m_enabled) {
-            m_restart.start();
-        }
-    });
+    connect(&m_process, &QProcess::finished, this, &PipeWireWatcher::ended);
     QTimer::singleShot(0, this, &PipeWireWatcher::start);
+}
+
+void PipeWireWatcher::ended()
+{
+    m_objects.clear();
+    m_buffer.clear();
+    m_chunk.clear();
+    recompute();
+    if (!m_enabled) {
+        return;
+    }
+    // One that ran for a while ended because PipeWire restarted: back in a moment. One that ends
+    // at once has no PipeWire to ask (a session without it): it is tried again ever more rarely,
+    // not as a new process every three seconds for as long as the session lasts.
+    if (m_lifetime.isValid() && m_lifetime.elapsed() >= s_settled) {
+        m_retryDelay = s_firstRetry;
+    }
+    m_restart.start(m_retryDelay);
+    m_retryDelay = qMin(m_retryDelay * 2, s_lastRetry);
 }
 
 PipeWireWatcher::~PipeWireWatcher()
@@ -59,6 +77,7 @@ void PipeWireWatcher::start()
         return;
     }
     m_process.setProcessChannelMode(QProcess::ForwardedErrorChannel);
+    m_lifetime.start();
     m_process.start(exe, {QStringLiteral("--monitor"), QStringLiteral("--no-colors")});
 }
 
@@ -71,7 +90,9 @@ void PipeWireWatcher::stop()
         m_process.waitForFinished(500);
         connect(&m_process, &QProcess::readyReadStandardOutput, this, &PipeWireWatcher::readOutput);
         connect(&m_process, &QProcess::stateChanged, this, &PipeWireWatcher::runningChanged);
+        connect(&m_process, &QProcess::finished, this, &PipeWireWatcher::ended);
     }
+    m_retryDelay = s_firstRetry;
     m_objects.clear();
     recompute();
 }

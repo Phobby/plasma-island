@@ -16,20 +16,25 @@ const float BassAlpha = 1.0f - std::exp(-2.0f * float(M_PI) * BassCutoff / Rate)
 constexpr float PeakFall = 0.997f;      // per frame: about -0.8 dB/s
 constexpr float PeakFloor = 0.004f;     // below this the signal counts as silence
 constexpr float Attack = 0.65f, Release = 0.18f;
+constexpr int FirstRetry = 2000, LastRetry = 5 * 60000;     // ms
+constexpr int Settled = 10000;                               // a pw-record that lived this long had something to record
 }
 
 AudioLevels::AudioLevels(QObject *parent)
     : QObject(parent)
 {
     m_retry.setSingleShot(true);
-    m_retry.setInterval(2000);
     connect(&m_retry, &QTimer::timeout, this, &AudioLevels::start);
     connect(&m_process, &QProcess::readyReadStandardOutput, this, &AudioLevels::read);
     connect(&m_process, &QProcess::stateChanged, this, &AudioLevels::runningChanged);
-    // The output went away (sink changed, PipeWire restarted): try again.
+    // The output went away (sink changed, PipeWire restarted): try again. One that ends at once has
+    // no PipeWire to record from: tried ever more rarely, not every two seconds while music plays.
     connect(&m_process, &QProcess::finished, this, [this] {
         reset();
-        if (m_active) m_retry.start();
+        if (!m_active) return;
+        if (m_lifetime.isValid() && m_lifetime.elapsed() >= Settled) m_retryDelay = FirstRetry;
+        m_retry.start(m_retryDelay);
+        m_retryDelay = qMin(m_retryDelay * 2, LastRetry);
     });
     m_process.setProcessChannelMode(QProcess::SeparateChannels);
     m_process.setStandardErrorFile(QProcess::nullDevice());
@@ -71,12 +76,14 @@ void AudioLevels::start()
     if (!m_target.isEmpty()) args << QStringLiteral("--target") << m_target;
     args << QStringLiteral("-");
     reset();
+    m_lifetime.start();
     m_process.start(program, args, QIODevice::ReadOnly);
 }
 
 void AudioLevels::stop()
 {
     m_retry.stop();
+    m_retryDelay = FirstRetry;
     if (isRunning()) {
         m_process.terminate();
         if (!m_process.waitForFinished(300)) m_process.kill();

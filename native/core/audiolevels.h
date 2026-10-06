@@ -63,6 +63,8 @@ private:
 
     QProcess m_process;
     QTimer m_retry;
+    QElapsedTimer m_lifetime;   // of the running pw-record
+    int m_retryDelay = 2000;    // ms until it is started again
     QElapsedTimer m_sinceBeat;
     QByteArray m_pending;
     QString m_target;
