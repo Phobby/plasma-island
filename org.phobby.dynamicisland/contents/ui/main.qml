@@ -916,7 +916,8 @@ PlasmoidItem {
 
     // ---- the cat's poses, to look at (DYNAMICISLAND_CAT_GALLERY=1 when the shell starts) ---------
     Loader {
-        active: root.core !== null && root.core.local !== null && typeof root.core.local.environment === "function"
+        // (a native module from before this has no `environment`: then there is no such switch)
+        active: root.core !== null && !!root.core.local && typeof root.core.local.environment === "function"
                 && root.core.local.environment("DYNAMICISLAND_CAT_GALLERY").length > 0
         sourceComponent: Window {
             visible: true
