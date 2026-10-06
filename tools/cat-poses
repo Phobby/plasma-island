@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# cat-poses — the companion's pose gallery as pictures, to look at.
+#
+#   tools/cat-poses [folder] [coat]    sheets of every pose and every frame of its
+#                                      motions (contents/ui/companion/CatGallery.qml),
+#                                      as PNG files in `folder` (default: tests/.run/cat-poses);
+#                                      coat: grey (default), orange, black, white, tuxedo
+#
+# Drawn off screen (qmltestrunner), so nothing shows on the desktop. The same
+# gallery is on the settings page ("Show all poses") and opens in a window
+# of its own when the island is started with DYNAMICISLAND_CAT_GALLERY=1.
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUT="$(mkdir -p "${1:-$HERE/tests/.run/cat-poses}" && cd "${1:-$HERE/tests/.run/cat-poses}" && pwd)"
+COAT="${2:-grey}"
+runner="$(command -v qmltestrunner || true)"
+for candidate in /usr/lib/qt6/bin/qmltestrunner /usr/lib64/qt6/bin/qmltestrunner; do
+    [ -z "$runner" ] && [ -x "$candidate" ] && runner="$candidate"
+done
+[ -n "$runner" ] || { echo "qmltestrunner not found" >&2; exit 1; }
+sheet="$(mktemp --suffix=.qml)"
+trap 'rm -f "$sheet"' EXIT
+cat > "$sheet" <<QML
+import QtQuick
+import QtTest
+import "file:$HERE/org.phobby.dynamicisland/contents/ui/companion"
+Rectangle {
+    id: root
+    width: 1200; height: gallery.height + 24
+    property string show: "bodies"
+    CatGallery { id: gallery; x: 12; y: 12; width: root.width - 24; cell: 120; show: root.show; fur: "$COAT" }
+    TestCase {
+        name: "CatPoses"
+        when: windowShown
+        function test_sheets() {
+            for (const show of ["bodies", "coats", "layers", "bubbles", "gestures", "motions", "changes"])
+                for (const ground of [["dark", "#2e3440"], ["light", "#dfe4ec"]]) {
+                    root.show = show; root.color = ground[1]; gallery.labelColor = ground[0] === "dark" ? "white" : "black";
+                    wait(150);
+                    grabImage(root).save("$OUT/" + show + "-" + ground[0] + ".png");
+                }
+        }
+    }
+}
+QML
+QT_QPA_PLATFORM=offscreen "$runner" -input "$sheet" -silent >/dev/null 2>&1 || { echo "the gallery did not draw" >&2; exit 1; }
+ls "$OUT"/*.png
