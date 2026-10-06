@@ -158,6 +158,10 @@ void CommandWatcher::consider(const Process &p)
         args.removeFirst();
     }
     const Command command = m_commands.value(name);
+    // (a script is named after itself and still starts with what runs it: "python3 /usr/bin/pip download")
+    if (args.size() > 1 && QFileInfo(args.at(0)).fileName() != name && QFileInfo(args.at(1)).fileName() == name) {
+        args.removeFirst();
+    }
     args.removeFirst();
 
     Tracked t;
@@ -349,7 +353,11 @@ void CommandWatcher::update(Tracked &t, const QList<Process> &all)
     }
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
     const qint64 ms = qMax<qint64>(1, now - t.lastSample);
-    if (ms >= 200) {
+    if (t.lastSample == t.startedAt) {
+        // the first look: what was there before it says nothing about the speed
+        t.lastSample = now;
+        t.bytes = bytes;
+    } else if (ms >= 200) {
         const double instant = qMax<qint64>(0, bytes - t.bytes) * 1000.0 / ms;
         t.speed = t.speed <= 0 ? instant : t.speed * 0.7 + instant * 0.3;
         if (t.speed < 1) {

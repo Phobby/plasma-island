@@ -224,8 +224,14 @@ one it left (`darkColorScheme` / `lightColorScheme`), so a custom scheme
 comes back; without one it takes the Light/Dark counterpart by name, else
 Breeze. NFC is not offered: Plasma has no NFC switch.
 **Activities** tab: priority order (up/down), split island on/off, keep
-playing media visible, watch the download folder, momentary event duration, a
+playing media visible, momentary event duration, a
 separate switch for every system event and live activity type.
+**Download tracking** tab: the main switch; the sources (browser downloads,
+packages, git clone, command-line downloaders); background jobs too (off by
+default); how long something must have lasted and how large a command-line
+download must be to be shown; whether the end is said; the watched folders
+and how long a finished file is waited for; the watched commands (the
+defaults can be switched off one by one, own names added).
 **Alerts** tab: low/critical battery threshold, Bluetooth device/phone battery
 threshold, CPU/GPU temperature threshold.
 **Calendar** tab: on/off, how many minutes before the start to pin (15), how
@@ -1364,6 +1370,18 @@ OSD keeps appearing too. Pick one of them:
 
 ## Known limitations
 
+- **Download tracking:** tried with the real programs: Zen (Flatpak) with a
+  5 MB and a 1.1 GB file, two at once and a second file of the same name;
+  `git clone` (done, a repository that does not exist, interrupted); `wget`,
+  `curl`, `pip download`, `apt download`; a PackageKit download. Not tried:
+  `sudo apt update/install` (needs a password; its stages, bytes and results
+  are only played with a made-up `/proc` and `/var` in the tests), a Chromium
+  browser and Firefox as a Snap (their sequences are replayed, not run),
+  pausing or cancelling inside the browser, a long PackageKit transaction's
+  percentage, Plasma Browser Integration (its extension is not installed in
+  either browser here). `user.xdg.origin.url` is read for the host where a
+  browser writes it; Zen does not.
+
 - **Click region on X11:** written for both, but tried only on Wayland. On
   X11 `setMask` also clips what is drawn, so the shadow and the glow outside
   the shape may be cut there.
@@ -1456,9 +1474,13 @@ OSD keeps appearing too. Pick one of them:
 ## File transfers: what can and cannot be tracked
 
 All transfers are shown through the shared `TransferActivity`/`TransferHub`:
-source name, percentage, time left (mm:ss) and "Completed"/"Sent" or a red
-"Failed" at the end. The time left is only shown if the source reports it or
-it can be computed from the speed; no estimated/fake time is shown.
+source name, the stage, "412 MB / 1.8 GB" ("412 MB / unknown" where the size
+is not known), percentage, smoothed speed, time left (m:ss) and time so far.
+The percentage and the time left are only shown where the size is known or
+the source reports them; nothing is estimated from a made-up total. At the
+end: "Downloaded"/"Completed"/"Sent" with the name, the size and the time it
+took; a red "Failed" only where something says it failed; a plain
+"Cancelled"; and a plain "Finished" where nothing tells how it ended.
 
 | Source | Provider | Status |
 |---|---|---|
@@ -1466,7 +1488,11 @@ it can be computed from the speed; no estimated/fake time is shown.
 | KDE Connect file receive/send | `KdeConnectTransferProvider` | Full support; "Pixel 7 → Computer: photo.jpg" |
 | USB/external disk (`/media`, `/run/media`) | `RemovableTransferProvider` | Full support; "USB DISK → Documents: report.pdf" |
 | Browser download + the Plasma Browser Integration extension | `BrowserDownloadProvider` | Full support (percentage, time) |
-| Browser download, no extension / Flatpak-Snap browser (e.g. Zen) | `BrowserDownloadProvider` + native `DownloadWatcher` | `*.part`/`*.crdownload` in the download folder are watched: downloaded size and speed, **no percentage or time left** (the browser does not write the total size to disk) |
+| Browser download, no extension / Flatpak-Snap browser (e.g. Zen) | `BrowserDownloadProvider` + native `DownloadWatcher` | `*.part`/`*.crdownload`/`*.opdownload` in the download folder are watched: downloaded size and speed, **no percentage or time left** (the browser does not write the total size to disk). Ends as "Downloaded" or "Cancelled" |
+| `apt`, `apt-get`, `aptitude`, also under `sudo` | `CommandTransferProvider` + native `CommandWatcher` | The stage (package lists / downloading / installing), the size of the packages that have arrived, **no percentage, no byte-exact speed** (root's process and apt's `partial` folders cannot be read). The result from apt's own records, else "Finished" |
+| Discover / PackageKit | `CommandTransferProvider` + native `PackageKitWatcher` | Full support: the daemon's own percentage, speed and remaining time |
+| `git clone` | `CommandWatcher` | Size of the pack being received and speed, **no percentage**. "Downloaded" with `.git/HEAD` there, "Failed" when git removed the folder (also after Ctrl+C) |
+| `wget`, `curl`, `aria2c`, `yt-dlp`, `pip`, `npm`, `cargo`, `docker pull`, `flatpak`, `snap` of the same user | `CommandWatcher` | The bytes the process has written and their speed (for pip/npm this includes what they unpack), **no percentage**; ends as "Finished": an exit code cannot be seen from outside. `flatpak`/`snap`/`docker` download in a system service, so they show without bytes |
 | Upload from a browser | — | **Cannot be tracked**: browser uploads never reach any system API as a job |
 
 Why Zen downloads did not show up: Zen is a Flatpak app; from inside the
@@ -1475,3 +1501,35 @@ its downloads never reached the KDE job system. The folder watcher closes this
 gap.
 Note: the `kioclient` command-line tool does not use the KDE job tracker; use
 Dolphin or `ark --batch` to test.
+
+**The "Failed" after a download that went well.** Zen and Firefox rename the
+partial file while they write it: recorded from Zen 1.22, a download of
+`name.bin` starts as an empty `name.bin` and `J-w3DTrx.bin.part`, which
+becomes `name.p6NHCVxw.bin.part` 80 ms later and `name.bin` at the end.
+Chromium starts as `Unconfirmed 123456.crdownload`. The watcher used to guess
+the final name by cutting off the suffix and took every rename for the end:
+no file of the guessed name, so "Failed", twice for one download. It now
+follows the file itself (its inode): renamed to another partial name it goes
+on, renamed to anything else it is done under that name. A partial file that
+is gone without one is waited for (3 s, Settings → Download tracking) under a
+matching name (`name.bin`, `name(1).bin`, `name (1).bin`, at least as large);
+none, and it was cancelled. `tests/tst_downloads.qml` replays the recorded
+sequences in a folder.
+
+**Commands, seen from outside** (`native/core/commandwatcher.h`): nothing is
+installed or wrapped and no shell file is touched. `/proc` is read every 3 s
+for the watched commands (2.8 ms per look with 360 processes here: about
+0.1 % of one core) and every second while one runs; a command shorter than
+that may be missed. A process without a terminal (unattended-upgrades, a
+cron job) is left out unless asked for. What cannot be had: a total size
+(so no percentage and no remaining time), an exit code, and for root's apt
+its bytes as they arrive. apt's result is taken from
+`/var/lib/apt/periodic/update-success-stamp` (update) and the new entry in
+`/var/log/apt/history.log` (an `Error:` line = failed); no record, no claim.
+A command line may hold a token or a password: it is read for the
+sub-command, the host and a repository's name and dropped; no signal, text
+or log holds an argument as it was (`tests/tst_commands.qml` looks for a
+planted secret in everything that comes out). The watchers run inside the
+island's native module, not in a helper process: they are a timer and a few
+small files per look, add about 0.5 MB, and a second process would need its
+own start, stop and channel for no gain.

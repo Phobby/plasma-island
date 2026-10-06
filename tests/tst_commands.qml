@@ -124,10 +124,11 @@ Item {
             process(21, "apt-get", "apt-get|-y|install|hello", 10);
             process(22, "node", "node|/usr/lib/node_modules/npm/bin/npm-cli.js|install|left-pad", 10);
             process(23, "python3", "/usr/bin/python3|/usr/bin/pip|install|requests", 10);
+            process(25, "pip3", "/usr/bin/python3|/usr/bin/pip3|download|numpy", 10);
             process(24, "wget", "wget|-q|https://files.example.org/big.iso", 10);
             look();
             compare(root.log.sort(), ["start apt packages [update]  ", "start apt-get packages [install]  ", "start npm download [install]  ",
-                                      "start pip download [install]  ", "start wget download [] files.example.org "]);
+                                      "start pip download [install]  ", "start pip3 download [download]  ", "start wget download [] files.example.org "]);
             // background jobs too, when asked for
             root.log = [];
             gone(16); gone(17);
