@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+# player — a small MPRIS media player for the demo and the measurements.
+#
+#   tools/demo/player DIR [--paused] [--track N]
+#
+# Plays the tunes made by tools/demo/make-media (DIR/track-N.wav, their names
+# in DIR/tracks.tsv, covers DIR/cover-N.png) through PipeWire (`pw-play`) and
+# tells the desktop about them over MPRIS, as "Demo Player": title, artist,
+# album, cover, length and a position that moves; play, pause, next, previous
+# and seeking work (from the island, from `playerctl`, from the keyboard's
+# media keys). A tune that ends starts the next one.
+# Run it inside tools/nested-session (… run tools/demo/player DIR): there the
+# sound goes to a sink nobody hears. Needs python3-dbus and python3-gi.
+import os, signal, subprocess, sys, time
+from pathlib import Path
+
+import dbus, dbus.service
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GLib
+
+ROOT = "org.mpris.MediaPlayer2"
+PLAYER = ROOT + ".Player"
+PATH = "/org/mpris/MediaPlayer2"
+
+class Player(dbus.service.Object):
+    def __init__(self, bus, folder, track, paused):
+        super().__init__(bus, PATH)
+        self.folder = folder
+        self.tracks = [line.split("\t") for line in (folder / "tracks.tsv").read_text().splitlines() if line.strip()]
+        self.index = max(0, min(len(self.tracks) - 1, track - 1))
+        self.process = None
+        self.playing = False
+        self.offset = 0.0        # seconds played before the current run
+        self.since = 0.0         # when the current run started
+        if not paused:
+            self.start()
+        GLib.timeout_add(500, self.watch)
+
+    # ---- the tune itself ---------------------------------------------------
+    def length(self):
+        return float(self.tracks[self.index][4])
+    def position(self):
+        return min(self.length(), self.offset + (time.monotonic() - self.since if self.playing else 0.0))
+    def stop_process(self):
+        if self.process is not None:
+            if self.process.poll() is None:
+                self.process.send_signal(signal.SIGCONT)
+                self.process.terminate()
+            self.process = None
+    def start(self):
+        self.stop_process()
+        self.offset = 0.0
+        self.since = time.monotonic()
+        self.playing = True
+        try:
+            self.process = subprocess.Popen(["pw-play", str(self.folder / f"track-{self.tracks[self.index][0]}.wav")],
+                                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except OSError:
+            self.process = None        # no pw-play: the names and the position are still told
+    def pause(self):
+        if not self.playing:
+            return
+        self.offset = self.position()
+        self.playing = False
+        if self.process is not None and self.process.poll() is None:
+            self.process.send_signal(signal.SIGSTOP)
+    def resume(self):
+        if self.playing:
+            return
+        if self.process is None or self.process.poll() is not None:
+            self.start()
+        else:
+            self.since = time.monotonic()
+            self.playing = True
+            self.process.send_signal(signal.SIGCONT)
+    def go(self, step):
+        self.index = (self.index + step) % len(self.tracks)
+        was = self.playing
+        self.start()
+        if not was:
+            self.pause()
+        self.changed({"Metadata": self.metadata(), "PlaybackStatus": self.status()})
+    def watch(self):
+        if self.playing and self.position() >= self.length() - 0.05:
+            self.go(1)
+        return True
+
+    # ---- what MPRIS is told ------------------------------------------------
+    def status(self):
+        return "Playing" if self.playing else "Paused"
+    def metadata(self):
+        number, title, artist, album, seconds = self.tracks[self.index]
+        data = {
+            "mpris:trackid": dbus.ObjectPath(f"/org/phobby/islanddemo/track/{number}"),
+            "mpris:length": dbus.Int64(int(float(seconds) * 1e6)),
+            "xesam:title": title,
+            "xesam:artist": dbus.Array([artist], signature="s"),
+            "xesam:album": album,
+        }
+        cover = self.folder / f"cover-{number}.png"
+        if cover.exists():
+            data["mpris:artUrl"] = cover.resolve().as_uri()
+        return dbus.Dictionary(data, signature="sv")
+    def properties(self, interface):
+        if interface == ROOT:
+            return {"CanQuit": True, "CanRaise": False, "HasTrackList": False, "Identity": "Demo Player",
+                    "DesktopEntry": "island-demo-player", "SupportedUriSchemes": dbus.Array([], signature="s"),
+                    "SupportedMimeTypes": dbus.Array([], signature="s")}
+        if interface == PLAYER:
+            return {"PlaybackStatus": self.status(), "LoopStatus": "Playlist", "Rate": 1.0, "Shuffle": False,
+                    "Metadata": self.metadata(), "Volume": 1.0, "Position": dbus.Int64(int(self.position() * 1e6)),
+                    "MinimumRate": 1.0, "MaximumRate": 1.0, "CanGoNext": True, "CanGoPrevious": True, "CanPlay": True,
+                    "CanPause": True, "CanSeek": True, "CanControl": True}
+        return {}
+    def changed(self, what):
+        self.PropertiesChanged(PLAYER, dbus.Dictionary(what, signature="sv"), dbus.Array([], signature="s"))
+
+    @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature="ss", out_signature="v")
+    def Get(self, interface, name):
+        return self.properties(interface)[name]
+    @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature="s", out_signature="a{sv}")
+    def GetAll(self, interface):
+        return self.properties(interface)
+    @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature="ssv")
+    def Set(self, interface, name, value):
+        pass
+    @dbus.service.signal(dbus.PROPERTIES_IFACE, signature="sa{sv}as")
+    def PropertiesChanged(self, interface, changed, invalidated):
+        pass
+
+    @dbus.service.method(ROOT)
+    def Raise(self):
+        pass
+    @dbus.service.method(ROOT)
+    def Quit(self):
+        self.stop_process()
+        loop.quit()
+
+    @dbus.service.method(PLAYER)
+    def Play(self):
+        self.resume(); self.changed({"PlaybackStatus": self.status()})
+    @dbus.service.method(PLAYER)
+    def Pause(self):
+        self.pause(); self.changed({"PlaybackStatus": self.status()})
+    @dbus.service.method(PLAYER)
+    def PlayPause(self):
+        self.pause() if self.playing else self.resume()
+        self.changed({"PlaybackStatus": self.status()})
+    @dbus.service.method(PLAYER)
+    def Stop(self):
+        self.Pause()
+    @dbus.service.method(PLAYER)
+    def Next(self):
+        self.go(1)
+    @dbus.service.method(PLAYER)
+    def Previous(self):
+        self.go(-1)
+    @dbus.service.method(PLAYER, in_signature="x")
+    def Seek(self, offset):
+        self.jump(self.position() + offset / 1e6)
+    @dbus.service.method(PLAYER, in_signature="ox")
+    def SetPosition(self, track, position):
+        self.jump(position / 1e6)
+    @dbus.service.signal(PLAYER, signature="x")
+    def Seeked(self, position):
+        pass
+    def jump(self, seconds):
+        # (the sound itself goes on from where it is: only what is told moves)
+        self.offset = max(0.0, min(self.length(), seconds))
+        self.since = time.monotonic()
+        self.Seeked(dbus.Int64(int(self.offset * 1e6)))
+
+if __name__ == "__main__":
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    if len(args) != 1 or not (Path(args[0]) / "tracks.tsv").exists():
+        sys.exit("usage: tools/demo/player DIR [--paused] [--track N]   (DIR as made by tools/demo/make-media)")
+    track = int(sys.argv[sys.argv.index("--track") + 1]) if "--track" in sys.argv else 1
+    DBusGMainLoop(set_as_default=True)
+    bus = dbus.SessionBus()
+    name = dbus.service.BusName(ROOT + ".islanddemo", bus)
+    player = Player(bus, Path(args[0]), track, "--paused" in sys.argv)
+    loop = GLib.MainLoop()
+    signal.signal(signal.SIGTERM, lambda *a: (player.stop_process(), loop.quit()))
+    try:
+        loop.run()
+    except KeyboardInterrupt:
+        pass
+    player.stop_process()

@@ -1,0 +1,202 @@
+#!/usr/bin/env python3
+# sample — what a process costs, read from /proc at a fixed pace, as CSV.
+#
+#   tools/bench/sample --pid 1234 [--also NAME=PID …] [--interval 1] [--duration 120]
+#                      [--children] [--gpu] [--out run.csv] [--label text]
+#
+# One row per interval and process:
+#   cpu_ms        CPU time used in the interval (utime + stime of /proc/<pid>/stat, all threads)
+#   cpu_pct       the same as per cent of one core
+#   child_ms      CPU time of children that ended and were waited for in the interval (cutime + cstime)
+#   rss_kb pss_kb resident and proportional set size (/proc/<pid>/smaps_rollup; pss needs the same user)
+#   threads fds   number of threads, of open file descriptors
+#   wake wake_inv voluntary and involuntary context switches in the interval, all threads
+#                 (a voluntary one is a thread that slept and was woken: wakeups per interval)
+#   spawned       child processes first seen in the interval (--children; seen by looking at /proc
+#                 `--child-rate` times a second, so one that lives shorter than that can be missed:
+#                 child_ms still has its CPU time)
+#   gpu_pct gpu_mem_mb   the process's share of the GPU and its memory there (--gpu, NVIDIA: nvidia-smi pmon;
+#                 otherwise the whole card's gpu_busy_percent, as gpu_all_pct)
+# Nothing is asked of the process itself, and nothing here needs root.
+import argparse, csv, os, subprocess, sys, time
+
+TICK = os.sysconf("SC_CLK_TCK")
+PAGE = os.sysconf("SC_PAGE_SIZE") // 1024
+
+def stat(pid):
+    with open(f"/proc/{pid}/stat") as f:
+        rest = f.read().rsplit(")", 1)[1].split()
+    # rest[0] is the state (field 3)
+    return {"ppid": int(rest[1]), "utime": int(rest[11]), "stime": int(rest[12]), "cutime": int(rest[13]),
+            "cstime": int(rest[14]), "threads": int(rest[17]), "rss": int(rest[21]) * PAGE}
+
+def switches(pid):
+    vol = inv = 0
+    try:
+        tasks = os.listdir(f"/proc/{pid}/task")
+    except OSError:
+        return 0, 0
+    for tid in tasks:
+        try:
+            with open(f"/proc/{pid}/task/{tid}/status") as f:
+                for line in f:
+                    if line.startswith("voluntary_ctxt_switches"): vol += int(line.split()[1])
+                    elif line.startswith("nonvoluntary_ctxt_switches"): inv += int(line.split()[1])
+        except OSError:
+            pass
+    return vol, inv
+
+def memory(pid):
+    rss = pss = 0
+    try:
+        with open(f"/proc/{pid}/smaps_rollup") as f:
+            for line in f:
+                if line.startswith("Rss:"): rss = int(line.split()[1])
+                elif line.startswith("Pss:"): pss = int(line.split()[1])
+    except OSError:
+        pass
+    return rss, pss
+
+def fds(pid):
+    try:
+        return len(os.listdir(f"/proc/{pid}/fd"))
+    except OSError:
+        return -1
+
+def children(pids):
+    """pid → (parent, command) of every process whose parent is one of `pids`."""
+    found = {}
+    for entry in os.listdir("/proc"):
+        if not entry.isdigit(): continue
+        try:
+            with open(f"/proc/{entry}/stat") as f:
+                text = f.read()
+            parent = int(text.rsplit(")", 1)[1].split()[1])
+            if parent in pids:
+                found[int(entry)] = (parent, text[text.index("(") + 1:text.rindex(")")])
+        except (OSError, ValueError, IndexError):
+            pass
+    return found
+
+class Gpu:
+    """The GPU share of our processes. NVIDIA: `nvidia-smi pmon` (one line per process and second)."""
+    def __init__(self, pids):
+        self.pids, self.proc, self.kind, self.last = pids, None, "", {}
+        try:
+            self.proc = subprocess.Popen(["nvidia-smi", "pmon", "-d", "1", "-s", "um"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+            os.set_blocking(self.proc.stdout.fileno(), False)
+            self.kind = "nvidia"
+        except OSError:
+            for card in sorted(os.listdir("/sys/class/drm")) if os.path.isdir("/sys/class/drm") else []:
+                path = f"/sys/class/drm/{card}/device/gpu_busy_percent"
+                if os.path.exists(path):
+                    self.kind, self.path = "busy", path
+                    break
+        self.buffer = ""
+    def read(self):
+        """pid → (percent, MB) since the last call (the mean of what was printed meanwhile); "all" → percent."""
+        out = {}
+        if self.kind == "busy":
+            try:
+                out["all"] = (float(open(self.path).read()), 0.0)
+            except OSError:
+                pass
+            return out
+        if self.kind != "nvidia":
+            return out
+        try:
+            self.buffer += self.proc.stdout.read() or ""
+        except (OSError, TypeError):
+            pass
+        lines, self.buffer = self.buffer.split("\n")[:-1], self.buffer.split("\n")[-1]
+        seen = {}
+        for line in lines:
+            if line.startswith("#"): continue
+            p = line.split()
+            if len(p) < 8 or not p[1].isdigit(): continue
+            pid = int(p[1])
+            if pid not in self.pids: continue
+            sm = 0.0 if p[3] == "-" else float(p[3])
+            fb = 0.0 if p[-2] == "-" else float(p[-2]) if p[-2].replace(".", "").isdigit() else 0.0
+            seen.setdefault(pid, []).append((sm, fb))
+        for pid, rows in seen.items():
+            out[pid] = (sum(r[0] for r in rows) / len(rows), rows[-1][1])
+        return out
+    def close(self):
+        if self.proc: self.proc.terminate()
+
+def main():
+    ap = argparse.ArgumentParser(description="What a process costs, from /proc, as CSV.")
+    ap.add_argument("--pid", type=int, required=True)
+    ap.add_argument("--name", default="")
+    ap.add_argument("--also", action="append", default=[], metavar="NAME=PID", help="more processes, one row each")
+    ap.add_argument("--interval", type=float, default=1.0)
+    ap.add_argument("--duration", type=float, default=60.0)
+    ap.add_argument("--children", action="store_true", help="count the child processes it starts")
+    ap.add_argument("--child-rate", type=float, default=10.0)
+    ap.add_argument("--gpu", action="store_true")
+    ap.add_argument("--label", default="")
+    ap.add_argument("--out", default="-")
+    a = ap.parse_args()
+
+    procs = {a.name or open(f"/proc/{a.pid}/comm").read().strip(): a.pid}
+    for item in a.also:
+        name, pid = item.split("=", 1)
+        procs[name] = int(pid)
+    pids = set(procs.values())
+    gpu = Gpu(pids) if a.gpu else None
+    out = sys.stdout if a.out == "-" else open(a.out, "w", newline="")
+    w = csv.writer(out)
+    w.writerow(["label", "t", "process", "pid", "cpu_ms", "cpu_pct", "child_ms", "rss_kb", "pss_kb", "threads", "fds",
+                "wake", "wake_inv", "spawned", "spawned_names", "gpu_pct", "gpu_mem_mb"])
+
+    def snapshot(pid):
+        s = stat(pid); vol, inv = switches(pid)
+        return s, vol, inv
+    last = {}
+    for name, pid in procs.items():
+        last[pid] = snapshot(pid)
+    known = set(children(pids)) if a.children else set()
+    start = time.monotonic(); n = 0
+    try:
+        while True:
+            n += 1
+            due = start + n * a.interval
+            new = {}
+            while True:
+                now = time.monotonic()
+                if now >= due: break
+                if a.children:
+                    for child, (parent, comm) in children(pids).items():
+                        if child not in known:
+                            known.add(child); new.setdefault(parent, []).append(comm)
+                    time.sleep(min(max(due - time.monotonic(), 0), 1.0 / a.child_rate))
+                else:
+                    time.sleep(due - now)
+            g = gpu.read() if gpu else {}
+            took = a.interval
+            for name, pid in procs.items():
+                try:
+                    s, vol, inv = snapshot(pid)
+                except OSError:
+                    continue          # it ended
+                p, pvol, pinv = last[pid]
+                cpu = (s["utime"] + s["stime"] - p["utime"] - p["stime"]) * 1000.0 / TICK
+                child = (s["cutime"] + s["cstime"] - p["cutime"] - p["cstime"]) * 1000.0 / TICK
+                rss, pss = memory(pid)
+                names = new.get(pid, [])
+                share = g.get(pid, g.get("all", ("", "")))
+                w.writerow([a.label, round(n * a.interval, 3), name, pid, round(cpu, 1), round(cpu / (took * 10.0), 3), round(child, 1),
+                            rss or s["rss"], pss, s["threads"], fds(pid), vol - pvol, inv - pinv,
+                            len(names) if a.children else "", " ".join(names), share[0], share[1]])
+                last[pid] = (s, vol, inv)
+            out.flush()
+            if n * a.interval >= a.duration: break
+    except KeyboardInterrupt:
+        pass
+    finally:
+        if gpu: gpu.close()
+        if out is not sys.stdout: out.close()
+
+if __name__ == "__main__":
+    main()

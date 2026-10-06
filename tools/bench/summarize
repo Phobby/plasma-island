@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+# summarize — the CSV files of tools/bench/run as tables and pictures.
+#
+#   tools/bench/summarize [--raw docs/perf/raw] [--out docs/perf]
+#
+# Writes into --out:
+#   summary.csv   one row per scenario, every figure
+#   summary.md    the same as a Markdown table (what docs/PERFORMANCE.md shows)
+#   cpu.svg       CPU per scenario: the shell, the compositor and the sensor daemon
+#   soak.svg      memory over a long run (when raw/soak.*.csv is there), with its slope
+#
+# How a figure is made: a repetition's CPU is its whole CPU time over its whole
+# duration (per cent of one core); a scenario's is the median of its
+# repetitions, with the lowest and highest beside it. "1 s p95 / max" are over
+# every single second of every repetition (CPU time comes in steps of 10 ms,
+# so one second reads 0, 1, 2 … per cent). "over baseline" is the scenario's
+# median minus the baseline's: what the island adds to the same shell.
+import argparse, csv, re, statistics as st, sys
+from collections import defaultdict
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent.parent
+
+def load(raw):
+    """scenario → [repetition → process → rows]"""
+    runs = defaultdict(dict)
+    for path in sorted(Path(raw).glob("*.csv")):
+        m = re.fullmatch(r"(.+?)\.(\d+)\.csv", path.name)
+        if not m or "+frames" in path.name or path.name.endswith(".frames.csv"):
+            continue
+        by = defaultdict(list)
+        with open(path, newline="") as f:
+            for row in csv.DictReader(f):
+                by[row["process"]].append(row)
+        if by: runs[m.group(1)][int(m.group(2))] = by
+    return runs
+
+def num(row, key):
+    try: return float(row[key])
+    except (ValueError, KeyError, TypeError): return 0.0
+
+def rep_stats(rows):
+    seconds = len(rows) or 1
+    return {
+        "cpu": sum(num(r, "cpu_ms") for r in rows) / seconds / 10.0,
+        "child": sum(num(r, "child_ms") for r in rows) / seconds / 10.0,
+        "wake": sum(num(r, "wake") for r in rows) / seconds,
+        "spawned": sum(num(r, "spawned") for r in rows) * 3600.0 / seconds,
+        "rss": st.median(num(r, "rss_kb") for r in rows) / 1024.0,
+        "pss": st.median(num(r, "pss_kb") for r in rows) / 1024.0,
+        "threads": st.median(num(r, "threads") for r in rows),
+        "fds": st.median(num(r, "fds") for r in rows),
+        "gpu": sum(num(r, "gpu_pct") for r in rows) / seconds,
+    }
+
+def summarize(runs):
+    out = {}
+    for name, reps in runs.items():
+        per = {p: [rep_stats(by[p]) for by in reps.values() if p in by] for p in ("plasmashell", "kwin_wayland", "ksystemstats")}
+        shell = per["plasmashell"]
+        if not shell: continue
+        seconds = sorted(num(r, "cpu_pct") for by in reps.values() for r in by.get("plasmashell", []))
+        med = lambda rows, key: st.median(r[key] for r in rows) if rows else 0.0
+        out[name] = {
+            "reps": len(shell), "cpu": med(shell, "cpu"), "cpu_min": min(r["cpu"] for r in shell), "cpu_max": max(r["cpu"] for r in shell),
+            "cpu_p95": seconds[int(len(seconds) * 0.95) - 1] if seconds else 0.0, "cpu_peak": seconds[-1] if seconds else 0.0,
+            "child": med(shell, "child"), "wake": med(shell, "wake"), "spawned": med(shell, "spawned"),
+            "rss": med(shell, "rss"), "pss": med(shell, "pss"), "threads": med(shell, "threads"), "fds": med(shell, "fds"), "gpu": med(shell, "gpu"),
+            "kwin": med(per["kwin_wayland"], "cpu"), "kwin_gpu": med(per["kwin_wayland"], "gpu"), "sensors": med(per["ksystemstats"], "cpu"),
+        }
+    return out
+
+def order(names, listing):
+    known = [n for n in listing if n in names]
+    return known + sorted(n for n in names if n not in known)
+
+def scenario_list():
+    """Names and descriptions as tools/bench/run has them."""
+    text = (Path(__file__).resolve().parent / "run").read_text()
+    return re.findall(r'^\s*\("([\w-]+)", "((?:[^"\\]|\\.)*)",', text, re.M)
+
+# ---- pictures ---------------------------------------------------------------
+STYLE = """
+  <style>
+    .bg{fill:#fcfcfb}.ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}
+    .s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.l1{stroke:#2a78d6}.l2{stroke:#eb6834}.gap{stroke:#fcfcfb}
+    text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+    @media (prefers-color-scheme: dark){
+      .bg{fill:#1a1a19}.ink{fill:#ffffff}.ink2{fill:#c3c2b7}.grid{stroke:#2c2c2a}.axis{stroke:#383835}
+      .s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.l1{stroke:#3987e5}.l2{stroke:#d95926}.gap{stroke:#1a1a19}
+    }
+  </style>"""
+
+def nice(top):
+    for step in (0.1, 0.2, 0.25, 0.5, 1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 500, 1000):
+        if top / step <= 6: return step
+    return top / 5
+
+def bar_end(x, y, w, h, last):
+    """A segment: square at its start, 4px round at the bar's end when it is the last one."""
+    if w <= 0: return ""
+    if not last or w < 5: return f'M{x:.1f},{y}h{w:.1f}v{h}h{-w:.1f}z'
+    return f'M{x:.1f},{y}h{w - 4:.1f}a4,4 0 0 1 4,4v{h - 8}a4,4 0 0 1 -4,4h{-(w - 4):.1f}z'
+
+def cpu_chart(summary, names, labels, path):
+    rows = [(n, summary[n]) for n in names]
+    left, right, top, band, bar = 260, 70, 64, 30, 16
+    width, height = 860, top + band * len(rows) + 44
+    most = max((s["cpu"] + s["kwin"] + s["sensors"]) for _, s in rows) or 1
+    step = nice(most); most = step * (int(most / step) + 1)
+    scale = (width - left - right) / most
+    o = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" role="img" '
+         f'aria-label="CPU per scenario, per cent of one core">', STYLE, f'<rect class="bg" width="{width}" height="{height}"/>',
+         f'<text class="ink" x="16" y="24" font-size="15" font-weight="600">CPU while the island does this, per cent of one core</text>']
+    x = 16
+    for cls, text in (("s1", "plasmashell"), ("s2", "KWin (the compositor)"), ("s3", "ksystemstats (sensors)")):
+        o.append(f'<rect class="{cls}" x="{x}" y="36" width="10" height="10" rx="2"/><text class="ink2" x="{x + 15}" y="45" font-size="12">{text}</text>')
+        x += 30 + len(text) * 6.6
+    v = 0.0
+    while v <= most + 1e-9:
+        gx = left + v * scale
+        o.append(f'<line class="{"axis" if v == 0 else "grid"}" x1="{gx:.1f}" y1="{top - 4}" x2="{gx:.1f}" y2="{top + band * len(rows)}" stroke-width="1"/>')
+        o.append(f'<text class="muted" x="{gx:.1f}" y="{top + band * len(rows) + 16}" font-size="11" text-anchor="middle">{v:g}</text>')
+        v += step
+    o.append(f'<text class="muted" x="{left + (width - left - right) / 2:.1f}" y="{top + band * len(rows) + 34}" font-size="11" text-anchor="middle">% of one core (median of the runs)</text>')
+    for i, (name, s) in enumerate(rows):
+        y = top + i * band + (band - bar) / 2
+        o.append(f'<text class="ink2" x="{left - 10}" y="{y + bar - 4}" font-size="12" text-anchor="end">{labels.get(name, name)}</text>')
+        parts = [("s1", s["cpu"]), ("s2", s["kwin"]), ("s3", s["sensors"])]
+        shown = [(c, val) for c, val in parts if val * scale >= 0.5]
+        at = left
+        for k, (cls, val) in enumerate(shown):
+            w = val * scale
+            gap = 2 if k < len(shown) - 1 else 0
+            o.append(f'<path class="{cls}" d="{bar_end(at, y, max(w - gap, 0.5), bar, k == len(shown) - 1)}"><title>{name}: {cls} {val:.2f}%</title></path>')
+            at += w
+        total = s["cpu"] + s["kwin"] + s["sensors"]
+        o.append(f'<text class="ink" x="{at + 6:.1f}" y="{y + bar - 4}" font-size="12">{total:.2f}</text>')
+    o.append("</svg>")
+    Path(path).write_text("\n".join(o) + "\n")
+
+def slope(xs, ys):
+    n = len(xs); mx, my = sum(xs) / n, sum(ys) / n
+    den = sum((x - mx) ** 2 for x in xs)
+    return sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / den if den else 0.0
+
+def soak_chart(raw, path):
+    files = sorted(Path(raw).glob("soak.*.csv"))
+    if not files: return None
+    rows = [r for r in csv.DictReader(open(files[0], newline="")) if r["process"] == "plasmashell"]
+    if len(rows) < 10: return None
+    t = [num(r, "t") / 3600.0 for r in rows]; rss = [num(r, "rss_kb") / 1024.0 for r in rows]; pss = [num(r, "pss_kb") / 1024.0 for r in rows]
+    warm = [i for i, x in enumerate(t) if x >= min(0.25, t[-1] / 4)]          # the first quarter hour is warming up
+    facts = {"hours": t[-1], "rss_slope": slope([t[i] for i in warm], [rss[i] for i in warm]), "pss_slope": slope([t[i] for i in warm], [pss[i] for i in warm]),
+             "rss_first": rss[warm[0]], "rss_last": rss[-1], "pss_first": pss[warm[0]], "pss_last": pss[-1],
+             "threads": (min(num(r, "threads") for r in rows), max(num(r, "threads") for r in rows)),
+             "fds": (min(num(r, "fds") for r in rows), max(num(r, "fds") for r in rows))}
+    width, height, left, right, top, bottom = 860, 340, 56, 150, 56, 44
+    lo, hi = min(pss + rss), max(pss + rss); pad = (hi - lo) * 0.1 + 1; lo, hi = lo - pad, hi + pad
+    step = nice(hi - lo); lo = step * int(lo / step); hi = step * (int(hi / step) + 1)
+    X = lambda x: left + x / t[-1] * (width - left - right); Y = lambda y: top + (hi - y) / (hi - lo) * (height - top - bottom)
+    o = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" role="img" aria-label="Memory of plasmashell over a long run">',
+         STYLE.replace(".l1{stroke", ".l1{fill:none;stroke").replace(".l2{stroke", ".l2{fill:none;stroke"), f'<rect class="bg" width="{width}" height="{height}"/>',
+         f'<text class="ink" x="16" y="24" font-size="15" font-weight="600">Memory of plasmashell with the island over {t[-1]:.1f} hours of mixed activity, MB</text>',
+         f'<rect class="s1" x="16" y="34" width="10" height="10" rx="2"/><text class="ink2" x="31" y="43" font-size="12">resident (RSS)</text>',
+         f'<rect class="s2" x="130" y="34" width="10" height="10" rx="2"/><text class="ink2" x="145" y="43" font-size="12">proportional (PSS)</text>']
+    v = lo
+    while v <= hi + 1e-9:
+        o.append(f'<line class="grid" x1="{left}" y1="{Y(v):.1f}" x2="{width - right}" y2="{Y(v):.1f}" stroke-width="1"/>')
+        o.append(f'<text class="muted" x="{left - 8}" y="{Y(v) + 4:.1f}" font-size="11" text-anchor="end">{v:g}</text>')
+        v += step
+    hours = 0.0
+    while hours <= t[-1] + 1e-9:
+        o.append(f'<text class="muted" x="{X(hours):.1f}" y="{height - bottom + 16}" font-size="11" text-anchor="middle">{hours:g} h</text>')
+        hours += 0.5 if t[-1] <= 4 else 1
+    o.append(f'<line class="axis" x1="{left}" y1="{height - bottom}" x2="{width - right}" y2="{height - bottom}" stroke-width="1"/>')
+    keep = max(1, len(t) // 600)
+    for cls, ys, label, tilt in (("l1", rss, "RSS", facts["rss_slope"]), ("l2", pss, "PSS", facts["pss_slope"])):
+        pts = " ".join(f"{X(t[i]):.1f},{Y(ys[i]):.1f}" for i in range(0, len(t), keep))
+        o.append(f'<polyline class="{cls}" points="{pts}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>')
+        o.append(f'<text class="ink2" x="{width - right + 8}" y="{Y(ys[-1]) + 4:.1f}" font-size="12">{label} {ys[-1]:.0f} MB ({tilt:+.1f} MB/h)</text>')
+    o.append("</svg>")
+    Path(path).write_text("\n".join(o) + "\n")
+    return facts
+
+def main():
+    ap = argparse.ArgumentParser(description="The CSV files of tools/bench/run as tables and pictures.")
+    ap.add_argument("--raw", default=str(REPO / "docs" / "perf" / "raw")); ap.add_argument("--out", default=str(REPO / "docs" / "perf"))
+    a = ap.parse_args()
+    runs = load(a.raw)
+    runs.pop("soak", None)
+    summary = summarize(runs)
+    if not summary: sys.exit(f"no measurements in {a.raw}")
+    listing = scenario_list(); labels = {n: n for n, _ in listing}; what = dict(listing)
+    names = order(summary.keys(), [n for n, _ in listing])
+    out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
+    base = summary.get("baseline")
+    keys = ["reps", "cpu", "cpu_min", "cpu_max", "cpu_p95", "cpu_peak", "child", "wake", "spawned", "rss", "pss", "threads", "fds", "gpu", "kwin", "kwin_gpu", "sensors"]
+    with open(out / "summary.csv", "w", newline="") as f:
+        w = csv.writer(f); w.writerow(["scenario"] + keys)
+        for n in names: w.writerow([n] + [round(summary[n][k], 3) for k in keys])
+    md = ["| Scenario | plasmashell CPU % (lowest–highest run) | over baseline | 1 s p95 / max | KWin % | sensors % | wakeups/s | child processes/h | RSS MB | PSS MB |",
+          "|---|---|---|---|---|---|---|---|---|---|"]
+    for n in names:
+        s = summary[n]
+        over = f"{s['cpu'] - base['cpu']:+.2f}" if base and n != "baseline" else "–"
+        md.append(f"| `{n}`: {what.get(n, '')} | **{s['cpu']:.2f}** ({s['cpu_min']:.2f}–{s['cpu_max']:.2f}) | {over} | {s['cpu_p95']:.0f} / {s['cpu_peak']:.0f} | {s['kwin']:.2f} | {s['sensors']:.2f} "
+                  f"| {s['wake']:.0f} | {s['spawned']:.0f} | {s['rss']:.0f} | {s['pss']:.0f} |")
+    (out / "summary.md").write_text("\n".join(md) + "\n")
+    cpu_chart(summary, names, labels, out / "cpu.svg")
+    facts = soak_chart(a.raw, out / "soak.svg")
+    print("\n".join(md))
+    if facts:
+        print(f"\nsoak: {facts['hours']:.2f} h; RSS {facts['rss_first']:.0f} → {facts['rss_last']:.0f} MB ({facts['rss_slope']:+.2f} MB/h), "
+              f"PSS {facts['pss_first']:.0f} → {facts['pss_last']:.0f} MB ({facts['pss_slope']:+.2f} MB/h), threads {facts['threads'][0]:.0f}–{facts['threads'][1]:.0f}, "
+              f"file descriptors {facts['fds'][0]:.0f}–{facts['fds'][1]:.0f}")
+
+if __name__ == "__main__":
+    main()

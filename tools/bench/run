@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+# run — measure what the island costs, one scenario at a time, in tools/nested-session.
+#
+#   tools/bench/run --list
+#   tools/bench/run [--reps 3] [--warmup 60] [--duration 120] [--out DIR] [--frames] SCENARIO…
+#   tools/bench/run … all            every scenario that needs no pointer
+#
+# For every repetition the session's plasmashell is started anew with a fresh
+# island (default settings, then the scenario's), left alone for `--warmup`
+# seconds and then sampled for `--duration` seconds by tools/bench/sample:
+# plasmashell, the session's KWin and ksystemstats (the sensor daemon the
+# island's System page starts), once a second. One CSV per repetition in DIR
+# (default docs/perf/raw), named SCENARIO.N.csv; tools/bench/summarize turns
+# them into the tables and pictures of docs/PERFORMANCE.md.
+#
+# `--frames` also logs every frame the shell draws (Qt's scene graph timing)
+# and writes SCENARIO.N.frames.csv: frames and their times per second. The
+# logging itself costs CPU, so the CPU figures of such a run are not kept
+# beside the others (the file is named SCENARIO+frames).
+#
+# The session is headless unless you started it yourself with --windowed: its
+# screen is 1920x1080 at 60 Hz, drawn by the GPU, shown to nobody. Scenarios
+# marked "pointer" need a pointer (hovering, opening a page, stroking the
+# cat): they are run by tools/demo/pointer in a windowed session and are
+# skipped here.
+import argparse, csv, json, os, re, subprocess, sys, time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parent.parent
+SESSION = str(REPO / "tools" / "nested-session")
+SAMPLE = str(HERE / "sample")
+
+def session(*args, check=True, capture=False):
+    r = subprocess.run([SESSION, *args], stdout=subprocess.PIPE if capture else None, stderr=subprocess.PIPE if capture else None, text=True)
+    if check and r.returncode != 0:
+        sys.exit(f"tools/nested-session {' '.join(args[:2])} failed" + (": " + (r.stderr or "")[:300] if capture else ""))
+    return (r.stdout or "").strip()
+
+def session_dir():
+    return Path(os.environ.get("ISLAND_SESSION_DIR") or Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "dynamicisland-session")
+
+def pid(name):
+    out = session("pid", name, check=False, capture=True)
+    return int(out) if out.isdigit() else 0
+
+def theme(name):
+    """The style of a theme of the catalog, as the island's custom style."""
+    data = json.loads((REPO / "catalog" / "themes" / f"{name}.islandtheme.json").read_text())
+    return json.dumps(data["style"])
+
+# ---- what goes on during a scenario ----------------------------------------
+class Driver:
+    def start(self): pass
+    def stop(self): pass
+
+class Media(Driver):
+    def start(self):
+        media = session_dir() / "media"
+        if not (media / "tracks.tsv").exists():
+            subprocess.run([str(REPO / "tools" / "demo" / "make-media"), str(media)], check=True, stdout=subprocess.DEVNULL)
+        session("spawn", "player", str(REPO / "tools" / "demo" / "player"), str(media))
+    def stop(self):
+        p = [l.split()[0] for l in session("ps", capture=True).splitlines() if "tools/demo/player" in l or "pw-play" in l]
+        if p: subprocess.run(["kill", *p])
+
+class Notifications(Driver):
+    """`count` notifications, one every `gap` seconds, from made-up applications."""
+    def __init__(self, count=200, gap=0.4): self.count, self.gap, self.proc = count, gap, None
+    def start(self):
+        script = (f"for i in $(seq {self.count}); do gdbus call --session --dest org.freedesktop.Notifications "
+                  "--object-path /org/freedesktop/Notifications --method org.freedesktop.Notifications.Notify "
+                  "\"Demo App $((i % 5))\" 0 dialog-information \"Message $i\" \"The body of message $i, a little longer than its title.\" '[]' '{}' 4000 >/dev/null; "
+                  f"sleep {self.gap}; done")
+        self.proc = subprocess.Popen([SESSION, "run", "sh", "-c", script])
+    def stop(self):
+        if self.proc and self.proc.poll() is None: self.proc.terminate()
+
+class Pushes(Driver):
+    """An activity of the D-Bus API that counts up, as a build or a download would."""
+    def __init__(self): self.proc = None
+    def start(self):
+        push = str(session_dir() / "home" / ".local" / "bin" / "island-push")
+        script = (f"i=0; while :; do i=$(( (i + 3) % 101 )); {push} start bench --title 'Building' --subtitle \"step $i of 100\" "
+                  "--icon run-build --progress $i >/dev/null 2>&1; sleep 1; done")
+        self.proc = subprocess.Popen([SESSION, "run", "sh", "-c", script])
+    def stop(self):
+        if self.proc and self.proc.poll() is None: self.proc.terminate()
+
+ALL_OFF = {k: "false" for k in """showMediaModule showSystemModule showVolumeModule showNotificationModule showNotifications showWeather showApps
+    showQuickSettings showTools showHabits showCalendar showNotes showClipboard showAi showCloud showKdeConnect showUpdates showThermalWarning
+    showPowerEvents showBluetoothEvents showOsdEvents showKeyboardEvents showNetworkEvents showDndEvents showRecording showPrivacy showUnlock
+    showJobs trackDownloads watchDownloads enableDbusApi suggestionsEnabled catEnabled""".split()}
+
+SCENARIOS = [
+    # name, what it is, island, settings, driver, needs a pointer
+    ("baseline", "the same shell and desktop without the island", False, {}, None, False),
+    ("idle", "the pill with the clock, default settings; the cat has fallen asleep", True, {}, None, False),
+    ("idle-dot", "shrunk to a dot (the cat hidden)", True, {"dotMode": "true", "dotStart": "2"}, None, False),
+    ("idle-no-cat", "the pill, default settings, without the cat", True, {"catEnabled": "false"}, None, False),
+    ("everything-off", "every page, module, alert and watcher switched off", True, ALL_OFF, None, False),
+    ("cat-awake", "the cat kept awake (sitting, its fidgets)", True, {"catSleepSeconds": "3600"}, None, False),
+    ("cat-still", "the cat with \"Reduce motion\"", True, {"catReduceMotion": "true"}, None, False),
+    ("media", "music playing; glow off, no cat", True, {"catEnabled": "false", "ambientGlow": "false"}, Media, False),
+    ("media-glow", "music playing; the glow follows it, no cat", True, {"catEnabled": "false", "ambientGlow": "true"}, Media, False),
+    ("media-glow-cat", "music playing; glow, and the cat nods with its headphones", True, {"ambientGlow": "true"}, Media, False),
+    ("media-cat", "music playing; no glow, the cat with its headphones", True, {"ambientGlow": "false"}, Media, False),
+    ("theme-flat", "an opaque, flat look (Midnight), no blur", True, {"appearanceMode": "1", "customStyle": ("theme", "midnight"), "catEnabled": "false"}, None, False),
+    ("theme-glass", "a see-through look with blur (Glass)", True, {"appearanceMode": "1", "customStyle": ("theme", "glass"), "catEnabled": "false"}, None, False),
+    ("theme-gradient", "a gradient with blur (Aurora)", True, {"appearanceMode": "1", "customStyle": ("theme", "aurora"), "catEnabled": "false"}, None, False),
+    ("notifications", "200 notifications, one every 0.4 s", True, {}, Notifications, False),
+    ("activity", "an activity of the D-Bus API that changes every second", True, {}, Pushes, False),
+    ("hover", "the pointer going on and off the island: it opens and closes", True, {}, None, True),
+    ("page", "one page of the open island at a time", True, {}, None, True),
+    ("cat-petting", "the cat stroked, then annoyed", True, {}, None, True),
+]
+
+def frames(log, out, start, seconds):
+    """Qt's frame log → frames and their times, per second of the measurement."""
+    # "… syncAndRender: frame rendered in 3ms, polish=0, sync=1, render=1, swap=1, …" (the basic loop) or
+    # "Frame rendered with 'threaded' renderloop in 3ms, sync=1, render=1, swap=1" (the threaded one)
+    pattern = re.compile(r"[Ff]rame rendered (?:with '\w+' renderloop )?in (\d+)ms.*?sync=(\d+).*?render=(\d+).*?swap=(\d+)")
+    rows = []
+    for line in Path(log).read_text(errors="replace").splitlines():
+        m = pattern.search(line)
+        if m: rows.append(tuple(int(x) for x in m.groups()))
+    with open(out, "w", newline="") as f:
+        w = csv.writer(f); w.writerow(["frames", "seconds", "frames_per_s", "total_ms_median", "total_ms_p95", "total_ms_max", "render_ms_median"])
+        if rows:
+            total = sorted(r[0] for r in rows); render = sorted(r[2] for r in rows)
+            w.writerow([len(rows), seconds, round(len(rows) / seconds, 2), total[len(total) // 2], total[int(len(total) * 0.95)], total[-1], render[len(render) // 2]])
+        else:
+            w.writerow([0, seconds, 0, "", "", "", ""])
+
+def main():
+    ap = argparse.ArgumentParser(add_help=False)
+    ap.add_argument("--list", action="store_true"); ap.add_argument("--reps", type=int, default=3)
+    ap.add_argument("--warmup", type=float, default=60); ap.add_argument("--duration", type=float, default=120)
+    ap.add_argument("--out", default=str(REPO / "docs" / "perf" / "raw")); ap.add_argument("--frames", action="store_true")
+    ap.add_argument("-h", "--help", action="store_true"); ap.add_argument("scenarios", nargs="*")
+    a = ap.parse_args()
+    if a.help or (not a.list and not a.scenarios):
+        print("".join(l[2:] if l.startswith("# ") else "\n" for l in Path(__file__).read_text().splitlines(True)[1:27])); return
+    if a.list:
+        for name, what, island, settings, driver, pointer in SCENARIOS:
+            print(f"{name:18} {'pointer  ' if pointer else '         '}{what}")
+        return
+    wanted = [s for s in SCENARIOS if s[0] in a.scenarios or ("all" in a.scenarios and not s[5])]
+    unknown = set(a.scenarios) - {s[0] for s in SCENARIOS} - {"all"}
+    if unknown: sys.exit(f"no such scenario: {', '.join(sorted(unknown))} (tools/bench/run --list)")
+    out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
+    if not pid("kwin_wayland"):
+        session("start", "--audio")
+    session("install", capture=True)
+    env = ["QT_LOGGING_RULES=qt.scenegraph.time.renderloop.debug=true"] if a.frames else []
+    for name, what, island, settings, driver, pointer in wanted:
+        if pointer:
+            print(f"{name}: needs a pointer, skipped (tools/demo/pointer)"); continue
+        for rep in range(1, a.reps + 1):
+            session("shell", "--no-island", capture=True)          # the island's settings go with it
+            if island:
+                session("shell", capture=True)
+                pairs = []
+                for key, value in settings.items():
+                    pairs += [key, theme(value[1]) if isinstance(value, tuple) else value]
+                if pairs: session("set", *pairs)
+                session("shell", *env, capture=True)                # started with its settings in place
+            elif env:
+                session("shell", "--no-island", *env, capture=True)
+            d = driver() if driver else Driver()
+            d.start()
+            time.sleep(a.warmup)
+            log = session_dir() / "logs" / "plasmashell.log"
+            mark = log.stat().st_size if log.exists() else 0
+            target = out / f"{name}{'+frames' if a.frames else ''}.{rep}.csv"
+            also = [f"{n}={pid(n)}" for n in ("kwin_wayland", "ksystemstats") if pid(n)]
+            cmd = [SAMPLE, "--pid", str(pid("plasmashell")), "--name", "plasmashell", "--interval", "1", "--duration", str(a.duration),
+                   "--children", "--gpu", "--label", name, "--out", str(target)]
+            for item in also: cmd += ["--also", item]
+            subprocess.run(cmd, check=True)
+            d.stop()
+            if a.frames:
+                tail = out / f".{name}.log"
+                with open(log, "rb") as f:
+                    f.seek(mark); tail.write_bytes(f.read())
+                frames(tail, out / f"{name}.{rep}.frames.csv", mark, a.duration); tail.unlink()
+            print(f"{name} {rep}/{a.reps}: {target.name}", flush=True)
+
+if __name__ == "__main__":
+    main()

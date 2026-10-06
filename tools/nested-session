@@ -1,0 +1,247 @@
+#!/usr/bin/env bash
+# nested-session — a Plasma session of its own for the island: a KWin inside
+# the session you are in, with its own D-Bus, its own home and settings, an
+# empty desktop and nothing of yours in it. For measuring (tools/bench), for
+# recording (tools/demo) and for trying a first run with empty settings.
+#
+#   tools/nested-session start [--windowed] [--audio] [--host-system-bus]
+#         headless by default (KWin draws with the GPU into a screen nobody
+#         sees: 1920x1080, scale 1); --windowed opens it as a window on your
+#         screen instead. --audio gives it a PipeWire of its own with no sound
+#         card: what plays there is heard by nobody. --host-system-bus lets it
+#         see the computer's own system services (see below).
+#   tools/nested-session install        the island of this checkout into its home (builds native/)
+#   tools/nested-session shell [--no-island] [--trace FILE] [ENV=value …]
+#         plasmashell with an empty desktop of one colour, no panel and (unless
+#         --no-island) the island on it. --trace runs it under strace and writes
+#         what it executed and connected to into FILE (slow: not for measuring).
+#   tools/nested-session set KEY VALUE [KEY VALUE …]   settings of the island there
+#   tools/nested-session get KEY
+#   tools/nested-session shot FILE.png  a picture of its screen (Spectacle)
+#   tools/nested-session run CMD…       run a command in it
+#   tools/nested-session spawn NAME CMD…  the same in the background; output in logs/NAME.log
+#   tools/nested-session pid NAME       the process id of plasmashell, kwin_wayland, …
+#   tools/nested-session ps | stop
+#
+# Where it lives: ISLAND_SESSION_DIR (default ~/.cache/dynamicisland-session)
+# holds its home and logs; its sockets are in $XDG_RUNTIME_DIR/island-session
+# (a socket's path has to be short). Nothing outside these two is written.
+# KDE Connect and Bluetooth's file transfer are not started in it, so it does
+# not show up on the network. Your own session's settings, wallet, notes and
+# accounts are out of its reach: it has another home.
+#
+# The system bus: a computer has one, shared by every session (NetworkManager,
+# Bluetooth, the battery, the package manager are on it). By default the
+# session gets an empty one of its own, so nothing in it can ask anything of
+# those, or change anything there: the island then shows no network, no
+# Bluetooth and no updates. With --host-system-bus it sees the real ones, as
+# the island on your desktop does: then a click on Wi-Fi or Bluetooth in its
+# Controls page switches the real thing. The sensor daemon (ksystemstats) is
+# kept off the real system bus either way: a second one beside your session's
+# makes the two set NetworkManager's statistics interval back and forth, some
+# six hundred signals a second for every program that listens.
+#
+# What it cannot do: take the pointer. KWin lets only the programs it knows
+# send input or record, and this script does not switch that off. A pointer
+# for a windowed session comes from tools/demo/pointer (through /dev/uinput:
+# it moves your real pointer). Headless, nothing can click.
+set -uo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ID="org.phobby.dynamicisland"
+ROOT="${ISLAND_SESSION_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/dynamicisland-session}"
+RUN="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/island-session"
+HOST_RUNTIME="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+HOST_WAYLAND="${WAYLAND_DISPLAY:-wayland-0}"
+HOME_="$ROOT/home"; LOGS="$ROOT/logs"
+SOCKET="wayland-island"
+W="${ISLAND_SESSION_WIDTH:-1920}"; H="${ISLAND_SESSION_HEIGHT:-1080}"
+COLOR="${ISLAND_SESSION_COLOR:-#2b3a4a}"
+
+inside() {
+    env -i PATH="$PATH" HOME="$HOME_" USER="demo" LOGNAME="demo" LANG="${ISLAND_SESSION_LANG:-en_US.UTF-8}" \
+        XDG_RUNTIME_DIR="$RUN" XDG_CONFIG_HOME="$HOME_/.config" XDG_DATA_HOME="$HOME_/.local/share" \
+        XDG_CACHE_HOME="$HOME_/.cache" XDG_STATE_HOME="$HOME_/.local/state" \
+        XDG_DATA_DIRS="${ISLAND_SESSION_DATA_DIRS:-/usr/local/share:/usr/share}" \
+        XDG_CONFIG_DIRS="${ISLAND_SESSION_CONFIG_DIRS:-/etc/xdg}" \
+        XDG_MENU_PREFIX=plasma- XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=wayland KDE_FULL_SESSION=true KDE_SESSION_VERSION=6 \
+        DBUS_SESSION_BUS_ADDRESS="unix:path=$RUN/bus" DBUS_SYSTEM_BUS_ADDRESS="$(system_bus)" \
+        WAYLAND_DISPLAY="$SOCKET" QT_QPA_PLATFORM=wayland \
+        QML_IMPORT_PATH="$HOME_/.local/lib/qml" ISLAND_SESSION="$ROOT" "$@"
+}
+# The system bus of the session: its own empty one, or the computer's (start --host-system-bus).
+system_bus() {
+    if [ -e "$ROOT/host-system-bus" ]; then echo "unix:path=/run/dbus/system_bus_socket"; else echo "unix:path=$RUN/system-bus"; fi
+}
+pids() {
+    # (kwin_wayland has file capabilities, so its environment cannot be read back: it is known by its socket)
+    { grep -l -a -s "ISLAND_SESSION=$ROOT" /proc/[0-9]*/environ 2>/dev/null | sed -E 's|/proc/([0-9]+)/environ|\1|'
+      for p in $(pgrep -u "$(id -u)" -x kwin_wayland); do
+          tr '\0' ' ' < "/proc/$p/cmdline" 2>/dev/null | grep -q -- "--socket $SOCKET " && echo "$p"
+      done
+    } | sort -u
+}
+pid_of() {
+    for p in $(pids); do
+        [ "$(cat "/proc/$p/comm" 2>/dev/null)" = "$1" ] && { echo "$p"; return 0; }
+    done
+    return 1
+}
+script() { inside qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "$1"; }
+wait_for_shell() {
+    for _ in $(seq 150); do
+        inside qdbus6 org.kde.plasmashell /PlasmaShell >/dev/null 2>&1 && return 0
+        sleep 0.2
+    done
+    echo "plasmashell did not come up; see $LOGS/plasmashell.log" >&2; return 1
+}
+
+case "${1:-}" in
+start)
+    shift
+    windowed=0; audio=0; host_bus=0
+    for a in "$@"; do
+        case "$a" in --windowed) windowed=1 ;; --audio) audio=1 ;; --host-system-bus) host_bus=1 ;; *) echo "unknown option: $a" >&2; exit 2 ;; esac
+    done
+    [ -z "$(pids)" ] || { echo "already running (tools/nested-session stop)"; exit 1; }
+    mkdir -p "$HOME_/.config" "$HOME_/.local/share/dbus-1/services" "$HOME_/.cache" "$HOME_/.local/state" "$LOGS"
+    mkdir -p -m 700 "$RUN"
+    rm -f "$ROOT/host-system-bus"; [ $host_bus -eq 1 ] && : > "$ROOT/host-system-bus"
+    for name in org.kde.kdeconnect org.bluez.obex; do
+        printf '[D-BUS Service]\nName=%s\nExec=/bin/false\n' "$name" > "$HOME_/.local/share/dbus-1/services/$name.service"
+    done
+    # The sensor daemon never on the computer's system bus (see above).
+    printf '[D-BUS Service]\nName=org.kde.ksystemstats1\nExec=/usr/bin/env DBUS_SYSTEM_BUS_ADDRESS=unix:path=%s/system-bus %s\n' \
+        "$RUN" "$(command -v ksystemstats || echo /usr/bin/ksystemstats)" > "$HOME_/.local/share/dbus-1/services/org.kde.ksystemstats1.service"
+    # An empty system bus of its own: no service is on it, and none can be started on it.
+    cat > "$ROOT/system-bus.conf" <<CONF
+<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+  <listen>unix:path=$RUN/system-bus</listen>
+  <auth>EXTERNAL</auth>
+  <policy context="default">
+    <allow send_destination="*" eavesdrop="true"/>
+    <allow eavesdrop="true"/>
+    <allow own="*"/>
+  </policy>
+</busconfig>
+CONF
+    inside setsid dbus-daemon --config-file="$ROOT/system-bus.conf" --nofork --nopidfile >"$LOGS/system-bus.log" 2>&1 &
+    # No welcome window on its first start.
+    [ -e "$HOME_/.config/plasma-welcomerc" ] || printf '[General]\nLastSeenVersion=99.0.0\nShouldShow=false\n' > "$HOME_/.config/plasma-welcomerc"
+    inside setsid dbus-daemon --session --address="unix:path=$RUN/bus" --nofork --nopidfile >"$LOGS/dbus.log" 2>&1 &
+    for _ in $(seq 50); do [ -S "$RUN/bus" ] && break; sleep 0.1; done
+    [ -S "$RUN/bus" ] || { echo "its D-Bus did not start; see $LOGS/dbus.log" >&2; exit 1; }
+    if [ $audio -eq 1 ]; then
+        mkdir -p "$HOME_/.config/wireplumber/wireplumber.conf.d"
+        printf 'wireplumber.profiles = {\n  main = {\n    hardware.audio = disabled\n    hardware.bluetooth = disabled\n    hardware.video-capture = disabled\n  }\n}\n' \
+            > "$HOME_/.config/wireplumber/wireplumber.conf.d/90-no-hardware.conf"
+        inside setsid pipewire >"$LOGS/pipewire.log" 2>&1 &
+        for _ in $(seq 50); do [ -S "$RUN/pipewire-0" ] && break; sleep 0.1; done
+        inside setsid wireplumber >"$LOGS/wireplumber.log" 2>&1 &
+        inside setsid pipewire-pulse >"$LOGS/pipewire-pulse.log" 2>&1 &
+        sleep 1.5
+        # a sink to play into (there is no sound card in here)
+        inside pactl load-module module-null-sink sink_name=nobody sink_properties=device.description=Nobody >/dev/null 2>&1 || true
+        inside pactl set-default-sink nobody >/dev/null 2>&1 || true
+    fi
+    if [ $windowed -eq 1 ]; then
+        inside env WAYLAND_DISPLAY="$HOST_RUNTIME/$HOST_WAYLAND" setsid kwin_wayland --width "$W" --height "$H" --socket "$SOCKET" \
+            --no-lockscreen --no-global-shortcuts --no-kactivities >"$LOGS/kwin.log" 2>&1 &
+    else
+        inside env -u WAYLAND_DISPLAY setsid kwin_wayland --virtual --width "$W" --height "$H" --socket "$SOCKET" \
+            --no-lockscreen --no-global-shortcuts --no-kactivities >"$LOGS/kwin.log" 2>&1 &
+    fi
+    for _ in $(seq 100); do [ -S "$RUN/$SOCKET" ] && break; sleep 0.1; done
+    [ -S "$RUN/$SOCKET" ] && echo "started ($([ $windowed -eq 1 ] && echo windowed || echo headless), ${W}x${H}) in $ROOT" \
+        || { echo "KWin did not start; see $LOGS/kwin.log" >&2; tail -5 "$LOGS/kwin.log" >&2; exit 1; }
+    ;;
+install)
+    # the plasmoid by its package tool, the native modules built apart from your own build folder
+    if inside kpackagetool6 -t Plasma/Applet -l 2>/dev/null | grep -qx "$ID"; then
+        inside kpackagetool6 -t Plasma/Applet -u "$HERE/$ID" >/dev/null || exit 1
+    else
+        inside kpackagetool6 -t Plasma/Applet -i "$HERE/$ID" >/dev/null || exit 1
+    fi
+    build="$ROOT/build"
+    cmake -S "$HERE/native" -B "$build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$HOME_/.local" \
+          -DQML_INSTALL_DIR="$HOME_/.local/lib/qml" >/dev/null && cmake --build "$build" -j"$(nproc)" >/dev/null \
+        && cmake --install "$build" >/dev/null || { echo "the native modules did not build" >&2; exit 1; }
+    mkdir -p "$HOME_/.local/bin" && install -m 755 "$HERE/tools/island-push" "$HOME_/.local/bin/island-push"
+    echo "installed into $HOME_"
+    ;;
+shell)
+    shift
+    island=1; trace=""; extra=()
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --no-island) island=0 ;;
+            --trace) trace="$2"; shift ;;
+            *=*) extra+=("$1") ;;
+            *) echo "unknown option: $1" >&2; exit 2 ;;
+        esac
+        shift
+    done
+    [ -S "$RUN/$SOCKET" ] || { echo "not started (tools/nested-session start)" >&2; exit 1; }
+    for p in $(pids); do case "$(cat "/proc/$p/comm" 2>/dev/null)" in plasmashell|strace) kill "$p" 2>/dev/null ;; esac; done
+    sleep 1
+    if [ -n "$trace" ]; then
+        inside env "${extra[@]}" setsid strace -f -qq -s 200 -e trace=execve,connect -o "$trace" plasmashell --no-respawn >"$LOGS/plasmashell.log" 2>&1 &
+    else
+        inside env "${extra[@]}" setsid plasmashell --no-respawn >"$LOGS/plasmashell.log" 2>&1 &
+    fi
+    wait_for_shell || exit 1
+    sleep 2
+    # An empty desktop of one colour, no panel; the island on it or not.
+    script "
+        var ps = panels(); for (var i = 0; i < ps.length; ++i) ps[i].remove();
+        var d = desktops()[0];
+        if (d.wallpaperPlugin != 'org.kde.color') {
+            d.wallpaperPlugin = 'org.kde.color';
+            d.currentConfigGroup = ['Wallpaper', 'org.kde.color', 'General'];
+            d.writeConfig('Color', '$COLOR'); d.reloadConfig();
+        }
+        var ws = d.widgets(), have = null;
+        for (var i = 0; i < ws.length; ++i) { if (ws[i].type == '$ID') have = ws[i]; else ws[i].remove(); }
+        if ($island && !have) d.addWidget('$ID');
+        if (!$island && have) have.remove();
+    " >/dev/null
+    echo "plasmashell $(pid_of plasmashell) ($([ $island -eq 1 ] && echo "with the island" || echo "without the island"))"
+    ;;
+set)
+    shift
+    [ $(( $# % 2 )) -eq 0 ] && [ $# -gt 0 ] || { echo "usage: tools/nested-session set KEY VALUE [KEY VALUE …]" >&2; exit 2; }
+    pairs=""
+    while [ $# -gt 0 ]; do
+        value="${2//\\/\\\\}"; value="${value//\'/\\\'}"; value="${value//$'\n'/\\n}"
+        pairs="$pairs w.writeConfig('$1', '$value');"; shift 2
+    done
+    script "
+        var ws = desktops()[0].widgets();
+        for (var i = 0; i < ws.length; ++i) { var w = ws[i]; if (w.type != '$ID') continue;
+            w.currentConfigGroup = ['General']; $pairs w.reloadConfig(); }
+    " >/dev/null
+    ;;
+get)
+    script "
+        var ws = desktops()[0].widgets();
+        for (var i = 0; i < ws.length; ++i) { var w = ws[i]; if (w.type != '$ID') continue;
+            w.currentConfigGroup = ['General']; print(w.readConfig('$2')); }
+    "
+    ;;
+shot)  inside spectacle -b -n -f -o "$2" >/dev/null 2>&1; [ -s "$2" ] || { echo "no picture (is it running?)" >&2; exit 1; } ;;
+run)   shift; inside "$@" ;;
+spawn) name="$2"; shift 2; inside setsid "$@" >"$LOGS/$name.log" 2>&1 & ;;
+pid)   pid_of "$2" ;;
+ps)    for p in $(pids); do printf '%s %s\n' "$p" "$(tr '\0' ' ' <"/proc/$p/cmdline" 2>/dev/null | cut -c1-110)"; done ;;
+stop)
+    for sig in TERM KILL; do
+        p="$(pids)"; [ -z "$p" ] && break
+        # shellcheck disable=SC2086
+        kill -$sig $p 2>/dev/null; sleep 1.5
+    done
+    p="$(pids)"
+    [ -z "$p" ] && { rm -rf "$RUN"; echo "stopped"; } || { echo "still running: $p" >&2; exit 1; }
+    ;;
+-h|--help|"") sed -n '2,50p' "$0" ;;
+*) echo "unknown command: $1 (tools/nested-session --help)" >&2; exit 2 ;;
+esac
