@@ -22,6 +22,7 @@ Item {
     Loader { id: layout; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configLayout.qml" }
     Loader { id: ai; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configAi.qml" }
     Loader { id: cloud; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configCloud.qml" }
+    Loader { id: cat; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configCat.qml" }
     PageCatalog { id: pages }
     QtObject { id: stored; property string suggestionsData: ""; property string suggestionsAvailable: "" }
 
@@ -228,6 +229,67 @@ Item {
         }
 
         // Export the look, reset the settings, bring the file back with "Add New…".
+        // The Cat page: its preview is the cat itself, with what is set before it is applied.
+        function test_cat_preview_coats_and_the_gallery() {
+            if (cat.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = cat.item;
+            const find = name => { let found = null; const walk = i => { if (found === null && i.objectName === name) found = i; for (const c of i.children) walk(c); if (i.contentItem) walk(i.contentItem); }; walk(page); return found; };
+            // as the settings window hands them in
+            page.cfg_catEnabled = true; page.cfg_catSide = 0; page.cfg_catSize = 130; page.cfg_catFur = "grey"; page.cfg_catFurColor = "#c9a27c";
+            page.cfg_catMusic = true; page.cfg_catThoughts = true; page.cfg_catEvents = true; page.cfg_catPetting = true; page.cfg_catClicks = true;
+            page.cfg_catNoAnger = false; page.cfg_catSulkSeconds = 10; page.cfg_catSleepSeconds = 20; page.cfg_catDot = 0; page.cfg_catReduceMotion = false;
+            cat.visible = true;
+            wait(150);
+            const figure = find("catPreview"), mind = page.previewMind, stage = find("catStage");
+            verify(figure !== null && mind !== null && stage !== null);
+            compare([figure.visible, figure.fur, figure.mirrored, mind.body, mind.active], [true, "grey", false, "sit", true]);
+            // size and side show at once
+            const small = figure.height;
+            page.cfg_catSize = 180;
+            verify(figure.height > small * 1.3);
+            page.cfg_catSide = 2;
+            compare(figure.mirrored, true);
+            page.cfg_catSide = 0;
+            // each coat, and a colour of one's own
+            for (const coat of ["orange", "black", "white", "tuxedo"]) {
+                const button = find("coat-" + coat);
+                mouseClick(button, button.width / 2, button.height / 2);
+                compare([page.cfg_catFur, figure.fur], [coat, coat]);
+                wait(40);
+            }
+            page.cfg_catFur = "custom"; page.cfg_catFurColor = "#3366aa";
+            compare(Qt.colorEqual(figure.furFill, "#3366aa"), true);
+            // what the island would tell it, tried here
+            stage.playing = true;
+            compare([mind.body, mind.accessory], ["listen", "headphones"]);
+            stage.thinking = true;
+            compare([mind.bubble, mind.tilt], ["dots", true]);
+            stage.playing = false; stage.thinking = false;
+            page.cfg_catMusic = false; stage.playing = true;
+            compare(mind.accessory, "", "a reaction switched off here is off in the preview");
+            stage.playing = false; page.cfg_catMusic = true;
+            // it can be clicked
+            mouseClick(figure, figure.width * 0.6, figure.height * 0.75);
+            compare(mind.body, "curious");
+            // reduced motion
+            page.cfg_catReduceMotion = true;
+            compare([mind.still, figure.still], [true, true]);
+            page.cfg_catReduceMotion = false;
+            // switched off: no cat, and nothing of it runs
+            page.cfg_catEnabled = false;
+            compare([figure.visible, mind.active, mind.timer.running], [false, false, false]);
+            page.cfg_catEnabled = true;
+            // the gallery in the preview's place, and back
+            const button = find("catGalleryButton");
+            mouseClick(button, button.width / 2, button.height / 2);
+            compare([page.gallery, mind.active, figure.running], [true, false, false]);
+            wait(300);
+            verify(stage.height > small * 3, "the gallery has room");
+            mouseClick(button, button.width / 2, button.height / 2);
+            compare([page.gallery, mind.active], [false, true]);
+            cat.visible = false;
+        }
+
         function test_theme_file_through_the_page() {
             if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
             const page = appearance.item, library = page.themeLibrary, dialog = page.themeDialog;

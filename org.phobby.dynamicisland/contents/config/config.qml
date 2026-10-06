@@ -78,6 +78,11 @@ ConfigModel {
         source: "configHabits.qml"
     }
     ConfigCategory {
+        name: Lang.i18n("Cat")
+        icon: "face-smile"
+        source: "configCat.qml"
+    }
+    ConfigCategory {
         name: Lang.i18n("Suggestions")
         icon: "dialog-question"
         source: "configSuggestions.qml"
