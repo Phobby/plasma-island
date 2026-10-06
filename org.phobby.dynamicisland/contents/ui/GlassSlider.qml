@@ -64,9 +64,15 @@ Item {
         }
         onPressed: mouse => update(mouse.x)
         onPositionChanged: mouse => { if (pressed) update(mouse.x); }
+        // A notch is 5 %; a touchpad moves it by the way the fingers went. A
+        // scroll that began elsewhere (a list passing under the pointer) is
+        // not the slider's, and one that began here goes nowhere else.
         onWheel: wheel => {
-            const v = Math.max(0, Math.min(1, slider.value + (wheel.angleDelta.y > 0 ? 0.05 : -0.05)));
-            slider.moved(v);
+            const step = ScrollGesture.step(wheel);
+            if (!ScrollGesture.take(slider, !step.none, wheel)) { wheel.accepted = false; return; }
+            if (step.horizontal || step.y === 0) return;
+            const by = step.pixels ? step.y / ScrollGesture.sliderPixels : (step.y > 0 ? 0.05 : -0.05);
+            slider.moved(Math.max(0, Math.min(1, slider.value + by)));
         }
     }
 }

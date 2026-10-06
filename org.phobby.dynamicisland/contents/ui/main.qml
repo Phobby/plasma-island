@@ -692,7 +692,6 @@ PlasmoidItem {
         Loader {
             readonly property bool interacting: item !== null && item.interacting
             readonly property bool holdOpen: item !== null && item.holdOpen
-            readonly property bool keepsWheel: item !== null && item.keepsWheel
             readonly property bool tall: item !== null && item.tall
             Component.onCompleted: setSource("AiPage.qml", { theme: root.islandTheme, ai: root.aiBackend })
             Connections {
@@ -707,7 +706,6 @@ PlasmoidItem {
         Loader {
             readonly property bool interacting: item !== null && item.interacting
             readonly property bool holdOpen: item !== null && item.holdOpen
-            readonly property bool keepsWheel: item !== null && item.keepsWheel
             readonly property bool tall: item !== null && item.tall
             Component.onCompleted: setSource("CloudPage.qml", { theme: root.islandTheme, cloud: root.cloudBackend })
         }

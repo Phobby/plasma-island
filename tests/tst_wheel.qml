@@ -1,11 +1,12 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
 
-    The wheel in the expanded island: it turns the pages, but not while a page
-    keeps it for a list of its own. The Weather page does while a place is
-    searched and while a day's hours are shown: a list lets the wheel through
-    at its end, and turning the page there would close the search (or the day)
-    in the middle of scrolling it.
+    The wheel on a real page of the expanded island, the Weather page: it
+    turns the pages, but not over a list that has more than fits. The places
+    a search found and a day's hours are such lists: a list lets the wheel
+    through at its end, and turning the page there would close the search (or
+    the day) in the middle of scrolling it. The rules themselves, on pages
+    made for them: tests/tst_scroll.qml.
 
     The real ExpandedContent with the real Weather page beside a second page.
     The hours need the forecast of tests/fixtures, read with the native module
@@ -69,11 +70,17 @@ Item {
         function page() { return find(item => typeof item.openSearch === "function"); }
         // the list that is shown now
         function list() { return find(item => typeof item.positionViewAtIndex === "function" && item.visible && item.count > 0); }
-        // One notch of the wheel (down: -1, up: 1) at the middle of `item`.
+        // One notch of the wheel (down: -1, up: 1) at the middle of `item`, as a scroll of its own.
         function notch(item, direction) {
             const at = item.mapToItem(root, item.width / 2, item.height / 2);
             mouseWheel(root, at.x, at.y, 0, 120 * direction);
-            wait(250);
+            wait(ScrollGesture.gestureGap + 100);
+        }
+        // Several in one scroll.
+        function spin(item, direction, notches) {
+            const at = item.mapToItem(root, item.width / 2, item.height / 2);
+            for (let i = 0; i < notches; ++i) { mouseWheel(root, at.x, at.y, 0, 120 * direction); wait(40); }
+            wait(ScrollGesture.gestureGap + 100);
         }
         // the pages slide (320 ms)
         function settle() { wait(450); }
@@ -88,7 +95,7 @@ Item {
 
         function test_1_the_wheel_turns_the_page() {
             const p = page();
-            compare([expanded.currentKey, p.view, p.keepsWheel, expanded.wheelKept], ["weather", "now", false, false]);
+            compare([expanded.currentKey, p.view], ["weather", "now"]);
             notch(p, -1);
             compare(expanded.currentKey, "other");
             settle();
@@ -103,29 +110,28 @@ Item {
             const places = [];
             for (let i = 0; i < 8; ++i) places.push({ name: "Place " + i, admin: "Region", country: "Country", latitude: 38 + i, longitude: 27 });
             p.found = places;
-            compare([p.keepsWheel, expanded.wheelKept], [true, true]);
             const l = list();
             verify(l !== null && l.count === 8);
             verify(l.contentHeight > l.height, "more places than fit: " + l.contentHeight + " in " + l.height);
             compare(l.atYBeginning, true);
 
             // down to the last place, and on: the list scrolls, the search stays
-            for (let i = 0; i < 6; ++i) notch(l, -1);
+            spin(l, -1, 12);
             tryCompare(l, "atYEnd", true);
             verify(l.contentY > 0);
             compare([expanded.currentKey, p.view, p.found.length, p.typing], ["weather", "search", 8, true]);
-            // and back up, past the first one
-            for (let i = 0; i < 6; ++i) notch(l, 1);
-            tryCompare(l, "atYBeginning", true);
-            compare([expanded.currentKey, p.view, p.found.length], ["weather", "search", 8]);
-            // beside the list (the field) too
-            notch(p, -1);
-            notch(expanded, -1);
+            // a new scroll from the end
+            notch(l, -1);
             compare([expanded.currentKey, p.view], ["weather", "search"]);
+            // and back up, past the first one
+            spin(l, 1, 12);
+            tryCompare(l, "atYBeginning", true);
+            notch(l, 1);
+            compare([expanded.currentKey, p.view, p.found.length], ["weather", "search", 8]);
 
             // a place is chosen: the wheel turns the page again
             p.pick(p.found[7]);
-            compare([p.view, p.keepsWheel, expanded.wheelKept], ["now", false, false]);
+            compare(p.view, "now");
             notch(p, -1);
             compare(expanded.currentKey, "other");
             settle();
@@ -142,36 +148,30 @@ Item {
             backend.retime();
             verify(backend.ready);
             p.shownDay = 1;
-            compare([p.keepsWheel, expanded.wheelKept], [true, true]);
             wait(500);
             const l = list();
             verify(l !== null && l.count === 24);
-            for (let i = 0; i < 12; ++i) notch(l, -1);
+            spin(l, -1, 20);
             tryCompare(l, "atYEnd", true);
+            notch(l, -1);
             compare([expanded.currentKey, p.shownDay], ["weather", 1]);
-            for (let i = 0; i < 12; ++i) notch(l, 1);
+            spin(l, 1, 20);
             tryCompare(l, "atYBeginning", true);
+            notch(l, 1);
             compare([expanded.currentKey, p.shownDay], ["weather", 1]);
+            // the tabs above the hours turn the page all the same
+            const header = expanded.mapToItem(root, expanded.width / 2, 8);
+            mouseWheel(root, header.x, header.y, 0, -120);
+            compare(expanded.currentKey, "other");
+            settle();
+            expanded.jumpTo("weather");
 
             // back to the days: the wheel turns the page again
             p.shownDay = -1;
-            compare([p.keepsWheel, expanded.wheelKept], [false, false]);
-            wait(400);
+            wait(ScrollGesture.gestureGap + 100);
             notch(p, -1);
             compare(expanded.currentKey, "other");
             settle();
-            // the page that is not shown keeps nothing
-            compare(expanded.wheelKept, false);
-        }
-
-        // The island closes: nothing is kept for the next time it opens.
-        function test_4_closing_lets_go() {
-            expanded.jumpTo("weather");
-            const p = page();
-            p.openSearch();
-            compare(expanded.wheelKept, true);
-            expanded.active = false;
-            compare(expanded.wheelKept, false);
         }
     }
 }

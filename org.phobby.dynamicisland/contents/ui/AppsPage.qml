@@ -330,12 +330,10 @@ Item {
                 onAccepted: if (results.count > 0) page.add(results.model[0])
             }
         }
-        ListView {
+        IslandListView {
             id: results
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
             spacing: 2
             model: {
                 const all = page.apps ? page.apps.all : [];

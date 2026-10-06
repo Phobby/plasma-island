@@ -501,13 +501,11 @@ Item {
                     onClicked: page.editing = false
                 }
             }
-            Flickable {
+            IslandFlickable {
                 id: picker
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                clip: true
                 contentHeight: spare.implicitHeight
-                boundsBehavior: Flickable.StopAtBounds
                 Flow {
                     id: spare
                     width: picker.width
@@ -549,13 +547,11 @@ Item {
         }
 
         // Adjustable controls
-        Flickable {
+        IslandFlickable {
             visible: !page.editing && page.detail.length === 0
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             contentHeight: sliders.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
             ColumnLayout {
                 id: sliders
                 width: parent.width

@@ -311,13 +311,11 @@ Item {
         }
 
         // ---- step 2: instructions + link ----
-        Flickable {
+        IslandFlickable {
             visible: connect.step === "link"
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             contentHeight: steps.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
             Column {
                 id: steps
                 width: parent.width

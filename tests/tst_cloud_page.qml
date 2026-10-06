@@ -139,7 +139,7 @@ Item {
         function test_2_the_folder_names_only() {
             const p = open();
             tryVerify(() => named("entries").count === 6, 20000);
-            compare([p.current, p.path, p.tall, expanded.tall, p.keepsWheel], ["box", "", true, true, true]);
+            compare([p.current, p.path, p.tall, expanded.tall], ["box", "", true, true]);
             compare(names(), ["Belgeler çğş", "empty", "<b>bold<b> &amp; [link](x).md", "b2.txt", "b10.txt", "Zeta.pdf"], "folders first, then by name");
             shown("<b>bold<b> &amp; [link](x).md", "Sync state unknown · why: Settings → Cloud");
             verify(find(item => item.textFormat !== undefined && item.textFormat !== Text.PlainText && String(item.text).indexOf("<b>") >= 0) === null, "a name is never read as markup");

@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+# scroll-check — everything in the island that scrolls keeps its scroll.
+#
+#   tools/scroll-check          the list of what scrolls, and what is wrong
+#   tools/scroll-check --quiet  only what is wrong
+#
+# A list at its end lets the wheel through, and the island's pages would be
+# turned by it. So every Flickable, ListView, GridView… of contents/ui is an
+# IslandFlickable, IslandListView or IslandGridView, or has an IslandScroll in
+# it; and nothing listens to the wheel on its own: only IslandScroll, the
+# pages (ExpandedContent) and the slider (GlassSlider) do, and they ask
+# ScrollGesture whose scroll it is. See CONTRIBUTING.md, "What scrolls".
+#
+# Not held to this: a list that does not move (interactive: false), and the
+# settings window (config*.qml, Theme*Dialog.qml), which has no pages to turn
+# and scrolls with the desktop's own controls.
+import re, sys
+from pathlib import Path
+
+UI = Path(__file__).resolve().parent.parent / "org.phobby.dynamicisland" / "contents" / "ui"
+SCROLLS = r"(?:Flickable|ListView|GridView|PathView|TableView|TreeView|ScrollView|SwipeView)"
+OURS = {"IslandFlickable.qml", "IslandListView.qml", "IslandGridView.qml"}
+LISTENS = {"IslandScroll.qml", "ExpandedContent.qml", "GlassSlider.qml"}
+
+def settings(path):
+    return path.name.startswith("config") or re.fullmatch(r"Theme\w*Dialog\.qml", path.name) is not None
+
+def block(lines, start):
+    """The lines of the object that opens on line `start`, with the depth of each."""
+    depth, out = 0, []
+    for line in lines[start:]:
+        code = re.sub(r'"(?:[^"\\]|\\.)*"', '""', line.split("//")[0])
+        out.append((depth, line))
+        depth += code.count("{") - code.count("}")
+        if depth <= 0:
+            break
+    return out
+
+quiet = "--quiet" in sys.argv
+wrong, seen = [], 0
+for path in sorted(UI.rglob("*.qml")):
+    text = path.read_text(encoding="utf-8")
+    # (comments say what they like: blanked, the line numbers stay)
+    text = re.sub(r"/\*.*?\*/", lambda c: "\n" * c.group(0).count("\n"), text, flags=re.S)
+    lines = text.split("\n")
+    rel = path.relative_to(UI)
+    for i, line in enumerate(lines):
+        code = line.split("//")[0]
+        if re.search(r"\b(onWheel|WheelHandler)\b", code) and path.name not in LISTENS:
+            wrong.append(f"{rel}:{i + 1}: listens to the wheel on its own: use IslandScroll (or ask ScrollGesture.take())")
+        m = re.match(r"^\s*(?:component\s+\w+\s*:\s*|\w+\s*:\s*)?((?:\w+\.)?)(Island)?(" + SCROLLS[3:-1] + r")\s*\{", code)
+        if not m:
+            continue
+        seen += 1
+        kind = m.group(1) + (m.group(2) or "") + m.group(3)
+        body = block(lines, i)
+        own = [l.strip() for d, l in body if d == 1]
+        if m.group(2):
+            how = "keeps its scroll"
+        elif path.name in OURS:
+            how = "the common component itself" if any("IslandScroll" in l for l in own) else None
+        elif any(l.startswith("IslandScroll") for l in own):
+            how = "keeps its scroll (IslandScroll)"
+        elif any(re.match(r"interactive:\s*false\b", l) for l in own):
+            how = "does not move (interactive: false)"
+        elif settings(path):
+            how = "settings window"
+        else:
+            how = None
+        if how is None:
+            wrong.append(f"{rel}:{i + 1}: {kind} does not keep its scroll: make it an Island{m.group(3)} or put an IslandScroll in it")
+        elif not quiet:
+            print(f"{str(rel) + ':' + str(i + 1):34} {kind:18} {how}")
+for name in LISTENS:
+    if "ScrollGesture.take(" not in (UI / name).read_text(encoding="utf-8"):
+        wrong.append(f"{name}: listens to the wheel without asking ScrollGesture.take()")
+for w in wrong:
+    print("!!", w)
+print(f"scroll: {seen} things that scroll, {len(wrong)} wrong")
+sys.exit(1 if wrong else 0)

@@ -2,11 +2,14 @@
 # run-tests — every check of the repository that needs no running island.
 #
 #   tools/run-tests            the rules in JavaScript (node) and the QML tests
-#                              (qmltestrunner, off screen); the texts (i18n-check)
+#                              (qmltestrunner, off screen); the texts (i18n-check);
+#                              what scrolls (scroll-check)
 #
 # Nothing here reads or changes the system's clock: the tests hand in their
 # own dates. QML tests that need the native module use the one built in
-# native/build (./install.sh builds it) and are skipped without it.
+# native/build (./install.sh builds it) and are skipped without it. The steps
+# of a touchpad's scroll are sent by tests/helper, built here (cmake, Qt 6
+# development files) into tests/.run; without it those tests are skipped.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$HERE"
@@ -18,6 +21,9 @@ python3 tools/i18n-check --strict | sed -n '1,2p' || failed=1
 echo "== theme catalog, weather pictures"
 python3 tools/catalog-update --check || failed=1
 python3 tools/weather-icons --check || failed=1
+
+echo "== what scrolls"
+python3 tools/scroll-check --quiet || failed=1
 
 echo "== rules (node)"
 if command -v node >/dev/null 2>&1; then
@@ -37,6 +43,15 @@ for candidate in /usr/lib/qt6/bin/qmltestrunner /usr/lib64/qt6/bin/qmltestrunner
 done
 if [ -n "$runner" ]; then
     [ -d native/build/qml ] && export QML_IMPORT_PATH="$HERE/native/build/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
+    # A touchpad's wheel steps for tests/tst_scroll.qml (skipped there without it).
+    if command -v cmake >/dev/null 2>&1; then
+        if cmake -S tests/helper -B tests/.run/helper -DCMAKE_BUILD_TYPE=Release >/dev/null 2>&1 \
+           && cmake --build tests/.run/helper -j"$(nproc)" >/dev/null 2>&1; then
+            export QML_IMPORT_PATH="$HERE/tests/.run/helper/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
+        else
+            echo "tests/helper did not build: the touchpad tests are skipped"
+        fi
+    fi
     # (KDE's colour button asks for KDE's own i18n, which a bare QML engine does not have)
     out="$(QT_QPA_PLATFORM=offscreen "$runner" -input tests -silent 2>&1)" || failed=1
     printf '%s\n' "$out" | grep -v -E "^(Testing|\*\*\*)|i18nc is not defined" || true

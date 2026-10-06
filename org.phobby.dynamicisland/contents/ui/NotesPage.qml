@@ -420,13 +420,11 @@ Item {
             font.pointSize: page.theme.fontSmall * 0.9
             elide: Text.ElideRight
         }
-        ListView {
+        IslandListView {
             id: list
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             spacing: 2
-            boundsBehavior: Flickable.StopAtBounds
             model: page.shown
 
             delegate: Rectangle {
@@ -671,12 +669,10 @@ Item {
                 font.weight: Font.DemiBold
             }
         }
-        Flickable {
+        IslandFlickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             contentHeight: sourceColumn.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
             ColumnLayout {
                 id: sourceColumn
                 width: parent.width
@@ -752,12 +748,10 @@ Item {
                 font.weight: Font.DemiBold
             }
         }
-        Flickable {
+        IslandFlickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             contentHeight: formInfo.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
             Text {
                 id: formInfo
                 width: parent.width
@@ -986,13 +980,11 @@ Item {
                 }
             }
         }
-        Flickable {
+        IslandFlickable {
             id: editorView
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             contentHeight: editor.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
             function follow(r: rect): void {
                 if (r.y < contentY) contentY = r.y;
                 else if (r.y + r.height > contentY + height) contentY = r.y + r.height - height;

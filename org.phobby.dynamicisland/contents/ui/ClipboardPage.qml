@@ -132,13 +132,11 @@ Item {
             }
         }
 
-        ListView {
+        IslandListView {
             id: list
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             spacing: 2
-            boundsBehavior: Flickable.StopAtBounds
             model: page.clipboard.model
 
             delegate: Rectangle {
@@ -309,13 +307,11 @@ Item {
                 onClicked: page.saveEdit()
             }
         }
-        Flickable {
+        IslandFlickable {
             id: editorView
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             contentHeight: editor.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
             function follow(r: rect): void {
                 if (r.y < contentY) contentY = r.y;
                 else if (r.y + r.height > contentY + height) contentY = r.y + r.height - height;

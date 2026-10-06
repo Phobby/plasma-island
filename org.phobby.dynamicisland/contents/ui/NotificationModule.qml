@@ -61,13 +61,11 @@ Item {
         }
     }
 
-    ListView {
+    IslandListView {
         id: list
         anchors { left: parent.left; right: parent.right; top: header.visible ? header.bottom : parent.top; bottom: parent.bottom; topMargin: header.visible ? 2 : 0 }
         interactive: contentHeight > height
-        boundsBehavior: Flickable.StopAtBounds
         spacing: 4
-        clip: true
         model: notif.active ? notif.backend.notificationModel : null
 
         delegate: Rectangle {

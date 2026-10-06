@@ -53,28 +53,13 @@ Item {
     property bool letGo: false
     readonly property bool interacting: visible && typing && (view === "chat" || view === "form" || view === "models")
     readonly property bool holdOpen: visible && ai.busy && !letGo
-    // The conversation and the lists scroll with the wheel; an empty chat lets it turn the page.
-    // A conversation scrolled to its end holds there: the wheel that brought it there does not
-    // turn the page. Let go and scrolled on from the end, it does (`wheelFree`).
-    property bool wheelFree: false
-    // One scroll: wheel steps with less than this between them (ms).
-    property int wheelPause: 350
-    readonly property Timer wheelRest: Timer { interval: page.wheelPause; onTriggered: page.wheelFree = false }
-    // A wheel step over the conversation, before it is scrolled by it. down: towards the end.
-    function wheeled(down: bool, atEdge: bool): void {
-        if (!wheelRest.running) wheelFree = atEdge;
-        wheelRest.restart();
-    }
-    readonly property bool keepsWheel: visible && (view === "chat" ? (ai.messages.length > 0 || ai.busy) && !wheelFree
-                                                   : view === "models" || view === "sources" || view === "kinds" || view === "form")
     // A conversation needs more room than the other pages: the taller island.
     // (Not for typing alone: the field that was just clicked would move away from under the pointer.)
     readonly property bool tall: visible && (view === "chat" ? ai.messages.length > 0 || ai.busy : view !== "cards")
 
     Binding { target: page.ai; property: "viewing"; value: page.visible; restoreMode: Binding.RestoreNone }
     Component.onDestruction: ai.viewing = false
-    // (arrived at by the wheel: what is left of that scroll does not go on to the next page)
-    onVisibleChanged: { wheelFree = false; if (visible) { wheelRest.restart(); arrive(); } else typing = false; }
+    onVisibleChanged: if (visible) arrive(); else typing = false
     Component.onCompleted: arrive()
     function arrive(): void {
         if (!visible) return;
@@ -483,30 +468,18 @@ Item {
             elide: Text.ElideRight
         }
 
-        Flickable {
+        IslandFlickable {
             id: scroll
             objectName: "conversation"
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             contentHeight: column.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
             // Follows the end while the answer is written, until the user scrolls away from it.
             property bool stick: true
             function toEnd(): void { if (stick) contentY = Math.max(0, contentHeight - height); }
             onContentHeightChanged: toEnd()
             onHeightChanged: toEnd()
             onMovementEnded: stick = atYEnd
-            // Sees every wheel step and takes none: the conversation scrolls as it does.
-            WheelHandler {
-                blocking: false
-                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                onWheel: event => {
-                    if (event.angleDelta.y === 0) return;
-                    const down = event.angleDelta.y < 0;
-                    page.wheeled(down, down ? scroll.atYEnd : scroll.atYBeginning);
-                }
-            }
 
             Column {
                 id: column
@@ -650,16 +623,14 @@ Item {
                 color: page.theme.faint
                 border.width: 1
                 border.color: input.activeFocus ? (page.over > 0 ? page.theme.danger : page.theme.control) : "transparent"
-                Flickable {
+                IslandFlickable {
                     id: inputView
                     anchors.fill: parent
                     anchors.leftMargin: 12
                     anchors.rightMargin: 12
                     anchors.topMargin: 5
                     anchors.bottomMargin: 5
-                    clip: true
                     contentHeight: input.implicitHeight
-                    boundsBehavior: Flickable.StopAtBounds
                     function follow(r: rect): void {
                         if (r.y < contentY) contentY = r.y;
                         else if (r.y + r.height > contentY + height) contentY = r.y + r.height - height;
@@ -915,13 +886,11 @@ Item {
             title: Lang.i18n("Add another")
             onBack: page.view = page.ai.available ? "sources" : "cards"
         }
-        ListView {
+        IslandListView {
             objectName: "kindList"
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             spacing: 2
-            boundsBehavior: Flickable.StopAtBounds
             model: page.view === "kinds" ? page.ai.catalog.order.filter(k => page.info(k).probe !== true) : []
             delegate: Rectangle {
                 id: kindRow
@@ -976,12 +945,10 @@ Item {
             icon: parent.kind !== null ? page.whereIcon(parent.kind.where) : ""
             onBack: { page.typing = false; page.view = "kinds"; }
         }
-        Flickable {
+        IslandFlickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             contentHeight: formInfo.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
             ColumnLayout {
                 id: formInfo
                 width: parent.width
@@ -1173,14 +1140,12 @@ Item {
             color: page.theme.readable(page.theme.warning, page.theme.surface)
             font.pointSize: page.theme.fontSmall * 0.9
         }
-        ListView {
+        IslandListView {
             id: modelView
             objectName: "modelList"
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             spacing: 2
-            boundsBehavior: Flickable.StopAtBounds
             // a name typed by hand that the list does not have can be taken as it is
             readonly property string typed: page.modelFilter.trim()
             readonly property bool own: typed.length > 0 && !page.modelList.some(m => m.id === typed)
@@ -1240,12 +1205,10 @@ Item {
             title: page.status.length > 0 ? page.status : Lang.i18n("What answers")
             onBack: page.view = page.ai.available ? "chat" : "cards"
         }
-        Flickable {
+        IslandFlickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             contentHeight: sourceColumn.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
             ColumnLayout {
                 id: sourceColumn
                 width: parent.width

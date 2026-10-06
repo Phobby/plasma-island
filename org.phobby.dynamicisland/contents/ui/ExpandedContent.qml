@@ -40,46 +40,9 @@ Item {
     // True while the user types a reply: the island keeps keyboard focus
     // and does not collapse.
     property bool interacting: false
-    onActiveChanged: if (!active) { interacting = false; holding = false; wide = false; tall = false; wheelKept = false; }
+    onActiveChanged: if (!active) { interacting = false; holding = false; wide = false; tall = false; }
     // A page keeps the island open without the keyboard (e.g. while a menu it opened is shown).
     property bool holding: false
-    // A page keeps the wheel for a list of its own (e.g. the places a search
-    // found): over that list the wheel scrolls it and does not turn the page.
-    // Beside the list (the page's header, its buttons, empty room) it turns
-    // the page as everywhere else.
-    property bool wheelKept: false
-    function currentPage(): Item {
-        for (let i = 0; i < pageLoaders.count; ++i) {
-            const loader = pageLoaders.itemAt(i);
-            if (loader && loader.pos === currentIndex) return loader.item;
-        }
-        return null;
-    }
-    // Is the point (in `from`'s coordinates) over something of the shown page that scrolls?
-    function overList(from: Item, x: real, y: real): bool {
-        const top = currentPage();
-        if (top === null) return false;
-        let item = top, at = from.mapToItem(top, x, y);
-        for (;;) {
-            const child = item.childAt(at.x, at.y);
-            if (child === null) break;
-            at = item.mapToItem(child, at.x, at.y);
-            item = child;
-        }
-        for (; item !== null && item !== top.parent; item = item.parent)
-            if (typeof item.flick === "function" && (item.contentHeight > item.height + 1 || item.contentWidth > item.width + 1)) return true;
-        return false;
-    }
-    // Only the page that is shown is asked: a page that is left gives the wheel
-    // up a moment after the one arrived at has taken it.
-    function refreshWheel(): void {
-        let kept = false;
-        for (let i = 0; i < pageLoaders.count; ++i) {
-            const loader = pageLoaders.itemAt(i);
-            if (loader && loader.pos === currentIndex && loader.pageKeepsWheel) kept = true;
-        }
-        wheelKept = kept;
-    }
     // A page asks for the wider island (Theme.wideWidth). The header keeps its
     // usual width in the middle, so the tabs do not move from under the pointer.
     property bool wide: false
@@ -117,7 +80,7 @@ Item {
         const i = visibleKeys.indexOf(currentKey);
         return i >= 0 ? i : Math.max(0, Math.min(lastIndex, visibleKeys.length - 1));
     }
-    onCurrentIndexChanged: { if (visibleKeys.indexOf(currentKey) >= 0) lastIndex = currentIndex; refreshWheel(); }
+    onCurrentIndexChanged: { if (visibleKeys.indexOf(currentKey) >= 0) lastIndex = currentIndex; }
     // The current page itself disappeared: settle on its neighbour.
     onVisibleKeysChanged: if (currentKey !== "" && visibleKeys.length > 0 && visibleKeys.indexOf(currentKey) < 0) {
         currentKey = visibleKeys[Math.max(0, Math.min(lastIndex, visibleKeys.length - 1))];
@@ -172,6 +135,45 @@ Item {
     function go(delta: int): void {
         const i = Math.max(0, Math.min(visibleKeys.length - 1, currentIndex + delta));
         showPage(visibleKeys[i]);
+    }
+
+    // The wheel or a touchpad swipe turns the pages: over the tabs, the header
+    // and wherever a page has nothing that scrolls (and in the island's margin
+    // around all that). What scrolls keeps its scroll, see ScrollGesture: a
+    // step that reaches this from a list at its end is the list's, not ours.
+    // One gesture turns one page. Not while a page holds the island (e.g.
+    // editing the Controls buttons).
+    WheelHandler {
+        id: pageWheel
+        objectName: "pages"
+        enabled: !expanded.holding
+        margin: expanded.theme.padding
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        // of the gesture `known`: how far it has come (in page turns), and whether it turned the page
+        property int known: -1
+        property real acc: 0
+        property bool turned: false
+        property real turnedAt: 0
+        onWheel: event => { if (!ScrollGesture.step(event).flat) stepped(event); }
+        function stepped(event): void {
+            const step = ScrollGesture.step(event);
+            if (!ScrollGesture.take(pageWheel, !step.none, event)) return;
+            if (known !== ScrollGesture.serial) { known = ScrollGesture.serial; acc = 0; turned = false; }
+            if (turned) return;
+            acc += (step.horizontal ? step.x : step.y) / (step.pixels ? ScrollGesture.tabPixels : ScrollGesture.tabAngle);
+            if (Math.abs(acc) < 1 || ScrollGesture.clock() - turnedAt < ScrollGesture.tabCooldown) return;
+            turned = true;
+            turnedAt = ScrollGesture.clock();
+            expanded.go(acc < 0 ? 1 : -1);
+        }
+    }
+    // (a WheelHandler hears one direction: this one hears the swipes that go sideways only)
+    WheelHandler {
+        enabled: pageWheel.enabled
+        margin: pageWheel.margin
+        orientation: Qt.Horizontal
+        acceptedDevices: pageWheel.acceptedDevices
+        onWheel: event => { if (ScrollGesture.step(event).flat) pageWheel.stepped(event); }
     }
 
     ColumnLayout {
@@ -412,34 +414,10 @@ Item {
                         onPageInteractingChanged: expanded.interacting = pageInteracting
                         readonly property bool pageHolding: item !== null && item.holdOpen === true
                         onPageHoldingChanged: expanded.holding = pageHolding
-                        readonly property bool pageKeepsWheel: item !== null && item.keepsWheel === true
-                        onPageKeepsWheelChanged: expanded.refreshWheel()
                         readonly property bool pageWide: item !== null && item.wide === true
                         onPageWideChanged: expanded.wide = pageWide
                         readonly property bool pageTall: item !== null && item.tall === true
                         onPageTallChanged: expanded.tall = pageTall
-                    }
-                }
-            }
-
-            WheelHandler {
-                // Mouse wheel or touchpad swipe pages; accumulate to debounce
-                // high-resolution touchpad deltas. Sliders handle their own wheel.
-                // Not while a page holds the island (e.g. editing the Controls
-                // buttons), nor over the list of a page that keeps the wheel
-                // (e.g. the places a search found): a list lets the wheel
-                // through at its end, so without this it would turn the page.
-                // (The AI chat gives the wheel back for a scroll that starts at its end.)
-                enabled: !expanded.holding
-                property real acc: 0
-                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                onWheel: event => {
-                    if (expanded.wheelKept && expanded.overList(viewport, point.position.x, point.position.y)) { acc = 0; return; }
-                    const d = Math.abs(event.angleDelta.x) > Math.abs(event.angleDelta.y) ? event.angleDelta.x : event.angleDelta.y;
-                    acc += d;
-                    if (Math.abs(acc) >= 120) {
-                        expanded.go(acc < 0 ? 1 : -1);
-                        acc = 0;
                     }
                 }
             }
@@ -494,10 +472,8 @@ Item {
     }
     Component {
         id: activitiesPage
-        Flickable {
-            clip: true
+        IslandFlickable {
             contentHeight: activityColumn.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
             Column {
                 id: activityColumn
                 width: parent.width

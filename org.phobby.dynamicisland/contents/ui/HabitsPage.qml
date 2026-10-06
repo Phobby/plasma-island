@@ -198,15 +198,13 @@ Item {
 
     // The list of a day: a click ticks an entry; under the pointer it can be
     // taken off that day's list or (today's list) the habit deleted for good.
-    component Checklist: GridView {
+    component Checklist: IslandGridView {
         id: checklist
         property string day: ""
         property int columns: 2
         property bool deletable: false
         readonly property var entries: Habits.items(page.record, day)
         readonly property string dropHint: day === page.habits.today ? Lang.i18n("Off today's list only") : Lang.i18n("Off this day's list")
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
         cellWidth: Math.floor(width / columns)
         cellHeight: 22
         // by number, so that ticking an entry does not rebuild the list (and lose its scroll position)
@@ -439,13 +437,11 @@ Item {
                     onClicked: firstField.submit()
                 }
             }
-            Flickable {
+            IslandFlickable {
                 id: firstScroll
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                clip: true
                 contentHeight: firstHabits.implicitHeight
-                boundsBehavior: Flickable.StopAtBounds
                 Flow {
                     id: firstHabits
                     width: firstScroll.width
@@ -946,13 +942,11 @@ Item {
                     onClicked: extraField.submit()
                 }
             }
-            Flickable {
+            IslandFlickable {
                 id: plannedScroll
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                clip: true
                 contentHeight: plannedFlow.implicitHeight
-                boundsBehavior: Flickable.StopAtBounds
                 Flow {
                     id: plannedFlow
                     width: plannedScroll.width

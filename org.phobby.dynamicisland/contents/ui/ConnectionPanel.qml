@@ -135,15 +135,13 @@ Item {
             Item { Layout.fillHeight: true }
         }
 
-        ListView {
+        IslandListView {
             id: list
             objectName: "panelList"
             visible: !panel.typing && !panel.off && shown.count > 0
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             spacing: 2
-            boundsBehavior: Flickable.StopAtBounds
             model: shown
             delegate: Rectangle {
                 id: row

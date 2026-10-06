@@ -125,9 +125,41 @@ about 360 px tall that covers the top of the screen. With pages the island
 always keeps the same compact size (~430×207) and feels like a single "card",
 as on iOS (one page asks for more room: the year of the Habits calendar widens
 it to ~650 px for as long as it is shown). Pages are switched with the tabs, the mouse wheel or a touchpad
-swipe. When the island opens, the Media page is shown if media is playing,
+swipe (see "The wheel" below). When the island opens, the Media page is shown if media is playing,
 otherwise the System page. The System page only shows status; everything
 adjustable (volume, brightness, buttons) is on the Controls page.
+
+**The wheel.** A scroll belongs to what it began over, from its first step to
+its last:
+
+- Over a list (a conversation, a text, a grid) that has more than fits, it
+  scrolls that list and nothing else: at the list's end too, and however
+  often one scrolls on from there, the page is not turned. A list inside
+  another keeps its scroll from the outer one in the same way.
+- Over anything else it turns the page: the tabs and the header (always),
+  empty room, a page's buttons, a list short enough to fit. So no page can
+  hold one: the tabs are always there. One scroll turns one page, however
+  far the wheel is spun or the fingers go, and what is left of it does not
+  scroll the page arrived at; less than a notch of a wheel, or ~40 px of a
+  touchpad, turns nothing.
+- A list takes the scroll of its own direction: a sideways swipe over a list
+  that goes up and down turns the page. A row that only goes sideways (the
+  clouds, the path of a folder) takes the wheel too and is moved by it: a
+  mouse has no other way to scroll it.
+- A slider takes the wheel over it (a notch is 5 %) and gives none away; a
+  list's scroll that passes under the pointer does not move it.
+
+"One scroll" is steps with no more than 350 ms between them: a wheel says
+nothing of where a scroll begins or ends. The rules and their numbers are in
+one place, `ScrollGesture.qml`; every list is an `IslandFlickable`,
+`IslandListView` or `IslandGridView` (an `IslandScroll` inside it asks
+`ScrollGesture` whose scroll it is), which `tools/scroll-check` verifies and
+`tests/tst_scroll.qml` tests, with a mouse's wheel and with a touchpad's
+steps. To watch who gets each step:
+
+```bash
+QT_LOGGING_RULES="island.wheel.debug=true" plasmashell --replace   # or: journalctl --user -f | grep island.wheel
+```
 
 ## Installation
 
@@ -463,13 +495,17 @@ Notification service on DBus` is normal). Try those in the real environment
 
 `tools/run-tests` runs every check that needs no running island: the texts
 (`tools/i18n-check --strict`), the theme catalog and the weather pictures,
+what scrolls (`tools/scroll-check`),
 the rules written in JavaScript under node (habits, theme files, weather
 data, suggestions) and the QML tests in `tests/` under `qmltestrunner`, off
 screen: providers and pages with stand-ins for what they watch, the settings
 pages as they are, the theme store and the weather against answers served on
 127.0.0.1. No test reads or changes the system's clock: what depends on time
 takes the day or the moment as an argument. Tests that need the native
-module use the one in `native/build` and are skipped without it.
+module use the one in `native/build` and are skipped without it. The steps
+of a touchpad's scroll (pixels, the phases of a scroll) cannot be made by
+QtTest: `tests/helper` sends them, a small module `tools/run-tests` builds
+into `tests/.run`.
 
 The AI tab is tested the same way, without asking anybody: `tests/ai-server.py`
 stands in for the services (an OpenAI-compatible one and the Anthropic API:
@@ -568,7 +604,7 @@ native/
                                IslandService (D-Bus API)
 catalog/                       the theme store: index.json, themes/*.islandtheme.json, the JSON Schema
 tools/island-push, tools/notify-done.sh, tools/i18n-check, tools/habits-test, tools/catalog-update,
-tools/weather-icons, tools/ai-cli-check
+tools/weather-icons, tools/ai-cli-check, tools/scroll-check
 tools/run-tests                every check that needs no running island: the texts, the rules (node), tests/
 tests/tst_*.qml                QML tests under qmltestrunner, off screen (habits provider, appearance…)
 ```
@@ -803,13 +839,9 @@ the weather's picture and, where the tab bar has room, the temperature.
   it feels like, the chance of precipitation, its amount (when there is any),
   humidity, wind speed and direction. The list scrolls; for today it starts
   at the current hour, which is highlighted. The arrow goes back.
-- **The wheel:** while a place is searched and while a day's hours are shown
-  the wheel scrolls that list and does not turn the island's page, not at
-  the list's end either (`keepsWheel` of the page, `tests/tst_wheel.qml`);
-  the tabs still do. This holds over the list only (on every page that
-  keeps the wheel: Weather, Cloud, AI): beside it, or over a list short
-  enough to fit, the wheel turns the page as usual. The AI conversation
-  also lets a scroll that starts at its end go on to the next page.
+- **The wheel:** the places a search found and a day's hours are lists that
+  keep their scroll (see "The wheel" above, `tests/tst_wheel.qml`): at their
+  end the page is not turned, which would close the search or the day.
 - **Source:** [Open-Meteo](https://open-meteo.com) (`backend/WeatherBackend.qml`,
   `WeatherData.js`): its forecast service for the weather and its geocoding
   service for the search. Neither needs a key or an account. The data is

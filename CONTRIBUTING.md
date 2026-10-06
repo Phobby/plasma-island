@@ -129,3 +129,38 @@ under `tests/` (qmltestrunner, off screen). Tests never read or change the
 system's clock: what depends on time takes the day or the moment as an
 argument. New texts go through `Lang.i18n()` and get their Turkish translation
 in `contents/ui/translations/tr.js`.
+
+### What scrolls
+
+A `Flickable` (a `ListView`, a `GridView`…) lets the wheel through at its end,
+and the island would turn its page with it. So nothing in `contents/ui` is a
+bare one:
+
+```qml
+IslandListView {            // or IslandFlickable, IslandGridView
+    Layout.fillWidth: true
+    Layout.fillHeight: true
+    model: …
+    delegate: …
+}
+```
+
+They clip, stop at their ends and keep their scroll: with more content than
+fits the wheel is theirs, at the end too; with content that fits it goes on
+and turns the page. Nothing else is needed, and nothing may listen to the
+wheel on its own (`onWheel`, `WheelHandler`). For another kind of view put an
+`IslandScroll` in it:
+
+```qml
+PathView { id: view; IslandScroll { area: view } }
+```
+
+Something that is not a list and takes the wheel (as `GlassSlider` does) asks
+`ScrollGesture.take(item, wants, event)` first and leaves the step alone when
+that says no. The rules, and every number (the pause that ends a scroll, the
+pause between two page turns, how much turns a page) are in
+`ScrollGesture.qml`; "The wheel" in the README says what the user sees.
+`tools/scroll-check` (part of `tools/run-tests`) fails for a bare list or a
+wheel handler of one's own; `tests/tst_scroll.qml` has the behaviour.
+`QT_LOGGING_RULES="island.wheel.debug=true"` logs who got each step and
+whose scroll it is.

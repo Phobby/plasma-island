@@ -63,12 +63,10 @@ Item {
             }
         }
 
-        Flickable {
+        IslandFlickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            clip: true
             contentHeight: info.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
             Text {
                 id: info
                 width: parent.width

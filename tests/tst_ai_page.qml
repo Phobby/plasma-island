@@ -146,7 +146,7 @@ Item {
         function test_01_nothing_connected_what_is_here_and_add_another() {
             root.here_ = { found: false, helper: true, version: "", running: false, installed: true, models: [] };
             const p = open();
-            compare([p.view, p.tall, expanded.tall, p.keepsWheel], ["cards", false, false, false]);
+            compare([p.view, p.tall, expanded.tall], ["cards", false, false]);
             tryCompare(p, "detected", true);
             shown("Not found · Install", "Not running · Start it", "Add another");
 

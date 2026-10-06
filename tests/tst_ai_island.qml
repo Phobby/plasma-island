@@ -54,7 +54,6 @@ Item {
     Component { id: aiPage; AiPage { theme: islandTheme; ai: backend } }
     Component { id: otherPage; Item {} }
     // (a page that keeps the wheel for a list of its own while it is shown)
-    Component { id: keeperPage; Item { readonly property bool keepsWheel: visible } }
 
     Island {
         id: island
@@ -67,11 +66,10 @@ Item {
         showNotificationModule: false
         hoverDelay: 60
         collapseDelay: 200
-        pageOrder: "ai,other,keeper"
+        pageOrder: "ai,other"
         extraPages: [
             { key: "ai", icon: "dialog-messages", title: "AI", component: aiPage, visible: true },
-            { key: "other", icon: "chronometer", title: "Other", component: otherPage, visible: true },
-            { key: "keeper", icon: "view-list-details", title: "Keeper", component: keeperPage, visible: true }
+            { key: "other", icon: "chronometer", title: "Other", component: otherPage, visible: true }
         ]
     }
 
@@ -123,13 +121,15 @@ Item {
             tryCompare(backend, "viewing", false);
         }
 
-        // The wheel in a conversation: it scrolls it, holds at its end, and turns the page
-        // only for a scroll that starts there.
+        // The wheel in a conversation: it scrolls it and stays with it, at its end too, however
+        // often one scrolls on from there (tests/tst_scroll.qml has the rules). Beside the
+        // conversation it turns the page.
         function notch(item, direction) {
             const at = item.mapToItem(root, item.width / 2, item.height / 2);
             mouseWheel(root, at.x, at.y, 0, 120 * direction);
         }
-        function test_0_the_wheel_holds_at_the_end_of_a_conversation() {
+        function test_0_the_wheel_stays_with_a_conversation() {
+            const rest = ScrollGesture.gestureGap + 150;
             pointerOn();
             island.openPage("ai");
             tryVerify(() => page() !== null);
@@ -143,8 +143,8 @@ Item {
             tryCompare(island, "tall", true);
             wait(600);
             scroll.contentY = 0;
-            wait(p.wheelPause + 150);
-            compare([c.wheelKept, scroll.atYBeginning], [true, true]);
+            wait(rest);
+            compare(scroll.atYBeginning, true);
 
             // one scroll, all the way down and on: the end holds it
             let steps = 0;
@@ -152,40 +152,23 @@ Item {
             verify(scroll.atYEnd, "scrolled to the end");
             for (let i = 0; i < 6; ++i) { notch(scroll, -1); wait(40); }
             compare([c.currentKey, scroll.atYEnd], ["ai", true], "the scroll that reached the end does not turn the page");
-            // let go, then scrolled on: the next page
-            wait(p.wheelPause + 150);
-            notch(scroll, -1);
-            tryCompare(c, "currentKey", "other", 2000);
-            wait(500);
+            // let go, then scrolled on from the end: still the conversation's
+            wait(rest);
+            for (let i = 0; i < 3; ++i) { notch(scroll, -1); wait(40); }
+            wait(rest);
+            compare([c.currentKey, scroll.atYEnd], ["ai", true], "nor does a scroll that starts at the end");
 
-            // back, and up from the end: that scrolls the conversation
-            c.showPage("ai");
-            tryCompare(p, "visible", true);
-            wait(p.wheelPause + 500);
-            verify(scroll.atYEnd);
+            // up from the end: that scrolls the conversation
             notch(scroll, 1);
             wait(300);
             compare([c.currentKey, scroll.atYEnd], ["ai", false]);
 
             // beside the conversation (the row of the source above it) the wheel turns the page as on any page
-            compare(c.wheelKept, true);
+            wait(rest);
             const at = scroll.mapToItem(root, scroll.width / 2, -14);
             mouseWheel(root, at.x, at.y, 0, -120);
             tryCompare(c, "currentKey", "other", 2000);
             wait(500);
-            c.showPage("ai");
-            wait(p.wheelPause + 500);
-
-            // a page that kept the wheel is left for the conversation: the wheel stays kept
-            c.showPage("keeper");
-            wait(600);
-            compare(c.wheelKept, true);
-            c.showPage("ai");
-            wait(600 + p.wheelPause);
-            compare([c.currentKey, c.wheelKept], ["ai", true], "the page that was left does not give the wheel away");
-            c.showPage("other");
-            wait(600);
-            compare(c.wheelKept, false);
         }
 
         function test_1_taller_for_a_conversation() {

@@ -38,7 +38,6 @@ Item {
     property bool typing: false
     readonly property bool interacting: visible && typing
     readonly property bool holdOpen: visible && (dropping || view === "upload" || picking || dragging)
-    readonly property bool keepsWheel: visible && view === "browse" && shown.length > 0
     readonly property bool tall: visible && view !== "missing" && view !== "empty"
 
     Binding { target: page.cloud; property: "viewing"; value: page.visible; restoreMode: Binding.RestoreNone }
@@ -319,12 +318,10 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             spacing: 4
-            Flickable {
+            IslandFlickable {
                 Layout.fillWidth: true
                 implicitHeight: 22
-                clip: true
                 contentWidth: chips.implicitWidth
-                boundsBehavior: Flickable.StopAtBounds
                 Row {
                     id: chips
                     spacing: 4
@@ -405,13 +402,14 @@ Item {
         RowLayout {
             Layout.fillWidth: true
             spacing: 2
-            Flickable {
+            IslandFlickable {
                 Layout.fillWidth: true
                 implicitHeight: 18
-                clip: true
                 contentWidth: crumbRow.implicitWidth
-                contentX: Math.max(0, contentWidth - width)
-                boundsBehavior: Flickable.StopAtBounds
+                // shows the folder one is in; a scroll back to the first ones lasts until the path changes
+                function toEnd(): void { contentX = Math.max(0, contentWidth - width); }
+                onContentWidthChanged: toEnd()
+                onWidthChanged: toEnd()
                 Row {
                     id: crumbRow
                     spacing: 2
@@ -553,13 +551,11 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            ListView {
+            IslandListView {
                 id: list
                 objectName: "entries"
                 anchors.fill: parent
-                clip: true
                 spacing: 1
-                boundsBehavior: Flickable.StopAtBounds
                 // only the rows on screen exist
                 reuseItems: true
                 cacheBuffer: 60

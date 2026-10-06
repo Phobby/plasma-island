@@ -460,14 +460,12 @@ Item {
                 elide: Text.ElideRight
             }
 
-            ListView {
+            IslandListView {
                 id: list
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 visible: page.detail === null
-                clip: true
                 spacing: 2
-                boundsBehavior: Flickable.StopAtBounds
                 model: page.dayEvents
 
                 delegate: Rectangle {
@@ -550,13 +548,11 @@ Item {
             }
 
             // Details of one event
-            Flickable {
+            IslandFlickable {
                 id: details
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 visible: page.detail !== null
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
                 contentHeight: detailColumn.implicitHeight
                 readonly property var e: page.detail
                 readonly property string where: e && e.location && e.location !== e.link ? e.location : ""
