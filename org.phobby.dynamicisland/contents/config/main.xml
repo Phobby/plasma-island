@@ -178,8 +178,7 @@
     <entry name="showWeather" type="Bool"><default>true</default></entry>
     <entry name="weatherLocation" type="String"><default></default></entry>
     <entry name="weatherUnits" type="Int"><default>0</default></entry>
-    <!-- Earlier (the place of Plasma's weather engine and its name): the name only starts the first search -->
-    <entry name="weatherPlace" type="String"><default></default></entry>
+    <!-- Earlier (the name of the place of Plasma's weather engine): it only starts the first search -->
     <entry name="weatherPlaceName" type="String"><default></default></entry>
     <entry name="showWeatherAlerts" type="Bool"><default>true</default></entry>
     <entry name="weatherAnnounced" type="String"><default></default></entry>
@@ -283,10 +282,6 @@
     <!-- while the island is a dot: 0 = hidden, 1 = asleep beside the dot -->
     <entry name="catDot" type="Int"><default>0</default></entry>
     <entry name="catReduceMotion" type="Bool"><default>false</default></entry>
-
-    <!-- Not in the settings window: draws the outline of where the island takes the pointer (also with
-         the environment variable DYNAMICISLAND_DEBUG_REGION) -->
-    <entry name="debugInputRegion" type="Bool"><default>false</default></entry>
 
     <!-- Modules -->
     <entry name="showMediaModule" type="Bool">

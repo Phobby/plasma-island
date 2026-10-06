@@ -113,8 +113,7 @@ PlasmoidItem {
     Binding { target: root.weatherBackend; property: "imperial"; value: root.cfg.weatherUnits === 1; when: root.weatherBackend !== null }
     // The application list: Plasma's own data engine (plasma-workspace).
     OptionalBackend { id: appsLoader; source: root.cfg.showApps ? "backend/AppsBackend.qml" : "" }
-    // Calendar: .ics links (no Akonadi). backend/CalendarBackend.qml is the
-    // older PIM-plugin source, kept for reference but no longer loaded.
+    // Calendar: .ics links (no Akonadi).
     OptionalBackend { id: calendarLoader; source: root.cfg.showCalendar ? "backend/IcsCalendarBackend.qml" : "" }
     Binding { target: root.calendarBackend; property: "sourcesJson"; value: root.cfg.calendarSources; when: root.calendarBackend !== null }
     Binding { target: root.calendarBackend; property: "client"; value: calendarClient; when: root.calendarBackend !== null }
@@ -894,7 +893,8 @@ PlasmoidItem {
             console.info("org.phobby.dynamicisland: native module too old to shape where the island takes the pointer; run install.sh again");
         }
     }
-    readonly property bool debugRegion: root.cfg.debugInputRegion || (mask.item !== null && mask.item.debug)
+    // (to look at it: DYNAMICISLAND_DEBUG_REGION=1 when the shell starts draws its outline)
+    readonly property bool debugRegion: mask.item !== null && mask.item.debug
 
     // ---- optional native blur -------------------------------------------------
     // BlurBridge.qml imports the native module; if it is not installed the

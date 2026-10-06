@@ -77,10 +77,9 @@ the surface's input region on Wayland and the window shape on X11, and
 follows the shape on every frame of a morph. The cat beside the island (see
 "Cat") adds its body to that region, as two ellipses (head and body; one
 while it is curled up): not the air around it, not its tail, not its
-bubble, and nothing while it is hidden. To see the region, set the
-hidden option `debugInputRegion=true` in the widget's `[Configuration][General]`
-group, or start plasmashell with `DYNAMICISLAND_DEBUG_REGION=1`: a red
-outline is drawn around it.
+bubble, and nothing while it is hidden. To see the region, start plasmashell
+with `DYNAMICISLAND_DEBUG_REGION=1` in its environment: a red outline is
+drawn around it.
 
 Expanded pages: **Activities** (all ongoing activities, actions and privacy
 details), **Media**, **System** (information only: CPU, CPU temperature, GPU,

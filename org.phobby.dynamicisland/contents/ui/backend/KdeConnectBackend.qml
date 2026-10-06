@@ -38,7 +38,8 @@ Item {
             readonly property string deviceId: model.deviceId
             readonly property string name: model.name || ""
             readonly property var device: KDEConnect.DeviceDbusInterfaceFactory.create(model.deviceId)
-            readonly property string icon: (device && device.iconName ? device.iconName : "smartphone") + "-symbolic"
+            // (a device's icon has no change signal: it is read once; a binding on it only earns a warning at every start)
+            property string icon: "smartphone-symbolic"
             property var checker: KDEConnect.PluginChecker {
                 pluginName: "battery"
                 device: row.device
@@ -50,7 +51,11 @@ Item {
             onChargeChanged: Qt.callLater(kdeconnect.rebuild)
             onChargingChanged: Qt.callLater(kdeconnect.rebuild)
             onNameChanged: Qt.callLater(kdeconnect.rebuild)
-            Component.onCompleted: { kdeconnect.rows.push(row); Qt.callLater(kdeconnect.rebuild); }
+            Component.onCompleted: {
+                if (device && device.iconName) icon = device.iconName + "-symbolic";
+                kdeconnect.rows.push(row);
+                Qt.callLater(kdeconnect.rebuild);
+            }
             Component.onDestruction: {
                 const i = kdeconnect.rows.indexOf(row);
                 if (i >= 0) kdeconnect.rows.splice(i, 1);

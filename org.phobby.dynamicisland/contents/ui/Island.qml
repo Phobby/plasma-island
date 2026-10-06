@@ -194,7 +194,7 @@ Item {
                                                              Math.max(dotTarget, surface.width), Math.max(dotTarget, surface.height))
                                                    : surfaceRect
     readonly property real hitRadius: mode === "dot" ? Math.min(hitRect.width, hitRect.height) / 2 : surfaceRadius
-    // Draws that region's outline (a hidden setting, or DYNAMICISLAND_DEBUG_REGION).
+    // Draws that region's outline (DYNAMICISLAND_DEBUG_REGION in the shell's environment).
     property bool debugRegion: false
     readonly property rect bubbleRect: bubble.opacity > 0.05 ? Qt.rect(bubble.x, bubble.y, bubble.width, bubble.height) : Qt.rect(0, 0, 0, 0)
 
