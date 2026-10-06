@@ -1,19 +1,23 @@
 #!/bin/sh
 # A stand-in for the `betternotes` command (0.1.15), for tests/tst_notes_locked.qml:
 # note 7 is locked with the master password "hunter2", note 3 is not. What it
-# was started with is written to tests/.run/fake-betternotes/ (args, stdin).
+# was started with is written to tests/.run/fake-betternotes/ (args, stdin),
+# and every command it was asked for is added to `calls` there. Like the real
+# one, `list` opens the database: SQLite's -wal beside it comes and goes.
 here="$(cd "$(dirname "$0")" && pwd)"
 box="$here/.run/fake-betternotes"
 mkdir -p "$box"
 case "$1" in --version) echo "BetterNotes ${FAKE_BN_VERSION:-0.1.15}"; exit 0 ;; esac
 printf '%s\n' "$@" > "$box/args"
+printf '%s\n' "$1" >> "$box/calls"
 command="$1"; id="$2"
 with_password=0
 for a in "$@"; do [ "$a" = "--password-stdin" ] && with_password=1; done
 password=""
 if [ $with_password -eq 1 ]; then IFS= read -r password; fi
 case "$command" in
-    list) printf '%-6s%-10s%-20s%s\n' ID PRIORITY TAGS TITLE 3 Normal - Shopping 7 Normal - "Secret title"; exit 0 ;;
+    list) : > "$box/notes.sqlite3-wal"; rm -f "$box/notes.sqlite3-wal"
+          printf '%-6s%-10s%-20s%s\n' ID PRIORITY TAGS TITLE 3 Normal - Shopping 7 Normal - "Secret title"; exit 0 ;;
     show)
         if [ "$id" = "7" ]; then
             [ $with_password -eq 1 ] || { echo "BetterNotes: note 7 is locked" >&2; exit 4; }

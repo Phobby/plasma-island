@@ -120,7 +120,24 @@ QtObject {
         target: backend.local
         function onPathChanged() { localChange.restart(); }
     }
-    readonly property Timer localChange: Timer { interval: 700; onTriggered: backend.refreshSource("betternotes") }
+    readonly property Timer localChange: Timer { interval: 700; onTriggered: backend.betterNotesChanged() }
+    // Looking at the database changes its folder too: SQLite makes its -wal and -shm beside it and
+    // takes them away again, with every `betternotes list` and every look of ours. So a change of
+    // the folder says nothing by itself (listing again for it would never end: one listing would
+    // call for the next); only a change of the database does: its time or size, or what waits in
+    // the -wal. `betterNotesSeen` is that, as it was after the last listing.
+    property string betterNotesSeen: ""
+    function betterNotesStamp(done: var): void {
+        const db = betterNotesData + "/notes.sqlite3";
+        local.run("stat", ["-c", "%s %y", "--", db, db + "-wal"], (code, out) => {
+            const lines = out.trim().split("\n");
+            // (an empty -wal is one that was only just made: the same as none)
+            done(lines[0] + " " + (lines.length > 1 ? Number(lines[1].split(" ")[0]) || 0 : 0));
+        });
+    }
+    function betterNotesChanged(): void {
+        betterNotesStamp(stamp => { if (stamp !== betterNotesSeen) refreshSource("betternotes"); });
+    }
     // `betternotes list` prints a table: ID (6) PRIORITY (10) TAGS (20, "-" = none) TITLE.
     function parseBetterNotesList(text: string): var {
         const rows = [];
@@ -428,6 +445,7 @@ QtObject {
                     let rows = backend.local.sqliteQuery(db, "SELECT n.id AS id, n.updated_at AS updated, n.is_locked AS locked, "
                         + "(SELECT MIN(r.remind_at) FROM reminders r WHERE r.note_id = n.id AND r.dismissed = 0) AS reminder FROM notes n");
                     if (rows.length === 0) rows = backend.local.sqliteQuery(db, "SELECT id, updated_at AS updated FROM notes");
+                    backend.betterNotesStamp(stamp => backend.betterNotesSeen = stamp);
                     for (const r of rows) extra[String(r.id)] = r;
                     const old = {};
                     for (const n of backend.bySource[source.id] || []) old[n.id] = n;
