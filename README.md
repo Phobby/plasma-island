@@ -74,7 +74,10 @@ pointer (the pill, the card, the split circle, the dot with a 24 px target),
 with its rounded corners; everything around it goes to the window
 underneath. The native helper does this with `QWindow::setMask`, which is
 the surface's input region on Wayland and the window shape on X11, and
-follows the shape on every frame of a morph. To see the region, set the
+follows the shape on every frame of a morph. The cat beside the island (see
+"Cat") adds its body to that region, as two ellipses (head and body; one
+while it is curled up): not the air around it, not its tail, not its
+bubble, and nothing while it is hidden. To see the region, set the
 hidden option `debugInputRegion=true` in the widget's `[Configuration][General]`
 group, or start plasmashell with `DYNAMICISLAND_DEBUG_REGION=1`: a red
 outline is drawn around it.
@@ -302,6 +305,9 @@ or from the store), "Export Theme…" and the gradient controls; see
 time of the evening review, its reminder on/off, the calendar's colours
 (GitHub green / the system's accent colour, also in Appearance) and "Reset
 all data" (asks first); see "Habits" below.
+**Cat** tab: the cat beside the island: on/off, side, size, coat, what it
+reacts to, what may be done to it, sleep, the dot, reduced motion, and a
+preview that is the cat itself; see "Cat" below.
 **Language** tab: Automatic (Turkish when the system is Turkish, English
 otherwise), Türkçe or English. Applies at once, to the island and the
 settings, without restarting Plasma; see "Translations" below.
@@ -605,6 +611,7 @@ native/
 catalog/                       the theme store: index.json, themes/*.islandtheme.json, the JSON Schema
 tools/island-push, tools/notify-done.sh, tools/i18n-check, tools/habits-test, tools/catalog-update,
 tools/weather-icons, tools/ai-cli-check, tools/scroll-check
+tools/cat-poses, tools/cat-measure   the cat: its pose gallery as pictures; what it costs in the running shell
 tools/run-tests                every check that needs no running island: the texts, the rules (node), tests/
 tests/tst_*.qml                QML tests under qmltestrunner, off screen (habits provider, appearance…)
 ```
@@ -1286,6 +1293,159 @@ rclone the page says so and shows the install command to be copied.
 - **On the island:** while something syncs, a cloud with its progress, below
   every other activity; "Synced" when done.
 
+## Cat
+
+A cat lives beside the island (Settings → Cat; on by default, off with one
+click or from its own right-click menu). It is there to be looked at: it
+never covers anything of the island, never opens or closes it, keeps
+nothing (what it feels lasts until the shell stops, and is forgotten
+whenever it is hidden) and asks nothing of the network. There is no sound.
+
+**What it does**
+
+| What happens | The cat |
+|---|---|
+| Nothing but the clock for 20 s (a setting) | yawns, curls up, sleeps: zzz |
+| Something comes up: a notification, an event, another activity | wakes with a stretch, pricks its ears, looks |
+| Music plays | headphones on, and it nods: to the music's own beat while the ambient glow listens anyway (the cat never starts the listening), else at a calm 80 to the minute |
+| The music stops | headphones off |
+| The AI writes an answer | three dots beside its head, the head to the side |
+| The answer is ready | "!" for a moment |
+| A question waits for you: a suggestion's card, the habits' evening question (its event, its waiting activity, the review itself), a confirmation on the open page ("Delete?", "Clear all?", "Upload here?") | "?", the head to the side, until it is answered or its time runs out |
+| A timer or a Pomodoro round ran out, a transfer is done | a short happy hop, the tail waves |
+| The battery is low | a tired yawn |
+| The pointer rests on it | it looks at the pointer |
+| The pointer goes back and forth over it | stroked: eyes shut, a purr one can see, hearts; asleep it purrs without waking |
+| A click | startled, curious |
+| The second click in a row | annoyed: ears back |
+| The third (within 3 s), or one click while it sleeps | angry: fur on end, ears flat, a hiss; then it turns its back and sulks for 10 s (a setting), deaf to clicks; the pointer gets a flick of the tail |
+| A long, unbroken stroke while it sulks | it makes up, before its time |
+
+Several of these can be true at once, which is why the cat is three
+layers and not one state: a **body** (sleep, doze, wake, sit, listen,
+curious, perk, cheer, tired, annoyed, pet, purr, angry, sulk), an
+**accessory** (headphones) and a **bubble** (dots, ?, !, ♪, hearts, a red
+"!!", zzz). Music and a thinking AI give a nodding cat with headphones and
+dots. Where they clash, this wins, from the top: what you do to it
+(stroking, anger, sulking, a startled look), then what calls for a moment's
+attention (an event), then what is going on (music, the AI, a question),
+then sleep. So an angry cat does not nod to the music (the headphones stay
+on; the nodding is back once it has calmed down), and no event moves a
+sulking one. Each reaction can be switched off by itself, so can stroking
+and clicks, and "Never angry" makes every click a curious one.
+
+**Stroking** is told from a pointer passing by its turns: a turn is counted
+when the pointer has come back a quarter of the cat's width from where it
+last turned; three turns within 1.2 s are a stroke (no button is held), and
+it lasts until 1.5 s after the last turn. Resting on the cat, crossing it
+once, trembling on the spot or wandering slowly are not strokes. These
+numbers, the clicks' and every duration are in one file,
+`companion/CompanionTuning.js`: change them there to tune the feel.
+
+**Where it sits.** Outside the pill, beside it, on its level and a little
+lower; the island hangs at the top of the screen, so there is no room above
+the cat, and its bubble goes beside its head, on the far side. It follows
+the pill's edge as the island changes shape: beside the open island it
+stands at the top corner, outside, and covers nothing. By itself it sits on
+the **left**, because the island puts what it has beside itself (the split
+island's bubble, the privacy dots) on the right; set to the right it keeps
+clear of both, moving over when they appear instead of jumping. Where a
+side has no room on the screen (the island moved far to one side on a
+narrow screen) it takes the other. A change of sides is a walk across.
+While the island is a dot the cat is hidden (the dot is for being out of
+the way), or sleeps beside the dot (a setting); it is back with the pill.
+The window keeps room for the cat on both sides, so the island stays in the
+middle. Size: 100–180 % of the pill's height (130 % by default), scaled
+with the island's size setting like everything else.
+
+The pointer on the cat is the cat's own: it neither opens the island nor
+keeps it open, and going from the pill to the cat and back does not make
+the island flutter (`tests/tst_companion.qml`). Its right button opens its
+own small menu (hide it, its settings), not the island's.
+
+**The drawing** is the island's own and made in code: a round, front-facing
+cat of ellipses, two ears, a tail of one thick curve and a face of a few
+strokes (`companion/CatPoses.js` has the numbers, `CatCharacter.qml` draws
+them as vector shapes). No picture files, no sprites, no third-party
+assets, so nothing to license; sharp at any size. Five coats (grey, orange,
+black, white, black and white) and a colour of your own; the outline, the
+eyes and the face's strokes are chosen from the coat's brightness, so a
+black cat has a light outline and bright eyes with pupils, a white one a
+dark outline and dark eyes. Every frame is a function of the pose it comes
+from, the pose it goes to and how far it is between them, the gesture that
+plays, the motion that repeats and its phase. To look at all of it:
+
+- Settings → Cat → **Show all poses**: the gallery in the preview's place;
+- `DYNAMICISLAND_CAT_GALLERY=1` in plasmashell's environment: the same
+  gallery in a window of its own, in your coat
+  (`systemctl --user set-environment DYNAMICISLAND_CAT_GALLERY=1`, restart
+  plasmashell, and `unset-environment` afterwards);
+- `tools/cat-poses [folder] [coat]`: the sheets as PNG files, drawn off
+  screen (bodies, coats, layers, bubbles, every gesture in five frames,
+  every repeating motion in four, the changes between poses).
+
+**What it costs.** An animation that simply runs keeps the whole window
+drawing at the screen's rate (180 times a second on a 180 Hz screen), so
+nothing of the cat does:
+
+- one timer in the character steps what is in motion and stops when
+  nothing is; a change of pose and a nod get 30 frames a second, a flick of
+  the tail 15, a blink is two frames;
+- what goes on for long goes in few steps and moves whole parts (a squash,
+  a lift, a turn) instead of reshaping outlines: a sleeping cat breathes in
+  2 steps a second and its zzz in 1; nodding is 20 steps a second;
+- the mind (`CompanionController`) has one timer, armed for the next moment
+  something is due and not at all while the cat sleeps;
+- hidden (switched off, or beside a dot when set so) nothing of it runs or
+  is drawn, and the window's input region does not grow;
+- with "Reduce motion", or with the desktop's own animations switched off
+  (System Settings → Animation speed: instant, which Plasma's units report),
+  it stands in still poses: no nodding, no fidgets, no floating hearts.
+
+Frames drawn by the island's window (counted in the test, off screen):
+sitting still 0; asleep 3 a second; asleep with reduced motion 0; nodding
+20–24 a second; a sitting cat's fidgets 3 to 4 a second on average;
+hidden 0. plasmashell's CPU with the screen locked (so timers only, nothing
+drawn; 40 s each, `ps`-style from /proc): 0.68 % without the cat, 0.75 %
+with it asleep, 0.63 % asleep with reduced motion: no difference outside
+the noise. Memory: a thousand changes of everything leave the same number
+of items and the memory within 2 MB; it settles (after thirty thousand:
++9 MB in the first twenty thousand, then flat). `tools/cat-measure` repeats
+the CPU measurement in your shell, cat off / on / off.
+
+**Settings → Cat:** show it; side (by itself, left, right); size; coat;
+reactions (music, the AI and questions, events); stroking, clicks, never
+angry, how long it sulks; after how long it falls asleep; hidden or asleep
+beside the dot; reduce motion; "Show all poses". The preview above them is
+the cat itself with what is set before it is applied: it can be stroked and
+clicked, and buttons let happen what the island would tell it.
+
+**How it is made** (`contents/ui/companion/`):
+
+```
+CompanionTuning.js       every number: strokes, clicks, durations, fidgets
+Companion.js             the rules, as functions of a state and a moment (no timers, no drawing)
+CompanionController.qml  runs them: facts in, layers out (body, accessory, bubble, tilt, gesture())
+CompanionFeed.qml        reads the ActivityManager, the island and the AI backend; writes nothing back
+CatPoses.js              the cat's poses, gestures and motions as numbers
+CatCharacter.qml         draws them; drawing only
+CompanionBubble.qml      the bubble; belongs to no character
+Companion.qml            on the island: placement, the pointer, the input shapes
+CatGallery.qml           every pose and frame, to look at
+```
+
+The mind knows no cat and the cat no mind: another character is another
+file like `CatCharacter.qml` with the same properties (`body`, `accessory`,
+`tilt`, `look`, `gesture()`, `beat()`, `still`, `running`, `mirrored`,
+`touch`, `bubbleAt`). The cat only watches: so that it need not guess from
+icons, an event may say what it is like (`feel`: done, low, ask), an
+activity that it asks (`asks`), and a page that a question of its own waits
+(`asking`, handed on like `interacting`); the island does nothing with any
+of them. Tests: `tests/companion.test.js` (the rules, with the clock and
+chance handed in), `tests/tst_companion.qml` (the real island with the cat
+beside it), `tests/still/` (the desktop's animations off), the Cat page in
+`tests/tst_settings.qml`.
+
 ## Clipboard
 
 A page with the history of Plasma's own clipboard (Klipper), so it shows the
@@ -1402,6 +1562,18 @@ OSD keeps appearing too. Pick one of them:
 
 ## Known limitations
 
+- **Cat:** drawn and tested off screen and with the GPU renderer in a
+  hidden window (the pictures match); its rules, placement, input shapes and
+  pointer handling are tested on the real Island component with synthetic
+  pointer events. Not yet looked at on the real screen (the session was
+  locked while it was built): the look beside the real pill over a
+  wallpaper, a click passing through beside the cat to a window underneath
+  (the region itself is the tested shapes, handed to the same
+  `QWindow::setMask` as the island's), stroking with a real mouse or
+  touchpad (the thresholds are a first guess: `CompanionTuning.js`), and
+  CPU with the screen on (`tools/cat-measure`). Not tried at all: several
+  monitors and a screen so narrow that the cat must change sides (the rule
+  is tested with made-up room), X11.
 - **Download tracking:** tried with the real programs: Zen (Flatpak) with a
   5 MB and a 1.1 GB file, two at once and a second file of the same name;
   `git clone` (done, a repository that does not exist, interrupted); `wget`,

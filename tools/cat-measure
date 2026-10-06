@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# cat-measure — what the cat beside the island costs, in the running shell.
+#
+#   tools/cat-measure [seconds]    plasmashell's CPU (per cent of one core) and memory, measured
+#                                  over `seconds` (default 30) with the cat switched off, then on,
+#                                  then off again; the setting is put back as it was
+#
+# Leave the island alone meanwhile (the pointer away from it, no music): with nothing going on
+# the cat falls asleep after its time (Settings → Cat), so the default 30 s mostly measure a
+# sitting cat and its fidgets; for a sleeping one wait until it sleeps and give more seconds.
+# The screen has to be on and unlocked: a hidden window is not drawn, and costs nothing.
+#
+# The cat is switched through Plasma's scripting (the same as the settings window does); the CPU
+# is read from /proc (user and system time of the process), the memory is its resident set.
+set -euo pipefail
+SECONDS_EACH="${1:-30}"
+pid="$(pgrep -x plasmashell | head -1 || true)"
+[ -n "$pid" ] || { echo "plasmashell is not running" >&2; exit 1; }
+tick="$(getconf CLK_TCK)"
+
+script() {      # read or write catEnabled of every Dynamic Island widget
+    qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "
+        var out = [];
+        var all = panels().concat(desktops());
+        for (var i = 0; i < all.length; ++i) {
+            var widgets = all[i].widgets();
+            for (var j = 0; j < widgets.length; ++j) {
+                var w = widgets[j];
+                if (w.type !== 'org.phobby.dynamicisland') continue;
+                w.currentConfigGroup = ['General'];
+                $1
+            }
+        }
+        print(out.join(','));"
+}
+was="$(script "out.push(String(w.readConfig('catEnabled', true)));")"
+[ -n "$was" ] || { echo "no Dynamic Island widget found" >&2; exit 1; }
+set_cat() { script "w.writeConfig('catEnabled', $1); w.reloadConfig();" >/dev/null; }
+restore() { set_cat "$([ "${was%%,*}" = "false" ] && echo false || echo true)"; }
+trap restore EXIT
+
+measure() {
+    local a b rss
+    a="$(awk '{ print $14 + $15 }' "/proc/$pid/stat")"
+    sleep "$SECONDS_EACH"
+    b="$(awk '{ print $14 + $15 }' "/proc/$pid/stat")"
+    rss="$(awk '/VmRSS/ { printf "%.1f", $2 / 1024 }' "/proc/$pid/status")"
+    awk -v a="$a" -v b="$b" -v t="$tick" -v s="$SECONDS_EACH" -v rss="$rss" -v what="$1" \
+        'BEGIN { printf "%-18s CPU %5.2f %%   RSS %s MB\n", what, (b - a) / t / s * 100, rss }'
+}
+locked="$(loginctl show-session "$(loginctl | awk -v u="$USER" '$3 == u { print $1; exit }')" -p LockedHint 2>/dev/null || true)"
+[ "$locked" = "LockedHint=yes" ] && echo "(the screen is locked: nothing is drawn, the numbers say little)"
+for round in off on off; do
+    set_cat "$([ "$round" = on ] && echo true || echo false)"
+    sleep 4
+    measure "cat $round"
+done
