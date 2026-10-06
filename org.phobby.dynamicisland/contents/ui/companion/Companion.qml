@@ -199,7 +199,7 @@ Item {
             TapHandler { onTapped: controller.clicked() }
             TapHandler {
                 acceptedButtons: Qt.RightButton
-                onTapped: companion.showMenu()
+                onTapped: companion.openMenu()
             }
         }
     }
@@ -229,7 +229,8 @@ Item {
 
     // ---- its own menu (right click on the cat, nowhere else) -------------------------------------
     readonly property bool menuOpen: menuLoader.item !== null && menuLoader.item.status === PlasmaExtras.Menu.Open
-    function showMenu(): void {
+    // (a function of its own, so that a test can look at the click without a menu opening)
+    property var openMenu: () => {
         menuLoader.active = true;
         menuLoader.item.openRelative();
     }

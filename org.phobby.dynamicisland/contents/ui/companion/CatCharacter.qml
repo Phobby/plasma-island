@@ -165,7 +165,7 @@ Item {
         onTriggered: {
             const now = Date.now();
             // (never a leap, whatever kept the timer waiting)
-            cat.clock += Math.max(1, Math.min(120, now - cat.last));
+            cat.clock += Math.max(1, Math.min(2 * interval + 60, now - cat.last));
             cat.last = now;
             if (cat.act !== "" && cat.actAt >= 1) cat.act = "";
         }
