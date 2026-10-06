@@ -68,7 +68,8 @@ Item {
     readonly property bool keepsWheel: visible && (view === "chat" ? (ai.messages.length > 0 || ai.busy) && !wheelFree
                                                    : view === "models" || view === "sources" || view === "kinds" || view === "form")
     // A conversation needs more room than the other pages: the taller island.
-    readonly property bool tall: visible && (view === "chat" ? ai.messages.length > 0 || ai.busy || typing : view !== "cards")
+    // (Not for typing alone: the field that was just clicked would move away from under the pointer.)
+    readonly property bool tall: visible && (view === "chat" ? ai.messages.length > 0 || ai.busy : view !== "cards")
 
     Binding { target: page.ai; property: "viewing"; value: page.visible; restoreMode: Binding.RestoreNone }
     Component.onDestruction: ai.viewing = false

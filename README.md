@@ -800,7 +800,10 @@ the weather's picture and, where the tab bar has room, the temperature.
 - **The wheel:** while a place is searched and while a day's hours are shown
   the wheel scrolls that list and does not turn the island's page, not at
   the list's end either (`keepsWheel` of the page, `tests/tst_wheel.qml`);
-  the tabs still do.
+  the tabs still do. This holds over the list only (on every page that
+  keeps the wheel: Weather, Cloud, AI): beside it, or over a list short
+  enough to fit, the wheel turns the page as usual. The AI conversation
+  also lets a scroll that starts at its end go on to the next page.
 - **Source:** [Open-Meteo](https://open-meteo.com) (`backend/WeatherBackend.qml`,
   `WeatherData.js`): its forecast service for the weather and its geocoding
   service for the search. Neither needs a key or an account. The data is

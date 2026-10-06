@@ -201,7 +201,8 @@ Item {
             shown("For quick questions.");
 
             const input = type(p, "What is 2+2?");
-            compare([p.interacting, p.tall, expanded.tall, expanded.interacting], [true, true, true, true], "typing: the island keeps the keyboard and grows");
+            compare([p.interacting, p.tall, expanded.tall, expanded.interacting], [true, false, false, true],
+                    "typing: the island keeps the keyboard, and its size (the field stays under the pointer)");
             // Shift+Enter is a new line, Enter sends
             keyClick(Qt.Key_Return, Qt.ShiftModifier);
             compare([input.text, root.asked.length], ["What is 2+2?\n", 0]);

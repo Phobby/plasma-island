@@ -167,6 +167,15 @@ Item {
             wait(300);
             compare([c.currentKey, scroll.atYEnd], ["ai", false]);
 
+            // beside the conversation (the row of the source above it) the wheel turns the page as on any page
+            compare(c.wheelKept, true);
+            const at = scroll.mapToItem(root, scroll.width / 2, -14);
+            mouseWheel(root, at.x, at.y, 0, -120);
+            tryCompare(c, "currentKey", "other", 2000);
+            wait(500);
+            c.showPage("ai");
+            wait(p.wheelPause + 500);
+
             // a page that kept the wheel is left for the conversation: the wheel stays kept
             c.showPage("keeper");
             wait(600);

@@ -44,8 +44,32 @@ Item {
     // A page keeps the island open without the keyboard (e.g. while a menu it opened is shown).
     property bool holding: false
     // A page keeps the wheel for a list of its own (e.g. the places a search
-    // found): it scrolls that list and does not turn the page.
+    // found): over that list the wheel scrolls it and does not turn the page.
+    // Beside the list (the page's header, its buttons, empty room) it turns
+    // the page as everywhere else.
     property bool wheelKept: false
+    function currentPage(): Item {
+        for (let i = 0; i < pageLoaders.count; ++i) {
+            const loader = pageLoaders.itemAt(i);
+            if (loader && loader.pos === currentIndex) return loader.item;
+        }
+        return null;
+    }
+    // Is the point (in `from`'s coordinates) over something of the shown page that scrolls?
+    function overList(from: Item, x: real, y: real): bool {
+        const top = currentPage();
+        if (top === null) return false;
+        let item = top, at = from.mapToItem(top, x, y);
+        for (;;) {
+            const child = item.childAt(at.x, at.y);
+            if (child === null) break;
+            at = item.mapToItem(child, at.x, at.y);
+            item = child;
+        }
+        for (; item !== null && item !== top.parent; item = item.parent)
+            if (typeof item.flick === "function" && (item.contentHeight > item.height + 1 || item.contentWidth > item.width + 1)) return true;
+        return false;
+    }
     // Only the page that is shown is asked: a page that is left gives the wheel
     // up a moment after the one arrived at has taken it.
     function refreshWheel(): void {
@@ -402,14 +426,15 @@ Item {
                 // Mouse wheel or touchpad swipe pages; accumulate to debounce
                 // high-resolution touchpad deltas. Sliders handle their own wheel.
                 // Not while a page holds the island (e.g. editing the Controls
-                // buttons) or keeps the wheel (e.g. the places a search found):
-                // there the wheel scrolls that page's list. A list lets the
-                // wheel through at its end, so without this it would turn the page.
+                // buttons), nor over the list of a page that keeps the wheel
+                // (e.g. the places a search found): a list lets the wheel
+                // through at its end, so without this it would turn the page.
                 // (The AI chat gives the wheel back for a scroll that starts at its end.)
-                enabled: !expanded.holding && !expanded.wheelKept
+                enabled: !expanded.holding
                 property real acc: 0
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: event => {
+                    if (expanded.wheelKept && expanded.overList(viewport, point.position.x, point.position.y)) { acc = 0; return; }
                     const d = Math.abs(event.angleDelta.x) > Math.abs(event.angleDelta.y) ? event.angleDelta.x : event.angleDelta.y;
                     acc += d;
                     if (Math.abs(acc) >= 120) {
