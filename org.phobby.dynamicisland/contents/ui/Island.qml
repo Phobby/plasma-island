@@ -383,12 +383,8 @@ Item {
                 else island.expanded = true;
             }
         }
-        // Dot mode, the open island: a click where nothing else takes it (a button, a list, a field).
-        TapHandler {
-            gesturePolicy: TapHandler.WithinBounds
-            enabled: island.dotMode && island.mode === "expanded"
-            onTapped: island.shrink()
-        }
+        // (The open island does not shrink for a click on its empty room: a page being filled in
+        // would be lost to a click beside a field. Its own button does that: ExpandedContent.)
         // Right click where nothing else takes it: the island's own menu.
         TapHandler {
             acceptedButtons: Qt.RightButton

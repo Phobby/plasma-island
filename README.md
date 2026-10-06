@@ -35,11 +35,11 @@ What shrinks it:
   split island);
 - a click that was on its way there when hovering opened the island: for
   0.7 s after it opened, while the pointer has not moved;
-- a click on the open island where nothing else takes it (not a button, a
-  list, a field or a card);
 - the ⌄ button at the top right of the open island;
 - right click → "Shrink to dot" (also "Back to pill" on the dot).
 
+A click on the empty room of the open island does nothing: it shrinks from
+its small form, not in the middle of a page that is being filled in.
 A notification or an event on the island keeps its own clicks (open,
 dismiss, its buttons); the split island's circle still opens the island.
 

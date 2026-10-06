@@ -5,7 +5,8 @@
     shrinks it to a dot in the pill's place, a click on the dot brings back the
     closed pill; off, a click opens the island as it always did. What the dot
     does with events (shows them as a colour and keeps them, opens for them,
-    nothing; critical ones always), hovering, the button of the open island,
+    nothing; critical ones always), hovering, the button of the open island
+    (a click on its empty room does not shrink it),
     and where the island takes the pointer in each form.
 */
 import QtQuick
@@ -143,7 +144,7 @@ Item {
             compare(island.surfaceRect.width, 15);
         }
 
-        function test_5b_the_open_island_a_click_on_its_empty_surface_or_right_after_it_opened() {
+        function test_5b_the_open_island_a_click_right_after_it_opened_but_not_on_its_empty_surface() {
             const [x, y] = onIsland();
             mouseMove(root, x, y);
             tryCompare(island, "expanded", true);
@@ -166,11 +167,12 @@ Item {
             mouseClick(settings[settings.length - 1]);
             island.settingsRequested.disconnect(count);
             compare([asked, island.mode], [1, "expanded"], "a button's click is the button's");
-            // the empty surface
+            // the empty surface of the open island: nothing (a page being filled in is not lost to a click beside a field)
             mouseClick(root, island.surfaceRect.x + island.surfaceRect.width / 2, island.surfaceRect.y + island.surfaceRect.height - 30);
-            compare([island.mode, island.dot], ["dot", true]);
+            wait(150);
+            compare([island.mode, island.dot, island.expanded], ["expanded", false, true]);
             // and after the moment has passed, without moving
-            island.dot = false; away(); wait(350); settled();
+            away(); wait(350); settled();
             mouseMove(root, x, y);
             tryCompare(island, "expanded", true);
             tryCompare(island, "grace", false, 2000);
