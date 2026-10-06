@@ -44,16 +44,19 @@ KCM.SimpleKCM {
         spacing: Kirigami.Units.largeSpacing
 
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             text: Lang.i18n("The buttons on the Controls page, at most %1. Drag one by its handle to move it. In the island, holding a button changes them too.", catalog.maximum)
         }
 
         Kirigami.Heading {
+            textFormat: Text.PlainText
             level: 4
             text: Lang.i18n("In the island (%1 of %2)", page.chosen.length, catalog.maximum)
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             visible: rows.count === 0
             text: Lang.i18n("None: the Controls page only shows the sliders.")
             opacity: 0.7
@@ -103,6 +106,7 @@ KCM.SimpleKCM {
                             onDropped: page.store()
                         }
                         QQC2.Label {
+                            textFormat: Text.PlainText
                             text: String(index + 1)
                             opacity: 0.6
                             Layout.preferredWidth: Kirigami.Units.gridUnit
@@ -115,8 +119,9 @@ KCM.SimpleKCM {
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 0
-                            QQC2.Label { Layout.fillWidth: true; text: wrapper.info ? wrapper.info.title : model.key; elide: Text.ElideRight }
+                            QQC2.Label { textFormat: Text.PlainText; Layout.fillWidth: true; text: wrapper.info ? wrapper.info.title : model.key; elide: Text.ElideRight }
                             QQC2.Label {
+                                textFormat: Text.PlainText
                                 Layout.fillWidth: true
                                 visible: text.length > 0
                                 text: wrapper.info ? wrapper.info.hint : ""
@@ -139,10 +144,12 @@ KCM.SimpleKCM {
         }
 
         Kirigami.Heading {
+            textFormat: Text.PlainText
             level: 4
             text: Lang.i18n("Other controls")
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             visible: page.full
             Layout.fillWidth: true
             wrapMode: Text.Wrap
@@ -171,8 +178,9 @@ KCM.SimpleKCM {
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 0
-                        QQC2.Label { Layout.fillWidth: true; text: spare.modelData.title; elide: Text.ElideRight }
+                        QQC2.Label { textFormat: Text.PlainText; Layout.fillWidth: true; text: spare.modelData.title; elide: Text.ElideRight }
                         QQC2.Label {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             visible: text.length > 0
                             text: spare.modelData.hint

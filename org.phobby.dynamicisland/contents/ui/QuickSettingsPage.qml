@@ -295,6 +295,7 @@ Item {
                 radius: 8
                 color: page.theme.text
                 Text {
+                    textFormat: Text.PlainText
                     id: badgeText
                     anchors.centerIn: parent
                     text: toggle.badge
@@ -374,6 +375,7 @@ Item {
                 id: ticker
                 spacing: labelBox.gap
                 Text {
+                    textFormat: Text.PlainText
                     id: labelText
                     objectName: "tileLabel"
                     width: labelBox.runs ? implicitWidth : labelBox.width
@@ -385,6 +387,7 @@ Item {
                     onImplicitWidthChanged: if (run.running) run.restart()
                 }
                 Text {
+                    textFormat: Text.PlainText
                     visible: labelBox.runs
                     text: toggle.label
                     color: labelText.color
@@ -462,6 +465,7 @@ Item {
             }
             // Nothing chosen: a way back in
             Text {
+                textFormat: Text.PlainText
                 visible: page.chosen.length === 0 && !page.editing
                 text: Lang.i18n("No buttons. Hold here to add some.")
                 color: page.theme.subText
@@ -483,6 +487,7 @@ Item {
                 Layout.fillWidth: true
                 spacing: 6
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     readonly property var info: editBox.hovered
                     text: info ? "+ " + info.title + (info.hint ? " · " + info.hint : "")

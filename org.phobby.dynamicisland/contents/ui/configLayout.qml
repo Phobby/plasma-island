@@ -75,10 +75,12 @@ KCM.SimpleKCM {
         spacing: Kirigami.Units.largeSpacing
 
         Kirigami.Heading {
+            textFormat: Text.PlainText
             level: 4
             text: Lang.i18n("Tabs")
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             text: Lang.i18n("Drag a page by its handle to change where its tab sits in the expanded island; the switch shows or hides it.")
@@ -149,11 +151,13 @@ KCM.SimpleKCM {
                             Layout.fillWidth: true
                             spacing: 0
                             QQC2.Label {
+                                textFormat: Text.PlainText
                                 Layout.fillWidth: true
                                 text: wrapper.page_ ? wrapper.page_.title : model.key
                                 elide: Text.ElideRight
                             }
                             QQC2.Label {
+                                textFormat: Text.PlainText
                                 Layout.fillWidth: true
                                 visible: text.length > 0
                                 text: wrapper.page_ ? wrapper.page_.hint : ""
@@ -164,6 +168,7 @@ KCM.SimpleKCM {
                         }
                         // Activities has no switch: it is there whenever something is going on.
                         QQC2.Label {
+                            textFormat: Text.PlainText
                             visible: wrapper.configKey.length === 0
                             text: Lang.i18n("Automatic")
                             opacity: 0.7
@@ -202,6 +207,7 @@ KCM.SimpleKCM {
         }
 
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
@@ -210,11 +216,13 @@ KCM.SimpleKCM {
         }
 
         Kirigami.Heading {
+            textFormat: Text.PlainText
             Layout.topMargin: Kirigami.Units.largeSpacing
             level: 4
             text: Lang.i18n("Modules")
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             text: Lang.i18n("Parts inside a page. They do not add or remove a tab.")
@@ -234,8 +242,9 @@ KCM.SimpleKCM {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 0
-                    QQC2.Label { Layout.fillWidth: true; text: Lang.i18n("Volume"); elide: Text.ElideRight }
+                    QQC2.Label { textFormat: Text.PlainText; Layout.fillWidth: true; text: Lang.i18n("Volume"); elide: Text.ElideRight }
                     QQC2.Label {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         text: Lang.i18n("The volume slider on the Controls page")
                         font: Kirigami.Theme.smallFont
@@ -247,6 +256,7 @@ KCM.SimpleKCM {
             }
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont

@@ -68,6 +68,7 @@ KCM.SimpleKCM {
                 text: Lang.i18n("Show the AI page in the island")
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 24
                 wrapMode: Text.Wrap
@@ -105,6 +106,7 @@ KCM.SimpleKCM {
                 valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 4000
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 24
                 wrapMode: Text.Wrap
@@ -125,6 +127,7 @@ KCM.SimpleKCM {
                 text: Lang.i18n("Keep it in a file on this computer")
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 24
                 wrapMode: Text.Wrap
@@ -136,10 +139,12 @@ KCM.SimpleKCM {
         }
 
         Kirigami.Heading {
+            textFormat: Text.PlainText
             level: 4
             text: Lang.i18n("What is connected")
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             visible: page.sources.length === 0
             wrapMode: Text.Wrap
@@ -160,11 +165,13 @@ KCM.SimpleKCM {
                     source: row.kind.where === "cli" ? "utilities-terminal" : row.kind.where === "device" ? "computer" : "globe"
                 }
                 QQC2.Label {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: page.label(row.modelData)
                     elide: Text.ElideMiddle
                 }
                 QQC2.Label {
+                    textFormat: Text.PlainText
                     text: Lang.i18n("Model:")
                     opacity: 0.7
                 }
@@ -182,6 +189,7 @@ KCM.SimpleKCM {
             }
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             opacity: 0.7

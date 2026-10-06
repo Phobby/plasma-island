@@ -39,6 +39,7 @@ Rectangle {
         Keys.onEscapePressed: field.escaped()
     }
     Text {
+        textFormat: Text.PlainText
         anchors.fill: fieldInput
         verticalAlignment: Text.AlignVCenter
         visible: fieldInput.text.length === 0

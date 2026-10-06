@@ -101,6 +101,7 @@ Item {
             spacing: 8
             Item { Layout.fillHeight: true }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 text: Lang.i18n("No applications added yet")
@@ -109,6 +110,7 @@ Item {
                 font.weight: Font.DemiBold
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
@@ -203,6 +205,7 @@ Item {
                             }
                         }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             text: cell.adder ? Lang.i18n("Add") : (cell.entry.label || cell.entry.name)
@@ -256,6 +259,7 @@ Item {
 
         // The limit, said where "Add" stops working
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             visible: page.full && page.selected < 0 && page.list.length > 0
             horizontalAlignment: Text.AlignHCenter
@@ -360,6 +364,7 @@ Item {
                         fallback: "application-x-executable"
                     }
                     Text {
+                        textFormat: Text.PlainText
                         text: row.modelData.name
                         color: page.theme.text
                         font.pointSize: page.theme.fontSmall
@@ -367,6 +372,7 @@ Item {
                         Layout.maximumWidth: row.width * 0.55
                     }
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         text: row.modelData.generic
                         color: page.theme.subText
@@ -377,6 +383,7 @@ Item {
                 MouseArea { id: rowMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.add(row.modelData) }
             }
             Text {
+                textFormat: Text.PlainText
                 anchors.centerIn: parent
                 visible: results.count === 0
                 text: page.apps && page.apps.all.length === 0 ? Lang.i18n("Loading…") : Lang.i18n("No application matches.")

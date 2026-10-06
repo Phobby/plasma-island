@@ -38,6 +38,7 @@ Item {
             color: strip.first?.color ?? strip.theme.text
         }
         Text {
+            textFormat: Text.PlainText
             objectName: "suggestionText"
             Layout.fillWidth: true
             text: strip.first === null ? "" : hover.hovered ? strip.first.why : strip.first.title + (strip.list.length > 1 ? "  +" + (strip.list.length - 1) : "")

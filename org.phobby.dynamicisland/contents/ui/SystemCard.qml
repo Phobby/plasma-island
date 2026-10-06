@@ -44,6 +44,7 @@ Rectangle {
             fontSize: card.theme.fontSmall * 0.8
         }
         Text {
+            textFormat: Text.PlainText
             Layout.alignment: Qt.AlignHCenter
             text: card.metric.caption ?? ""
             color: card.theme.subText
@@ -72,6 +73,7 @@ Rectangle {
             Layout.fillWidth: !extra.visible
             spacing: 0
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: card.metric.caption ?? ""
                 color: card.theme.text
@@ -80,6 +82,7 @@ Rectangle {
                 elide: Text.ElideRight
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: card.metric.detail ?? ""
                 visible: text.length > 0
@@ -89,6 +92,7 @@ Rectangle {
                 elide: Text.ElideRight
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: card.metric.detail2 ?? ""
                 visible: text.length > 0
@@ -107,6 +111,7 @@ Rectangle {
                 id: lines
                 model: card.metric.extra ?? []
                 delegate: Text {
+                    textFormat: Text.PlainText
                     required property string modelData
                     required property int index
                     Layout.fillWidth: true

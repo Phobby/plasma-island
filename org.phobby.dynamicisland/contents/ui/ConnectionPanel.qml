@@ -71,6 +71,7 @@ Item {
                 onClicked: if (panel.asking !== null) panel.asking = null; else panel.closed()
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: panel.title
                 color: panel.theme.text
@@ -103,6 +104,7 @@ Item {
             Layout.fillHeight: true
             spacing: 6
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: panel.asking !== null ? Lang.i18n("Password for %1", panel.asking.name) : ""
                 color: panel.theme.subText
@@ -171,6 +173,7 @@ Item {
                         isMask: true
                     }
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         text: row.name
                         color: panel.theme.text
@@ -179,6 +182,7 @@ Item {
                         elide: Text.ElideRight
                     }
                     Text {
+                        textFormat: Text.PlainText
                         visible: text.length > 0
                         Layout.maximumWidth: row.width * 0.45
                         text: row.detail
@@ -218,6 +222,7 @@ Item {
             spacing: 6
             Item { Layout.fillHeight: true }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 text: panel.off ? panel.offText : panel.scanning ? Lang.i18n("Scanning…") : panel.emptyText
@@ -238,6 +243,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             visible: panel.failure.length > 0 && !panel.typing
             Layout.fillWidth: true
             text: panel.failure

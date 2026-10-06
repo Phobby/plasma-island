@@ -280,6 +280,7 @@ Item {
                     onClicked: page.shiftMonth(-1)
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     text: new Date(page.monthStart).toLocaleDateString(Lang.locale, "MMMM yyyy")
@@ -304,6 +305,7 @@ Item {
                 Repeater {
                     model: 7
                     delegate: Text {
+                        textFormat: Text.PlainText
                         required property int index
                         width: month.cell
                         height: 12
@@ -342,6 +344,7 @@ Item {
                             border.color: page.theme.text
                         }
                         Text {
+                            textFormat: Text.PlainText
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.top: parent.top
                             anchors.topMargin: Math.max(0, Math.round((parent.height - 5 - implicitHeight) / 2))
@@ -403,6 +406,7 @@ Item {
                     onClicked: page.detail = null
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: page.selectedDay === page.todayStart
                         ? Lang.i18nc("@title today's date", "Today · %1", new Date(page.selectedDay).toLocaleDateString(Lang.locale, "d MMMM"))
@@ -454,6 +458,7 @@ Item {
                 }
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 visible: page.provider !== null && page.provider.errorNames.length > 0
                 text: visible ? Lang.i18n("Could not update: %1", page.provider.errorNames.join(", ")) : ""
@@ -503,6 +508,7 @@ Item {
                             Layout.fillWidth: true
                             spacing: 0
                             Text {
+                                textFormat: Text.PlainText
                                 Layout.fillWidth: true
                                 text: (row.modelData.todo ? "☐ " : "") + (row.modelData.title || Lang.i18n("Event"))
                                 color: page.theme.text
@@ -511,6 +517,7 @@ Item {
                                 elide: Text.ElideRight
                             }
                             Text {
+                                textFormat: Text.PlainText
                                 Layout.fillWidth: true
                                 text: [row.modelData.allDay ? Lang.i18n("All day") : page.provider.timeRange(row.modelData), row.modelData.calendar].filter(s => s.length > 0).join(" · ")
                                 color: row.running ? page.theme.text : page.theme.subText
@@ -538,6 +545,7 @@ Item {
                 }
 
                 Text {
+                    textFormat: Text.PlainText
                     anchors.centerIn: parent
                     width: parent.width
                     visible: list.count === 0
@@ -577,6 +585,7 @@ Item {
                             Layout.fillWidth: true
                             spacing: 0
                             Text {
+                                textFormat: Text.PlainText
                                 Layout.fillWidth: true
                                 text: details.e ? (details.e.todo ? "☐ " : "") + (details.e.title || Lang.i18n("Event")) : ""
                                 color: page.theme.text
@@ -587,6 +596,7 @@ Item {
                                 elide: Text.ElideRight
                             }
                             Text {
+                                textFormat: Text.PlainText
                                 Layout.fillWidth: true
                                 text: details.e ? page.dateRange(details.e) : ""
                                 color: page.theme.subText
@@ -597,6 +607,7 @@ Item {
                         }
                     }
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         visible: page.detailError.length > 0
                         text: page.detailError
@@ -648,6 +659,7 @@ Item {
                              : page.theme.faint
                         Behavior on color { ColorAnimation { duration: 120 } }
                         Text {
+                            textFormat: Text.PlainText
                             id: linkLabel
                             anchors.centerIn: parent
                             text: Lang.i18nc("@action:button opens the link of a calendar event", "Open link")
@@ -675,6 +687,7 @@ Item {
             isMask: true
         }
         Text {
+            textFormat: Text.PlainText
             Layout.alignment: Qt.AlignHCenter
             text: Lang.i18n("No calendar connected")
             color: page.theme.subText
@@ -693,6 +706,7 @@ Item {
             Behavior on color { ColorAnimation { duration: 120 } }
             Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
             Text {
+                textFormat: Text.PlainText
                 id: connectLabel
                 anchors.centerIn: parent
                 text: Lang.i18nc("@action:button starts connecting a calendar link", "Connect a calendar…")

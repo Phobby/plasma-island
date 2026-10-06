@@ -196,6 +196,7 @@ KCM.SimpleKCM {
                 }
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 visible: !card.asking
                 horizontalAlignment: Text.AlignHCenter
@@ -207,7 +208,7 @@ KCM.SimpleKCM {
                 Layout.alignment: Qt.AlignHCenter
                 visible: card.asking
                 spacing: 0
-                QQC2.Label { text: Lang.i18n("Delete?"); font: Kirigami.Theme.smallFont }
+                QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("Delete?"); font: Kirigami.Theme.smallFont }
                 QQC2.ToolButton {
                     icon.name: "edit-delete"
                     display: QQC2.AbstractButton.IconOnly
@@ -286,7 +287,7 @@ KCM.SimpleKCM {
             onMoved: row.moved(value)
             Binding { target: slider; property: "value"; value: row.value; when: !slider.pressed }
         }
-        QQC2.Label { text: row.valueText; font.features: { "tnum": 1 } }
+        QQC2.Label { textFormat: Text.PlainText; text: row.valueText; font.features: { "tnum": 1 } }
     }
 
     Kirigami.FormLayout {
@@ -333,6 +334,7 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             Layout.maximumWidth: Kirigami.Units.gridUnit * 30
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 visible: !library.available
                 wrapMode: Text.Wrap
@@ -378,8 +380,17 @@ KCM.SimpleKCM {
                     onRemoveRequested: page.confirmRemove = modelData.file
                     onRemoveCancelled: page.confirmRemove = ""
                     onRemoveConfirmed: { page.confirmRemove = ""; library.remove(modelData.file); }
-                    QQC2.ToolTip.visible: hovered && (modelData.author.length > 0 || modelData.description.length > 0)
-                    QQC2.ToolTip.text: (modelData.author.length > 0 ? Lang.i18n("by %1", modelData.author) : "") + (modelData.author.length > 0 && modelData.description.length > 0 ? "\n" : "") + modelData.description
+                    // (a tooltip of its own: the shared one would read what a theme's file says as rich text)
+                    QQC2.ToolTip {
+                        id: about
+                        visible: parent.hovered && text.length > 0
+                        text: (modelData.author.length > 0 ? Lang.i18n("by %1", modelData.author) : "") + (modelData.author.length > 0 && modelData.description.length > 0 ? "\n" : "") + modelData.description
+                        contentItem: QQC2.Label {
+                            text: about.text
+                            textFormat: Text.PlainText
+                            wrapMode: Text.Wrap
+                        }
+                    }
                 }
             }
         }

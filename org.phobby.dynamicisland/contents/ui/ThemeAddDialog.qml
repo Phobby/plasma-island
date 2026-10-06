@@ -88,8 +88,9 @@ Kirigami.Dialog {
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 0
-                QQC2.Label { Layout.fillWidth: true; text: card.name; font.weight: Font.DemiBold; elide: Text.ElideRight }
+                QQC2.Label { textFormat: Text.PlainText; Layout.fillWidth: true; text: card.name; font.weight: Font.DemiBold; elide: Text.ElideRight }
                 QQC2.Label {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     visible: card.author.length > 0
                     text: Lang.i18n("by %1", card.author)
@@ -98,6 +99,7 @@ Kirigami.Dialog {
                     elide: Text.ElideRight
                 }
                 QQC2.Label {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     visible: card.description.length > 0
                     text: card.description
@@ -150,7 +152,7 @@ Kirigami.Dialog {
                     text: Lang.i18n("Overwrite")
                     onClicked: dialog.overwrite()
                 }
-                QQC2.Label { text: Lang.i18n("or add it as:") }
+                QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("or add it as:") }
                 QQC2.TextField {
                     id: renameField
                     Layout.fillWidth: true
@@ -212,6 +214,7 @@ Kirigami.Dialog {
                             source: "document-import"
                         }
                         QQC2.Label {
+                            textFormat: Text.PlainText
                             Layout.alignment: Qt.AlignHCenter
                             text: Lang.i18n("Drop a theme file here (.islandtheme.json)")
                         }
@@ -229,6 +232,7 @@ Kirigami.Dialog {
                     }
                 }
                 QQC2.Label {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
                     font: Kirigami.Theme.smallFont
@@ -244,7 +248,7 @@ Kirigami.Dialog {
                     Layout.fillWidth: true
                     visible: dialog.store.state === "loading"
                     QQC2.BusyIndicator { Layout.preferredWidth: Kirigami.Units.gridUnit * 1.5; Layout.preferredHeight: Kirigami.Units.gridUnit * 1.5; running: visible }
-                    QQC2.Label { text: Lang.i18n("Asking the store…") }
+                    QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("Asking the store…") }
                 }
                 Kirigami.InlineMessage {
                     Layout.fillWidth: true
@@ -294,6 +298,7 @@ Kirigami.Dialog {
                             }
                         }
                         QQC2.Label {
+                            textFormat: Text.PlainText
                             visible: dialog.store.entries.length === 0
                             text: Lang.i18n("The store has no themes yet.")
                             opacity: 0.7
@@ -301,6 +306,7 @@ Kirigami.Dialog {
                     }
                 }
                 QQC2.Label {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
                     font: Kirigami.Theme.smallFont

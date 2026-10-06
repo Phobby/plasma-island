@@ -281,6 +281,7 @@ Item {
         visible: page.view === "missing" || page.view === "empty"
         spacing: 5
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             text: page.view === "missing" ? Lang.i18n("rclone was not found") : Lang.i18n("No cloud is set up yet")
             color: page.theme.text
@@ -288,6 +289,7 @@ Item {
             font.weight: Font.DemiBold
         }
         Text {
+            textFormat: Text.PlainText
             objectName: "setupText"
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -378,6 +380,7 @@ Item {
                             spacing: 5
                             Dot { anchors.verticalCenter: parent.verticalCenter; state: parent.parent.sync.state }
                             Text {
+                                textFormat: Text.PlainText
                                 text: "Syncthing · " + (parent.parent.sync.problem === "key" ? Lang.i18n("its key is needed") : page.cloud.stateText(parent.parent.sync.state)
                                       + (parent.parent.sync.progress >= 0 && parent.parent.sync.state === "syncing" ? " " + Lang.percent(Math.round(parent.parent.sync.progress * 100)) : ""))
                                 color: page.theme.subText
@@ -422,7 +425,7 @@ Item {
                             required property string modelData
                             required property int index
                             spacing: 2
-                            Text { visible: crumb.index > 0; text: "›"; color: page.theme.subText; font.pointSize: page.theme.fontSmall * 0.9 }
+                            Text { textFormat: Text.PlainText; visible: crumb.index > 0; text: "›"; color: page.theme.subText; font.pointSize: page.theme.fontSmall * 0.9 }
                             Text {
                                 text: Rclone.display(crumb.modelData).slice(0, 28)
                                 textFormat: Text.PlainText
@@ -453,6 +456,7 @@ Item {
                 }
             }
             Text {
+                textFormat: Text.PlainText
                 objectName: "storageText"
                 visible: bar.about !== null && bar.about !== undefined
                 text: !visible ? "" : bar.full >= 0 ? Lang.i18n("%1 of %2", page.cloud.size(bar.about.used), page.cloud.size(bar.about.total)) : Lang.i18n("%1 used", page.cloud.size(bar.about.used))
@@ -494,6 +498,7 @@ Item {
                 radius: 11
                 color: hereMouse.pressed ? page.theme.pressedFill : hereMouse.containsMouse ? page.theme.over(page.theme.hoverFill, page.theme.over(page.theme.faint, page.theme.surface)) : page.theme.faint
                 Text {
+                    textFormat: Text.PlainText
                     id: hereLabel
                     anchors.centerIn: parent
                     text: page.hereReady ? Lang.i18n("Folder · drag")
@@ -535,6 +540,7 @@ Item {
             visible: page.trouble !== null
             spacing: 3
             Text {
+                textFormat: Text.PlainText
                 objectName: "trouble"
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
@@ -595,6 +601,7 @@ Item {
                         }
                         // fetched: can be dragged; being fetched: how far
                         Text {
+                            textFormat: Text.PlainText
                             visible: row.fetching || row.local.length > 0
                             text: row.local.length > 0 ? Lang.i18n("drag")
                                 : (page.cloud.fetching[row.key] ?? page.cloud.fetchingFolders[row.key]) >= 0 ? Lang.percent(Math.round(page.cloud.fetching[row.key] ?? page.cloud.fetchingFolders[row.key])) : "…"
@@ -603,6 +610,7 @@ Item {
                         }
                         // (a cloud's own document, a Google Doc for one, has no size)
                         Text {
+                            textFormat: Text.PlainText
                             Layout.preferredWidth: 52
                             horizontalAlignment: Text.AlignRight
                             text: row.modelData.dir ? "" : row.modelData.size >= 0 ? page.cloud.size(row.modelData.size) : "—"
@@ -611,6 +619,7 @@ Item {
                             font.features: { "tnum": 1 }
                         }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.preferredWidth: 74
                             horizontalAlignment: Text.AlignRight
                             text: page.when(row.modelData.modified)
@@ -644,6 +653,7 @@ Item {
                 }
             }
             Text {
+                textFormat: Text.PlainText
                 anchors.centerIn: parent
                 width: parent.width
                 visible: list.count === 0 && page.trouble === null
@@ -688,6 +698,7 @@ Item {
 
         // the sync state of this cloud, or why it is not known; a list that was cut
         Text {
+            textFormat: Text.PlainText
             objectName: "note"
             Layout.fillWidth: true
             readonly property var sync: page.here !== null ? page.cloud.syncOf(page.current) : null
@@ -715,6 +726,7 @@ Item {
             onBack: page.view = "browse"
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             text: page.chosen === null ? "" : page.cloud.size(page.chosen.size) + " · " + page.when(page.chosen.modified) + "\n"
@@ -758,6 +770,7 @@ Item {
             }
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             visible: page.status.length > 0
             text: page.status
@@ -781,6 +794,7 @@ Item {
             onBack: page.view = "browse"
         }
         Text {
+            textFormat: Text.PlainText
             objectName: "folderText"
             Layout.fillWidth: true
             wrapMode: Text.Wrap
@@ -849,6 +863,7 @@ Item {
             PillButton { theme: page.theme; text: Lang.i18n("Cancel"); onClicked: { page.planned = null; page.view = "browse"; } }
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             text: Lang.i18n("Files are copied; nothing on this computer is changed.")
@@ -869,6 +884,7 @@ Item {
             onBack: { page.typing = false; page.view = "browse"; }
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             Layout.fillHeight: true
             wrapMode: Text.Wrap

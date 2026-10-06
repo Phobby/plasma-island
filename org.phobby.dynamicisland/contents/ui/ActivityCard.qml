@@ -5,7 +5,6 @@
 */
 import QtQuick
 import QtQuick.Layouts
-import org.kde.kirigami as Kirigami
 
 Rectangle {
     id: card
@@ -42,6 +41,7 @@ Rectangle {
                 Layout.fillWidth: true
                 spacing: 0
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: card.activity?.title ?? ""
                     color: card.theme.text
@@ -50,6 +50,7 @@ Rectangle {
                     elide: Text.ElideRight
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     visible: text.length > 0
                     text: card.activity?.subtitle ?? ""
@@ -61,6 +62,7 @@ Rectangle {
                 }
             }
             Text {
+                textFormat: Text.PlainText
                 visible: text.length > 0
                 text: card.activity?.trailingText ?? ""
                 color: card.activity?.color ?? card.theme.text

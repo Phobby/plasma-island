@@ -54,6 +54,7 @@ KCM.SimpleKCM {
         RowLayout {
             Kirigami.FormData.label: Lang.i18n("Place:")
             QQC2.Label {
+                textFormat: Text.PlainText
                 text: page.place !== null ? WeatherData.placeLabel(page.place) : Lang.i18n("None chosen yet")
                 font.weight: page.place !== null ? Font.DemiBold : Font.Normal
             }
@@ -104,6 +105,7 @@ KCM.SimpleKCM {
             }
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             visible: page.problem.length > 0
             text: page.problem === "none" ? Lang.i18n("No place was found by that name.")
                 : page.problem === "offline" ? Lang.i18n("No connection: places cannot be searched right now.")
@@ -111,6 +113,7 @@ KCM.SimpleKCM {
             opacity: 0.7
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
@@ -135,6 +138,7 @@ KCM.SimpleKCM {
             onCurrentIndexChanged: if (currentIndex >= 0) chosen = currentIndex
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
@@ -153,6 +157,7 @@ KCM.SimpleKCM {
             text: Lang.i18n("Announce rain, snow and storms")
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap

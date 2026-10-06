@@ -154,11 +154,13 @@ KCM.SimpleKCM {
         }
 
         Kirigami.Heading {
+            textFormat: Text.PlainText
             level: 4
             text: Lang.i18n("Connected calendars")
         }
 
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             visible: page.sources.length === 0
             wrapMode: Text.Wrap
@@ -193,11 +195,13 @@ KCM.SimpleKCM {
                     Layout.fillWidth: true
                     spacing: 0
                     QQC2.Label {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         text: sourceRow.modelData.name || Lang.i18n("Calendar")
                         elide: Text.ElideRight
                     }
                     QQC2.Label {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         font: Kirigami.Theme.smallFont
                         elide: Text.ElideRight
@@ -230,6 +234,7 @@ KCM.SimpleKCM {
         }
 
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
@@ -274,6 +279,7 @@ KCM.SimpleKCM {
                                 isMask: true
                             }
                             QQC2.Label {
+                                textFormat: Text.PlainText
                                 Layout.fillWidth: true
                                 horizontalAlignment: Text.AlignHCenter
                                 wrapMode: Text.Wrap
@@ -296,6 +302,7 @@ KCM.SimpleKCM {
                     text: page.wizardType === "google" ? links.instructions.google : links.appleInstructions
                 }
                 QQC2.Label {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
                     font: Kirigami.Theme.smallFont
@@ -317,6 +324,7 @@ KCM.SimpleKCM {
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.largeSpacing
                 QQC2.Label {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
                     text: Lang.i18np("Calendar found: it has %1 event.", "Calendar found: it has %1 events.", page.wizardCount)
@@ -330,7 +338,7 @@ KCM.SimpleKCM {
                 }
                 RowLayout {
                     spacing: Kirigami.Units.smallSpacing
-                    QQC2.Label { text: Lang.i18n("Color:") }
+                    QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("Color:") }
                     Repeater {
                         model: page.palette
                         delegate: Rectangle {

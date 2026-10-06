@@ -285,6 +285,7 @@ Item {
                 isMask: true
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: chip.label
                 color: page.theme.text
@@ -319,6 +320,7 @@ Item {
             isMask: true
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             text: heading.title
             color: page.theme.text
@@ -400,6 +402,7 @@ Item {
                         RowLayout {
                             width: parent.width
                             Text {
+                                textFormat: Text.PlainText
                                 Layout.fillWidth: true
                                 text: part.modelData.code && part.modelData.lang.length > 0 ? part.modelData.lang : Lang.i18n("code")
                                 color: page.theme.subText
@@ -460,6 +463,7 @@ Item {
             }
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             readonly property string note: page.status.length > 0 ? page.status : Lang.i18n("For quick questions.")
             text: note
@@ -530,6 +534,7 @@ Item {
                             width: parent.width
                             spacing: 6
                             Text {
+                                textFormat: Text.PlainText
                                 Layout.fillWidth: true
                                 wrapMode: Text.Wrap
                                 maximumLineCount: 3
@@ -567,6 +572,7 @@ Item {
                     width: column.width
                     height: Math.max(hint.implicitHeight, scroll.height - 2)
                     Text {
+                        textFormat: Text.PlainText
                         id: hint
                         anchors.centerIn: parent
                         width: parent.width
@@ -601,6 +607,7 @@ Item {
             visible: page.over > 0 || (page.ai.lengthy && !page.ai.busy)
             spacing: 6
             Text {
+                textFormat: Text.PlainText
                 objectName: "limitNote"
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
@@ -661,6 +668,7 @@ Item {
                     }
                 }
                 Text {
+                    textFormat: Text.PlainText
                     anchors.fill: inputView
                     visible: input.length === 0
                     text: Lang.i18n("Ask something…")
@@ -700,6 +708,7 @@ Item {
             isMask: true
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             text: Lang.i18n("Before the first question")
@@ -708,6 +717,7 @@ Item {
             font.weight: Font.DemiBold
         }
         Text {
+            textFormat: Text.PlainText
             objectName: "noticeText"
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
@@ -742,6 +752,7 @@ Item {
         spacing: 6
         readonly property string web: Markdown.webLink(page.link)
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
@@ -792,6 +803,7 @@ Item {
         visible: page.view === "cards"
         spacing: 6
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             text: page.status.length > 0 ? page.status
                 : !page.detected ? Lang.i18n("Looking for what can answer on this computer…")
@@ -840,6 +852,7 @@ Item {
                             isMask: true
                         }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             text: card.more ? Lang.i18n("Add another") : page.info(card.modelData).name
@@ -849,6 +862,7 @@ Item {
                             elide: Text.ElideRight
                         }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             text: card.more ? Lang.i18n("A key, or a model server of your own")
@@ -914,12 +928,14 @@ Item {
                         isMask: true
                     }
                     Text {
+                        textFormat: Text.PlainText
                         text: kindRow.kind.name
                         color: page.theme.text
                         font.pointSize: page.theme.fontSmall
                         font.weight: Font.DemiBold
                     }
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignRight
                         text: kindRow.kind.key === true ? Lang.i18n("A key · may cost money") : Lang.i18n("On this device, no account")
@@ -955,6 +971,7 @@ Item {
                 spacing: 4
                 readonly property var kind: page.formKind.length > 0 ? page.info(page.formKind) : null
                 Text {
+                    textFormat: Text.PlainText
                     objectName: "formError"
                     Layout.fillWidth: true
                     visible: page.formError.length > 0
@@ -965,6 +982,7 @@ Item {
                 }
                 // where what is written will go, when that is not this computer
                 Text {
+                    textFormat: Text.PlainText
                     objectName: "farNote"
                     Layout.fillWidth: true
                     visible: page.far
@@ -1065,6 +1083,7 @@ Item {
             onBack: page.view = page.ai.available ? "sources" : "cards"
         }
         Text {
+            textFormat: Text.PlainText
             objectName: "installText"
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -1131,6 +1150,7 @@ Item {
             MouseArea { anchors.fill: parent; visible: !page.typing; cursorShape: Qt.IBeamCursor; onClicked: page.focusLater(modelField.input) }
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             visible: page.modelError.length > 0
             wrapMode: Text.Wrap
@@ -1166,6 +1186,7 @@ Item {
                     anchors.rightMargin: 8
                     spacing: 8
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         text: modelRow.modelData.name
                         color: page.theme.text
@@ -1174,6 +1195,7 @@ Item {
                         elide: Text.ElideMiddle
                     }
                     Text {
+                        textFormat: Text.PlainText
                         visible: modelRow.modelData.own !== true && modelRow.modelData.name !== modelRow.modelData.id && modelRow.modelData.id.length > 0
                         text: modelRow.modelData.id
                         color: page.theme.subText
@@ -1230,6 +1252,7 @@ Item {
                             isMask: true
                         }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             text: page.ai.label(sourceRow.modelData)
                             color: page.theme.text
@@ -1260,6 +1283,7 @@ Item {
                     }
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     Layout.topMargin: 2
                     text: Lang.i18n("Connect another:")

@@ -49,6 +49,7 @@ Item {
                     onMoved: v => module.display.setBrightness(row.displayName, Math.max(1, Math.round(v * row.maxBrightness)))
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.preferredWidth: 36
                     horizontalAlignment: Text.AlignRight
                     text: Lang.percent(Math.round(row.maxBrightness > 0 ? row.brightness * 100 / row.maxBrightness : 0))

@@ -70,10 +70,12 @@ KCM.SimpleKCM {
         spacing: Kirigami.Units.largeSpacing
 
         Kirigami.Heading {
+            textFormat: Text.PlainText
             level: 4
             text: Lang.i18n("Permanent habits")
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             text: Lang.i18n("They are on every day's list until you delete them. Drag one by its handle to change the order. A deleted habit stays in the days already recorded; what you change here applies at once.")
@@ -150,6 +152,7 @@ KCM.SimpleKCM {
                             QQC2.ToolTip.text: text
                         }
                         QQC2.Label {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             visible: wrapper.asking
                             text: Lang.i18n("Delete “%1”? Earlier days keep it.", model.name)
@@ -171,6 +174,7 @@ KCM.SimpleKCM {
             }
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             visible: rows.count === 0
             wrapMode: Text.Wrap
@@ -212,7 +216,7 @@ KCM.SimpleKCM {
                     valueFromText: t => parseInt(t)
                     onValueModified: page.setTime(value, minuteSpin.value)
                 }
-                QQC2.Label { text: ":" }
+                QQC2.Label { textFormat: Text.PlainText; text: ":" }
                 QQC2.SpinBox {
                     id: minuteSpin
                     from: 0; to: 59
@@ -230,6 +234,7 @@ KCM.SimpleKCM {
                 text: Lang.i18n("Ask on the island how the day went")
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 22
                 wrapMode: Text.Wrap
@@ -253,11 +258,13 @@ KCM.SimpleKCM {
                 Kirigami.FormData.label: Lang.i18n("Data")
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Kirigami.FormData.label: Lang.i18n("Recorded:")
                 text: page.year.days > 0 ? Lang.i18np("%1 day recorded · %2 on average", "%1 days recorded · %2 on average", page.year.days, Lang.percent(Math.round(page.year.average * 100)))
                                          : Lang.i18n("Nothing recorded yet.")
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 22
                 wrapMode: Text.Wrap
@@ -274,7 +281,7 @@ KCM.SimpleKCM {
             }
             RowLayout {
                 visible: page.confirmReset
-                QQC2.Label { text: Lang.i18n("Delete all habits and every day's record?") }
+                QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("Delete all habits and every day's record?") }
                 QQC2.Button {
                     icon.name: "edit-delete"
                     text: Lang.i18n("Delete")

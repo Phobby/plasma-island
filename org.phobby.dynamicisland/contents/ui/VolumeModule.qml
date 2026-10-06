@@ -34,6 +34,7 @@ Item {
             onMoved: v => vol.backend.setVolume(v)
         }
         Text {
+            textFormat: Text.PlainText
             Layout.preferredWidth: 36
             horizontalAlignment: Text.AlignRight
             text: vol.backend.muted ? Lang.i18nc("@label volume muted", "Muted") : Lang.percent(Math.round(vol.backend.volume * 100))

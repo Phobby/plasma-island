@@ -113,6 +113,7 @@ KCM.SimpleKCM {
                 text: Lang.i18n("Suggest things at the right moment, and learn when that is welcome")
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 24
                 wrapMode: Text.Wrap
                 font: Kirigami.Theme.smallFont
@@ -159,8 +160,8 @@ KCM.SimpleKCM {
             }
         }
 
-        Kirigami.Heading { level: 3; text: Lang.i18n("What I learned") }
-        QQC2.Label { objectName: "weekText"; Layout.fillWidth: true; wrapMode: Text.Wrap; text: page.weekText() }
+        Kirigami.Heading { textFormat: Text.PlainText; level: 3; text: Lang.i18n("What I learned") }
+        QQC2.Label { textFormat: Text.PlainText; objectName: "weekText"; Layout.fillWidth: true; wrapMode: Text.Wrap; text: page.weekText() }
 
         Repeater {
             model: catalog.rules
@@ -177,7 +178,7 @@ KCM.SimpleKCM {
                     spacing: Kirigami.Units.smallSpacing
                     RowLayout {
                         Kirigami.Icon { source: card.modelData.icon; Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium; Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium }
-                        Kirigami.Heading { level: 4; text: card.modelData.title; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                        Kirigami.Heading { textFormat: Text.PlainText; level: 4; text: card.modelData.title; Layout.fillWidth: true; wrapMode: Text.Wrap }
                         QQC2.ComboBox {
                             objectName: "mode-" + card.ruleId
                             enabled: card.usable
@@ -186,15 +187,15 @@ KCM.SimpleKCM {
                             onActivated: index => page.change(Suggestions.setMode(page.learned, card.ruleId, page.modes[index].id))
                         }
                     }
-                    QQC2.Label { Layout.fillWidth: true; wrapMode: Text.Wrap; font: Kirigami.Theme.smallFont; text: card.modelData.hint }
-                    QQC2.Label { Layout.fillWidth: true; wrapMode: Text.Wrap; text: page.status(card.ruleId) }
+                    QQC2.Label { textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.Wrap; font: Kirigami.Theme.smallFont; text: card.modelData.hint }
+                    QQC2.Label { textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.Wrap; text: page.status(card.ruleId) }
                     Repeater {
                         model: card.contexts
                         delegate: RowLayout {
                             id: row
                             required property var modelData
                             Layout.fillWidth: true
-                            QQC2.Label { Layout.fillWidth: true; wrapMode: Text.Wrap; font: Kirigami.Theme.smallFont; text: "• " + page.contextLine(card.ruleId, row.modelData) }
+                            QQC2.Label { textFormat: Text.PlainText; Layout.fillWidth: true; wrapMode: Text.Wrap; font: Kirigami.Theme.smallFont; text: "• " + page.contextLine(card.ruleId, row.modelData) }
                             QQC2.ToolButton {
                                 icon.name: "edit-clear-history"
                                 text: Lang.i18n("Forget this context")
@@ -215,8 +216,9 @@ KCM.SimpleKCM {
             }
         }
 
-        Kirigami.Heading { level: 3; text: Lang.i18n("Done automatically") }
+        Kirigami.Heading { textFormat: Text.PlainText; level: 3; text: Lang.i18n("Done automatically") }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             visible: page.learned.log.length === 0
             text: Lang.i18n("Nothing yet.")
@@ -224,6 +226,7 @@ KCM.SimpleKCM {
         Repeater {
             model: page.learned.log.slice().reverse()
             delegate: QQC2.Label {
+                textFormat: Text.PlainText
                 required property var modelData
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap

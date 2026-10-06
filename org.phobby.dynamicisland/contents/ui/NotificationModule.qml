@@ -46,6 +46,7 @@ Item {
         height: 22
         visible: notif.count > 0
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             leftPadding: 6
             text: Lang.i18np("%1 notification", "%1 notifications", notif.count)
@@ -114,6 +115,7 @@ Item {
                     Layout.minimumWidth: 0
                     spacing: 0
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         text: row.model.summary || row.model.applicationName || ""
                         color: notif.theme.text
@@ -123,6 +125,7 @@ Item {
                         maximumLineCount: 1
                     }
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         visible: text.length > 0
                         text: notif.backend.plainText(row.model.body || "")
@@ -134,6 +137,7 @@ Item {
                 }
                 // Arrival time; under the mouse its place goes to reply and dismiss.
                 Text {
+                    textFormat: Text.PlainText
                     Layout.alignment: Qt.AlignTop
                     Layout.topMargin: 3
                     Layout.rightMargin: 4
@@ -184,6 +188,7 @@ Item {
             isMask: true
         }
         Text {
+            textFormat: Text.PlainText
             Layout.alignment: Qt.AlignHCenter
             text: Lang.i18n("No notifications")
             color: notif.theme.subText
@@ -203,6 +208,7 @@ Item {
             anchors.margins: 8
             spacing: 6
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: Lang.i18n("Reply to %1", notif.replyTarget?.summary ?? "")
                 color: notif.theme.subText
@@ -277,6 +283,7 @@ Item {
             anchors.centerIn: parent
             spacing: 8
             Text {
+                textFormat: Text.PlainText
                 text: Lang.i18n("Clear all notifications?")
                 color: notif.theme.text
                 font.pointSize: notif.theme.fontSmall
@@ -287,7 +294,7 @@ Item {
                 implicitHeight: 24
                 radius: 12
                 color: cancelMouse.pressed ? notif.theme.pressedFill : cancelMouse.containsMouse ? notif.theme.hoverFill : notif.theme.faint
-                Text { id: cancelLabel; anchors.centerIn: parent; text: Lang.i18n("Cancel"); color: notif.theme.text; font.pointSize: notif.theme.fontSmall }
+                Text { textFormat: Text.PlainText; id: cancelLabel; anchors.centerIn: parent; text: Lang.i18n("Cancel"); color: notif.theme.text; font.pointSize: notif.theme.fontSmall }
                 MouseArea { id: cancelMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: notif.confirmingClear = false }
             }
             Rectangle {
@@ -295,7 +302,7 @@ Item {
                 implicitHeight: 24
                 radius: 12
                 color: deleteMouse.pressed ? Qt.darker(notif.theme.red, 1.25) : deleteMouse.containsMouse ? Qt.lighter(notif.theme.red, 1.1) : notif.theme.red
-                Text { id: deleteLabel; anchors.centerIn: parent; text: Lang.i18n("Clear"); color: notif.theme.onColor(notif.theme.red); font.pointSize: notif.theme.fontSmall; font.weight: Font.DemiBold }
+                Text { textFormat: Text.PlainText; id: deleteLabel; anchors.centerIn: parent; text: Lang.i18n("Clear"); color: notif.theme.onColor(notif.theme.red); font.pointSize: notif.theme.fontSmall; font.weight: Font.DemiBold }
                 MouseArea {
                     id: deleteMouse
                     anchors.fill: parent

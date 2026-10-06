@@ -69,6 +69,7 @@ KCM.SimpleKCM {
                 text: Lang.i18n("Carry on in the note that was being edited")
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 22
                 wrapMode: Text.Wrap
@@ -79,10 +80,12 @@ KCM.SimpleKCM {
         }
 
         Kirigami.Heading {
+            textFormat: Text.PlainText
             level: 4
             text: Lang.i18n("Connected notes apps")
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             visible: page.sources.length === 0
             wrapMode: Text.Wrap
@@ -96,6 +99,7 @@ KCM.SimpleKCM {
                 required property var modelData
                 Layout.fillWidth: true
                 QQC2.Label {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: page.label(row.modelData)
                     elide: Text.ElideMiddle
@@ -111,6 +115,7 @@ KCM.SimpleKCM {
             }
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             opacity: 0.7

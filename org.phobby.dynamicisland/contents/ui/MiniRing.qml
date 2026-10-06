@@ -67,6 +67,7 @@ Item {
         isMask: true
     }
     Text {
+        textFormat: Text.PlainText
         anchors.centerIn: parent
         visible: ring.text.length > 0 && ring.icon.length === 0
         text: ring.text

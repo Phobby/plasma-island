@@ -16,7 +16,6 @@
 */
 import QtQuick
 import QtQuick.Layouts
-import org.kde.kirigami as Kirigami
 
 Item {
     id: page
@@ -109,6 +108,7 @@ Item {
             color: page.theme.subText
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
@@ -139,6 +139,7 @@ Item {
             color: page.theme.subText
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
@@ -220,6 +221,7 @@ Item {
                     anchors.rightMargin: 8
                     spacing: 8
                     Text {
+                        textFormat: Text.PlainText
                         text: result.modelData.name
                         color: page.theme.text
                         font.pointSize: page.theme.fontSmall
@@ -227,6 +229,7 @@ Item {
                     }
                     // region, country
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         text: [result.modelData.admin !== result.modelData.name ? result.modelData.admin : "", result.modelData.country].filter(t => t.length > 0).join(", ")
                         color: page.theme.subText
@@ -237,6 +240,7 @@ Item {
                 MouseArea { id: resultMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.pick(result.modelData) }
             }
             Text {
+                textFormat: Text.PlainText
                 anchors.centerIn: parent
                 width: parent.width - 20
                 visible: results.count === 0
@@ -252,6 +256,7 @@ Item {
             }
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignRight
             text: Lang.i18n("Weather data by Open-Meteo.com")
@@ -282,6 +287,7 @@ Item {
                 name: page.current !== null ? page.weather.icon : ""
             }
             Text {
+                textFormat: Text.PlainText
                 text: page.current !== null ? page.weather.degrees(page.current.temperature) : ""
                 color: page.theme.text
                 font.pointSize: page.theme.fontNormal * 2.3
@@ -292,6 +298,7 @@ Item {
                 Layout.fillWidth: true
                 spacing: 0
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: page.current !== null ? page.weather.describe(page.current.kind, page.current.day) : ""
                     color: page.theme.text
@@ -300,6 +307,7 @@ Item {
                     elide: Text.ElideRight
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     visible: page.current !== null && !isNaN(page.current.feelsLike)
                     text: page.current !== null ? Lang.i18n("Feels like %1", page.weather.degrees(page.current.feelsLike)) : ""
@@ -308,6 +316,7 @@ Item {
                     elide: Text.ElideRight
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: {
                         const c = page.current, parts = [];
@@ -343,6 +352,7 @@ Item {
                         color: page.theme.subText
                     }
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         text: page.weather !== null ? page.weather.placeName : ""
                         color: placeMouse.containsMouse ? page.theme.text : page.theme.subText
@@ -383,6 +393,7 @@ Item {
                         width: parent.width - 4
                         spacing: 1
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             text: card.d !== null ? page.dayName(card.d, false) : ""
@@ -397,6 +408,7 @@ Item {
                             name: card.d !== null ? page.weather.iconFor(card.d.kind, true) : ""
                         }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             text: card.d !== null ? page.weather.degrees(card.d.high) + " " + page.weather.degrees(card.d.low) : ""
@@ -406,6 +418,7 @@ Item {
                         }
                         // Chance of rain, when it is worth a look
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             visible: card.d !== null && card.d.chance >= 20
@@ -468,6 +481,7 @@ Item {
                     onClicked: page.shownDay = -1
                 }
                 Text {
+                    textFormat: Text.PlainText
                     text: dayView.d !== null ? page.dayName(dayView.d, true) : ""
                     color: page.theme.text
                     font.pointSize: page.theme.fontSmall
@@ -479,6 +493,7 @@ Item {
                     name: dayView.d !== null ? page.weather.iconFor(dayView.d.kind, true) : ""
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: dayView.d !== null ? Lang.i18n("High %1 · Low %2", page.weather.degrees(dayView.d.high), page.weather.degrees(dayView.d.low)) : ""
                     color: page.theme.subText
@@ -494,6 +509,7 @@ Item {
                     color: page.theme.subText
                 }
                 Text {
+                    textFormat: Text.PlainText
                     visible: dayView.d !== null && dayView.d.sunrise.length > 0
                     text: dayView.d !== null ? dayView.d.sunrise : ""
                     color: page.theme.subText
@@ -508,6 +524,7 @@ Item {
                     color: page.theme.subText
                 }
                 Text {
+                    textFormat: Text.PlainText
                     visible: dayView.d !== null && dayView.d.sunset.length > 0
                     text: dayView.d !== null ? dayView.d.sunset : ""
                     color: page.theme.subText
@@ -529,6 +546,7 @@ Item {
                 Cell { column: 5; text: page.weather !== null ? page.weather.amountUnit : ""; color: page.theme.subText; font.pointSize: page.theme.fontSmall * 0.75 }
                 Cell { column: 6; text: Lang.i18nc("@title:column relative humidity", "Humid."); color: page.theme.subText; font.pointSize: page.theme.fontSmall * 0.75 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignRight
                     text: page.weather !== null ? Lang.i18nc("@title:column wind speed and its unit", "Wind, %1", page.weather.speedUnit) : ""
@@ -578,6 +596,7 @@ Item {
                         }
                         Cell { column: 6; text: row.h === null || isNaN(row.h.humidity) ? "–" : Lang.percent(Math.round(row.h.humidity)) }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignRight
                             text: row.h !== null ? page.weather.speed(row.h.wind) + " " + page.weather.windName(row.h.windDirection) : ""

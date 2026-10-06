@@ -164,3 +164,27 @@ pause between two page turns, how much turns a page) are in
 wheel handler of one's own; `tests/tst_scroll.qml` has the behaviour.
 `QT_LOGGING_RULES="island.wheel.debug=true"` logs who got each step and
 whose scroll it is.
+
+### What is shown
+
+A `Text` (a `Label`, a `Kirigami.Heading`) without a `textFormat` reads its
+text as rich text as soon as it looks like some. Much of what the island shows
+is not its own: a notification's title, a track's name, a file's, a network's
+or a device's name, an event of a calendar somebody else filled. One that says
+`<img src="http://…">` would make the shell fetch that address. So every text
+item of `contents/ui` names its format:
+
+```qml
+Text {
+    textFormat: Text.PlainText
+    text: notification.summary
+}
+```
+
+`Text.StyledText` (or `MarkdownText`) is for markup the island writes itself,
+and what it puts into it from outside is escaped first (`escapeHtml()` in
+`CalendarPage.qml`, `Markdown.safe()` for the AI's answers). A tooltip is a
+label too: `PlasmoidItem` has `toolTipTextFormat`, and a `ToolTip` that shows
+something from outside gets a plain `contentItem` of its own.
+`tools/text-check` (part of `tools/run-tests`) fails for a text item without
+a format.

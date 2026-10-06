@@ -20,6 +20,10 @@ Item {
     readonly property bool interacting: true
     readonly property string passwordsUrl: "https://account.apple.com/account/manage"
 
+    // What went wrong is shown as it is said, never read as markup (the label below is styled text).
+    function escaped(text: string): string {
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
     function reset(): void {
         error = ""; busy = false;
         userField.text = client.account.user; passwordField.text = "";
@@ -45,6 +49,7 @@ Item {
             Layout.fillWidth: true
             spacing: 6
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: Lang.i18n("iCloud account")
                 color: accountPage.theme.text
@@ -72,7 +77,7 @@ Item {
                 linkColor: accountPage.theme.readable(accountPage.theme.control, accountPage.theme.surface)
                 color: accountPage.error.length > 0 ? accountPage.theme.readable(accountPage.theme.danger, accountPage.theme.surface) : accountPage.theme.text
                 font.pointSize: accountPage.theme.fontSmall * 0.9
-                text: accountPage.error.length > 0 ? accountPage.error
+                text: accountPage.error.length > 0 ? accountPage.escaped(accountPage.error)
                     : accountPage.client.ready
                         ? Lang.i18n("Connected: %1 · %2 calendars.", accountPage.client.account.user, accountPage.client.account.calendars.length) + " "
                           + (accountPage.client.core && accountPage.client.core.secretsAvailable ? Lang.i18n("The password is kept in KDE Wallet.")

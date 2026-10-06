@@ -5,6 +5,7 @@
 import QtQuick
 
 Text {
+    textFormat: Text.PlainText
     id: clock
 
     property bool running: true

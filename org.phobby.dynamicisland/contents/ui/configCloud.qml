@@ -119,9 +119,9 @@ KCM.SimpleKCM {
             RowLayout {
                 Kirigami.FormData.label: Lang.i18n("Storage:")
                 enabled: enableCheck.checked && alertsCheck.checked
-                QQC2.Label { text: Lang.i18n("nearly full from") }
+                QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("nearly full from") }
                 QQC2.SpinBox { id: warnSpin; from: 50; to: 100; textFromValue: value => Lang.percent(value); valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 90 }
-                QQC2.Label { text: Lang.i18n("full from") }
+                QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("full from") }
                 QQC2.SpinBox { id: criticalSpin; from: 50; to: 100; textFromValue: value => Lang.percent(value); valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 98 }
             }
             QQC2.SpinBox {
@@ -140,6 +140,7 @@ KCM.SimpleKCM {
                 text: Lang.i18n("Ask before every upload")
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 24
                 wrapMode: Text.Wrap
@@ -168,10 +169,11 @@ KCM.SimpleKCM {
                     textFromValue: value => Lang.i18n("at most %1 MB", value)
                     valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 500
                 }
-                QQC2.Label { objectName: "cacheSize"; text: page.cacheBytes >= 0 ? Lang.i18n("now %1", page.size(page.cacheBytes)) : ""; opacity: 0.7 }
+                QQC2.Label { textFormat: Text.PlainText; objectName: "cacheSize"; text: page.cacheBytes >= 0 ? Lang.i18n("now %1", page.size(page.cacheBytes)) : ""; opacity: 0.7 }
                 QQC2.Button { objectName: "clearCache"; icon.name: "edit-clear"; text: Lang.i18n("Clear cache"); enabled: page.cacheBytes > 0; onClicked: page.clearCache() }
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 24
                 wrapMode: Text.Wrap
@@ -181,8 +183,9 @@ KCM.SimpleKCM {
             }
         }
 
-        Kirigami.Heading { level: 4; text: Lang.i18n("Clouds") }
+        Kirigami.Heading { textFormat: Text.PlainText; level: 4; text: Lang.i18n("Clouds") }
         QQC2.Label {
+            textFormat: Text.PlainText
             objectName: "cloudsNote"
             Layout.fillWidth: true
             visible: page.looked && page.remotes.length === 0
@@ -207,7 +210,7 @@ KCM.SimpleKCM {
                         onToggled: page.setHidden(row.modelData.name, !checked)
                     }
                     QQC2.Label { Layout.fillWidth: true; text: row.modelData.name + " (" + row.modelData.type + ")"; textFormat: Text.PlainText; elide: Text.ElideRight }
-                    QQC2.Label { text: Lang.i18n("Shown as:"); opacity: 0.7 }
+                    QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("Shown as:"); opacity: 0.7 }
                     QQC2.TextField {
                         Layout.preferredWidth: Kirigami.Units.gridUnit * 10
                         text: page.aliases[row.modelData.name] || ""
@@ -216,6 +219,7 @@ KCM.SimpleKCM {
                     }
                 }
                 QQC2.Label {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     Layout.leftMargin: Kirigami.Units.gridUnit * 3
                     wrapMode: Text.Wrap
@@ -227,6 +231,7 @@ KCM.SimpleKCM {
             }
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             visible: page.clients.syncthing
             wrapMode: Text.Wrap
@@ -234,7 +239,7 @@ KCM.SimpleKCM {
             text: Lang.i18n("Syncthing was found: it has a card of its own on the Cloud page, which asks for its API key once.")
         }
 
-        Kirigami.Heading { level: 4; text: Lang.i18n("Adding a cloud") }
+        Kirigami.Heading { textFormat: Text.PlainText; level: 4; text: Lang.i18n("Adding a cloud") }
         QQC2.Label {
             objectName: "howTo"
             Layout.fillWidth: true

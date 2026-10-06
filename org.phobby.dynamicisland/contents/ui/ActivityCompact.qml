@@ -26,6 +26,7 @@ Item {
             running: compact.visible
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             text: compact.activity?.title ?? ""
             color: compact.theme.subText
@@ -34,6 +35,7 @@ Item {
             maximumLineCount: 1
         }
         Text {
+            textFormat: Text.PlainText
             visible: text.length > 0
             text: compact.activity?.trailingText ?? ""
             color: compact.activity?.color ?? compact.theme.text

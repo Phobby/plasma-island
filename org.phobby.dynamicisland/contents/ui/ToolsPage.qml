@@ -49,6 +49,7 @@ Item {
         Behavior on color { ColorAnimation { duration: 120 } }
         Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         Text {
+            textFormat: Text.PlainText
             id: label
             anchors.centerIn: parent
             text: parent.text
@@ -80,6 +81,7 @@ Item {
         Behavior on color { ColorAnimation { duration: 120 } }
         Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         Text {
+            textFormat: Text.PlainText
             anchors.centerIn: parent
             visible: parent.icon.length === 0
             text: parent.text
@@ -112,6 +114,7 @@ Item {
             onClicked: parent.edited(parent.value - parent.step < parent.from ? (parent.wrap ? parent.to : parent.from) : parent.value - parent.step)
         }
         Text {
+            textFormat: Text.PlainText
             Layout.preferredWidth: 34
             horizontalAlignment: Text.AlignHCenter
             text: (parent.value < 10 && parent.suffix === "" ? "0" : "") + parent.value + parent.suffix
@@ -185,6 +188,7 @@ Item {
                         icon: "chronometer"
                     }
                     Text {
+                        textFormat: Text.PlainText
                         text: TimeFormat.clock(tools.timer.remaining)
                         color: tools.theme.readable(tools.theme.orange, tools.theme.surface)
                         font.pointSize: tools.theme.fontNormal * 2
@@ -204,6 +208,7 @@ Item {
             RowLayout {
                 spacing: 12
                 Text {
+                    textFormat: Text.PlainText
                     Layout.preferredWidth: 130
                     text: TimeFormat.stopwatch(tools.stopwatch.elapsed)
                     color: tools.theme.text
@@ -228,6 +233,7 @@ Item {
                     Repeater {
                         model: tools.stopwatch.laps.slice(0, 4)
                         delegate: Text {
+                            textFormat: Text.PlainText
                             required property int index
                             required property var modelData
                             text: Lang.i18nc("@info lap number and time", "Lap %1  %2", tools.stopwatch.laps.length - index, TimeFormat.stopwatch(modelData))
@@ -266,11 +272,13 @@ Item {
                         ColumnLayout {
                             spacing: 0
                             Text {
+                                textFormat: Text.PlainText
                                 text: tools.pomodoro.running ? tools.pomodoro.phaseName(tools.pomodoro.phase) : Lang.i18n("Pomodoro")
                                 color: tools.theme.subText
                                 font.pointSize: tools.theme.fontSmall
                             }
                             Text {
+                                textFormat: Text.PlainText
                                 text: TimeFormat.clock(tools.pomodoro.remaining)
                                 color: tools.theme.text
                                 font.pointSize: tools.theme.fontNormal * 1.7
@@ -304,6 +312,7 @@ Item {
                     }
                     Item { Layout.fillHeight: true }
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         text: Lang.i18n("Today: %1 · This week: %2 · Streak: %3", Stats.count(tools.pomodoro.stats, tools.today),
@@ -338,6 +347,7 @@ Item {
                                 Layout.preferredWidth: 10
                                 spacing: 1
                                 Text {
+                                    textFormat: Text.PlainText
                                     Layout.alignment: Qt.AlignHCenter
                                     text: bar.modelData.count
                                     color: bar.modelData.count > 0 ? tools.theme.text : tools.theme.subText
@@ -358,6 +368,7 @@ Item {
                                     }
                                 }
                                 Text {
+                                    textFormat: Text.PlainText
                                     Layout.alignment: Qt.AlignHCenter
                                     text: bar.modelData.date.toLocaleDateString(Lang.locale, "ddd")
                                     color: bar.index === 6 ? tools.theme.text : tools.theme.subText
@@ -367,6 +378,7 @@ Item {
                         }
                     }
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         text: Lang.i18n("Total: %1 · Longest streak: %2", tools.pomodoro.stats.total, Lang.i18np("%1 day", "%1 days", Stats.bestStreak(tools.pomodoro.stats, tools.today)))
@@ -393,7 +405,7 @@ Item {
                     from: 0; to: 23; wrap: true
                     onEdited: v => tools.alarmHour = v
                 }
-                Text { text: ":"; color: tools.theme.text; font.pointSize: tools.theme.fontTitle; font.weight: Font.DemiBold }
+                Text { textFormat: Text.PlainText; text: ":"; color: tools.theme.text; font.pointSize: tools.theme.fontTitle; font.weight: Font.DemiBold }
                 Stepper {
                     value: tools.alarmMinute
                     from: 0; to: 55; step: 5; wrap: true
@@ -403,6 +415,7 @@ Item {
                 ColumnLayout {
                     spacing: 2
                     Text {
+                        textFormat: Text.PlainText
                         Layout.alignment: Qt.AlignRight
                         text: tools.alarm.armed ? Lang.i18n("Rings at %1", tools.alarm.alarmTime) : Lang.i18n("Off")
                         color: tools.alarm.armed ? tools.theme.readable(tools.theme.orange, tools.theme.surface) : tools.theme.subText

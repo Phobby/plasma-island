@@ -40,6 +40,8 @@ PlasmoidItem {
     preferredRepresentation: compactRepresentation
     toolTipMainText: Lang.i18n("Dynamic Island")
     toolTipSubText: backend.hasMedia ? backend.track : ""
+    // (a title is whatever a player or a web page says it is)
+    toolTipTextFormat: Text.PlainText
 
     compactRepresentation: Kirigami.Icon {
         source: Plasmoid.icon

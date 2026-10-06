@@ -56,6 +56,7 @@ Item {
                 spacing: 1
 
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: media.backend.track
                     color: media.theme.text
@@ -65,6 +66,7 @@ Item {
                     maximumLineCount: 1
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     visible: text.length > 0
                     text: media.backend.artist
@@ -83,6 +85,7 @@ Item {
                         visible: media.backend.playerIcon.length > 0
                     }
                     Text {
+                        textFormat: Text.PlainText
                         text: media.backend.playerName
                         color: media.theme.subText
                         font.pointSize: media.theme.fontSmall
@@ -126,6 +129,7 @@ Item {
             visible: media.backend.length > 0
 
             Text {
+                textFormat: Text.PlainText
                 text: media.formatTime(seek.pressed ? seek.dragValue * media.backend.length : media.backend.position)
                 color: media.theme.subText
                 font.pointSize: media.theme.fontSmall
@@ -146,6 +150,7 @@ Item {
                 }
             }
             Text {
+                textFormat: Text.PlainText
                 text: "-" + media.formatTime(media.backend.length - (seek.pressed ? seek.dragValue * media.backend.length : media.backend.position))
                 color: media.theme.subText
                 font.pointSize: media.theme.fontSmall
@@ -219,6 +224,7 @@ Item {
             isMask: true
         }
         Text {
+            textFormat: Text.PlainText
             Layout.alignment: Qt.AlignHCenter
             text: Lang.i18n("Nothing is playing")
             color: media.theme.subText

@@ -252,6 +252,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.centerIn: parent
                 width: parent.width
                 visible: list.count === 0
@@ -296,6 +297,7 @@ Item {
                 onClicked: page.back()
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: Lang.i18n("Edit the copied text")
                 color: page.theme.subText
@@ -383,6 +385,7 @@ Item {
                     onClicked: page.back()
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: page.target && page.target.size ? Lang.i18n("Image · %1 × %2", page.target.size.width, page.target.size.height) : ""
                     color: page.theme.subText

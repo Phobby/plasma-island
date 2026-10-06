@@ -54,6 +54,7 @@ KCM.SimpleKCM {
         spacing: Kirigami.Units.largeSpacing
 
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             text: Lang.i18n("A cat lives beside the island: it sleeps while nothing happens, puts on headphones for music, thinks along with the AI and likes to be stroked. It is only there to be looked at: it never covers anything of the island, keeps nothing and sends nothing anywhere.")
@@ -97,6 +98,7 @@ KCM.SimpleKCM {
                     border.width: 1
                     border.color: "#5c5e66"
                     QQC2.Label {
+                        textFormat: Text.PlainText
                         anchors.centerIn: parent
                         text: Qt.formatTime(new Date(), Lang.locale.timeFormat(Locale.ShortFormat))
                         color: "#f4f5f7"
@@ -157,6 +159,7 @@ KCM.SimpleKCM {
                     y: Math.max(0, figure.y + figure.bubbleAt.y - height * 0.75)
                 }
                 QQC2.Label {
+                    textFormat: Text.PlainText
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: Kirigami.Units.smallSpacing
@@ -188,7 +191,7 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             spacing: Kirigami.Units.smallSpacing
             visible: !page.gallery
-            QQC2.Label { text: Lang.i18n("Try:") }
+            QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("Try:") }
             QQC2.Button {
                 text: Lang.i18n("Music")
                 checkable: true
@@ -237,6 +240,7 @@ KCM.SimpleKCM {
                 model: [Lang.i18n("By itself (the free side)"), Lang.i18n("Left"), Lang.i18n("Right")]
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 24
                 wrapMode: Text.Wrap
                 font: Kirigami.Theme.smallFont
@@ -253,7 +257,7 @@ KCM.SimpleKCM {
                     stepSize: 5
                     Layout.preferredWidth: Kirigami.Units.gridUnit * 10
                 }
-                QQC2.Label { text: Lang.i18n("%1 of the pill's height", Lang.percent(sizeSlider.value)) }
+                QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("%1 of the pill's height", Lang.percent(sizeSlider.value)) }
             }
             RowLayout {
                 Kirigami.FormData.label: Lang.i18n("Coat:")
@@ -303,6 +307,7 @@ KCM.SimpleKCM {
                     QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
                 }
                 QQC2.Label {
+                    textFormat: Text.PlainText
                     text: page.cfg_catFur === "custom" ? Lang.i18n("A colour of your own") : (page.coatNames[page.cfg_catFur] ?? "")
                     opacity: 0.75
                 }
@@ -374,6 +379,7 @@ KCM.SimpleKCM {
                 valueFromText: t => parseInt(t) || 20
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 24
                 wrapMode: Text.Wrap
                 font: Kirigami.Theme.smallFont
@@ -393,6 +399,7 @@ KCM.SimpleKCM {
                 text: Lang.i18n("Reduce motion: still poses, nothing nods or floats")
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 visible: page.desktopStill
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 24
                 wrapMode: Text.Wrap

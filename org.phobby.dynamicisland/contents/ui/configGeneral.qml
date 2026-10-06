@@ -37,6 +37,7 @@ KCM.SimpleKCM {
         }
 
         QQC2.Label {
+            textFormat: Text.PlainText
             Kirigami.FormData.label: Lang.i18n("Look:")
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
@@ -118,6 +119,7 @@ KCM.SimpleKCM {
             text: Lang.i18n("A click shrinks the island to a dot")
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
@@ -163,6 +165,7 @@ KCM.SimpleKCM {
         }
 
         QQC2.Label {
+            textFormat: Text.PlainText
             Kirigami.FormData.label: Lang.i18n("Pages:")
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap

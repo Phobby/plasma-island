@@ -67,6 +67,7 @@ Kirigami.Dialog {
         RowLayout {
             Layout.fillWidth: true
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 font: Kirigami.Theme.smallFont

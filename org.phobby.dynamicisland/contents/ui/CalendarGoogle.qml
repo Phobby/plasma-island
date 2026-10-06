@@ -24,6 +24,10 @@ Item {
     readonly property bool interacting: step === "client"
     readonly property string consoleUrl: "https://console.cloud.google.com/apis/credentials"
 
+    // What went wrong is shown as it is said, never read as markup (the label below is styled text).
+    function escaped(text: string): string {
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
     function reset(): void {
         error = ""; editingClient = false;
         idField.text = google.clientId; secretField.text = google.clientSecret;
@@ -48,6 +52,7 @@ Item {
             Layout.fillWidth: true
             spacing: 6
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: Lang.i18n("Google account")
                 color: googlePage.theme.text
@@ -76,7 +81,7 @@ Item {
                 readonly property string problem: googlePage.error.length > 0 ? googlePage.error : googlePage.step === "start" ? googlePage.google.signInError : ""
                 color: googlePage.theme.text
                 font.pointSize: googlePage.theme.fontSmall * 0.9
-                text: (problem.length > 0 ? "<font color=\"" + googlePage.theme.readable(googlePage.theme.danger, googlePage.theme.surface) + "\">" + problem + "</font><br>" : "")
+                text: (problem.length > 0 ? "<font color=\"" + googlePage.theme.readable(googlePage.theme.danger, googlePage.theme.surface) + "\">" + googlePage.escaped(problem) + "</font><br>" : "")
                     + (googlePage.step === "client"
                         ? Lang.i18n("Google only gives access to an account through a registered app; this is done once:<br>1. Open a project in the <a href=\"%1\">Google Cloud Console</a> and enable the \"Google Calendar API\".<br>2. Set up the OAuth consent screen (External) and add yourself as a test user.<br>3. Clients → Create client → \"Desktop app\".<br>4. Paste the client ID and client secret it gives you below.", googlePage.consoleUrl)
                      : googlePage.step === "waiting"

@@ -16,7 +16,6 @@
     Privacy dots (mic / camera / screen) always sit right of the island.
 */
 import QtQuick
-import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.extras as PlasmaExtras
 
@@ -223,7 +222,7 @@ Item {
     // rendering scales cleanly. So while the size is not 100% every text item
     // is switched over, and back at 100%. Items come and go (pages, lists), hence
     // the walk repeats while the island shows more than the clock; never at 100%.
-    Text { id: textProbe; visible: false }
+    Text { textFormat: Text.PlainText; id: textProbe; visible: false }
     readonly property bool scaled: theme.scale !== 1
     property bool retyped: false
     function retype(item: Item, type: int): void {

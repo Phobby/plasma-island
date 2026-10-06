@@ -140,6 +140,7 @@ Item {
         radius: 10
         color: page.theme.faint
         Text {
+            textFormat: Text.PlainText
             id: chipLabel
             x: 9
             anchors.verticalCenter: parent.verticalCenter
@@ -171,6 +172,7 @@ Item {
         spacing: 2
         SmallButton { iconName: "go-down-symbolic"; color: page.theme.text; onClicked: stepper.edited(stepper.value - stepper.step < 0 ? stepper.to : stepper.value - stepper.step) }
         Text {
+            textFormat: Text.PlainText
             Layout.preferredWidth: 30
             horizontalAlignment: Text.AlignHCenter
             text: page.two(stepper.value)
@@ -256,6 +258,7 @@ Item {
                     visible: !slot.asking
                     Tick { on: slot.entry !== null && slot.entry.done }
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         text: slot.entry !== null ? slot.entry.name : ""
                         color: slot.entry !== null && slot.entry.done ? page.theme.subText : page.theme.text
@@ -264,6 +267,7 @@ Item {
                     }
                     // a one-time extra
                     Text {
+                        textFormat: Text.PlainText
                         visible: slot.entry !== null && slot.entry.extra && !slot.hovered
                         text: Lang.i18nc("@info a one-time item on the day's list", "once")
                         color: page.theme.subText
@@ -292,6 +296,7 @@ Item {
                     spacing: 3
                     visible: slot.asking
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         text: Lang.i18n("Delete for good?")
                         color: page.theme.text
@@ -337,6 +342,7 @@ Item {
         Repeater {
             model: calendar.dayNames ? [1, 3, 5] : []
             delegate: Text {
+                textFormat: Text.PlainText
                 required property int modelData
                 y: calendar.monthsHeight + (modelData - 1) * calendar.pitch + (calendar.cell - height) / 2
                 text: Lang.locale.dayName(modelData, Locale.ShortFormat)
@@ -354,6 +360,7 @@ Item {
                 readonly property var first: days.find(d => d !== null && d.date.getDate() === 1) ?? null
                 x: calendar.namesWidth + index * calendar.pitch
                 Text {
+                    textFormat: Text.PlainText
                     visible: week.first !== null && week.index < calendar.weeks.length - 2
                     text: week.first !== null ? week.first.date.toLocaleDateString(Lang.locale, "MMM") : ""
                     color: page.theme.subText
@@ -415,6 +422,7 @@ Item {
             visible: page.setupStep === 0
             spacing: 5
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: Lang.i18n("Write down the habits you want to build.")
                 color: page.theme.text
@@ -461,6 +469,7 @@ Item {
             RowLayout {
                 Layout.fillWidth: true
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: Lang.i18n("They stay on every day's list until you delete them.")
                     color: page.theme.subText
@@ -486,6 +495,7 @@ Item {
             spacing: 5
             onVisibleChanged: if (visible) page.typing = false
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 text: Lang.i18n("When shall I ask how the day went?")
@@ -497,10 +507,11 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 4
                 Stepper { value: page.setupHour; to: 23; onEdited: v => page.setupHour = v }
-                Text { text: ":"; color: page.theme.text; font.pointSize: page.theme.fontTitle * 1.3; font.weight: Font.DemiBold }
+                Text { textFormat: Text.PlainText; text: ":"; color: page.theme.text; font.pointSize: page.theme.fontTitle * 1.3; font.weight: Font.DemiBold }
                 Stepper { value: page.setupMinute; to: 55; step: 5; onEdited: v => page.setupMinute = v }
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 text: Lang.i18n("The evening review; the time can be changed in the settings.")
@@ -546,12 +557,14 @@ Item {
                 visible: !page.adding
                 spacing: 6
                 Text {
+                    textFormat: Text.PlainText
                     text: Lang.i18n("Today")
                     color: page.theme.text
                     font.pointSize: page.theme.fontSmall
                     font.weight: Font.DemiBold
                 }
                 Text {
+                    textFormat: Text.PlainText
                     readonly property var counts: Habits.counts(page.record, page.habits.today)
                     visible: counts.total > 0
                     text: counts.done + "/" + counts.total
@@ -561,6 +574,7 @@ Item {
                     font.features: { "tnum": 1 }
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignRight
                     text: page.hint
@@ -613,6 +627,7 @@ Item {
                 deletable: true
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 visible: todayList.count === 0
@@ -642,6 +657,7 @@ Item {
                 spacing: 4
                 Legend { visible: recent.hoveredKey === "" }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: recent.hoveredKey !== "" ? page.caption(recent.hoveredKey) : ""
                     color: page.theme.text
@@ -678,12 +694,14 @@ Item {
                 onClicked: page.view = "today"
             }
             Text {
+                textFormat: Text.PlainText
                 text: Lang.i18n("Last 365 days")
                 color: page.theme.text
                 font.pointSize: page.theme.fontSmall
                 font.weight: Font.DemiBold
             }
             Text {
+                textFormat: Text.PlainText
                 readonly property var summary: page.mode === "year" ? Habits.summary(page.record, page.habits.moment, 365) : { days: 0, average: 0 }
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignRight
@@ -708,9 +726,9 @@ Item {
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
             spacing: 5
-            Text { text: Lang.i18nc("@label the low end of the calendar's shades", "Less"); color: page.theme.subText; font.pointSize: page.theme.fontSmall * 0.8 }
+            Text { textFormat: Text.PlainText; text: Lang.i18nc("@label the low end of the calendar's shades", "Less"); color: page.theme.subText; font.pointSize: page.theme.fontSmall * 0.8 }
             Legend {}
-            Text { text: Lang.i18nc("@label the high end of the calendar's shades", "More"); color: page.theme.subText; font.pointSize: page.theme.fontSmall * 0.8 }
+            Text { textFormat: Text.PlainText; text: Lang.i18nc("@label the high end of the calendar's shades", "More"); color: page.theme.subText; font.pointSize: page.theme.fontSmall * 0.8 }
             Item { Layout.preferredWidth: 8 }
             Rectangle {
                 implicitWidth: 9; implicitHeight: 9; radius: 2
@@ -718,7 +736,7 @@ Item {
                 border.width: 1
                 border.color: Qt.rgba(page.theme.text.r, page.theme.text.g, page.theme.text.b, 0.42)
             }
-            Text { text: Lang.i18n("not reviewed"); color: page.theme.subText; font.pointSize: page.theme.fontSmall * 0.8 }
+            Text { textFormat: Text.PlainText; text: Lang.i18n("not reviewed"); color: page.theme.subText; font.pointSize: page.theme.fontSmall * 0.8 }
         }
         Item { Layout.fillHeight: true }
     }
@@ -742,12 +760,14 @@ Item {
                 onClicked: page.view = page.fromYear ? "year" : "today"
             }
             Text {
+                textFormat: Text.PlainText
                 text: page.shownDay === "" ? "" : Habits.dateOf(page.shownDay).toLocaleDateString(Lang.locale, "d MMMM dddd")
                 color: page.theme.text
                 font.pointSize: page.theme.fontSmall
                 font.weight: Font.DemiBold
             }
             Text {
+                textFormat: Text.PlainText
                 visible: dayHeader.cell.listed
                 text: dayHeader.cell.done + "/" + dayHeader.cell.total
                 color: page.toneText
@@ -756,6 +776,7 @@ Item {
                 font.features: { "tnum": 1 }
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignRight
                 text: page.hint !== "" ? page.hint
@@ -790,6 +811,7 @@ Item {
             day: page.mode === "day" ? page.shownDay : ""
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             Layout.fillHeight: true
             visible: dayList.count === 0
@@ -832,18 +854,21 @@ Item {
                 Layout.preferredHeight: 24
                 spacing: 6
                 Text {
+                    textFormat: Text.PlainText
                     text: page.habits.question(page.habits.reviewDay)
                     color: page.theme.text
                     font.pointSize: page.theme.fontSmall
                     font.weight: Font.DemiBold
                 }
                 Text {
+                    textFormat: Text.PlainText
                     text: Lang.i18n("%1/%2 checked", parent.counts.done, parent.counts.total)
                     color: page.toneText
                     font.pointSize: page.theme.fontSmall
                     font.features: { "tnum": 1 }
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignRight
                     text: page.hint
@@ -878,6 +903,7 @@ Item {
             visible: reviewView.step === 2
             spacing: 8
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
@@ -905,6 +931,7 @@ Item {
                 }
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 text: page.notice !== "" ? page.notice : Lang.i18n("Yes makes it a habit of every day; no lets it go.")
@@ -919,6 +946,7 @@ Item {
             visible: reviewView.step === 3
             spacing: 5
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: reviewView.forToday ? Lang.i18n("Is there an extra activity you want to add for today?")
                                           : Lang.i18n("Is there an extra activity you want to add for tomorrow?")
@@ -967,6 +995,7 @@ Item {
                 Layout.fillWidth: true
                 spacing: 6
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: page.notice !== "" ? page.notice : Lang.i18n("Only for that day; added two days in a row it becomes a habit.")
                     color: page.notice !== "" ? page.toneText : page.theme.subText

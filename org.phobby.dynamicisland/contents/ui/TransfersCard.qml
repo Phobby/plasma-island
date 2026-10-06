@@ -54,6 +54,7 @@ Rectangle {
                         Layout.fillWidth: true
                         spacing: 0
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             text: row.t.headline
                             color: card.theme.text
@@ -63,6 +64,7 @@ Rectangle {
                         }
                         // the stage, and how much of how much
                         Text {
+                            textFormat: Text.PlainText
                             objectName: "transferAmount"
                             Layout.fillWidth: true
                             text: [row.t.suspended ? Lang.i18n("Paused") : row.t.stalled > 60 ? Lang.i18n("Stalled") : row.t.stalled > 5 ? Lang.i18n("Waiting") : row.t.detail,
@@ -76,6 +78,7 @@ Rectangle {
                         }
                         // how fast, how long still (only where the size is known), how long so far
                         Text {
+                            textFormat: Text.PlainText
                             objectName: "transferPace"
                             Layout.fillWidth: true
                             readonly property real elapsed: row.t.startedAt > 0 ? Math.max(0, (card.now - row.t.startedAt) / 1000) : -1
@@ -91,6 +94,7 @@ Rectangle {
                         }
                     }
                     Text {
+                        textFormat: Text.PlainText
                         visible: row.t.percent >= 0
                         text: Lang.percent(Math.round(row.t.percent))
                         color: card.theme.text

@@ -6,7 +6,6 @@
 */
 import QtQuick
 import QtQuick.Layouts
-import org.kde.kirigami as Kirigami
 
 Item {
     id: banner
@@ -46,6 +45,7 @@ Item {
             Layout.fillWidth: true
             spacing: 0
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: banner.event?.title ?? ""
                 color: banner.theme.text
@@ -55,6 +55,7 @@ Item {
                 maximumLineCount: 1
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 visible: text.length > 0
                 text: banner.event?.subtitle ?? ""
@@ -109,6 +110,7 @@ Item {
             radius: 12
             color: banner.theme.faint
             Text {
+                textFormat: Text.PlainText
                 id: buttonLabel
                 anchors.centerIn: parent
                 text: banner.trailing?.type === "button" ? banner.trailing.text : ""
@@ -119,6 +121,7 @@ Item {
         }
         // trailing: text (percentages etc.)
         Text {
+            textFormat: Text.PlainText
             visible: (banner.trailing?.text ?? "").length > 0 && banner.trailing?.type !== "ring" && banner.trailing?.type !== "button"
             text: banner.trailing?.text ?? ""
             color: banner.trailing?.color ?? banner.accent

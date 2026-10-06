@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+# text-check — every text the island shows says how it is to be read.
+#
+#   tools/text-check          the count, and what is wrong
+#   tools/text-check --list   every text item and its format
+#
+# A Text or Label without a textFormat reads its text as rich text as soon as
+# it looks like some ("AutoText"): a notification's title, a track's name, a
+# file's or a network's name that says `<img src="http://…">` then makes the
+# shell fetch that address. So every Text, Label and Heading of contents/ui
+# names its format: Text.PlainText, or Text.StyledText / MarkdownText where
+# the island writes the markup itself and escapes what it puts into it.
+# (Text fields are plain by themselves.) See CONTRIBUTING.md, "What is shown".
+import re, sys
+from pathlib import Path
+
+UI = Path(__file__).resolve().parent.parent / "org.phobby.dynamicisland" / "contents" / "ui"
+# (a bare `Heading` is a page's own row of a title and a back button; Kirigami's is a text)
+OPENS = re.compile(r"^\s*(?:[A-Za-z_]\w*\s*:\s*)?((?:\w+\.)?(?:Text|Label)|\w+\.Heading)\s*\{")
+
+def block(lines, start):
+    """The lines of the object that opens on line `start`, with the depth of each."""
+    depth, out = 0, []
+    for line in lines[start:]:
+        code = re.sub(r'"(?:[^"\\]|\\.)*"', '""', line.split("//")[0])
+        out.append((depth, code))
+        depth += code.count("{") - code.count("}")
+        if depth <= 0:
+            break
+    return out
+
+def own(body):
+    """What the object says of itself: its first line after the brace, and its lines at depth 1."""
+    first = body[0][1]
+    parts = [first[first.index("{") + 1:]] + [code for depth, code in body[1:] if depth == 1]
+    # (a one-line child object's properties are not the item's own)
+    return " ; ".join(re.sub(r"\{[^{}]*\}", "{}", p) for p in parts)
+
+listing = "--list" in sys.argv
+wrong, seen = [], 0
+for path in sorted(UI.rglob("*.qml")):
+    text = path.read_text(encoding="utf-8")
+    text = re.sub(r"/\*.*?\*/", lambda c: "\n" * c.group(0).count("\n"), text, flags=re.S)
+    lines = text.split("\n")
+    rel = path.relative_to(UI)
+    for i, line in enumerate(lines):
+        m = OPENS.match(line.split("//")[0])
+        if not m:
+            continue
+        seen += 1
+        said = re.search(r"\btextFormat\s*:\s*([\w.]+)", own(block(lines, i)))
+        if said is None:
+            wrong.append(f"{rel}:{i + 1}: {m.group(1)} without a textFormat: say Text.PlainText (or StyledText, and escape what goes into it)")
+        elif listing:
+            print(f"{str(rel) + ':' + str(i + 1):40} {m.group(1):24} {said.group(1)}")
+for w in wrong:
+    print("!!", w)
+print(f"text: {seen} texts, {len(wrong)} without a format")
+sys.exit(1 if wrong else 0)

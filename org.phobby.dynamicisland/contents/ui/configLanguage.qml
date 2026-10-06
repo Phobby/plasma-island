@@ -32,6 +32,7 @@ KCM.SimpleKCM {
         spacing: Kirigami.Units.largeSpacing
 
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             text: Lang.i18n("Language of the island and of these settings:")
@@ -52,12 +53,14 @@ KCM.SimpleKCM {
                     contentItem: ColumnLayout {
                         spacing: 2
                         QQC2.Label {
+                            textFormat: Text.PlainText
                             Layout.alignment: Qt.AlignHCenter
                             text: choice.modelData.title
                             font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.25
                             font.weight: Font.DemiBold
                         }
                         QQC2.Label {
+                            textFormat: Text.PlainText
                             Layout.alignment: Qt.AlignHCenter
                             text: choice.modelData.detail
                             font: Kirigami.Theme.smallFont
@@ -69,6 +72,7 @@ KCM.SimpleKCM {
         }
 
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont

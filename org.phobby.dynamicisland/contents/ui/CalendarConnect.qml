@@ -85,6 +85,7 @@ Item {
         Behavior on color { ColorAnimation { duration: 120 } }
         Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         Text {
+            textFormat: Text.PlainText
             id: pillLabel
             anchors.centerIn: parent
             text: parent.text
@@ -119,6 +120,7 @@ Item {
             Keys.onEscapePressed: connect.cancelled()
         }
         Text {
+            textFormat: Text.PlainText
             anchors.fill: fieldInput
             verticalAlignment: Text.AlignVCenter
             visible: fieldInput.text.length === 0
@@ -154,6 +156,7 @@ Item {
                 isMask: true
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: connect.step === "pick" ? Lang.i18n("Connect a Calendar") : links.typeNames[connect.type]
                 color: connect.theme.text
@@ -171,6 +174,7 @@ Item {
                     radius: 10
                     color: connect.device === modelData.key ? connect.theme.faint : "transparent"
                     Text {
+                        textFormat: Text.PlainText
                         id: deviceLabel
                         anchors.centerIn: parent
                         text: parent.modelData.text
@@ -222,6 +226,7 @@ Item {
                             isMask: true
                         }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.alignment: Qt.AlignHCenter
                             text: links.typeNames[tile.modelData]
                             color: connect.theme.text
@@ -282,6 +287,7 @@ Item {
                                 isMask: true
                             }
                             Text {
+                                textFormat: Text.PlainText
                                 text: modeTile.modelData.title
                                 color: connect.theme.text
                                 font.pointSize: connect.theme.fontSmall
@@ -289,6 +295,7 @@ Item {
                             }
                         }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             text: modeTile.modelData.text
@@ -329,6 +336,7 @@ Item {
                     font.pointSize: connect.theme.fontSmall * 0.9
                 }
                 Text {
+                    textFormat: Text.PlainText
                     width: parent.width
                     wrapMode: Text.Wrap
                     text: links.secretWarning
@@ -345,6 +353,7 @@ Item {
             Layout.fillHeight: true
             spacing: 6
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: Lang.i18np("Calendar found: it has %1 event.", "Calendar found: it has %1 events.", connect.count)
                 color: connect.theme.subText
@@ -368,6 +377,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             visible: connect.error.length > 0
             text: connect.error

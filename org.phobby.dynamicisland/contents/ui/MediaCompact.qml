@@ -28,6 +28,7 @@ Item {
             fallbackColor: media.theme.faint
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             text: media.backend?.track ?? ""
             color: media.theme.subText

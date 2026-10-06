@@ -94,14 +94,17 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: Lang.i18n("Pomodoro statistics")
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Kirigami.FormData.label: Lang.i18n("Completed focus rounds:")
             text: Lang.i18n("Today: %1 · This week: %2 · Streak: %3", Stats.count(page.stats, new Date()), Stats.week(page.stats, new Date()),
                             Lang.i18np("%1 day", "%1 days", Stats.streak(page.stats, new Date())))
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             text: Lang.i18n("Total: %1 · Longest streak: %2", page.stats.total, Lang.i18np("%1 day", "%1 days", Stats.bestStreak(page.stats, new Date())))
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
@@ -117,7 +120,7 @@ KCM.SimpleKCM {
         }
         RowLayout {
             visible: page.confirmReset
-            QQC2.Label { text: Lang.i18n("Delete all Pomodoro statistics?") }
+            QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("Delete all Pomodoro statistics?") }
             QQC2.Button {
                 icon.name: "edit-delete"
                 text: Lang.i18n("Delete")
@@ -129,6 +132,7 @@ KCM.SimpleKCM {
             }
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             visible: page.stats.total === 0 && !page.confirmReset
             font: Kirigami.Theme.smallFont
             opacity: 0.7

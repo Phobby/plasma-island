@@ -112,6 +112,7 @@ Item {
             }
         }
         Text {
+            textFormat: Text.PlainText
             anchors.centerIn: box
             anchors.verticalCenterOffset: bubble.drawn === "note" ? -bubble.size * 0.02 : 0
             visible: bubble.drawn === "question" || bubble.drawn === "exclaim" || bubble.drawn === "note" || bubble.drawn === "hiss"
@@ -160,6 +161,7 @@ Item {
     Repeater {
         model: bubble.drawn === "zzz" ? 3 : 0
         delegate: Text {
+            textFormat: Text.PlainText
             required property int index
             readonly property int shown: bubble.still ? 3 : Math.floor(bubble.phase * 4 + 0.001) + 1
             text: "z"

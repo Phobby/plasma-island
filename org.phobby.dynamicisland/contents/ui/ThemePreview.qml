@@ -37,7 +37,7 @@ Rectangle {
             anchors.centerIn: parent
             spacing: 6
             Rectangle { width: 8; height: 8; radius: 4; color: sample.control; anchors.verticalCenter: parent.verticalCenter }
-            Text { text: "12:45"; color: sample.text; font.pointSize: sample.fontSmall; font.weight: Font.DemiBold }
+            Text { textFormat: Text.PlainText; text: "12:45"; color: sample.text; font.pointSize: sample.fontSmall; font.weight: Font.DemiBold }
         }
     }
 }

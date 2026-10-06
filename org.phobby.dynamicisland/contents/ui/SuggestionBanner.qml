@@ -65,6 +65,7 @@ Item {
                 Layout.fillWidth: true
                 spacing: 0
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: banner.event?.title ?? ""
                     color: banner.theme.text
@@ -75,6 +76,7 @@ Item {
                     elide: Text.ElideRight
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     visible: text.length > 0
                     text: banner.event?.subtitle ?? ""

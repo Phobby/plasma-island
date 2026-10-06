@@ -63,6 +63,7 @@ Item {
                         color: pill.theme.subText
                     }
                     Text {
+                        textFormat: Text.PlainText
                         Layout.fillWidth: true
                         text: pill.activity?.title ?? ""
                         color: pill.theme.subText

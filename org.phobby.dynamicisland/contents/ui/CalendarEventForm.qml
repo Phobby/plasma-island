@@ -86,6 +86,7 @@ Item {
             Layout.preferredHeight: 20
             spacing: 6
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: form.error.length > 0 ? form.error : Lang.i18n("New event")
                 color: form.error.length > 0 ? form.theme.readable(form.theme.danger, form.theme.surface) : form.theme.text
@@ -106,6 +107,7 @@ Item {
                     spacing: 5
                     Rectangle { anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; radius: 4; color: form.calendar ? form.calendar.color : "transparent" }
                     Text {
+                        textFormat: Text.PlainText
                         text: form.calendar ? form.calendar.name : ""
                         color: form.theme.text
                         font.pointSize: form.theme.fontSmall * 0.9
@@ -166,7 +168,7 @@ Item {
                 onAccepted: form.submit()
                 onEscaped: form.cancelled()
             }
-            Text { text: "–"; color: form.theme.subText; font.pointSize: form.theme.fontSmall; opacity: form.allDay ? 0.35 : 1 }
+            Text { textFormat: Text.PlainText; text: "–"; color: form.theme.subText; font.pointSize: form.theme.fontSmall; opacity: form.allDay ? 0.35 : 1 }
             PillField {
                 id: endField
                 theme: form.theme

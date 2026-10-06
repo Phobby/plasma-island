@@ -70,6 +70,7 @@ KCM.SimpleKCM {
                     required property int index
                     required property string modelData
                     QQC2.Label {
+                        textFormat: Text.PlainText
                         Layout.preferredWidth: Kirigami.Units.gridUnit * 16
                         text: (index + 1) + ". " + (page.categoryNames[modelData] ?? modelData)
                     }
@@ -90,6 +91,7 @@ KCM.SimpleKCM {
                 }
             }
             QQC2.Label {
+                textFormat: Text.PlainText
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 22
                 wrapMode: Text.Wrap
                 font: Kirigami.Theme.smallFont
@@ -147,12 +149,14 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: Lang.i18n("Expanded pages")
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
             text: Lang.i18n("Which pages are shown, and in what order, is set in Layout.")
         }
 
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont

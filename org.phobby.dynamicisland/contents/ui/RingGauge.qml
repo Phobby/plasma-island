@@ -62,6 +62,7 @@ Item {
         anchors.centerIn: shape
         spacing: -1
         Text {
+            textFormat: Text.PlainText
             anchors.horizontalCenter: parent.horizontalCenter
             text: ring.label
             color: ring.textColor
@@ -70,6 +71,7 @@ Item {
             font.features: { "tnum": 1 }
         }
         Text {
+            textFormat: Text.PlainText
             anchors.horizontalCenter: parent.horizontalCenter
             visible: ring.secondaryLabel.length > 0
             text: ring.secondaryLabel
@@ -82,6 +84,7 @@ Item {
     }
 
     Text {
+        textFormat: Text.PlainText
         id: captionText
         anchors.top: shape.bottom
         anchors.topMargin: 2

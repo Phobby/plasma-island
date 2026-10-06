@@ -266,6 +266,7 @@ Item {
                                     }
                                 }
                                 Text {
+                                    textFormat: Text.PlainText
                                     anchors.verticalCenter: parent.verticalCenter
                                     visible: tab.labelled
                                     text: tab.modelData.label ?? ""
@@ -275,6 +276,7 @@ Item {
                                     font.features: { "tnum": 1 }
                                 }
                                 Text {
+                                    textFormat: Text.PlainText
                                     anchors.verticalCenter: parent.verticalCenter
                                     visible: !tab.labelled
                                     text: tab.modelData.title
@@ -295,6 +297,7 @@ Item {
                                 radius: 6
                                 color: expanded.theme.red
                                 Text {
+                                    textFormat: Text.PlainText
                                     id: badgeLabel
                                     anchors.centerIn: parent
                                     text: (tab.modelData.badge ?? 0) > 99 ? "99+" : String(tab.modelData.badge ?? 0)

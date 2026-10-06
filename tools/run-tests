@@ -3,7 +3,8 @@
 #
 #   tools/run-tests            the rules in JavaScript (node) and the QML tests
 #                              (qmltestrunner, off screen); the texts (i18n-check);
-#                              what scrolls (scroll-check)
+#                              what scrolls (scroll-check); that every text names
+#                              how it is read (text-check)
 #
 # Nothing here reads or changes the system's clock: the tests hand in their
 # own dates. QML tests that need the native module use the one built in
@@ -24,6 +25,9 @@ python3 tools/weather-icons --check || failed=1
 
 echo "== what scrolls"
 python3 tools/scroll-check --quiet || failed=1
+
+echo "== what is shown"
+python3 tools/text-check || failed=1
 
 echo "== rules (node)"
 if command -v node >/dev/null 2>&1; then

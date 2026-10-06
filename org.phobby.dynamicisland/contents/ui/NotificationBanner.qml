@@ -40,6 +40,7 @@ Item {
             Layout.fillWidth: true
             spacing: 1
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: banner.notification?.appName ?? ""
                 visible: text.length > 0
@@ -48,6 +49,7 @@ Item {
                 elide: Text.ElideRight
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: banner.notification?.summary ?? ""
                 color: banner.theme.text
@@ -57,6 +59,7 @@ Item {
                 maximumLineCount: 1
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: banner.notification?.body ?? ""
                 visible: text.length > 0

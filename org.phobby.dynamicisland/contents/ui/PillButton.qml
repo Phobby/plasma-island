@@ -24,6 +24,7 @@ Rectangle {
     Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
     Text {
+        textFormat: Text.PlainText
         id: label
         anchors.centerIn: parent
         text: pill.text

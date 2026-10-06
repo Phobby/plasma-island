@@ -50,6 +50,7 @@ KCM.SimpleKCM {
             text: Lang.i18n("Show downloads that have no window of their own")
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.maximumWidth: Kirigami.Units.gridUnit * 26
             wrapMode: Text.Wrap
             opacity: 0.7
@@ -97,6 +98,7 @@ KCM.SimpleKCM {
             text: Lang.i18n("Say so (\"Downloaded\", with the name, the size and the time it took)")
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.maximumWidth: Kirigami.Units.gridUnit * 26
             wrapMode: Text.Wrap
             opacity: 0.7
@@ -157,6 +159,7 @@ KCM.SimpleKCM {
             wrapMode: TextEdit.NoWrap
         }
         QQC2.Label {
+            textFormat: Text.PlainText
             Layout.maximumWidth: Kirigami.Units.gridUnit * 26
             wrapMode: Text.Wrap
             opacity: 0.7

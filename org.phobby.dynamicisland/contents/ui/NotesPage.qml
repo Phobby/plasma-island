@@ -49,6 +49,10 @@ Item {
     onVisibleChanged: if (!visible) typing = false; else arrive()
     Component.onCompleted: arrive()
     // Opening the page: fetch the notes, or look for notes apps when none is connected.
+    // What went wrong is shown as it is said, never read as markup (the label below is styled text).
+    function escaped(text: string): string {
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
     function arrive(): void {
         if (!visible) return;
         if (notes.available) notes.refreshIfStale(); else if (!detected) detect();
@@ -361,6 +365,7 @@ Item {
             source: visible ? badge.info.icon : ""
         }
         Text {
+            textFormat: Text.PlainText
             anchors.centerIn: parent
             visible: badge.info !== null && badge.info.icon.toString().length === 0
             text: badge.info ? badge.info.name.charAt(0) : ""
@@ -410,6 +415,7 @@ Item {
             }
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             readonly property var failed: page.notes.sources.filter(s => page.notes.errors[s.id] !== undefined)
             readonly property string message: page.status.length > 0 ? page.status
@@ -446,6 +452,7 @@ Item {
                         Layout.fillWidth: true
                         spacing: 0
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             text: row.modelData.title || Lang.i18n("Untitled note")
                             color: page.theme.text
@@ -454,6 +461,7 @@ Item {
                             elide: Text.ElideRight
                         }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             // BetterNotes: tags and priority; others: the text after the title.
                             readonly property string rest: row.modelData.type === "betternotes"
@@ -478,6 +486,7 @@ Item {
                         isMask: true
                     }
                     Text {
+                        textFormat: Text.PlainText
                         text: (row.modelData.reminder || 0) > 0 ? page.when(row.modelData.reminder) : page.when(row.modelData.updated)
                         color: (row.modelData.reminder || 0) > 0 ? page.theme.readable(page.theme.orange, page.theme.surface) : page.theme.subText
                         font.pointSize: page.theme.fontSmall * 0.85
@@ -488,6 +497,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText
                 anchors.centerIn: parent
                 width: parent.width
                 visible: list.count === 0
@@ -514,6 +524,7 @@ Item {
             isMask: true
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             text: page.lockedNote !== null ? page.lockedNote.title : ""
@@ -523,6 +534,7 @@ Item {
             elide: Text.ElideRight
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
@@ -581,6 +593,7 @@ Item {
         visible: page.view === "list" && !page.notes.available
         spacing: 6
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             text: !page.detected ? Lang.i18n("Looking for notes apps…")
                 : page.found.joplin || page.found.simplenote || page.found.betternotes ? Lang.i18n("Notes apps found on this computer:")
@@ -619,6 +632,7 @@ Item {
                         spacing: 3
                         SourceBadge { Layout.alignment: Qt.AlignHCenter; type: card.modelData; Layout.preferredWidth: 22; Layout.preferredHeight: 22 }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             text: page.notes.types[card.modelData].name
@@ -627,6 +641,7 @@ Item {
                             font.weight: Font.DemiBold
                         }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             text: card.modelData === "joplin" ? (page.found.joplinRunning ? Lang.i18n("Found, running · Connect") : card.here ? Lang.i18n("Found · Connect") : Lang.i18n("Desktop app"))
@@ -662,6 +677,7 @@ Item {
                 onClicked: page.view = "list"
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: Lang.i18n("Notes apps")
                 color: page.theme.text
@@ -687,6 +703,7 @@ Item {
                         spacing: 6
                         SourceBadge { type: sourceRow.modelData.type }
                         Text {
+                            textFormat: Text.PlainText
                             Layout.fillWidth: true
                             text: sourceRow.modelData.name + (sourceRow.modelData.user ? " · " + sourceRow.modelData.user : sourceRow.modelData.server ? " · " + sourceRow.modelData.server
                                                                : sourceRow.modelData.type === "betternotes" ? " · " + Lang.i18n("this computer only") : "")
@@ -711,6 +728,7 @@ Item {
                     }
                 }
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     Layout.topMargin: 2
                     text: Lang.i18n("Connect another:")
@@ -741,6 +759,7 @@ Item {
             }
             SourceBadge { type: page.formType }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: page.notes.types[page.formType].name
                 color: page.theme.text
@@ -757,7 +776,7 @@ Item {
                 width: parent.width
                 wrapMode: Text.Wrap
                 textFormat: Text.StyledText
-                text: page.formError.length > 0 ? page.formError : page.guidance[page.formType]
+                text: page.formError.length > 0 ? page.escaped(page.formError) : page.guidance[page.formType]
                 color: page.formError.length > 0 ? page.theme.readable(page.theme.danger, page.theme.surface) : page.theme.text
                 font.pointSize: page.theme.fontSmall * 0.9
             }
@@ -818,6 +837,7 @@ Item {
             }
             SourceBadge { type: "betternotes" }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 text: Lang.i18n("BetterNotes was not found")
                 color: page.theme.text
@@ -826,6 +846,7 @@ Item {
             }
         }
         Text {
+            textFormat: Text.PlainText
             Layout.fillWidth: true
             Layout.fillHeight: true
             wrapMode: Text.Wrap
@@ -910,6 +931,7 @@ Item {
                 }
             }
             Text {
+                textFormat: Text.PlainText
                 Layout.fillWidth: true
                 visible: !titleField.visible
                 text: page.saveError.length > 0 && !page.titled ? page.saveError
@@ -921,6 +943,7 @@ Item {
                 elide: Text.ElideRight
             }
             Text {
+                textFormat: Text.PlainText
                 visible: !page.readOnly
                 text: page.loading ? "" : page.saving ? Lang.i18n("Saving…") : page.dirty ? Lang.i18n("Edited") : page.current ? Lang.i18n("Saved") : ""
                 color: page.theme.subText
@@ -962,6 +985,7 @@ Item {
                 anchors.rightMargin: 4
                 spacing: 6
                 Text {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: page.saveError
                     color: page.theme.readable(page.theme.danger, page.theme.surface)
