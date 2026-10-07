@@ -344,7 +344,6 @@ Hapın yanında küçük bir kedi oturur. Hiçbir şey olmayınca uykuya dalar (
 ## Görünüm, temalar ve mağaza
 
 <!-- GIF: appearance-looks.gif | Müzik çalarken aynı hap art arda dört hazır temada, sonra yeniden sistemin renklerinde. | Aynı ada, birkaç görünümde -->
-<p align="center"><img src="docs/media/appearance-looks.gif" alt="Müzik çalarken aynı hap art arda dört hazır temada, sonra yeniden sistemin renklerinde." width="800"><br><sub>Aynı ada, birkaç görünümde</sub></p>
 <!-- GIF: appearance-themes.gif | Ayarlarda hazır bir tema seçiliyor, bir gradyan ayarlanıyor ve ada anında değişiyor; görünüm dosya olarak dışa aktarılıp yeniden ekleniyor. | Görünüm: temalar, gradyan, dışa aktarma ve ekleme -->
 
 **Ayarlar → Görünüm** iki kip sunar.

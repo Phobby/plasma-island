@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+# link-check — every link and picture of the documents leads to something that is there.
+#
+#   tools/link-check          the count, and what is wrong
+#   tools/link-check --list   every local link and where it leads
+#
+# In every Markdown file of the repository: a link `[text](target)`, a picture
+# `![text](target)` and an `<img src="target">` whose target is a path of this
+# repository has to lead to a file or folder that exists, and a `#heading`
+# behind it (or alone, for the same file) to a heading that file has, by the
+# name GitHub gives it. Addresses of the network (`https://…`, `mailto:`) are
+# not asked: this check never leaves the computer. What stands in a code block
+# or in a comment is no link.
+#
+# It also says when a README shows a clip twice or shows none where one is
+# marked as placed: the lines `<!-- GIF: … -->` are tools/demo/place-clips'.
+import re, sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+SKIP = {".git", "build", ".run", "node_modules", "__pycache__"}
+LINK = re.compile(r"!?\[(?:[^\]\[]|\[[^\]]*\])*\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\)")
+IMG = re.compile(r"<img\b[^>]*?\bsrc=\"([^\"]+)\"", re.I)
+HREF = re.compile(r"<a\b[^>]*?\bhref=\"([^\"]+)\"", re.I)
+# What GitHub takes out of a heading to make its anchor (github-slugger), then spaces become "-".
+GONE = re.compile(r"[ -⁯⸀-⹿\\'!\"#$%&()*+,./:;<=>?@\[\]^`{|}~]")
+
+def documents():
+    for path in sorted(REPO.rglob("*.md")):
+        if not SKIP & set(path.relative_to(REPO).parts): yield path
+
+def prose(text):
+    """The text without what is no prose: code blocks, code spans and comments (their lines stay, as empty ones)."""
+    blank = lambda m: re.sub(r"[^\n]", " ", m.group(0))
+    text = re.sub(r"^(```|~~~).*?^\1[^\n]*$", blank, text, flags=re.S | re.M)
+    text = re.sub(r"<!--.*?-->", blank, text, flags=re.S)
+    return re.sub(r"`[^`\n]*`", blank, text)
+
+def anchors(path, cache={}):
+    """The anchors GitHub gives the headings of a Markdown file."""
+    if path not in cache:
+        seen, out = {}, set()
+        text = re.sub(r"^(```|~~~).*?^\1[^\n]*$", "", path.read_text(), flags=re.S | re.M)
+        for line in text.splitlines():
+            m = re.match(r"#{1,6}\s+(.*?)\s*#*\s*$", line)
+            if not m: continue
+            title = re.sub(r"!?\[((?:[^\]\[]|\[[^\]]*\])*)\]\([^)]*\)", r"\1", m.group(1))     # a link's text stays, its target goes
+            slug = GONE.sub("", re.sub(r"<[^>]+>", "", title).lower()).replace(" ", "-")
+            n = seen.get(slug, 0); seen[slug] = n + 1
+            out.add(slug if n == 0 else f"{slug}-{n}")
+        cache[path] = out
+    return cache[path]
+
+def main():
+    listing = "--list" in sys.argv
+    wrong, count = [], 0
+    for doc in documents():
+        name = doc.relative_to(REPO)
+        raw = doc.read_text(); text = prose(raw)
+        for pattern in (LINK, IMG, HREF):
+            for m in pattern.finditer(text):
+                target = m.group(1)
+                if re.match(r"[a-z][a-z0-9+.-]*:", target, re.I): continue          # https:, mailto:…
+                count += 1
+                line = text.count("\n", 0, m.start()) + 1
+                file, _, anchor = target.partition("#")
+                goal = (doc.parent / file).resolve() if file else doc
+                if listing: print(f"{name}:{line}: {target}")
+                if not goal.exists():
+                    wrong.append(f"{name}:{line}: {target}: no such file"); continue
+                if REPO not in goal.parents and goal != REPO:
+                    wrong.append(f"{name}:{line}: {target}: leads out of the repository"); continue
+                if anchor and goal.suffix == ".md" and anchor.lower() not in anchors(goal):
+                    wrong.append(f"{name}:{line}: {target}: {goal.relative_to(REPO)} has no heading \"#{anchor}\"")
+        # A clip's place: the picture right under its mark is that clip, and its file is there.
+        lines = raw.split("\n")
+        for i, line in enumerate(lines):
+            m = re.match(r"<!-- GIF: (\S+) \|", line)
+            if not m: continue
+            there = (REPO / "docs" / "media" / m.group(1)).exists()
+            shown = i + 1 < len(lines) and f'src="docs/media/{m.group(1)}"' in lines[i + 1]
+            if there and not shown: wrong.append(f"{name}:{i + 1}: {m.group(1)} is recorded but not shown (tools/demo/place-clips)")
+            if shown and not there: wrong.append(f"{name}:{i + 1}: {m.group(1)} is shown but not there")
+    for line in wrong: print(line)
+    print(f"{count} local links and pictures in {sum(1 for _ in documents())} documents, {len(wrong)} wrong")
+    sys.exit(1 if wrong else 0)
+
+if __name__ == "__main__":
+    main()

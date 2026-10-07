@@ -299,7 +299,7 @@ plain GETs to raw.githubusercontent.com: no account, no cookies, no
 telemetry, no check in the background, nothing while the settings are closed.
 Without a connection the tab says so and offers to try again.
 
-Adding a theme to the catalog: [CONTRIBUTING.md](CONTRIBUTING.md)
+Adding a theme to the catalog: [CONTRIBUTING.md](../CONTRIBUTING.md)
 (`tools/catalog-update` writes `index.json` with the checksums).
 
 Theme files need the native module (it reads, writes and deletes them);

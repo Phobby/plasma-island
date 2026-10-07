@@ -342,7 +342,6 @@ A small cat sits beside the pill. It falls asleep when nothing happens (after 20
 ## Appearance, themes and the store
 
 <!-- GIF: appearance-looks.gif | The same pill, with music playing, in four ready-made looks one after the other and back to the system's colours. | The same island in several looks -->
-<p align="center"><img src="docs/media/appearance-looks.gif" alt="The same pill, with music playing, in four ready-made looks one after the other and back to the system's colours." width="800"><br><sub>The same island in several looks</sub></p>
 <!-- GIF: appearance-themes.gif | In the settings a ready-made look is chosen, a gradient is tuned and the island changes at once; the look is exported as a file and added again. | Appearance: looks, a gradient, export and add -->
 
 **Settings → Appearance** has two modes.

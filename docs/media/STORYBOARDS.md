@@ -24,8 +24,14 @@ island), 128 colours.
 | `cat-sleep.gif` | the cat falls asleep, a notification wakes it |
 | `island-push.gif` | an activity pushed with `island-push` |
 | `downloads-tracking.gif` | a download from the local test server |
-| `appearance-looks.gif` | the same island in several looks |
 | `calendar-pinned.gif` | an event pinned before it starts, then started |
+
+`appearance-looks.gif` (the same island in several looks:
+`tools/demo/scenes appearance-looks`) was recorded with the others and taken
+out again: with 128 colours for the whole clip the gradients of Sunset and
+Aurora came out in bands. It is to be recorded again with more colours
+(`tools/demo/record` takes `--colors`, 128 as it comes; `scenes` does not hand
+it on yet) and looked at before it goes back.
 
 ## Need a pointer: to be recorded in a windowed session
 
