@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+# scenes — the clips of the README, each one a short scripted scene in tools/nested-session.
+#
+#   tools/demo/scenes --list
+#   tools/demo/scenes [--out docs/media] NAME…      record these
+#   tools/demo/scenes [--out docs/media] --headless every scene that needs no pointer
+#   tools/demo/scenes --prepare                     only set the session up (data, server, player)
+#
+# A scene sets the island up with made-up data (tools/demo/make-data, a local
+# server, the demo player), then records itself with tools/demo/record while
+# it plays: notifications sent over D-Bus, an activity pushed, the player told
+# to go on, a setting changed. The session is started if it is not running
+# (headless, with its silent PipeWire).
+#
+# Scenes marked "pointer" open the island, click and type: they need a windowed
+# session and tools/demo/pointer, which moves your real pointer. They are not
+# in this file yet; docs/media/STORYBOARDS.md says how each is shot.
+#
+# Everything shown is invented (names, messages, events, files); the weather
+# is a real forecast for a large city, not for where anyone lives.
+import argparse, json, os, shlex, subprocess, sys, time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parent.parent
+SESSION = str(REPO / "tools" / "nested-session")
+PORT = 8377
+# the top middle of a 1920x1080 screen: the island with room for the cat and the glow
+PILL = "560,0,800,150"
+WIDE = "460,0,1000,190"
+
+def root():
+    return Path(os.environ.get("ISLAND_SESSION_DIR") or Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "dynamicisland-session")
+
+def session(*args, capture=False, check=False):
+    r = subprocess.run([SESSION, *args], stdout=subprocess.PIPE if capture else subprocess.DEVNULL, stderr=subprocess.DEVNULL, text=True)
+    if check and r.returncode != 0: sys.exit(f"tools/nested-session {' '.join(args[:2])} failed")
+    return (r.stdout or "").strip()
+
+def inside(*command):
+    """Run a command in the session (when this script itself runs there, directly)."""
+    if "ISLAND_SESSION" in os.environ: return subprocess.run(list(command), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return subprocess.run([SESSION, "run", *command], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+# ---- what a scene can do ------------------------------------------------------
+def wait(seconds): time.sleep(seconds)
+def notify(app, title, body, icon="dialog-information", ms=3500):
+    inside("gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications", "--object-path", "/org/freedesktop/Notifications",
+           "--method", "org.freedesktop.Notifications.Notify", app, "0", icon, title, body, "[]", "{}", str(ms))
+def player(method):
+    inside("gdbus", "call", "--session", "--dest", "org.mpris.MediaPlayer2.islanddemo", "--object-path", "/org/mpris/MediaPlayer2",
+           "--method", f"org.mpris.MediaPlayer2.Player.{method}")
+def push(*args):
+    inside(str(root() / "home" / ".local" / "bin" / "island-push"), *args)
+def setting(*pairs):
+    session("set", *pairs)
+def theme(name):
+    return json.dumps(json.loads((REPO / "catalog" / "themes" / f"{name}.islandtheme.json").read_text())["style"])
+def start_player(paused=False):
+    stop("tools/demo/player", "pw-play")
+    session("spawn", "player", str(HERE / "player"), str(root() / "media"), *(["--paused"] if paused else []))
+def stop(*names):
+    for line in session("ps", capture=True).splitlines():
+        if any(n in line for n in names): subprocess.run(["kill", line.split()[0]], stderr=subprocess.DEVNULL)
+def fresh(**settings):
+    """A new island with default settings, then these; the shell started with them in place."""
+    session("shell", "--no-island"); session("shell")
+    pairs = []
+    for key, value in settings.items(): pairs += [key, value]
+    if pairs:
+        session("set", *pairs); session("shell")
+    time.sleep(4)
+
+def prepare():
+    if not session("pid", "kwin_wayland", capture=True):
+        session("start", "--audio", check=True)
+    session("install", check=True)
+    data = root() / "demo"
+    if not (root() / "media" / "tracks.tsv").exists():
+        subprocess.run([str(HERE / "make-media"), str(root() / "media")], check=True, stdout=subprocess.DEVNULL)
+    subprocess.run([str(HERE / "make-data"), str(data), "--port", str(PORT)], check=True, stdout=subprocess.DEVNULL)
+    stop("tools/demo/serve")
+    session("spawn", "serve", str(HERE / "serve"), str(data), "--port", str(PORT), "--rate", "24")
+    return data
+
+# ---- the scenes ---------------------------------------------------------------
+# name → (what the clip shows, crop, set-up, play). `play` runs while the clip is recorded.
+def setup_plain(): fresh(catEnabled="false"); stop("tools/demo/player", "pw-play")
+def play_states():
+    wait(1.5)
+    notify("Messages", "Lena", "Are we still on for the lake on Saturday?", "mail-unread")
+    wait(4.5)
+    push("--id", "build", "--title", "Build", "--subtitle", "compiling", "--icon", "run-build", "--progress", "20")
+    for p in (45, 70, 90):
+        wait(0.9); push("--id", "build", "--progress", str(p), "--subtitle", "linking" if p > 60 else "compiling")
+    wait(0.9); push("--id", "build", "--done", "--status", "success")
+    wait(3.0)
+
+def setup_media(): fresh(catEnabled="false", ambientGlow="false"); start_player(); wait(3)
+def play_media():
+    wait(3.0); player("Next"); wait(3.5); player("Pause"); wait(1.8); player("Play"); wait(2.0)
+
+def setup_glow(): fresh(catEnabled="false", ambientGlow="false"); start_player(); wait(3)
+def play_glow():
+    wait(1.5); setting("ambientGlow", "true"); wait(6.0); setting("ambientGlow", "false"); wait(1.5)
+
+def setup_media_cat(): fresh(ambientGlow="false", catSleepSeconds="600"); stop("tools/demo/player", "pw-play"); wait(2)
+def play_media_cat():
+    wait(1.2); start_player(); wait(8.0)
+
+def setup_cat_sleep(): fresh(catSleepSeconds="5"); stop("tools/demo/player", "pw-play"); wait(1)
+def play_cat_sleep():
+    wait(6.5)                                   # it curls up
+    notify("Calendar", "Dentist at 16:30", "Harbour Street 12", "view-calendar")
+    wait(5.0)
+
+def setup_push(): fresh(catEnabled="false"); stop("tools/demo/player", "pw-play")
+def play_push():
+    wait(1.0)
+    push("--id", "backup", "--title", "Backup", "--subtitle", "Documents", "--icon", "document-save", "--color", "blue", "--progress", "5")
+    for p in (25, 45, 65, 85, 100):
+        wait(1.0); push("--id", "backup", "--progress", str(p))
+    wait(0.6); push("--id", "backup", "--done", "--status", "success"); wait(3.0)
+
+def setup_download(): fresh(catEnabled="false"); stop("tools/demo/player", "pw-play")
+def play_download():
+    downloads = root() / "home" / "Downloads"; downloads.mkdir(parents=True, exist_ok=True)
+    target = downloads / "atlas-of-lakes.iso"
+    if target.exists(): target.unlink()
+    wait(0.8)
+    # (in a terminal of its own, as somebody would start it: a command without one is a background job,
+    # which the island leaves alone unless told otherwise)
+    inside("script", "-qfc", f"curl -s -o {shlex.quote(str(target))} 'http://127.0.0.1:{PORT}/download/atlas-of-lakes.iso?mb=220'", "/dev/null")
+    wait(3.5)
+
+def setup_looks(): fresh(catEnabled="false"); start_player(); wait(3)
+def play_looks():
+    wait(1.2)
+    for name in ("midnight", "aurora", "glass", "sunset"):
+        setting("appearanceMode", "1", "customStyle", theme(name)); wait(1.9)
+    setting("appearanceMode", "0"); wait(1.5)
+
+def setup_calendar():
+    # The meeting starts 80 s from now: time for a fresh island to fetch the calendar, and the clip
+    # begins six seconds before the start.
+    starts = time.time() + 80
+    subprocess.run([str(HERE / "make-data"), str(root() / "demo"), "--port", str(PORT), "--meeting-in", f"{80 / 60:.4f}"], check=True, stdout=subprocess.DEVNULL)
+    sources = dict(l.split("\t", 1) for l in (root() / "demo" / "settings.tsv").read_text().splitlines())["calendarSources"]
+    stop("tools/demo/player", "pw-play")
+    fresh(catEnabled="false", calendarSources=sources, calendarRefreshMinutes="1", calendarSound="false")
+    time.sleep(max(0.0, starts - 6.5 - time.time()))
+def play_calendar():
+    wait(12.0)
+
+SCENES = {
+    "island-states": ("the clock, a notification, then an activity with its progress", PILL, setup_plain, play_states),
+    "media-controls": ("a track on the pill; the next one; paused and playing again", PILL, setup_media, play_media),
+    "media-glow": ("the glow in the cover's colour, following the music, switched on and off", WIDE, setup_glow, play_glow),
+    "media-cat": ("the cat puts on headphones and nods when music starts", PILL, setup_media_cat, play_media_cat),
+    "cat-sleep": ("the cat falls asleep; a notification wakes it", PILL, setup_cat_sleep, play_cat_sleep),
+    "island-push": ("an activity pushed by a program over D-Bus, counting up and finishing", PILL, setup_push, play_push),
+    "downloads-tracking": ("a download from the local test server with its size, speed and time left", PILL, setup_download, play_download),
+    "appearance-looks": ("the same island in several looks", PILL, setup_looks, play_looks),
+    "calendar-pinned": ("an event pinned before it starts, then started", PILL, setup_calendar, play_calendar),
+}
+
+def main():
+    ap = argparse.ArgumentParser(add_help=False)
+    ap.add_argument("--list", action="store_true"); ap.add_argument("--headless", action="store_true"); ap.add_argument("--prepare", action="store_true")
+    ap.add_argument("--out", default=str(REPO / "docs" / "media")); ap.add_argument("--play", default=""); ap.add_argument("--fps", default="12")
+    ap.add_argument("--width", default="800"); ap.add_argument("-h", "--help", action="store_true"); ap.add_argument("names", nargs="*")
+    a = ap.parse_args()
+    if a.play:                                   # (inside the session, while tools/demo/record takes its pictures)
+        SCENES[a.play][3](); return
+    if a.help or not (a.list or a.headless or a.prepare or a.names):
+        print("".join(l[2:] if l.startswith("# ") else "\n" for l in Path(__file__).read_text().splitlines(True)[1:21])); return
+    if a.list:
+        for name, (what, crop, _, _) in SCENES.items(): print(f"{name:20} {what}")
+        return
+    prepare()
+    if a.prepare: return
+    names = list(SCENES) if a.headless else a.names
+    unknown = [n for n in names if n not in SCENES]
+    if unknown: sys.exit(f"no such scene: {', '.join(unknown)} (tools/demo/scenes --list)")
+    out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
+    for name in names:
+        what, crop, setup, play = SCENES[name]
+        setup()
+        command = f"{shlex.quote(sys.executable)} {shlex.quote(str(Path(__file__).resolve()))} --play {shlex.quote(name)}"
+        r = subprocess.run([SESSION, "run", str(HERE / "record"), "--out", str(out / f"{name}.gif"), "--crop", crop, "--width", a.width,
+                            "--fps", a.fps, "--while", command], text=True, capture_output=True)
+        print((r.stdout or r.stderr).strip().splitlines()[-1] if (r.stdout or r.stderr).strip() else f"{name}: nothing recorded", flush=True)
+
+if __name__ == "__main__":
+    main()

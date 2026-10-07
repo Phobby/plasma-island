@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# soak — one long run with mixed activity, to see whether anything grows.
+#
+#   tools/bench/soak [--hours 2] [--out docs/perf/raw]
+#
+# In tools/nested-session (headless): a fresh shell with the island and
+# tools/demo/player playing, then, minute after minute until the time is up:
+# notifications, an activity of the D-Bus API counting up and finishing, the
+# next track (every fifth minute a pause), another look (follow the system,
+# Midnight, Aurora, Glass), the other language, the cat off and on, the glow
+# on and off. Meanwhile tools/bench/sample writes plasmashell, KWin and
+# ksystemstats to soak.1.csv every ten seconds: memory, threads, file
+# descriptors, CPU, child processes. tools/bench/summarize draws it
+# (docs/perf/soak.svg) with the slope of the memory after the first quarter
+# of an hour.
+#
+# Not in it, because nothing can click in a headless session: turning pages,
+# typing, stroking the cat. Those are in the pointer scenarios.
+set -uo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+S="$HERE/tools/nested-session"
+hours=2; out="$HERE/docs/perf/raw"
+while [ $# -gt 0 ]; do
+    case "$1" in --hours) hours="$2"; shift ;; --out) out="$2"; shift ;; -h|--help) sed -n '2,20p' "$0"; exit 0 ;; *) echo "unknown option: $1" >&2; exit 2 ;; esac
+    shift
+done
+ROOT="${ISLAND_SESSION_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/dynamicisland-session}"
+seconds="$(python3 -c "print(int(float('$hours') * 3600))")"
+mkdir -p "$out"
+
+"$S" pid kwin_wayland >/dev/null 2>&1 || "$S" start --audio || exit 1
+"$S" install >/dev/null || exit 1
+"$S" shell --no-island >/dev/null && "$S" shell >/dev/null || exit 1
+[ -e "$ROOT/media/tracks.tsv" ] || "$HERE/tools/demo/make-media" "$ROOT/media" >/dev/null
+"$S" spawn player "$HERE/tools/demo/player" "$ROOT/media"
+sleep 20
+
+also=()
+for name in kwin_wayland ksystemstats; do p="$("$S" pid "$name" 2>/dev/null)"; [ -n "$p" ] && also+=(--also "$name=$p"); done
+"$HERE/tools/bench/sample" --pid "$("$S" pid plasmashell)" --name plasmashell "${also[@]}" --interval 10 --duration "$seconds" \
+    --children --label soak --out "$out/soak.1.csv" &
+sampler=$!
+
+theme() { python3 -c "import json,sys; print(json.dumps(json.load(open(sys.argv[1]))['style']))" "$HERE/catalog/themes/$1.islandtheme.json"; }
+notify() {
+    "$S" run gdbus call --session --dest org.freedesktop.Notifications --object-path /org/freedesktop/Notifications \
+        --method org.freedesktop.Notifications.Notify "$1" 0 dialog-information "$2" "$3" '[]' '{}' 4000 >/dev/null 2>&1
+}
+player() {
+    "$S" run gdbus call --session --dest org.mpris.MediaPlayer2.islanddemo --object-path /org/mpris/MediaPlayer2 \
+        --method "org.mpris.MediaPlayer2.Player.$1" >/dev/null 2>&1
+}
+push="$ROOT/home/.local/bin/island-push"
+looks=(follow midnight aurora glass)
+end=$(( $(date +%s) + seconds )); minute=0
+while [ "$(date +%s)" -lt "$end" ] && kill -0 "$sampler" 2>/dev/null; do
+    minute=$((minute + 1)); began=$(date +%s)
+    for i in 1 2 3; do notify "Demo App $i" "Message $minute.$i" "The body of a message, a little longer than its title."; sleep 1.5; done
+    for p in 0 15 30 45 60 75 90 100; do
+        "$S" run "$push" --id soak --title "Building" --subtitle "step $p of 100" --icon run-build --progress "$p" >/dev/null 2>&1; sleep 2
+    done
+    "$S" run "$push" --id soak --done --status success >/dev/null 2>&1
+    if [ $((minute % 5)) -eq 0 ]; then player PlayPause; else player Next; fi
+    look="${looks[$((minute % 4))]}"
+    if [ "$look" = follow ]; then "$S" set appearanceMode 0; else "$S" set appearanceMode 1 customStyle "$(theme "$look")"; fi
+    sleep 5
+    "$S" set language "$([ $((minute % 2)) -eq 0 ] && echo tr || echo en)"
+    sleep 5
+    "$S" set catEnabled "$([ $((minute % 6)) -eq 3 ] && echo false || echo true)" ambientGlow "$([ $((minute % 3)) -eq 0 ] && echo true || echo false)"
+    left=$(( 60 - ($(date +%s) - began) )); [ "$left" -gt 0 ] && sleep "$left"
+done
+wait "$sampler" 2>/dev/null
+for p in $("$S" ps | awk '/tools\/demo\/player|pw-play/ {print $1}'); do kill "$p" 2>/dev/null; done
+echo "soak: $minute minutes; $out/soak.1.csv"

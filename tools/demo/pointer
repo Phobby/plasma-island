@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+# pointer — a scripted mouse and keyboard for a windowed tools/nested-session.
+#
+#   tools/demo/pointer calibrate            find where the session's window is on your screen
+#   tools/demo/pointer move X Y [SECONDS]   glide to X,Y of the session's screen (in its pixels)
+#   tools/demo/pointer click [left|right|middle]
+#   tools/demo/pointer drag X1 Y1 X2 Y2 [SECONDS]
+#   tools/demo/pointer wheel NOTCHES        positive scrolls down
+#   tools/demo/pointer type "text"          US keys, as the session's own layout reads them
+#   tools/demo/pointer key Return|Escape|Tab|BackSpace|…
+#   tools/demo/pointer park                 out of the way: the bottom right corner of the session
+#
+# THIS MOVES YOUR REAL POINTER AND TYPES ON YOUR REAL KEYBOARD. KWin lets only
+# programs it knows send input to it, so this goes the way a mouse does: two
+# virtual devices made through /dev/uinput (which your user must be allowed to
+# write; nothing here asks for more rights). What they do lands in whatever is
+# under the pointer and has the keyboard, so: keep the session's window in
+# front and do not touch the mouse while a scene plays. It refuses to act
+# while your session is locked. `calibrate` moves the pointer to the middle of
+# your screen and asks the session's own KWin where it sees it.
+#
+# From Python: `from pointer import Pointer` (tools/demo/scenes does).
+import fcntl, os, re, struct, subprocess, sys, time
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+SESSION = str(HERE.parent / "nested-session")
+
+UI_SET_EVBIT, UI_SET_KEYBIT, UI_SET_RELBIT, UI_SET_ABSBIT, UI_SET_PROPBIT = 0x40045564, 0x40045565, 0x40045566, 0x40045567, 0x4004556E
+UI_DEV_SETUP, UI_ABS_SETUP, UI_DEV_CREATE, UI_DEV_DESTROY = 0x405C5503, 0x401C5504, 0x5501, 0x5502
+EV_SYN, EV_KEY, EV_REL, EV_ABS = 0, 1, 2, 3
+ABS_X, ABS_Y, REL_WHEEL, REL_WHEEL_HI_RES = 0, 1, 8, 11
+BUTTONS = {"left": 0x110, "right": 0x111, "middle": 0x112}
+RANGE = 65535
+# US layout: character → (key code, shift)
+ROWS = [("1234567890-=", 2), ("qwertyuiop[]", 16), ("asdfghjkl;'", 30), ("zxcvbnm,./", 44)]
+SHIFTED = {"!": "1", "@": "2", "#": "3", "$": "4", "%": "5", "^": "6", "&": "7", "*": "8", "(": "9", ")": "0", "_": "-", "+": "=",
+           "{": "[", "}": "]", ":": ";", '"': "'", "<": ",", ">": ".", "?": "/"}
+KEYS = {"Escape": 1, "BackSpace": 14, "Tab": 15, "Return": 28, "space": 57, "Up": 103, "Left": 105, "Right": 106, "Down": 108, "Delete": 111, "Control": 29, "Shift": 42}
+CODES = {" ": (57, False), "\n": (28, False), "`": (41, False), "~": (41, True), "\\": (43, False), "|": (43, True)}
+for row, first in ROWS:
+    for i, ch in enumerate(row):
+        CODES[ch] = (first + i, False)
+        if ch.isalpha(): CODES[ch.upper()] = (first + i, True)
+for ch, base in SHIFTED.items():
+    CODES[ch] = (CODES[base][0], True)
+
+def session_dir():
+    return Path(os.environ.get("ISLAND_SESSION_DIR") or Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "dynamicisland-session")
+
+def locked():
+    try:
+        sid = os.environ.get("XDG_SESSION_ID") or subprocess.run(["loginctl", "show-user", str(os.getuid()), "-p", "Display", "--value"],
+                                                                  capture_output=True, text=True).stdout.strip()
+        return subprocess.run(["loginctl", "show-session", sid, "-p", "LockedHint", "--value"], capture_output=True, text=True).stdout.strip() == "yes"
+    except OSError:
+        return False
+
+class Device:
+    def __init__(self, name, keys=(), absolute=False, wheel=False):
+        self.fd = os.open("/dev/uinput", os.O_WRONLY | os.O_NONBLOCK)
+        fcntl.ioctl(self.fd, UI_SET_EVBIT, EV_KEY)
+        for key in keys: fcntl.ioctl(self.fd, UI_SET_KEYBIT, key)
+        if absolute:
+            fcntl.ioctl(self.fd, UI_SET_EVBIT, EV_ABS)
+            for axis in (ABS_X, ABS_Y):
+                fcntl.ioctl(self.fd, UI_SET_ABSBIT, axis)
+                fcntl.ioctl(self.fd, UI_ABS_SETUP, struct.pack("HHiiiiii", axis, 0, 0, 0, RANGE, 0, 0, 0))
+        if wheel:
+            fcntl.ioctl(self.fd, UI_SET_EVBIT, EV_REL)
+            for axis in (REL_WHEEL, REL_WHEEL_HI_RES): fcntl.ioctl(self.fd, UI_SET_RELBIT, axis)
+        fcntl.ioctl(self.fd, UI_DEV_SETUP, struct.pack("HHHH80sI", 0x06, 0x1D6B, 0x0104, 1, name.encode(), 0))
+        fcntl.ioctl(self.fd, UI_DEV_CREATE)
+    def emit(self, kind, code, value):
+        now = time.time()
+        os.write(self.fd, struct.pack("llHHi", int(now), int((now % 1) * 1e6), kind, code, value))
+    def sync(self): self.emit(EV_SYN, 0, 0)
+    def close(self):
+        try: fcntl.ioctl(self.fd, UI_DEV_DESTROY)
+        finally: os.close(self.fd)
+
+class Pointer:
+    """The session's screen in its own pixels; `calibrate()` once per placement of its window."""
+    def __init__(self):
+        if locked(): sys.exit("your session is locked: nothing is sent")
+        self.mouse = Device("Dynamic Island demo pointer", keys=BUTTONS.values(), absolute=True)
+        self.wheel_device = Device("Dynamic Island demo wheel", keys=[BUTTONS["left"]], wheel=True)
+        self.keyboard = Device("Dynamic Island demo keyboard", keys=range(1, 128))
+        time.sleep(0.8)                    # the compositor takes a moment to see new devices
+        self.at = None
+        self.state = session_dir() / "pointer.txt"
+        self.origin, self.screen = (0, 0), (2560, 1440)
+        if self.state.exists():
+            ox, oy, sw, sh = (int(v) for v in self.state.read_text().split())
+            self.origin, self.screen = (ox, oy), (sw, sh)
+    def close(self):
+        for d in (self.mouse, self.wheel_device, self.keyboard): d.close()
+    # ---- your screen ---------------------------------------------------------
+    def host(self, hx, hy):
+        self.mouse.emit(EV_ABS, ABS_X, int(hx * RANGE / max(1, self.screen[0] - 1)))
+        self.mouse.emit(EV_ABS, ABS_Y, int(hy * RANGE / max(1, self.screen[1] - 1)))
+        self.mouse.sync()
+    def session_cursor(self):
+        """Where the session's KWin sees the pointer (a script of its own, read back from its log)."""
+        mark = f"island-cursor-{time.time_ns()}"
+        script = session_dir() / "cursor.js"
+        script.write_text(f'print("{mark} " + workspace.cursorPos.x + " " + workspace.cursorPos.y);\n')
+        number = subprocess.run([SESSION, "run", "qdbus6", "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting.loadScript", str(script)],
+                                capture_output=True, text=True).stdout.strip()
+        subprocess.run([SESSION, "run", "qdbus6", "org.kde.KWin", f"/Scripting/Script{number}", "org.kde.kwin.Script.run"], capture_output=True)
+        time.sleep(0.3)
+        subprocess.run([SESSION, "run", "qdbus6", "org.kde.KWin", f"/Scripting/Script{number}", "org.kde.kwin.Script.stop"], capture_output=True)
+        found = re.findall(mark + r" (-?\d+) (-?\d+)", (session_dir() / "logs" / "kwin.log").read_text(errors="replace"))
+        return (int(found[-1][0]), int(found[-1][1])) if found else None
+    def calibrate(self):
+        out = subprocess.run(["kscreen-doctor", "-o"], capture_output=True, text=True).stdout
+        m = re.search(r"Geometry: \d+,\d+ (\d+)x(\d+)", re.sub(r"\x1b\[[0-9;]*m", "", out))
+        if m: self.screen = (int(m.group(1)), int(m.group(2)))
+        hx, hy = self.screen[0] // 2, self.screen[1] // 2
+        self.host(hx, hy); time.sleep(0.4); self.host(hx + 1, hy + 1); time.sleep(0.4)
+        seen = self.session_cursor()
+        if seen is None: sys.exit("the session's KWin did not answer (is it running, and windowed?)")
+        self.origin = (hx + 1 - seen[0], hy + 1 - seen[1])
+        self.state.write_text(f"{self.origin[0]} {self.origin[1]} {self.screen[0]} {self.screen[1]}\n")
+        self.at = seen
+        return self.origin
+    # ---- the session's screen -------------------------------------------------
+    def jump(self, x, y):
+        self.host(self.origin[0] + x, self.origin[1] + y); self.at = (x, y)
+    def move(self, x, y, seconds=0.6):
+        if self.at is None: self.jump(x, y); time.sleep(0.05); return
+        x0, y0 = self.at; steps = max(2, int(seconds * 90))
+        for i in range(1, steps + 1):
+            t = i / steps; ease = t * t * (3 - 2 * t)
+            self.jump(x0 + (x - x0) * ease, y0 + (y - y0) * ease); time.sleep(seconds / steps)
+    def press(self, button="left"):
+        self.mouse.emit(EV_KEY, BUTTONS[button], 1); self.mouse.sync()
+    def release(self, button="left"):
+        self.mouse.emit(EV_KEY, BUTTONS[button], 0); self.mouse.sync()
+    def click(self, button="left"):
+        self.press(button); time.sleep(0.06); self.release(button); time.sleep(0.05)
+    def drag(self, x1, y1, x2, y2, seconds=1.0):
+        self.move(x1, y1, 0.4); self.press(); time.sleep(0.25); self.move(x2, y2, seconds); time.sleep(0.2); self.release()
+    def wheel(self, notches):
+        for _ in range(abs(int(notches))):
+            sign = -1 if notches > 0 else 1
+            self.wheel_device.emit(EV_REL, REL_WHEEL, sign); self.wheel_device.emit(EV_REL, REL_WHEEL_HI_RES, sign * 120)
+            self.wheel_device.sync(); time.sleep(0.12)
+    def tap(self, code, shift=False):
+        if shift: self.keyboard.emit(EV_KEY, KEYS["Shift"], 1); self.keyboard.sync()
+        self.keyboard.emit(EV_KEY, code, 1); self.keyboard.sync(); time.sleep(0.02)
+        self.keyboard.emit(EV_KEY, code, 0); self.keyboard.sync()
+        if shift: self.keyboard.emit(EV_KEY, KEYS["Shift"], 0); self.keyboard.sync()
+    def type(self, text, pause=0.055):
+        for ch in text:
+            if ch in CODES: self.tap(*CODES[ch]); time.sleep(pause)
+    def key(self, name):
+        self.tap(KEYS[name])
+
+def main():
+    a = sys.argv[1:]
+    if not a or a[0] in ("-h", "--help"):
+        print("".join(l[2:] if l.startswith("# ") else "\n" for l in Path(__file__).read_text().splitlines(True)[1:21])); return
+    p = Pointer()
+    try:
+        cmd = a[0]
+        if cmd == "calibrate": print("the session's screen starts at", p.calibrate(), "of yours")
+        elif cmd == "move": p.move(float(a[1]), float(a[2]), float(a[3]) if len(a) > 3 else 0.6)
+        elif cmd == "click": p.click(a[1] if len(a) > 1 else "left")
+        elif cmd == "drag": p.drag(*(float(v) for v in a[1:5]), float(a[5]) if len(a) > 5 else 1.0)
+        elif cmd == "wheel": p.wheel(int(a[1]))
+        elif cmd == "type": p.type(a[1])
+        elif cmd == "key": p.key(a[1])
+        elif cmd == "park": p.move(1900, 1060, 0.4)
+        else: sys.exit(f"unknown command: {cmd}")
+        time.sleep(0.2)
+    finally:
+        p.close()
+
+if __name__ == "__main__":
+    main()

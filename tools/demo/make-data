@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+# make-data — made-up data for the demo and for measuring with full pages.
+#
+#   tools/demo/make-data DIR [--port 8377] [--meeting-in MINUTES] [--big]
+#
+# Writes into DIR (nothing anywhere else):
+#   calendar/work.ics, calendar/personal.ics   two calendars with meetings around today,
+#                                              one of them starting in --meeting-in minutes (3)
+#   cloud/…                                    folders and files for a made-up cloud
+#   notes.tsv                                  notes (title <tab> text) to be created in BetterNotes
+#   settings.tsv                               the island's settings for the demo (key <tab> value):
+#                                              a place for the weather, the two calendars as links to
+#                                              tools/demo/serve on --port, a year of habits and
+#                                              Pomodoro rounds, the AI page asking tools/demo/serve
+# --big makes it large instead: 500 notes, 2000 files in one cloud folder, 200 chat messages
+# (chat.json, the AI page's kept chat), for measuring how the pages cope.
+#
+# Every name, title and sentence here is invented; no person, company or
+# product is meant. The place for the weather is a large city, not anyone's home.
+import argparse, json, os, random
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
+
+PLACE = {"name": "Reykjavik", "admin": "Capital Region", "country": "Iceland", "latitude": 64.13548, "longitude": -21.89541}
+HABITS = ["Water the plants", "Read 20 pages", "Stretch for ten minutes", "Practise the guitar", "Go for a walk"]
+NOTES = [
+    ("Ideas for the garden", "- raised bed along the fence\n- herbs by the kitchen door\n- ask about the apple tree"),
+    ("Packing list", "tent, sleeping bag, stove\nmap of the lake\nrain jacket"),
+    ("Book notes: The Long Way Round", "Chapter 3: the harbour scene.\nThe narrator never says where the letter went."),
+    ("Recipe: lentil soup", "red lentils, carrots, cumin, lemon\n25 minutes, salt at the end"),
+    ("Meeting notes", "Next steps:\n1. draft the outline\n2. send the figures\n3. book the room"),
+]
+CLOUD = {
+    "Documents": ["Budget 2026.ods", "Lease agreement.pdf", "Travel plan.md", "Reading list.txt"],
+    "Photos/Lake trip": ["IMG_0101.jpg", "IMG_0102.jpg", "IMG_0103.jpg", "panorama.jpg"],
+    "Photos/Garden": ["tomatoes.jpg", "fence.jpg"],
+    "Music": ["Paper Lanterns.flac", "Glass Harbour.flac", "Slow Orbit.flac"],
+    "Projects/Bird feeder": ["plan.svg", "parts.csv", "notes.md"],
+    "": ["Welcome.txt", "Shared with me.url"],
+}
+
+def ics_time(moment):
+    return moment.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+def calendar(name, events):
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Dynamic Island demo//EN", f"X-WR-CALNAME:{name}"]
+    for i, (title, start, minutes, extra) in enumerate(events):
+        lines += ["BEGIN:VEVENT", f"UID:demo-{name.lower()}-{i}@island.invalid", f"DTSTAMP:{ics_time(datetime.now(timezone.utc))}",
+                  f"DTSTART:{ics_time(start)}", f"DTEND:{ics_time(start + timedelta(minutes=minutes))}", f"SUMMARY:{title}"]
+        lines += extra
+        lines += ["END:VEVENT"]
+    lines.append("END:VCALENDAR")
+    return "\r\n".join(lines) + "\r\n"
+
+def habits(today, rng):
+    data = {"v": 1, "setup": 1, "next": len(HABITS) + 1, "habits": [{"id": i + 1, "name": n} for i, n in enumerate(HABITS)], "days": {}, "plan": {}, "runs": {}}
+    for back in range(365, 0, -1):
+        day = today - timedelta(days=back)
+        # better in recent months, a few days missed altogether
+        keen = 0.45 + 0.45 * (1 - back / 365.0)
+        if rng.random() < 0.06:
+            continue
+        on = [h["id"] for h in data["habits"] if rng.random() < keen]
+        off = [h["id"] for h in data["habits"] if h["id"] not in on]
+        data["days"][day.isoformat()] = {"r": 1, "on": on, "off": off, "x": []}
+    data["days"][today.isoformat()] = {"r": 0, "on": [1, 3], "off": [2, 4, 5], "x": [{"n": "Call the dentist", "d": 0}]}
+    data["last"] = today.isoformat()
+    return data
+
+def pomodoro(today, rng):
+    days = {}
+    for back in range(120, -1, -1):
+        day = today - timedelta(days=back)
+        rounds = 0 if (day.weekday() >= 5 and rng.random() < 0.7) or (back > 9 and rng.random() < 0.25) else rng.randint(1, 8)
+        if back <= 9:
+            rounds = max(rounds, rng.randint(2, 6))       # a streak up to today
+        if rounds:
+            days[day.isoformat()] = rounds
+    return {"days": days, "total": sum(days.values()) + 340, "best": 21}
+
+def main():
+    ap = argparse.ArgumentParser(description="Made-up data for the demo and for measuring with full pages.")
+    ap.add_argument("dir"); ap.add_argument("--port", type=int, default=8377)
+    ap.add_argument("--meeting-in", type=float, default=3, metavar="MINUTES"); ap.add_argument("--big", action="store_true")
+    a = ap.parse_args()
+    port, soon, big = a.port, a.meeting_in, a.big
+    out = Path(a.dir); rng = random.Random(7)
+    now = datetime.now().astimezone().replace(microsecond=0)
+    today = now.date()
+    at = lambda days, hour, minute=0: (now + timedelta(days=days)).replace(hour=hour, minute=minute, second=0)
+
+    (out / "calendar").mkdir(parents=True, exist_ok=True)
+    work = [("Weekly planning", now + timedelta(minutes=soon), 30, ["LOCATION:Room 2", "DESCRIPTION:Agenda: roadmap\\, open questions. https://meet.jit.si/island-demo-planning"]),
+            ("Design review", at(1, 10), 45, ["LOCATION:Room 4"]), ("Lunch with the team", at(2, 12, 30), 60, []),
+            ("Release notes", at(3, 15), 30, []), ("One to one", at(-1, 11), 30, []), ("Budget check", at(6, 9, 30), 60, ["LOCATION:Room 1"])]
+    personal = [("Dentist", at(1, 16, 30), 40, ["LOCATION:Harbour Street 12"]), ("Football practice", at(2, 18), 90, []),
+                ("Dinner at the lake", at(4, 19), 120, ["DESCRIPTION:Bring the map."]), ("Library books due", at(5, 9), 15, []),
+                ("Market", at(-2, 10), 60, [])]
+    (out / "calendar" / "work.ics").write_text(calendar("Work", work))
+    (out / "calendar" / "personal.ics").write_text(calendar("Personal", personal))
+
+    for folder, names in CLOUD.items():
+        (out / "cloud" / folder).mkdir(parents=True, exist_ok=True)
+        for name in names:
+            size = rng.randint(2, 60) * 1024 if not name.endswith((".jpg", ".flac", ".pdf")) else rng.randint(300, 2500) * 1024
+            (out / "cloud" / folder / name).write_bytes(os.urandom(size))
+    notes = list(NOTES)
+    if big:
+        (out / "cloud" / "Archive").mkdir(parents=True, exist_ok=True)
+        for i in range(2000):
+            (out / "cloud" / "Archive" / f"scan-{i:04d}.txt").write_text(f"page {i}\n")
+        words = "river stone lamp window garden paper north quiet morning letter bridge winter".split()
+        for i in range(500 - len(notes)):
+            title = " ".join(rng.choice(words) for _ in range(3)).capitalize() + f" {i}"
+            notes.append((title, " ".join(rng.choice(words) for _ in range(40))))
+        chat = []
+        for i in range(100):
+            chat.append({"role": "user", "text": f"Question {i + 1}: what is {i + 2} times {i + 3}?", "source": "demo"})
+            chat.append({"role": "assistant", "text": f"**{(i + 2) * (i + 3)}**. " + " ".join(rng.choice(words) for _ in range(30)), "source": "demo"})
+        (out / "chat.json").write_text(json.dumps({"messages": chat}))
+    (out / "notes.tsv").write_text("".join(f"{t}\t{b.replace(chr(10), ' ⏎ ')}\n" for t, b in notes))
+
+    base = f"http://127.0.0.1:{port}"
+    settings = {
+        "weatherLocation": json.dumps(PLACE),
+        "calendarSources": json.dumps([
+            {"id": "demowork", "type": "google", "url": f"{base}/calendar/work.ics", "name": "Work", "color": "#4285f4", "enabled": True},
+            {"id": "demohome", "type": "apple", "url": f"{base}/calendar/personal.ics", "name": "Personal", "color": "#ff9500", "enabled": True}]),
+        "calendarRefreshMinutes": "1",
+        "habitsData": json.dumps(habits(today, rng)),
+        "pomodoroStats": json.dumps(pomodoro(today, rng)),
+        "notesSources": json.dumps([{"id": "betternotes-demo", "type": "betternotes", "name": "BetterNotes", "server": "", "user": ""}]),
+        "showAi": "true",
+        "aiSources": json.dumps([{"id": "demo", "kind": "local", "server": f"{base}/v1", "model": "demo-canned-answers"}]),
+        "aiDefault": "demo",
+        "showCloud": "true",
+        "cloudConfirmUpload": "true",
+    }
+    (out / "settings.tsv").write_text("".join(f"{k}\t{v}\n" for k, v in settings.items()))
+    print(f"demo data in {out} ({len(notes)} notes, the meeting starts at {(now + timedelta(minutes=soon)).strftime('%H:%M')})")
+
+if __name__ == "__main__":
+    main()

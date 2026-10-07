@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+# energy — the CPU's own energy counter (RAPL), once a second, as CSV. Reads only.
+#
+#   sudo tools/bench/energy [--seconds 600] [--out docs/perf/raw/energy.csv] [--label text]
+#
+# /sys/class/powercap/*/energy_uj counts the microjoules the whole processor
+# package (and, as a sub-zone, its cores) has used since boot. Since 2020 it
+# is readable by root only on most kernels, so this is the one script here to
+# be run with sudo, by you: it opens those files for reading and writes one
+# CSV; nothing else. Run it while tools/bench/run plays a scenario and the
+# same scenario's baseline; the difference of the two means is what the island
+# adds, in watts. It is the whole package: everything else that runs is in it,
+# so the machine has to be quiet, and a small difference drowns in the noise.
+import argparse, csv, glob, os, sys, time
+
+def zones():
+    out = []
+    for path in sorted(glob.glob("/sys/class/powercap/*/energy_uj")):
+        zone = os.path.dirname(path)
+        try:
+            name = open(os.path.join(zone, "name")).read().strip()
+            limit = int(open(os.path.join(zone, "max_energy_range_uj")).read())
+        except OSError:
+            continue
+        out.append((os.path.basename(zone) + ":" + name, path, limit))
+    return out
+
+def main():
+    ap = argparse.ArgumentParser(description="The CPU's energy counter (RAPL), once a second, as CSV.")
+    ap.add_argument("--seconds", type=float, default=600); ap.add_argument("--out", default="-"); ap.add_argument("--label", default="")
+    a = ap.parse_args()
+    found = zones()
+    if not found: sys.exit("no energy counters under /sys/class/powercap on this machine")
+    try:
+        last = [int(open(path).read()) for _, path, _ in found]
+    except PermissionError:
+        sys.exit("the counters are readable by root only: run this with sudo")
+    out = sys.stdout if a.out == "-" else open(a.out, "w", newline="")
+    w = csv.writer(out); w.writerow(["label", "t"] + [f"{name}_watts" for name, _, _ in found])
+    start = time.monotonic(); n = 0; before = start
+    while n < a.seconds:
+        n += 1
+        time.sleep(max(0, start + n - time.monotonic()))
+        now = time.monotonic(); row = []
+        for i, (_, path, limit) in enumerate(found):
+            value = int(open(path).read()); used = value - last[i]
+            if used < 0: used += limit           # the counter wrapped
+            row.append(round(used / 1e6 / (now - before), 3)); last[i] = value
+        before = now
+        w.writerow([a.label, n] + row); out.flush()
+    if out is not sys.stdout:
+        out.close()
+        # the file is yours, not root's
+        uid, gid = os.environ.get("SUDO_UID"), os.environ.get("SUDO_GID")
+        if uid and gid: os.chown(a.out, int(uid), int(gid))
+
+if __name__ == "__main__":
+    main()

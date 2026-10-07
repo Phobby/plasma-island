@@ -49,15 +49,19 @@ set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ID="org.phobby.dynamicisland"
 ROOT="${ISLAND_SESSION_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/dynamicisland-session}"
-RUN="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/island-session"
+# (a second one beside the first: ISLAND_SESSION_NAME, together with another ISLAND_SESSION_DIR)
+NAME="${ISLAND_SESSION_NAME:+-$ISLAND_SESSION_NAME}"
+RUN="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/island-session$NAME"
 HOST_RUNTIME="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 HOST_WAYLAND="${WAYLAND_DISPLAY:-wayland-0}"
 HOME_="$ROOT/home"; LOGS="$ROOT/logs"
-SOCKET="wayland-island"
+SOCKET="wayland-island$NAME"
 W="${ISLAND_SESSION_WIDTH:-1920}"; H="${ISLAND_SESSION_HEIGHT:-1080}"
 COLOR="${ISLAND_SESSION_COLOR:-#2b3a4a}"
 
 inside() {
+    # (called from a program that already runs in it: as it is)
+    if [ "${ISLAND_SESSION:-}" = "$ROOT" ]; then "$@"; return; fi
     env -i PATH="$PATH" HOME="$HOME_" USER="demo" LOGNAME="demo" LANG="${ISLAND_SESSION_LANG:-en_US.UTF-8}" \
         XDG_RUNTIME_DIR="$RUN" XDG_CONFIG_HOME="$HOME_/.config" XDG_DATA_HOME="$HOME_/.local/share" \
         XDG_CACHE_HOME="$HOME_/.cache" XDG_STATE_HOME="$HOME_/.local/state" \
@@ -66,7 +70,8 @@ inside() {
         XDG_MENU_PREFIX=plasma- XDG_CURRENT_DESKTOP=KDE XDG_SESSION_TYPE=wayland KDE_FULL_SESSION=true KDE_SESSION_VERSION=6 \
         DBUS_SESSION_BUS_ADDRESS="unix:path=$RUN/bus" DBUS_SYSTEM_BUS_ADDRESS="$(system_bus)" \
         WAYLAND_DISPLAY="$SOCKET" QT_QPA_PLATFORM=wayland \
-        QML_IMPORT_PATH="$HOME_/.local/lib/qml" ISLAND_SESSION="$ROOT" "$@"
+        QML_IMPORT_PATH="$HOME_/.local/lib/qml" ISLAND_SESSION="$ROOT" ISLAND_SESSION_DIR="$ROOT" \
+        ISLAND_SESSION_NAME="${ISLAND_SESSION_NAME:-}" "$@"
 }
 # The system bus of the session: its own empty one, or the computer's (start --host-system-bus).
 system_bus() {
@@ -74,7 +79,8 @@ system_bus() {
 }
 pids() {
     # (kwin_wayland has file capabilities, so its environment cannot be read back: it is known by its socket)
-    { grep -l -a -s "ISLAND_SESSION=$ROOT" /proc/[0-9]*/environ 2>/dev/null | sed -E 's|/proc/([0-9]+)/environ|\1|'
+    # (the whole entry: another session's folder may begin with this one's name)
+    { grep -l -z -x -s -F "ISLAND_SESSION=$ROOT" /proc/[0-9]*/environ 2>/dev/null | sed -E 's|/proc/([0-9]+)/environ|\1|'
       for p in $(pgrep -u "$(id -u)" -x kwin_wayland); do
           tr '\0' ' ' < "/proc/$p/cmdline" 2>/dev/null | grep -q -- "--socket $SOCKET " && echo "$p"
       done

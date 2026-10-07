@@ -81,11 +81,52 @@ class Pushes(Driver):
     def __init__(self): self.proc = None
     def start(self):
         push = str(session_dir() / "home" / ".local" / "bin" / "island-push")
-        script = (f"i=0; while :; do i=$(( (i + 3) % 101 )); {push} start bench --title 'Building' --subtitle \"step $i of 100\" "
+        script = (f"i=0; while :; do i=$(( (i + 3) % 101 )); {push} --id bench --title 'Building' --subtitle \"step $i of 100\" "
                   "--icon run-build --progress $i >/dev/null 2>&1; sleep 1; done")
         self.proc = subprocess.Popen([SESSION, "run", "sh", "-c", script])
     def stop(self):
         if self.proc and self.proc.poll() is None: self.proc.terminate()
+
+DEMO = REPO / "tools" / "demo"
+PORT = 8377
+
+def demo_settings(*keys):
+    """Settings of tools/demo/make-data (a place for the weather, two calendars on the local server, BetterNotes…)."""
+    data = session_dir() / "demo"
+    subprocess.run([str(DEMO / "make-data"), str(data), "--port", str(PORT), "--meeting-in", "30"], check=True, stdout=subprocess.DEVNULL)
+    table = dict(line.split("\t", 1) for line in (data / "settings.tsv").read_text().splitlines())
+    return {k: table[k] for k in keys}
+
+class Serve(Driver):
+    """tools/demo/serve: the calendars, and something slow to download."""
+    rate = 16
+    def start(self):
+        data = session_dir() / "demo"
+        if not (data / "calendar").exists(): demo_settings()
+        session("spawn", "serve", str(DEMO / "serve"), str(data), "--port", str(PORT), "--rate", str(self.rate))
+        time.sleep(1)
+    def stop(self):
+        p = [l.split()[0] for l in session("ps", capture=True).splitlines() if "tools/demo/serve" in l or " curl " in l]
+        if p: subprocess.run(["kill", *p])
+
+class Background(Serve):
+    """Weather, two calendars fetched every minute, BetterNotes listed every minute."""
+    def start(self):
+        super().start()
+        # (the session's own BetterNotes, with its own, empty data: three notes to list)
+        for title in ("Packing list", "Ideas for the garden", "Meeting notes"):
+            subprocess.run([SESSION, "run", "betternotes", "new", title, "--no-open", "--id-only"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+class Download(Serve):
+    """curl fetching from the local server at 16 MB/s for as long as the measurement lasts."""
+    def start(self):
+        super().start()
+        target = session_dir() / "home" / "Downloads"; target.mkdir(parents=True, exist_ok=True)
+        self.proc = subprocess.Popen([SESSION, "run", "curl", "-s", "-o", str(target / "big.bin"), f"http://127.0.0.1:{PORT}/download/big.bin?mb=8000"])
+    def stop(self):
+        super().stop()
+        try: (session_dir() / "home" / "Downloads" / "big.bin").unlink()
+        except OSError: pass
 
 ALL_OFF = {k: "false" for k in """showMediaModule showSystemModule showVolumeModule showNotificationModule showNotifications showWeather showApps
     showQuickSettings showTools showHabits showCalendar showNotes showClipboard showAi showCloud showKdeConnect showUpdates showThermalWarning
@@ -110,6 +151,9 @@ SCENARIOS = [
     ("theme-gradient", "a gradient with blur (Aurora)", True, {"appearanceMode": "1", "customStyle": ("theme", "aurora"), "catEnabled": "false"}, None, False),
     ("notifications", "200 notifications, one every 0.4 s", True, {}, Notifications, False),
     ("activity", "an activity of the D-Bus API that changes every second", True, {}, Pushes, False),
+    ("download", "curl downloading at 16 MB/s, tracked on the pill", True, {"catEnabled": "false"}, Download, False),
+    ("background", "weather for a place, two calendars and BetterNotes, each asked once a minute", True,
+     ("demo", ["weatherLocation", "calendarSources", "calendarRefreshMinutes", "notesSources"], {"catEnabled": "false", "notesRefreshMinutes": "1"}), Background, False),
     ("hover", "the pointer going on and off the island: it opens and closes", True, {}, None, True),
     ("page", "one page of the open island at a time", True, {}, None, True),
     ("cat-petting", "the cat stroked, then annoyed", True, {}, None, True),
@@ -158,6 +202,8 @@ def main():
             print(f"{name}: needs a pointer, skipped (tools/demo/pointer)"); continue
         for rep in range(1, a.reps + 1):
             session("shell", "--no-island", capture=True)          # the island's settings go with it
+            if isinstance(settings, tuple):                   # made-up data of tools/demo, and more beside it
+                settings = dict(demo_settings(*settings[1]), **settings[2])
             if island:
                 session("shell", capture=True)
                 pairs = []
