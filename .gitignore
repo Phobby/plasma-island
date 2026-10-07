@@ -3,3 +3,4 @@ lib/
 *.qmlc
 *.jsc
 tests/.run/
+__pycache__/

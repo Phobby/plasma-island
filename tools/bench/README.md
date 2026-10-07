@@ -11,6 +11,7 @@ Three scripts; none needs root, and none touches your own session.
 ```bash
 tools/bench/run --reps 3 --warmup 60 --duration 120 all    # every scenario that needs no pointer, about three hours
 tools/bench/run --reps 3 idle idle-no-cat                  # or only some
+tools/bench/run --resume --reps 3 all                      # go on where a run was cut off: what is measured already is kept
 tools/bench/run --frames --reps 1 cat-awake                # also frames per second and frame times (costs CPU itself)
 tools/bench/soak --hours 2                                 # one long run with mixed activity, sampled every 10 s
 tools/bench/summarize

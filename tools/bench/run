@@ -2,7 +2,7 @@
 # run — measure what the island costs, one scenario at a time, in tools/nested-session.
 #
 #   tools/bench/run --list
-#   tools/bench/run [--reps 3] [--warmup 60] [--duration 120] [--out DIR] [--frames] SCENARIO…
+#   tools/bench/run [--reps 3] [--warmup 60] [--duration 120] [--out DIR] [--frames] [--resume] SCENARIO…
 #   tools/bench/run … all            every scenario that needs no pointer
 #
 # For every repetition the session's plasmashell is started anew with a fresh
@@ -17,6 +17,10 @@
 # and writes SCENARIO.N.frames.csv: frames and their times per second. The
 # logging itself costs CPU, so the CPU figures of such a run are not kept
 # beside the others (the file is named SCENARIO+frames).
+#
+# `--resume` keeps every repetition whose CSV in DIR already holds the whole
+# measurement and runs the others: for going on after a run of hours was cut
+# off (the computer was switched off). A CSV that was cut off is run again.
 #
 # The session is headless unless you started it yourself with --windowed: its
 # screen is 1920x1080 at 60 Hz, drawn by the GPU, shown to nobody. Scenarios
@@ -176,15 +180,24 @@ def frames(log, out, start, seconds):
         else:
             w.writerow([0, seconds, 0, "", "", "", ""])
 
+def complete(path, duration):
+    """Whether the CSV of an earlier run holds the whole measurement (one that was cut off holds fewer seconds)."""
+    try:
+        with open(path, newline="") as f:
+            return sum(1 for row in csv.DictReader(f) if row.get("process") == "plasmashell") >= duration - 1
+    except OSError:
+        return False
+
 def main():
     ap = argparse.ArgumentParser(add_help=False)
     ap.add_argument("--list", action="store_true"); ap.add_argument("--reps", type=int, default=3)
     ap.add_argument("--warmup", type=float, default=60); ap.add_argument("--duration", type=float, default=120)
     ap.add_argument("--out", default=str(REPO / "docs" / "perf" / "raw")); ap.add_argument("--frames", action="store_true")
+    ap.add_argument("--resume", action="store_true")
     ap.add_argument("-h", "--help", action="store_true"); ap.add_argument("scenarios", nargs="*")
     a = ap.parse_args()
     if a.help or (not a.list and not a.scenarios):
-        print("".join(l[2:] if l.startswith("# ") else "\n" for l in Path(__file__).read_text().splitlines(True)[1:27])); return
+        print("".join(l[2:] if l.startswith("# ") else "\n" for l in Path(__file__).read_text().splitlines(True)[1:31])); return
     if a.list:
         for name, what, island, settings, driver, pointer in SCENARIOS:
             print(f"{name:18} {'pointer  ' if pointer else '         '}{what}")
@@ -201,6 +214,9 @@ def main():
         if pointer:
             print(f"{name}: needs a pointer, skipped (tools/demo/pointer)"); continue
         for rep in range(1, a.reps + 1):
+            target = out / f"{name}{'+frames' if a.frames else ''}.{rep}.csv"
+            if a.resume and complete(target, a.duration) and (not a.frames or (out / f"{name}.{rep}.frames.csv").exists()):
+                print(f"{name} {rep}/{a.reps}: {target.name} is there, kept", flush=True); continue
             session("shell", "--no-island", capture=True)          # the island's settings go with it
             if isinstance(settings, tuple):                   # made-up data of tools/demo, and more beside it
                 settings = dict(demo_settings(*settings[1]), **settings[2])
@@ -218,7 +234,6 @@ def main():
             time.sleep(a.warmup)
             log = session_dir() / "logs" / "plasmashell.log"
             mark = log.stat().st_size if log.exists() else 0
-            target = out / f"{name}{'+frames' if a.frames else ''}.{rep}.csv"
             also = [f"{n}={pid(n)}" for n in ("kwin_wayland", "ksystemstats") if pid(n)]
             cmd = [SAMPLE, "--pid", str(pid("plasmashell")), "--name", "plasmashell", "--interval", "1", "--duration", str(a.duration),
                    "--children", "--gpu", "--label", name, "--out", str(target)]
