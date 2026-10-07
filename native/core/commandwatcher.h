@@ -134,6 +134,7 @@ private:
     QString m_systemRoot;
     QVariantList m_commandList;
     QHash<QString, Command> m_commands;
+    QSet<QByteArray> m_names;       // their names as /proc has them, for the look at every process
     QList<Tracked> m_tracked;
     QSet<QString> m_ignored;        // "pid:starttime" of matching processes that are not shown
     quint64 m_next = 1;

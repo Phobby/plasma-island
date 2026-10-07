@@ -43,11 +43,16 @@ Item {
         radius: width / 2
         color: root.color
     }
-    SequentialAnimation on opacity {
+    // The blink of something urgent (a recording, a call): down to a quarter and up again in 1.3 s.
+    // In steps (12 a second), not as an animation: that would draw the island at every refresh of
+    // the display for as long as the recording runs.
+    property int pulseAt: 0
+    opacity: pulse && running ? 0.625 + 0.375 * Math.cos(2 * Math.PI * pulseAt / 1300) : 1
+    Timer {
+        interval: 83
+        repeat: true
         running: root.pulse && root.running
-        loops: Animation.Infinite
-        onRunningChanged: if (!running) root.opacity = 1
-        NumberAnimation { to: 0.25; duration: 650; easing.type: Easing.InOutSine }
-        NumberAnimation { to: 1; duration: 650; easing.type: Easing.InOutSine }
+        onRunningChanged: root.pulseAt = 0
+        onTriggered: root.pulseAt = (root.pulseAt + interval) % 1300
     }
 }

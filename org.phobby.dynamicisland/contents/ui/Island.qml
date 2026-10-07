@@ -454,13 +454,17 @@ Item {
                 radius: width / 2
                 color: island.dotColor
                 visible: island.dotColor.a > 0
-                SequentialAnimation on opacity {
+                // Down to a quarter and up again in 1.1 s, then 1.4 s of rest; in steps (12 a second) and
+                // not as an animation, which would draw the island at every refresh of the display for as
+                // long as something is going on behind the dot.
+                property int pulseAt: 0         // ms into the round of 2.5 s
+                opacity: !island.dotPulse || pulseAt >= 1100 ? 1 : 0.625 + 0.375 * Math.cos(2 * Math.PI * pulseAt / 1100)
+                Timer {
+                    interval: 83
+                    repeat: true
                     running: island.dotPulse
-                    loops: Animation.Infinite
-                    alwaysRunToEnd: true
-                    NumberAnimation { to: 0.25; duration: 550; easing.type: Easing.InOutSine }
-                    NumberAnimation { to: 1; duration: 550; easing.type: Easing.InOutSine }
-                    PauseAnimation { duration: 1400 }
+                    onRunningChanged: parent.pulseAt = 0
+                    onTriggered: parent.pulseAt = (parent.pulseAt + interval) % 2500
                 }
             }
         }
