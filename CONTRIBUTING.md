@@ -124,11 +124,44 @@ store reads (see "Themes" in the README for where that is set).
 ## Code
 
 `tools/run-tests` runs every check that needs no running island: the texts
-(`tools/i18n-check`), the rules written in JavaScript (node) and the QML tests
-under `tests/` (qmltestrunner, off screen). Tests never read or change the
+(`tools/i18n-check`), what scrolls (`tools/scroll-check`), that every text names
+how it is read (`tools/text-check`), the rules written in JavaScript (node) and
+the QML tests under `tests/` (qmltestrunner, off screen). Tests never read or change the
 system's clock: what depends on time takes the day or the moment as an
 argument. New texts go through `Lang.i18n()` and get their Turkish translation
 in `contents/ui/translations/tr.js`.
+
+### Trying it without touching your desktop
+
+`tools/nested-session` starts a Plasma session of its own (a KWin inside
+yours, headless or as a window) with its own D-Bus, home and settings, and
+the island of your checkout on an empty desktop:
+
+```bash
+tools/nested-session start --windowed    # or without --windowed: headless
+tools/nested-session install             # this checkout into its home
+tools/nested-session shell               # plasmashell with only the island
+tools/nested-session shot /tmp/island.png
+tools/nested-session set catEnabled false dotMode true
+tools/nested-session stop
+```
+
+Nothing of your own session is read or changed by it (another home, another
+D-Bus, an empty system bus); `tools/nested-session --help` says what it can
+and cannot do. It is also where a first run with empty settings is tried.
+
+### What it costs
+
+A change that draws, polls or starts a program is measured before and after:
+
+```bash
+tools/bench/run --list
+tools/bench/run --reps 3 idle cat-awake      # CSV files in docs/perf/raw
+tools/bench/summarize                        # the tables and pictures of docs/perf
+```
+
+The budgets and how the figures are made are in `docs/PERFORMANCE.md`.
+Nothing here needs root.
 
 ### What scrolls
 
