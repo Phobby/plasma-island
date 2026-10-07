@@ -7,6 +7,7 @@
     quoted labels are those of Google's and Apple's own interfaces.
 */
 import QtQuick
+import "backend"
 
 QtObject {
     id: links
@@ -60,25 +61,25 @@ QtObject {
         return "";
     }
 
-    // Downloads the link once: it must really be an iCalendar file.
+    // Downloads the link once: it must really be an iCalendar file, of a size
+    // and in a time the island will also accept later (IcsDownload).
     // done({ ok, name, count, error })
+    readonly property IcsDownload fetcher: IcsDownload {}
     function check(url: string, done: var): void {
-        const xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState !== XMLHttpRequest.DONE) return;
-            const text = xhr.responseText || "";
-            if (xhr.status === 200 && /^\s*BEGIN:VCALENDAR/i.test(text)) {
+        fetcher.get(normalize(url), (status, text) => {
+            if (status === 200 && /^\s*BEGIN:VCALENDAR/i.test(text)) {
                 const name = /^X-WR-CALNAME[^:\r\n]*:(.*)$/im.exec(text);
                 done({ ok: true, name: name ? name[1].trim().replace(/\\([,;\\])/g, "$1") : "", count: (text.match(/^BEGIN:VEVENT/gim) || []).length });
                 return;
             }
-            const detail = xhr.status === 200 ? Lang.i18n("The downloaded file is not a calendar (VCALENDAR).")
-                         : xhr.status > 0 ? Lang.i18n("The server answered %1.", xhr.status)
+            // (a calendar that is too large or too slow is a calendar: said as it is)
+            if (status === fetcher.tooLarge) { done({ ok: false, error: Lang.i18n("This calendar file is larger than %1 MB; the island does not read files of that size.", Math.round(fetcher.limit / 1048576)) }); return; }
+            if (status === fetcher.tooLate) { done({ ok: false, error: Lang.i18n("The calendar was not downloaded within %1 seconds. Try again, or check the link.", Math.round(fetcher.timeout / 1000)) }); return; }
+            const detail = status === 200 ? Lang.i18n("The downloaded file is not a calendar (VCALENDAR).")
+                         : status > 0 ? Lang.i18n("The server answered %1.", status)
                          : Lang.i18n("No connection.");
             done({ ok: false, error: links.notCalendarMessage + " " + detail });
-        };
-        xhr.open("GET", normalize(url));
-        xhr.send();
+        });
     }
 
     function freeColor(): string {

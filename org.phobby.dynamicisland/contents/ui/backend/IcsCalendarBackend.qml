@@ -16,7 +16,8 @@
     `events` holds today's and tomorrow's occurrences, sorted by start; see
     IcsWorker.js for the fields. `rangeEvents` additionally covers the days a
     month view asked for with setView(). A link that fails to download keeps
-    showing its last good copy.
+    showing its last good copy; so does one that sends more than
+    `downloadLimit` or is not there within `downloadTimeout` (IcsDownload).
 */
 import QtQuick
 import ".."
@@ -27,6 +28,11 @@ Item {
     property bool enabled: true
     property string sourcesJson: "[]"
     property int refreshMinutes: 5
+
+    // How much a link may send, and how long it may take (ms).
+    property alias downloadLimit: fetcher.limit
+    property alias downloadTimeout: fetcher.timeout
+    IcsDownload { id: fetcher }
 
     property var client: null               // CalDavClient
     readonly property var linkSources: {
@@ -177,20 +183,14 @@ Item {
                 syncCalendar(s.url, error => { if (error.length > 0) failed[s.url] = error; done(); });
                 continue;
             }
-            const xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState !== XMLHttpRequest.DONE) return;
-                const text = xhr.responseText || "";
-                if (xhr.status === 200 && text.indexOf("BEGIN:VCALENDAR") >= 0) cache[s.url] = text;
-                else failed[s.url] = xhr.status === 200 ? Lang.i18n("Not an iCalendar file")
-                                   : xhr.status > 0 ? Lang.i18n("Server answered %1", xhr.status) : Lang.i18n("No connection");
+            fetcher.get(s.url, (status, text) => {
+                if (status === 200 && text.indexOf("BEGIN:VCALENDAR") >= 0) cache[s.url] = text;
+                else failed[s.url] = status === 200 ? Lang.i18n("Not an iCalendar file")
+                                   : status === fetcher.tooLarge ? Lang.i18n("The file is larger than %1 MB", Math.round(downloadLimit / 1048576))
+                                   : status === fetcher.tooLate ? Lang.i18n("Not downloaded within %1 seconds", Math.round(downloadTimeout / 1000))
+                                   : status > 0 ? Lang.i18n("Server answered %1", status) : Lang.i18n("No connection");
                 done();
-            };
-            xhr.open("GET", s.url);
-            // Always the server's current copy, never one cached on the way.
-            xhr.setRequestHeader("Cache-Control", "no-cache");
-            xhr.setRequestHeader("Pragma", "no-cache");
-            xhr.send();
+            });
         }
     }
 
