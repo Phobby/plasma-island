@@ -133,7 +133,7 @@ Item {
             const packages = info.kind === "packages", clone = info.kind === "clone";
             provider.begin("c" + id, {
                 kind: info.kind,
-                icon: packages ? "system-software-install-symbolic" : clone ? "folder-download-symbolic" : "download",
+                icon: packages ? "package-symbolic" : clone ? "folder-download-symbolic" : "download",
                 // only the command's name, its sub-command, the host and the repository's name are ever known here
                 source: clone ? (info.host || info.name) : info.name,
                 fileName: packages ? info.action : clone ? info.repo : info.host,
@@ -156,7 +156,7 @@ Item {
             if (!provider.wantsPackageKit) return;
             provider.begin("p" + id, {
                 kind: "packages",
-                icon: "system-software-install-symbolic",
+                icon: "package-symbolic",
                 source: "PackageKit",
                 fileName: info.action,
                 detail: provider.stageText("packages", ""),

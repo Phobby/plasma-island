@@ -72,7 +72,7 @@ Item {
     function kind(type: int, text: string): string {
         return type === 4 ? "image" : type === 8 ? "files" : isCode(text) ? "code" : /^\s*https?:\/\/\S+\s*$/i.test(text) ? "link" : "text";
     }
-    readonly property var kindIcons: ({ image: "image-x-generic-symbolic", files: "document-multiple-symbolic", code: "code-context-symbolic",
+    readonly property var kindIcons: ({ image: "viewimage-symbolic", files: "document-multiple-symbolic", code: "code-context-symbolic",
                                         link: "link-symbolic", text: "edit-paste-symbolic" })
     function fileNames(text: string): string {
         return text.split(/\s+/).filter(s => s.length > 0).map(u => decodeURIComponent(u.replace(/\/+$/, "").replace(/^.*\//, ""))).join(", ");

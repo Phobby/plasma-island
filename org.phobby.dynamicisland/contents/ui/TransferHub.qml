@@ -65,7 +65,7 @@ Item {
             });
         } else if (t.state === "failed") {
             Object.assign(event, {
-                icon: "dialog-error-symbolic",
+                icon: "dialog-close-symbolic",
                 color: theme.red,
                 title: Lang.i18n("Failed"),
                 subtitle: t.errorText ? t.headline + " · " + t.errorText : t.headline,
@@ -77,7 +77,8 @@ Item {
             Object.assign(event, { icon: "dialog-cancel-symbolic", color: theme.subText, title: Lang.i18n("Cancelled"), subtitle: t.headline });
         } else {
             // it ended, and nothing says how
-            Object.assign(event, { icon: "dialog-information-symbolic", color: theme.subText, title: Lang.i18n("Finished") });
+            // (Breeze has no dialog-information-symbolic: the coloured one it falls back to is a filled square as a mask)
+            Object.assign(event, { icon: "help-about-symbolic", color: theme.subText, title: Lang.i18n("Finished") });
         }
         manager.flash(event);
     }

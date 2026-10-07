@@ -80,7 +80,7 @@ Item {
         if (status === "success" || status === "error" || status === "cancel") {
             manager.flash({
                 key: "dbus:" + id,
-                icon: status === "success" ? "dialog-ok-apply-symbolic" : status === "error" ? "dialog-error-symbolic" : "dialog-cancel-symbolic",
+                icon: status === "success" ? "dialog-ok-apply-symbolic" : status === "error" ? "dialog-close-symbolic" : "dialog-cancel-symbolic",
                 color: status === "success" ? theme.live : status === "error" ? theme.red : theme.subText,
                 title: title,
                 subtitle: status === "success" ? Lang.i18n("Done") : status === "error" ? Lang.i18n("Failed") : Lang.i18n("Cancelled"),
@@ -97,7 +97,7 @@ Item {
         function onEventFlashed(props) {
             if (!provider.enabled) return;
             provider.manager.flash({
-                icon: String(props.icon || "dialog-information-symbolic"),
+                icon: String(props.icon || "help-about-symbolic"),
                 color: provider.colorFor(props.color),
                 title: String(props.title || ""),
                 subtitle: String(props.subtitle || ""),

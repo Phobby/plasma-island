@@ -79,7 +79,7 @@ Item {
         case BluezQt.Device.OtherAudio: return "audio-speakers-symbolic";
         case BluezQt.Device.Keyboard: return "input-keyboard-symbolic";
         case BluezQt.Device.Mouse: return "input-mouse-symbolic";
-        case BluezQt.Device.Joypad: return "input-gaming-symbolic";
+        case BluezQt.Device.Joypad: return "input-gamepad-symbolic";
         case BluezQt.Device.Phone: return "smartphone-symbolic";
         case BluezQt.Device.Tablet: return "input-tablet-symbolic";
         default: return device && device.icon ? device.icon + "-symbolic" : "network-bluetooth-activated-symbolic";
