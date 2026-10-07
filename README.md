@@ -394,7 +394,29 @@ notify-done make -j16          # on the island while it runs, then "Done" or "Fa
 ## Performance
 
 <!-- PERF:BEGIN -->
-*Measurements are being added; see [docs/PERFORMANCE.md](docs/PERFORMANCE.md).*
+| State | plasmashell | + KWin | + sensor service | Wakeups/s | Memory (RSS / PSS) |
+|---|---|---|---|---|---|
+| The same desktop without the island | 0.00 % | 0.00 % | – | 0 | 212 / 68 MB |
+| The island with everything switched off | 0.01 % | 0.00 % | 0.07 % | 0 | 263 / 110 MB |
+| Idle, shrunk to a dot | 0.12 % | 0.00 % | 0.19 % | 4 | 283 / 122 MB |
+| Idle, the pill with the clock, no cat | 0.12 % | 0.00 % | 0.20 % | 4 | 282 / 120 MB |
+| Idle with default settings (the cat asleep) | 0.40 % | 0.11 % | 0.19 % | 66 | 284 / 123 MB |
+| The cat awake | 0.52 % | 0.17 % | 0.18 % | 107 | 283 / 123 MB |
+
+CPU as per cent of **one** core (the machine has twelve threads), medians of three runs of two minutes each (two for "The same desktop without the island"), in an isolated session on a 60 Hz screen; "+ KWin" and "+ sensor service" are what the compositor and Plasma's sensor daemon use beside the shell ("–": the daemon was not running). Measured on one desktop PC (Ryzen 5 7500F, RTX 4060, Plasma 6.6.6 on Wayland): on yours it will differ, and on a display with a higher refresh rate whatever animates costs more. **The island's code has changed since these were taken, and they were not taken again.** The method, every scenario and how to take your own: [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+
+**Not measured yet** (no figure is given for these):
+
+- Music playing, with and without the ambient glow and the cat
+- A look of your own: flat, glass with blur, a gradient
+- A burst of notifications (200 in 80 s)
+- An activity of the D-Bus API that changes every second
+- A download being tracked
+- Work in the background: the weather, two calendars and the notes, each asked once a minute
+- Frames per second and frame times
+- The long run of two hours: whether memory, threads or file descriptors grow
+- Energy in watts
+- Everything that needs a pointer: hovering, an open page, scrolling a list, stroking the cat
 <!-- PERF:END -->
 
 ## Privacy and the network
@@ -420,7 +442,7 @@ There is **no telemetry**: the island reports nothing to anybody, and has no acc
 
 Three more things worth knowing:
 
-- **A page that is switched off does no work.** AI and Cloud are not even loaded while they are off. With every page and watcher switched off the island measured the same as a desktop without it (see [Performance](#performance)).
+- **A page that is switched off does no work.** AI and Cloud are not even loaded while they are off. With every page and watcher switched off the island used 0.01 % of one core (a desktop without it: 0.00 %) and woke the processor less than once a second; it still holds about 50 MB of memory (see [Performance](#performance)).
 - **What others write is shown as plain text.** A notification's title, a track's name, a file's or a network's name is never read as markup, so it cannot make the island fetch a picture from somewhere.
 - **Programs are started without a shell**, each argument on its own; a password for a locked note goes to the program's standard input, never onto its command line.
 

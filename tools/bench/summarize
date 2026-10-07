@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 # summarize — the CSV files of tools/bench/run as tables and pictures.
 #
-#   tools/bench/summarize [--raw docs/perf/raw] [--out docs/perf]
+#   tools/bench/summarize [--raw docs/perf/raw] [--out docs/perf] [--readme]
 #
 # Writes into --out:
 #   summary.csv   one row per scenario, every figure
 #   summary.md    the same as a Markdown table (what docs/PERFORMANCE.md shows)
 #   cpu.svg       CPU per scenario: the shell, the compositor and the sensor daemon
 #   soak.svg      memory over a long run (when raw/soak.*.csv is there), with its slope
+# and with --readme the figures of docs/PERFORMANCE.md and the short table of
+# README.md and README.tr.md, each between its marks, with a list of what is
+# not measured yet.
+#
+# Only what was measured whole counts: where a folder has marks (done.tsv,
+# tools/bench/done) a file without its mark is left out and named. Such a
+# file was cut off, or is not the file that was marked.
 #
 # How a figure is made: a repetition's CPU is its whole CPU time over its whole
 # duration (per cent of one core); a scenario's is the median of its
@@ -15,11 +22,13 @@
 # every single second of every repetition (CPU time comes in steps of 10 ms,
 # so one second reads 0, 1, 2 … per cent). "over baseline" is the scenario's
 # median minus the baseline's: what the island adds to the same shell.
-import argparse, csv, re, statistics as st, sys
+import argparse, csv, importlib.machinery, importlib.util, re, statistics as st, subprocess, sys
 from collections import defaultdict
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent.parent
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parent.parent
+DONE = str(HERE / "done")
 
 def whole_rows(path):
     """The whole rows of a CSV: a run that was cut off (the computer went off) may end in half a line or in zero bytes."""
@@ -27,18 +36,34 @@ def whole_rows(path):
         lines = [line for line in f if "\0" not in line]
     return [row for row in csv.DictReader(lines) if None not in row and None not in row.values()]
 
+def marked(path):
+    """Whether a file has its mark (tools/bench/done), and what is wrong when it has not."""
+    r = subprocess.run([DONE, "check", str(path)], capture_output=True, text=True)
+    return r.returncode == 0, r.stdout.strip()
+
 def load(raw):
-    """scenario → [repetition → process → rows]"""
-    runs = defaultdict(dict)
+    """scenario → [repetition → process → rows], and the files that were left out with the reason"""
+    runs, left = defaultdict(dict), []
+    marks = (Path(raw) / "done.tsv").exists()       # a folder measured before there were marks counts as it is
     for path in sorted(Path(raw).glob("*.csv")):
         m = re.fullmatch(r"(.+?)\.(\d+)\.csv", path.name)
         if not m or "+frames" in path.name or path.name.endswith(".frames.csv"):
             continue
+        ok, why = marked(path) if marks else (True, "")
+        if not ok:
+            left.append((path.name, why)); continue
         by = defaultdict(list)
         for row in whole_rows(path):
             by[row["process"]].append(row)
         if by: runs[m.group(1)][int(m.group(2))] = by
-    return runs
+    return runs, left
+
+def marks(raw):
+    """file name → its mark, as tools/bench/done wrote it"""
+    try: lines = (Path(raw) / "done.tsv").read_text(errors="replace").splitlines()
+    except OSError: return {}
+    head = lines[0].split("\t") if lines else []
+    return {p[0]: dict(zip(head, p)) for p in (line.split("\t") for line in lines[1:]) if len(p) == len(head)}
 
 def num(row, key):
     try: return float(row[key])
@@ -72,6 +97,7 @@ def summarize(runs):
             "child": med(shell, "child"), "wake": med(shell, "wake"), "spawned": med(shell, "spawned"),
             "rss": med(shell, "rss"), "pss": med(shell, "pss"), "threads": med(shell, "threads"), "fds": med(shell, "fds"), "gpu": med(shell, "gpu"),
             "kwin": med(per["kwin_wayland"], "cpu"), "kwin_gpu": med(per["kwin_wayland"], "gpu"), "sensors": med(per["ksystemstats"], "cpu"),
+            "sensors_ran": bool(per["ksystemstats"]),       # without the island nothing starts the sensor daemon
         }
     return out
 
@@ -80,9 +106,12 @@ def order(names, listing):
     return known + sorted(n for n in names if n not in known)
 
 def scenario_list():
-    """Names and descriptions as tools/bench/run has them."""
-    text = (Path(__file__).resolve().parent / "run").read_text()
-    return re.findall(r'^\s*\("([\w-]+)", "((?:[^"\\]|\\.)*)",', text, re.M)
+    """Names, descriptions and whether a pointer is needed, as tools/bench/run has them."""
+    sys.dont_write_bytecode = True
+    loader = importlib.machinery.SourceFileLoader("bench_run", str(HERE / "run"))
+    run = importlib.util.module_from_spec(importlib.util.spec_from_loader("bench_run", loader))
+    loader.exec_module(run)
+    return [(s[0], s[1], s[5]) for s in run.SCENARIOS]
 
 # ---- pictures ---------------------------------------------------------------
 STYLE = """
@@ -205,6 +234,34 @@ SHORT = [
     ("notifications", "200 notifications in 80 s", "80 saniyede 200 bildirim"),
 ]
 
+# What the READMEs call the scenarios that are not measured yet: named there while none of its scenarios has a whole run.
+MISSING = [
+    (["media", "media-cat", "media-glow", "media-glow-cat"], "Music playing, with and without the ambient glow and the cat",
+     "Müzik çalarken; ortam ışığı ve kedi açıkken ve kapalıyken"),
+    (["theme-flat", "theme-glass", "theme-gradient"], "A look of your own: flat, glass with blur, a gradient", "Özel görünümler: düz, bulanık cam, gradyan"),
+    (["notifications"], "A burst of notifications (200 in 80 s)", "Bildirim yükü (80 saniyede 200 bildirim)"),
+    (["activity"], "An activity of the D-Bus API that changes every second", "D-Bus API'siyle gönderilen, her saniye değişen bir etkinlik"),
+    (["download"], "A download being tracked", "İzlenen bir indirme"),
+    (["background"], "Work in the background: the weather, two calendars and the notes, each asked once a minute",
+     "Arka plan işleri: her biri dakikada bir sorulan hava durumu, iki takvim ve notlar"),
+]
+# What no scenario of the table says, with the file that would: (key, English, Turkish).
+BESIDE = [
+    ("frames", "Frames per second and frame times", "Saniyedeki kare sayısı ve kare süreleri"),
+    ("soak", "The long run of two hours: whether memory, threads or file descriptors grow",
+     "İki saatlik uzun koşu: bellek, iş parçacığı ya da dosya tanımlayıcı sayısı büyüyor mu"),
+    ("energy", "Energy in watts", "Watt cinsinden enerji"),
+    ("pointer", "Everything that needs a pointer: hovering, an open page, scrolling a list, stroking the cat",
+     "İmleç gerektiren her şey: üzerine gelme, açık bir sayfa, liste kaydırma, kediyi okşama"),
+]
+WORDS = ({1: "one", 2: "two"}, {1: "bir", 2: "iki"})
+
+def taken(raw, out):
+    """Which of BESIDE is measured: a file that is there and, where the folder has marks, has its own."""
+    whole = lambda path: path.exists() and (not (path.parent / "done.tsv").exists() or marked(path)[0])
+    return {"frames": any(whole(f) for f in (Path(out) / "raw-frames").glob("*.frames.csv")), "soak": whole(Path(raw) / "soak.1.csv"),
+            "energy": any(Path(raw).glob("energy*.csv")), "pointer": False}
+
 def short_table(summary, turkish):
     head = ("| Durum | plasmashell | + KWin | + algılayıcı servisi | Uyanma/sn | Bellek (RSS / PSS) |" if turkish
             else "| State | plasmashell | + KWin | + sensor service | Wakeups/s | Memory (RSS / PSS) |")
@@ -213,8 +270,85 @@ def short_table(summary, turkish):
         if name not in summary: continue
         s = summary[name]
         pct = lambda v: (f"%{v:.2f}".replace(".", ",") if turkish else f"{v:.2f} %")
-        rows.append(f"| {turkce if turkish else english} | {pct(s['cpu'])} | {pct(s['kwin'])} | {pct(s['sensors'])} | {s['wake']:.0f} | {s['rss']:.0f} / {s['pss']:.0f} MB |")
+        rows.append(f"| {turkce if turkish else english} | {pct(s['cpu'])} | {pct(s['kwin'])} | {pct(s['sensors']) if s['sensors_ran'] else '–'} | {s['wake']:.0f} "
+                    f"| {s['rss']:.0f} / {s['pss']:.0f} MB |")
     return "\n".join(rows)
+
+def short_note(summary, changed, turkish):
+    """What stands under the short table: how the figures were taken, and of which code."""
+    shown = [(name, (turkce if turkish else english)) for name, english, turkce in SHORT if name in summary]
+    count = lambda name: WORDS[turkish].get(summary[name]["reps"], summary[name]["reps"])
+    fewer = [(f"\"{label}\" için {count(name)} koşu" if turkish else f"{count(name)} for \"{label}\"") for name, label in shown if summary[name]["reps"] != 3]
+    dash = any(not summary[name]["sensors_ran"] for name, _ in shown)
+    if turkish:
+        return ("CPU, **tek** çekirdeğin yüzdesi olarak (makinede on iki iş parçacığı var); her biri iki dakikalık üç koşunun ortancası"
+                + (f" ({', '.join(fewer)})" if fewer else "") + ", 60 Hz ekranlı izole bir oturumda. \"+ KWin\" ve "
+                "\"+ algılayıcı servisi\", kabuğun yanında bileşikleyicinin ve Plasma'nın algılayıcı servisinin kullandığıdır"
+                + (" (\"–\": servis çalışmıyordu)" if dash else "") + ". Tek bir masaüstü bilgisayarda ölçüldü (Ryzen 5 7500F, RTX 4060, Wayland üzerinde "
+                "Plasma 6.6.6): sizin sisteminizde farklı olacaktır; yenileme hızı daha yüksek bir ekranda hareket eden her şey daha pahalıdır. "
+                + ("**Adanın kodu bu ölçümlerden sonra değişti ve ölçümler yeni kodla tekrarlanmadı.** " if changed else "")
+                + "Yöntem, tüm senaryolar ve kendi ölçümünüzü nasıl alacağınız: [docs/PERFORMANCE.md](docs/PERFORMANCE.md) (İngilizce).")
+    return ("CPU as per cent of **one** core (the machine has twelve threads), medians of three runs of two minutes each"
+            + (f" ({', '.join(fewer)})" if fewer else "") + ", in an isolated session on a 60 Hz screen; \"+ KWin\" and \"+ sensor service\" are what "
+            "the compositor and Plasma's sensor daemon use beside the shell" + (" (\"–\": the daemon was not running)" if dash else "")
+            + ". Measured on one desktop PC (Ryzen 5 7500F, RTX 4060, Plasma 6.6.6 on Wayland): on yours it will differ, and on a display with a "
+            "higher refresh rate whatever animates costs more. "
+            + ("**The island's code has changed since these were taken, and they were not taken again.** " if changed else "")
+            + "The method, every scenario and how to take your own: [docs/PERFORMANCE.md](docs/PERFORMANCE.md).")
+
+def short_missing(summary, have, turkish):
+    """The READMEs' list of what has no figure yet."""
+    items = []
+    for names, english, turkce in MISSING:
+        if not any(n in summary for n in names): items.append(turkce if turkish else english)
+        else: items += [f"`{n}`" for n in names if n not in summary]
+    items += [(turkce if turkish else english) for key, english, turkce in BESIDE if not have[key]]
+    if not items: return ""
+    head = ("**Henüz ölçülmedi** (bunlar için rakam verilmiyor):" if turkish else "**Not measured yet** (no figure is given for these):")
+    return head + "\n\n" + "\n".join(f"- {item}" for item in items)
+
+def startup_table(raw):
+    """The start of the shell, from raw/startup.csv; "" when it was not measured whole."""
+    path = Path(raw) / "startup.csv"
+    if not path.exists() or ((Path(raw) / "done.tsv").exists() and not marked(path)[0]): return ""
+    rows = whole_rows(path)
+    def figure(kind, key):
+        v = [float(r[key]) for r in rows if r["shell"] == kind and r[key] not in ("", "-1")]
+        return (f"{st.median(v):.2f} ({min(v):.2f}–{max(v):.2f})", len(v)) if v else ("–", 0)
+    (without, n), (with_, _), (service, _) = figure("baseline", "shell_answers_s"), figure("island", "shell_answers_s"), figure("island", "island_service_s")
+    return "\n".join(["### The start of the shell", "",
+                      f"`tools/bench/startup`: plasmashell is started {n} times without the island and {n} times with it; the median, with the lowest and the highest.", "",
+                      "| | Seconds |", "|---|---|",
+                      f"| Until the shell answers on D-Bus, without the island | {without} |", f"| The same, with the island | {with_} |",
+                      f"| Until the island's own D-Bus service is there | {service} |"])
+
+def results(summary, names, listing, table, left, stamps, changed, have, raw):
+    """What stands between the marks of docs/PERFORMANCE.md: the figures, and what has none yet."""
+    days = sorted({m["finished"][:10] for m in stamps}); codes = sorted({m["code"] for m in stamps if m["code"] != "-"})
+    o = ["## The figures", ""]
+    if days:
+        o += [f"Taken {'on ' + days[0] if len(days) == 1 else 'from ' + days[0] + ' to ' + days[-1]}, of the island's code with the id "
+              f"{' and '.join('`' + c + '`' for c in codes)} (a checksum of `org.phobby.dynamicisland/` and `native/`: `tools/bench/done code` says a "
+              "checkout's, [`perf/raw/done.tsv`](perf/raw/done.tsv) the one of every file)."
+              + (" **The island's code has changed since, and nothing was measured again:** the figures are of that code, not of this checkout's." if changed else ""), ""]
+    o += table + [""]
+    fewer = [f"`{n}` has {summary[n]['reps']}" for n in names if summary[n]["reps"] != 3]
+    notes = []
+    if fewer: notes.append(f"Runs: three for every scenario, but {' and '.join(fewer)}. A run that was cut off (the computer went off), or was not taken whole, "
+                           "has no mark in `done.tsv` and is not counted.")
+    if any(not summary[n]["sensors_ran"] for n in names): notes.append("\"–\" under sensors: the daemon was not running (without the island nothing starts it).")
+    if notes: o += [" ".join(notes), ""]
+    o += ['<p align="center"><img src="perf/cpu.svg" alt="A bar for every scenario of the table: the CPU of plasmashell, of KWin and of ksystemstats, in per cent of one core." width="860"></p>', ""]
+    start = startup_table(raw)
+    if start: o += [start, ""]
+    missing = [f"`{n}`: {what}" for n, what, pointer in listing if n not in summary and not pointer]
+    if not have["frames"]: missing.append("Frames per second and frame times (`tools/bench/run --frames`).")
+    if not have["soak"]: missing.append("The long run of two hours (`tools/bench/soak`): whether memory, threads or file descriptors grow.")
+    if not have["energy"]: missing.append("Energy in watts: see \"Energy\" below.")
+    missing.append("The scenarios that need a pointer (" + ", ".join(f"`{n}`" for n, _, pointer in listing if pointer) + "): see \"What could not be measured\" below.")
+    o += ["## Not measured yet", "", "No figure is given for any of these; `tools/bench/chain` takes all but the last two (\"Taking your own\" below).", ""]
+    o += [f"- {item}" for item in missing]
+    return "\n".join(o)
 
 def between(path, begin, end, text):
     """Replace what stands between two marker lines of a file."""
@@ -225,44 +359,42 @@ def between(path, begin, end, text):
 def main():
     ap = argparse.ArgumentParser(description="The CSV files of tools/bench/run as tables and pictures.")
     ap.add_argument("--raw", default=str(REPO / "docs" / "perf" / "raw")); ap.add_argument("--out", default=str(REPO / "docs" / "perf"))
-    ap.add_argument("--readme", action="store_true", help="also write the short table into README.md and README.tr.md (between their PERF marks)")
+    ap.add_argument("--readme", action="store_true", help="also write the figures into docs/PERFORMANCE.md and the short table into README.md and README.tr.md (between their marks)")
     a = ap.parse_args()
-    runs = load(a.raw)
+    runs, left = load(a.raw)
+    for file, why in left: print(f"left out: {file} ({why})", file=sys.stderr)
     runs.pop("soak", None)
     summary = summarize(runs)
     if not summary: sys.exit(f"no measurements in {a.raw}")
-    listing = scenario_list(); labels = {n: n for n, _ in listing}; what = dict(listing)
-    names = order(summary.keys(), [n for n, _ in listing])
+    listing = scenario_list(); labels = {n: n for n, _, _ in listing}; what = {n: w for n, w, _ in listing}
+    names = order(summary.keys(), [n for n, _, _ in listing])
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     base = summary.get("baseline")
     keys = ["reps", "cpu", "cpu_min", "cpu_max", "cpu_p95", "cpu_peak", "child", "wake", "spawned", "rss", "pss", "threads", "fds", "gpu", "kwin", "kwin_gpu", "sensors"]
     with open(out / "summary.csv", "w", newline="") as f:
         w = csv.writer(f); w.writerow(["scenario"] + keys)
-        for n in names: w.writerow([n] + [round(summary[n][k], 3) for k in keys])
-    md = ["| Scenario | plasmashell CPU % (lowest–highest run) | over baseline | 1 s p95 / max | KWin % | sensors % | wakeups/s | child processes/h | RSS MB | PSS MB |",
-          "|---|---|---|---|---|---|---|---|---|---|"]
+        for n in names: w.writerow([n] + ["" if k == "sensors" and not summary[n]["sensors_ran"] else round(summary[n][k], 3) for k in keys])
+    md = ["| Scenario | runs | plasmashell CPU % (lowest–highest run) | over baseline | 1 s p95 / max | KWin % | sensors % | wakeups/s | child processes/h | RSS MB | PSS MB |",
+          "|---|---|---|---|---|---|---|---|---|---|---|"]
     for n in names:
         s = summary[n]
         over = f"{s['cpu'] - base['cpu']:+.2f}" if base and n != "baseline" else "–"
-        md.append(f"| `{n}`: {what.get(n, '')} | **{s['cpu']:.2f}** ({s['cpu_min']:.2f}–{s['cpu_max']:.2f}) | {over} | {s['cpu_p95']:.0f} / {s['cpu_peak']:.0f} | {s['kwin']:.2f} | {s['sensors']:.2f} "
-                  f"| {s['wake']:.0f} | {s['spawned']:.0f} | {s['rss']:.0f} | {s['pss']:.0f} |")
+        md.append(f"| `{n}`: {what.get(n, '')} | {s['reps']} | **{s['cpu']:.2f}** ({s['cpu_min']:.2f}–{s['cpu_max']:.2f}) | {over} | {s['cpu_p95']:.0f} / {s['cpu_peak']:.0f} "
+                  f"| {s['kwin']:.2f} | {f'{s["sensors"]:.2f}' if s['sensors_ran'] else '–'} | {s['wake']:.0f} | {s['spawned']:.0f} | {s['rss']:.0f} | {s['pss']:.0f} |")
     (out / "summary.md").write_text("\n".join(md) + "\n")
     cpu_chart(summary, names, labels, out / "cpu.svg")
     facts = soak_chart(a.raw, out / "soak.svg")
     print("\n".join(md))
     if a.readme:
-        note = ("CPU as per cent of **one** core (the machine has twelve threads), medians of three runs of two minutes each, in an isolated "
-                "session on a 60 Hz screen; \"+ KWin\" and \"+ sensor service\" are what the compositor and Plasma's sensor daemon use beside "
-                "the shell. Measured on one desktop PC (Ryzen 5 7500F, RTX 4060, Plasma 6.6.6 on Wayland): on yours it will differ, and on a "
-                "display with a higher refresh rate whatever animates costs more. The method, every scenario, the long run and how to take "
-                "your own: [docs/PERFORMANCE.md](docs/PERFORMANCE.md).")
-        not_ = ("CPU, **tek** çekirdeğin yüzdesi olarak (makinede on iki iş parçacığı var); her biri iki dakikalık üç koşunun ortancası, 60 Hz "
-                "ekranlı izole bir oturumda. \"+ KWin\" ve \"+ algılayıcı servisi\", kabuğun yanında bileşikleyicinin ve Plasma'nın algılayıcı "
-                "servisinin kullandığıdır. Tek bir masaüstü bilgisayarda ölçüldü (Ryzen 5 7500F, RTX 4060, Wayland üzerinde Plasma 6.6.6): sizin "
-                "sisteminizde farklı olacaktır; yenileme hızı daha yüksek bir ekranda hareket eden her şey daha pahalıdır. Yöntem, tüm senaryolar, "
-                "uzun koşu ve kendi ölçümünüzü nasıl alacağınız: [docs/PERFORMANCE.md](docs/PERFORMANCE.md) (İngilizce).")
-        between(REPO / "README.md", "<!-- PERF:BEGIN -->", "<!-- PERF:END -->", short_table(summary, False) + "\n\n" + note)
-        between(REPO / "README.tr.md", "<!-- PERF:BEGIN -->", "<!-- PERF:END -->", short_table(summary, True) + "\n\n" + not_)
+        counted = {f"{name}.{rep}.csv" for name, reps in runs.items() for rep in reps}
+        stamps = [m for file, m in marks(a.raw).items() if file in counted]
+        code = subprocess.run([DONE, "code"], capture_output=True, text=True).stdout.strip()
+        changed = any(m["code"] not in ("-", code) for m in stamps)
+        have = taken(a.raw, out)
+        between(REPO / "docs" / "PERFORMANCE.md", "<!-- RESULTS:BEGIN -->", "<!-- RESULTS:END -->", results(summary, names, listing, md, left, stamps, changed, have, a.raw))
+        for name, turkish in (("README.md", False), ("README.tr.md", True)):
+            between(REPO / name, "<!-- PERF:BEGIN -->", "<!-- PERF:END -->",
+                    "\n\n".join(filter(None, [short_table(summary, turkish), short_note(summary, changed, turkish), short_missing(summary, have, turkish)])))
     if facts:
         print(f"\nsoak: {facts['hours']:.2f} h; RSS {facts['rss_first']:.0f} → {facts['rss_last']:.0f} MB ({facts['rss_slope']:+.2f} MB/h), "
               f"PSS {facts['pss_first']:.0f} → {facts['pss_last']:.0f} MB ({facts['pss_slope']:+.2f} MB/h), threads {facts['threads'][0]:.0f}–{facts['threads'][1]:.0f}, "

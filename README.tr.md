@@ -396,7 +396,29 @@ notify-done make -j16          # çalışırken adada, sonra "Bitti" ya da "Baş
 ## Performans
 
 <!-- PERF:BEGIN -->
-*Ölçümler ekleniyor; bkz. [docs/PERFORMANCE.md](docs/PERFORMANCE.md) (İngilizce).*
+| Durum | plasmashell | + KWin | + algılayıcı servisi | Uyanma/sn | Bellek (RSS / PSS) |
+|---|---|---|---|---|---|
+| Adasız aynı masaüstü | %0,00 | %0,00 | – | 0 | 212 / 68 MB |
+| Her şeyi kapalı ada | %0,01 | %0,00 | %0,07 | 0 | 263 / 110 MB |
+| Boşta, noktaya küçülmüş | %0,12 | %0,00 | %0,19 | 4 | 283 / 122 MB |
+| Boşta, saatli hap, kedisiz | %0,12 | %0,00 | %0,20 | 4 | 282 / 120 MB |
+| Boşta, varsayılan ayarlar (kedi uyuyor) | %0,40 | %0,11 | %0,19 | 66 | 284 / 123 MB |
+| Kedi uyanık | %0,52 | %0,17 | %0,18 | 107 | 283 / 123 MB |
+
+CPU, **tek** çekirdeğin yüzdesi olarak (makinede on iki iş parçacığı var); her biri iki dakikalık üç koşunun ortancası ("Adasız aynı masaüstü" için iki koşu), 60 Hz ekranlı izole bir oturumda. "+ KWin" ve "+ algılayıcı servisi", kabuğun yanında bileşikleyicinin ve Plasma'nın algılayıcı servisinin kullandığıdır ("–": servis çalışmıyordu). Tek bir masaüstü bilgisayarda ölçüldü (Ryzen 5 7500F, RTX 4060, Wayland üzerinde Plasma 6.6.6): sizin sisteminizde farklı olacaktır; yenileme hızı daha yüksek bir ekranda hareket eden her şey daha pahalıdır. **Adanın kodu bu ölçümlerden sonra değişti ve ölçümler yeni kodla tekrarlanmadı.** Yöntem, tüm senaryolar ve kendi ölçümünüzü nasıl alacağınız: [docs/PERFORMANCE.md](docs/PERFORMANCE.md) (İngilizce).
+
+**Henüz ölçülmedi** (bunlar için rakam verilmiyor):
+
+- Müzik çalarken; ortam ışığı ve kedi açıkken ve kapalıyken
+- Özel görünümler: düz, bulanık cam, gradyan
+- Bildirim yükü (80 saniyede 200 bildirim)
+- D-Bus API'siyle gönderilen, her saniye değişen bir etkinlik
+- İzlenen bir indirme
+- Arka plan işleri: her biri dakikada bir sorulan hava durumu, iki takvim ve notlar
+- Saniyedeki kare sayısı ve kare süreleri
+- İki saatlik uzun koşu: bellek, iş parçacığı ya da dosya tanımlayıcı sayısı büyüyor mu
+- Watt cinsinden enerji
+- İmleç gerektiren her şey: üzerine gelme, açık bir sayfa, liste kaydırma, kediyi okşama
 <!-- PERF:END -->
 
 ## Gizlilik ve ağ
@@ -422,7 +444,7 @@ notify-done make -j16          # çalışırken adada, sonra "Bitti" ya da "Baş
 
 Bilinmesi gereken üç şey daha:
 
-- **Kapalı bir sayfa iş yapmaz.** Yapay Zeka ve Bulut kapalıyken yüklenmez bile. Tüm sayfalar ve izleyiciler kapalıyken ada, onsuz bir masaüstüyle aynı ölçüldü (bkz. [Performans](#performans)).
+- **Kapalı bir sayfa iş yapmaz.** Yapay Zeka ve Bulut kapalıyken yüklenmez bile. Tüm sayfalar ve izleyiciler kapalıyken ada tek çekirdeğin %0,01'ini kullandı (adasız masaüstü: %0,00) ve işlemciyi saniyede birden az uyandırdı; yine de yaklaşık 50 MB bellek tutar (bkz. [Performans](#performans)).
 - **Başkalarının yazdığı düz metin olarak gösterilir.** Bir bildirimin başlığı, bir parçanın, bir dosyanın ya da bir ağın adı asla biçimlendirme olarak okunmaz; bu yüzden adaya bir yerden resim çektiremez.
 - **Programlar kabuk olmadan başlatılır**, her argüman ayrı ayrı; kilitli bir notun parolası programın standart girdisine gider, asla komut satırına değil.
 

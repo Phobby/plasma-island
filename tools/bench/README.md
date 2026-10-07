@@ -10,7 +10,7 @@ None of these needs root, and none touches your own session.
 | `startup` | How long the shell takes to come up, with and without the island. |
 | `chain` | All of the above in one go, in the background, made to be cut off: see below. |
 | `done` | The marks that say a measurement was taken whole (`done.tsv` beside the CSV files). |
-| `summarize` | Turns the CSV files into `docs/perf/summary.md`, `summary.csv`, `cpu.svg` and (for a long run) `soak.svg`. |
+| `summarize` | Turns the CSV files into `docs/perf/summary.md`, `summary.csv`, `cpu.svg` and (for a long run) `soak.svg`; with `--readme` also into the figures of `docs/PERFORMANCE.md` and the short table of both READMEs, each with a list of what is not measured yet. Only what has its mark in `done.tsv` counts: a file that was cut off is left out and named. |
 
 ```bash
 tools/bench/run --reps 3 --warmup 60 --duration 120 all    # every scenario that needs no pointer, about three hours

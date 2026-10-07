@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 318" width="860" height="318" role="img" aria-label="CPU per scenario, per cent of one core">
+
+  <style>
+    .bg{fill:#fcfcfb}.ink{fill:#0b0b0b}.ink2{fill:#52514e}.muted{fill:#898781}.grid{stroke:#e1e0d9}.axis{stroke:#c3c2b7}
+    .s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.l1{stroke:#2a78d6}.l2{stroke:#eb6834}.gap{stroke:#fcfcfb}
+    text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+    @media (prefers-color-scheme: dark){
+      .bg{fill:#1a1a19}.ink{fill:#ffffff}.ink2{fill:#c3c2b7}.grid{stroke:#2c2c2a}.axis{stroke:#383835}
+      .s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.l1{stroke:#3987e5}.l2{stroke:#d95926}.gap{stroke:#1a1a19}
+    }
+  </style>
+<rect class="bg" width="860" height="318"/>
+<text class="ink" x="16" y="24" font-size="15" font-weight="600">CPU while the island does this, per cent of one core</text>
+<rect class="s1" x="16" y="36" width="10" height="10" rx="2"/><text class="ink2" x="31" y="45" font-size="12">plasmashell</text>
+<rect class="s2" x="118.6" y="36" width="10" height="10" rx="2"/><text class="ink2" x="133.6" y="45" font-size="12">KWin (the compositor)</text>
+<rect class="s3" x="287.2" y="36" width="10" height="10" rx="2"/><text class="ink2" x="302.2" y="45" font-size="12">ksystemstats (sensors)</text>
+<line class="axis" x1="260.0" y1="60" x2="260.0" y2="274" stroke-width="1"/>
+<text class="muted" x="260.0" y="290" font-size="11" text-anchor="middle">0</text>
+<line class="grid" x1="366.0" y1="60" x2="366.0" y2="274" stroke-width="1"/>
+<text class="muted" x="366.0" y="290" font-size="11" text-anchor="middle">0.2</text>
+<line class="grid" x1="472.0" y1="60" x2="472.0" y2="274" stroke-width="1"/>
+<text class="muted" x="472.0" y="290" font-size="11" text-anchor="middle">0.4</text>
+<line class="grid" x1="578.0" y1="60" x2="578.0" y2="274" stroke-width="1"/>
+<text class="muted" x="578.0" y="290" font-size="11" text-anchor="middle">0.6</text>
+<line class="grid" x1="684.0" y1="60" x2="684.0" y2="274" stroke-width="1"/>
+<text class="muted" x="684.0" y="290" font-size="11" text-anchor="middle">0.8</text>
+<line class="grid" x1="790.0" y1="60" x2="790.0" y2="274" stroke-width="1"/>
+<text class="muted" x="790.0" y="290" font-size="11" text-anchor="middle">1</text>
+<text class="muted" x="525.0" y="308" font-size="11" text-anchor="middle">% of one core (median of the runs)</text>
+<text class="ink2" x="250" y="83.0" font-size="12" text-anchor="end">baseline</text>
+<text class="ink" x="266.0" y="83.0" font-size="12">0.00</text>
+<text class="ink2" x="250" y="113.0" font-size="12" text-anchor="end">idle</text>
+<path class="s1" d="M260.0,101.0h210.0v16h-210.0z"><title>idle: s1 0.40%</title></path>
+<path class="s2" d="M472.0,101.0h55.4v16h-55.4z"><title>idle: s2 0.11%</title></path>
+<path class="s3" d="M529.4,101.0h97.6a4,4 0 0 1 4,4v8a4,4 0 0 1 -4,4h-97.6z"><title>idle: s3 0.19%</title></path>
+<text class="ink" x="637.0" y="113.0" font-size="12">0.70</text>
+<text class="ink2" x="250" y="143.0" font-size="12" text-anchor="end">idle-dot</text>
+<path class="s1" d="M260.0,131.0h59.8v16h-59.8z"><title>idle-dot: s1 0.12%</title></path>
+<path class="s3" d="M321.8,131.0h97.6a4,4 0 0 1 4,4v8a4,4 0 0 1 -4,4h-97.6z"><title>idle-dot: s3 0.19%</title></path>
+<text class="ink" x="429.4" y="143.0" font-size="12">0.31</text>
+<text class="ink2" x="250" y="173.0" font-size="12" text-anchor="end">idle-no-cat</text>
+<path class="s1" d="M260.0,161.0h59.8v16h-59.8z"><title>idle-no-cat: s1 0.12%</title></path>
+<path class="s3" d="M321.8,161.0h102.0a4,4 0 0 1 4,4v8a4,4 0 0 1 -4,4h-102.0z"><title>idle-no-cat: s3 0.20%</title></path>
+<text class="ink" x="433.8" y="173.0" font-size="12">0.32</text>
+<text class="ink2" x="250" y="203.0" font-size="12" text-anchor="end">everything-off</text>
+<path class="s1" d="M260.0,191.0h2.4v16h-2.4z"><title>everything-off: s1 0.01%</title></path>
+<path class="s3" d="M264.4,191.0h31.3a4,4 0 0 1 4,4v8a4,4 0 0 1 -4,4h-31.3z"><title>everything-off: s3 0.07%</title></path>
+<text class="ink" x="305.8" y="203.0" font-size="12">0.07</text>
+<text class="ink2" x="250" y="233.0" font-size="12" text-anchor="end">cat-awake</text>
+<path class="s1" d="M260.0,221.0h271.8v16h-271.8z"><title>cat-awake: s1 0.52%</title></path>
+<path class="s2" d="M533.8,221.0h86.3v16h-86.3z"><title>cat-awake: s2 0.17%</title></path>
+<path class="s3" d="M622.2,221.0h93.2a4,4 0 0 1 4,4v8a4,4 0 0 1 -4,4h-93.2z"><title>cat-awake: s3 0.18%</title></path>
+<text class="ink" x="725.3" y="233.0" font-size="12">0.87</text>
+<text class="ink2" x="250" y="263.0" font-size="12" text-anchor="end">cat-still</text>
+<path class="s1" d="M260.0,251.0h64.2v16h-64.2z"><title>cat-still: s1 0.12%</title></path>
+<path class="s3" d="M326.2,251.0h97.6a4,4 0 0 1 4,4v8a4,4 0 0 1 -4,4h-97.6z"><title>cat-still: s3 0.19%</title></path>
+<text class="ink" x="433.8" y="263.0" font-size="12">0.32</text>
+</svg>
