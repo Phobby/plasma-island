@@ -97,6 +97,9 @@ What stands in for it:
 ## Taking your own
 
 ```bash
+tools/bench/chain                                           # everything below, in the background; goes on where it was cut off
+tools/bench/chain --status                                  # what is measured, what is left, how long that takes
+# or piece by piece:
 tools/bench/run --list
 tools/bench/run --reps 3 --warmup 60 --duration 120 all     # about three hours; your desktop stays usable
 tools/bench/soak --hours 2
@@ -105,4 +108,6 @@ tools/bench/summarize                                       # docs/perf/summary.
 tools/bench/sample --pid "$(pgrep -x plasmashell)" --children --gpu --duration 120 --out /tmp/my-shell.csv
 ```
 
-The raw CSV files of the figures here are in [`perf/raw/`](perf/raw/).
+The raw CSV files of the figures here are in [`perf/raw/`](perf/raw/);
+`done.tsv` beside them says which code each measured and when
+([`tools/bench`](../tools/bench/README.md)).

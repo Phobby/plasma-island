@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+# chain — every measurement of docs/PERFORMANCE.md, one after the other, made to be cut off.
+#
+#   tools/bench/chain             start it in the background, or go on where it was cut off
+#   tools/bench/chain --status    what is measured, what is left and how long that takes
+#   tools/bench/chain --stop      end it, and its session with it
+#
+# Hours of measuring: every scenario three times, `background` once for ten
+# minutes, seven scenarios with their frames counted, the start of the shell,
+# and last the long run of two hours (tools/bench/soak). Whatever has ended
+# is written to the disk for good and gets its mark (tools/bench/done), so
+# starting the chain again after the computer went off measures only what has
+# no mark: the repetition that was cut off is measured again from its start,
+# what ended before it is kept. The long run cannot be picked up in the
+# middle; it starts anew, and what the cut run had measured (written to the
+# disk every quarter of an hour) is kept beside it as soak.cut-….csv.
+#
+# While it runs it keeps the computer from going to sleep (systemd-inhibit)
+# and writes what it does to docs/perf/chain.log; at its end it stops the
+# session. One chain at a time. Leave the island's code alone meanwhile
+# (org.phobby.dynamicisland/, native/): every step installs this checkout
+# into the session, and what is marked as measured of other code is measured
+# again by the next start. Keep the machine quiet too: no builds, no tests.
+set -uo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+B="$HERE/tools/bench"; S="$HERE/tools/nested-session"; P="$HERE/docs/perf"
+LOG="$P/chain.log"; LOCK="${XDG_RUNTIME_DIR:-/tmp}/island-bench-chain.pid"
+
+# What tools/bench/run is asked, step after step; then the start of the shell, and last the long run.
+STEP1=(--reps 3 --warmup 60 --duration 120 --out "$P/raw" all)
+STEP2=(--reps 1 --warmup 60 --duration 600 --out "$P/raw-long" background)
+STEP3=(--frames --reps 1 --warmup 45 --duration 60 --out "$P/raw-frames" idle idle-no-cat cat-awake media media-glow media-glow-cat notifications)
+SOAK_HOURS=2
+BETWEEN=13      # seconds a repetition takes beside its warm-up and its measuring: the shell is started three times
+
+say() { echo "$(date '+%F %T') $*"; }
+option() { local name="$1"; shift; while [ $# -gt 1 ]; do [ "$1" = "$name" ] && { echo "$2"; return; }; shift; done; }
+running() { local p; p="$(cat "$LOCK" 2>/dev/null)"; [ -n "$p" ] && grep -q -a -s "bench/chain" "/proc/$p/cmdline" && echo "$p"; }
+startup_done() { "$B/done" check "$P/raw/startup.csv" --code "$("$B/done" code)" >/dev/null; }
+soak_done() { "$B/done" check "$P/raw/soak.1.csv" --seconds $((SOAK_HOURS * 3600)) --code "$("$B/done" code)" >/dev/null; }
+
+status() {
+    local left=0 s plan todo kept each p
+    for s in STEP1 STEP2 STEP3; do
+        local -n step="$s"
+        plan="$("$B/run" --resume --dry-run "${step[@]}")"
+        todo="$(grep -c ': to measure' <<<"$plan")"; kept="$(grep -c 'kept$' <<<"$plan")"
+        each=$(( $(option --warmup "${step[@]}") + $(option --duration "${step[@]}") + BETWEEN ))
+        left=$(( left + todo * each ))
+        printf '%-11s %2d done, %2d to measure%s\n' "$(basename "$(option --out "${step[@]}")")" "$kept" "$todo" \
+            "$([ "$todo" -gt 0 ] && echo " (next: $(grep -m1 ': to measure' <<<"$plan" | cut -d: -f1))")"
+        unset -n step
+    done
+    if startup_done; then echo "startup     done"; else echo "startup     to measure"; left=$((left + 90)); fi
+    if soak_done; then echo "long run    done"; else echo "long run    to run ($SOAK_HOURS h)"; left=$((left + SOAK_HOURS * 3600 + 90)); fi
+    if [ "$left" -eq 0 ]; then echo "nothing is left to measure"
+    else echo "left: about $((left / 3600)) h $((left % 3600 / 60)) min; started now it ends around $(date -d "+$left seconds" '+%H:%M')"; fi
+    p="$(running)" && echo "a chain is running (process $p); the last it wrote: $(tail -n 1 "$LOG" 2>/dev/null)"
+    return 0
+}
+
+case "${1:-}" in
+-h|--help) sed -n '2,23p' "$0" ;;
+--status) status ;;
+--stop)
+    p="$(running)" || { echo "no chain is running"; exit 0; }
+    kill -TERM "$p"
+    for _ in $(seq 40); do [ -z "$(running)" ] && break; sleep 0.5; done
+    [ -z "$(running)" ] && echo "stopped" || { echo "it does not end: process $p" >&2; exit 1; }
+    ;;
+"")
+    p="$(running)" && { echo "a chain is running already (process $p): tools/bench/chain --status" >&2; exit 1; }
+    mkdir -p "$P"; status
+    inhibit=()
+    command -v systemd-inhibit >/dev/null 2>&1 && inhibit=(systemd-inhibit --what=idle:sleep --who="plasma-island bench" --why="tools/bench/chain is measuring" --mode=block)
+    setsid nohup "${inhibit[@]}" "$B/chain" --run >>"$LOG" 2>&1 </dev/null &
+    echo "started in the background; it writes to ${LOG#"$HERE"/} (tools/bench/chain --status, --stop)"
+    [ ${#inhibit[@]} -gt 0 ] || echo "systemd-inhibit is not there: nothing keeps the computer from going to sleep"
+    ;;
+--run)          # the chain itself: what a start puts into the background
+    echo $$ > "$LOCK"
+    ended() { rm -f "$LOCK"; }
+    trap ended EXIT
+    # (a signal is heard at once only while the shell waits: so every long step runs behind a `wait`)
+    trap 'trap - TERM INT; say "chain: stopped"; "$S" stop >/dev/null 2>&1; ended; kill 0' TERM INT
+    cd "$HERE" || exit 1
+    say "chain: start; code $("$B/done" code), commit $(git rev-parse --short HEAD 2>/dev/null || echo "?")$(git diff --quiet HEAD -- org.phobby.dynamicisland native 2>/dev/null || echo " with changes that are not committed")"
+    "$S" stop >/dev/null 2>&1                 # a session left over from a chain that was ended: a fresh one
+    failed=0
+    for s in STEP1 STEP2 STEP3; do
+        declare -n step="$s"
+        for pass in 1 2 3; do
+            "$B/run" --resume "${step[@]}" & wait $!; r=$?
+            [ $r -eq 0 ] && break
+            say "chain: tools/bench/run ended with $r (pass $pass of 3); the session is started anew"
+            "$S" stop >/dev/null 2>&1
+        done
+        [ $r -eq 0 ] || failed=1
+        say "chain: $(basename "$(option --out "${step[@]}")") $([ $r -eq 0 ] && echo "done" || echo "NOT whole")"
+        unset -n step
+    done
+    if ! startup_done; then
+        { "$S" pid kwin_wayland >/dev/null 2>&1 || "$S" start --audio; } && "$S" install >/dev/null \
+            && { "$B/startup" --reps 5 --out "$P/raw/startup.csv" & wait $!; } \
+            && "$B/done" mark "$P/raw/startup.csv" --code "$("$B/done" code)" || failed=1
+        say "chain: startup $(startup_done && echo "done" || echo "NOT whole")"
+    fi
+    "$B/soak" --resume --hours "$SOAK_HOURS" --out "$P/raw" & wait $!; r=$?
+    [ $r -eq 0 ] || failed=1
+    say "chain: long run $([ $r -eq 0 ] && echo "done" || echo "NOT whole")"
+    "$S" stop
+    say "chain: end$([ $failed -eq 0 ] || echo "; not everything was measured (tools/bench/chain --status)")"
+    exit $failed
+    ;;
+*) echo "unknown option: $1 (tools/bench/chain --help)" >&2; exit 2 ;;
+esac

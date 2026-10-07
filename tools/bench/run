@@ -2,7 +2,7 @@
 # run — measure what the island costs, one scenario at a time, in tools/nested-session.
 #
 #   tools/bench/run --list
-#   tools/bench/run [--reps 3] [--warmup 60] [--duration 120] [--out DIR] [--frames] [--resume] SCENARIO…
+#   tools/bench/run [--reps 3] [--warmup 60] [--duration 120] [--out DIR] [--frames] [--resume] [--dry-run] SCENARIO…
 #   tools/bench/run … all            every scenario that needs no pointer
 #
 # For every repetition the session's plasmashell is started anew with a fresh
@@ -18,9 +18,13 @@
 # logging itself costs CPU, so the CPU figures of such a run are not kept
 # beside the others (the file is named SCENARIO+frames).
 #
-# `--resume` keeps every repetition whose CSV in DIR already holds the whole
-# measurement and runs the others: for going on after a run of hours was cut
-# off (the computer was switched off). A CSV that was cut off is run again.
+# `--resume` keeps every repetition that is marked as done and measures the
+# others: for going on after a run of hours was cut off (the computer went
+# off). A repetition that has ended is written to the disk for good and gets
+# its mark in DIR/done.tsv (tools/bench/done): the file's checksum, its
+# lengths and the code it measured. One without a mark was cut off and is
+# measured again from its start; so is one that measured other code than this
+# checkout's. `--dry-run` only says what would be kept and what measured.
 #
 # The session is headless unless you started it yourself with --windowed: its
 # screen is 1920x1080 at 60 Hz, drawn by the GPU, shown to nobody. Scenarios
@@ -34,6 +38,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 SESSION = str(REPO / "tools" / "nested-session")
 SAMPLE = str(HERE / "sample")
+DONE = str(HERE / "done")
 
 def session(*args, check=True, capture=False):
     r = subprocess.run([SESSION, *args], stdout=subprocess.PIPE if capture else None, stderr=subprocess.PIPE if capture else None, text=True)
@@ -179,25 +184,31 @@ def frames(log, out, start, seconds):
             w.writerow([len(rows), seconds, round(len(rows) / seconds, 2), total[len(total) // 2], total[int(len(total) * 0.95)], total[-1], render[len(render) // 2]])
         else:
             w.writerow([0, seconds, 0, "", "", "", ""])
+        f.flush(); os.fsync(f.fileno())
 
 def complete(path, duration):
-    """Whether the CSV of an earlier run holds the whole measurement (one that was cut off holds fewer seconds)."""
+    """Whether a CSV holds the whole measurement (when the shell ended on the way it holds fewer seconds)."""
     try:
-        with open(path, newline="") as f:
-            return sum(1 for row in csv.DictReader(f) if row.get("process") == "plasmashell") >= duration - 1
+        with open(path, newline="", errors="replace") as f:
+            return sum(1 for row in csv.DictReader(l for l in f if "\0" not in l) if row.get("process") == "plasmashell") >= duration - 1
     except OSError:
         return False
+
+def done(*args):
+    """tools/bench/done: whether it said yes, and what it said."""
+    r = subprocess.run([DONE, *args], capture_output=True, text=True)
+    return r.returncode == 0, r.stdout.strip()
 
 def main():
     ap = argparse.ArgumentParser(add_help=False)
     ap.add_argument("--list", action="store_true"); ap.add_argument("--reps", type=int, default=3)
     ap.add_argument("--warmup", type=float, default=60); ap.add_argument("--duration", type=float, default=120)
     ap.add_argument("--out", default=str(REPO / "docs" / "perf" / "raw")); ap.add_argument("--frames", action="store_true")
-    ap.add_argument("--resume", action="store_true")
+    ap.add_argument("--resume", action="store_true"); ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("-h", "--help", action="store_true"); ap.add_argument("scenarios", nargs="*")
     a = ap.parse_args()
     if a.help or (not a.list and not a.scenarios):
-        print("".join(l[2:] if l.startswith("# ") else "\n" for l in Path(__file__).read_text().splitlines(True)[1:31])); return
+        print("".join(l[2:] if l.startswith("# ") else "\n" for l in Path(__file__).read_text().splitlines(True)[1:35])); return
     if a.list:
         for name, what, island, settings, driver, pointer in SCENARIOS:
             print(f"{name:18} {'pointer  ' if pointer else '         '}{what}")
@@ -206,17 +217,33 @@ def main():
     unknown = set(a.scenarios) - {s[0] for s in SCENARIOS} - {"all"}
     if unknown: sys.exit(f"no such scenario: {', '.join(sorted(unknown))} (tools/bench/run --list)")
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
-    if not pid("kwin_wayland"):
-        session("start", "--audio")
-    session("install", capture=True)
-    env = ["QT_LOGGING_RULES=qt.scenegraph.time.renderloop.debug=true"] if a.frames else []
+    code = done("code")[1]
+    file = lambda name, rep: out / f"{name}{'+frames' if a.frames else ''}.{rep}.csv"
+    lengths = lambda island: ["--seconds", str(a.duration), "--warmup", str(a.warmup), "--code", code if island else "-"]
+    # What is to be measured: everything, or with --resume what has no mark.
+    todo = set()
     for name, what, island, settings, driver, pointer in wanted:
         if pointer:
             print(f"{name}: needs a pointer, skipped (tools/demo/pointer)"); continue
         for rep in range(1, a.reps + 1):
-            target = out / f"{name}{'+frames' if a.frames else ''}.{rep}.csv"
-            if a.resume and complete(target, a.duration) and (not a.frames or (out / f"{name}.{rep}.frames.csv").exists()):
-                print(f"{name} {rep}/{a.reps}: {target.name} is there, kept", flush=True); continue
+            target = file(name, rep)
+            ok, why = done("check", str(target), *lengths(island)) if a.resume else (False, "")
+            if ok and a.frames and not (out / f"{name}.{rep}.frames.csv").exists(): ok, why = False, "its frames are missing"
+            if ok:
+                print(f"{name} {rep}/{a.reps}: {target.name} is marked as done, kept", flush=True); continue
+            todo.add((name, rep))
+            if a.dry_run or (a.resume and target.exists()):
+                print(f"{name} {rep}/{a.reps}: to measure" + (f" ({target.name}: {why})" if target.exists() and why else ""), flush=True)
+    if a.dry_run or not todo: return
+    if not pid("kwin_wayland"):
+        session("start", "--audio")
+    session("install", capture=True)
+    env = ["QT_LOGGING_RULES=qt.scenegraph.time.renderloop.debug=true"] if a.frames else []
+    failed = 0
+    for name, what, island, settings, driver, pointer in wanted:
+        for rep in range(1, a.reps + 1):
+            if (name, rep) not in todo: continue
+            target = file(name, rep)
             session("shell", "--no-island", capture=True)          # the island's settings go with it
             if isinstance(settings, tuple):                   # made-up data of tools/demo, and more beside it
                 settings = dict(demo_settings(*settings[1]), **settings[2])
@@ -245,7 +272,13 @@ def main():
                 with open(log, "rb") as f:
                     f.seek(mark); tail.write_bytes(f.read())
                 frames(tail, out / f"{name}.{rep}.frames.csv", mark, a.duration); tail.unlink()
-            print(f"{name} {rep}/{a.reps}: {target.name}", flush=True)
+            if complete(target, a.duration):
+                done("mark", str(target), *lengths(island))
+                print(f"{name} {rep}/{a.reps}: {target.name}", flush=True)
+            else:                                             # the shell ended on the way: no mark, so --resume measures it again
+                failed += 1
+                print(f"{name} {rep}/{a.reps}: {target.name} does not hold the whole measurement, not marked", flush=True)
+    sys.exit(1 if failed else 0)
 
 if __name__ == "__main__":
     main()

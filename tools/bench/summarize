@@ -21,6 +21,12 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent.parent
 
+def whole_rows(path):
+    """The whole rows of a CSV: a run that was cut off (the computer went off) may end in half a line or in zero bytes."""
+    with open(path, newline="", errors="replace") as f:
+        lines = [line for line in f if "\0" not in line]
+    return [row for row in csv.DictReader(lines) if None not in row and None not in row.values()]
+
 def load(raw):
     """scenario → [repetition → process → rows]"""
     runs = defaultdict(dict)
@@ -29,9 +35,8 @@ def load(raw):
         if not m or "+frames" in path.name or path.name.endswith(".frames.csv"):
             continue
         by = defaultdict(list)
-        with open(path, newline="") as f:
-            for row in csv.DictReader(f):
-                by[row["process"]].append(row)
+        for row in whole_rows(path):
+            by[row["process"]].append(row)
         if by: runs[m.group(1)][int(m.group(2))] = by
     return runs
 
@@ -145,9 +150,10 @@ def slope(xs, ys):
     return sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / den if den else 0.0
 
 def soak_chart(raw, path):
-    files = sorted(Path(raw).glob("soak.*.csv"))
-    if not files: return None
-    rows = [r for r in csv.DictReader(open(files[0], newline="")) if r["process"] == "plasmashell"]
+    # The whole run; as long as there is none, the longest of the runs that were cut off (soak.cut-….csv).
+    files = [Path(raw) / "soak.1.csv"] if (Path(raw) / "soak.1.csv").exists() else sorted(Path(raw).glob("soak.cut-*.csv"))
+    runs = [[r for r in whole_rows(f) if r["process"] == "plasmashell"] for f in files]
+    rows = max(runs, key=len, default=[])
     if len(rows) < 10: return None
     t = [num(r, "t") / 3600.0 for r in rows]; rss = [num(r, "rss_kb") / 1024.0 for r in rows]; pss = [num(r, "pss_kb") / 1024.0 for r in rows]
     warm = [i for i, x in enumerate(t) if x >= min(0.25, t[-1] / 4)]          # the first quarter hour is warming up

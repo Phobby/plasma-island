@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # soak — one long run with mixed activity, to see whether anything grows.
 #
-#   tools/bench/soak [--hours 2] [--out docs/perf/raw]
+#   tools/bench/soak [--hours 2] [--out docs/perf/raw] [--checkpoint 15] [--resume]
 #
 # In tools/nested-session (headless): a fresh shell with the island and
 # tools/demo/player playing, then, minute after minute until the time is up:
@@ -14,19 +14,40 @@
 # (docs/perf/soak.svg) with the slope of the memory after the first quarter
 # of an hour.
 #
+# A run of hours can be cut off (the computer goes off), and it cannot be
+# picked up in the middle: the shell it watched is gone. So every
+# `--checkpoint` minutes what is measured until then is written to the disk
+# for good, and a run that was cut off is not thrown away: the next one moves
+# its file to soak.cut-DATE-TIME.csv, and tools/bench/summarize draws that as
+# long as no whole run is there. A run that came to its end gets its mark
+# (tools/bench/done); with --resume such a run is kept and nothing is measured.
+#
 # Not in it, because nothing can click in a headless session: turning pages,
 # typing, stroking the cat. Those are in the pointer scenarios.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 S="$HERE/tools/nested-session"
-hours=2; out="$HERE/docs/perf/raw"
+D="$HERE/tools/bench/done"
+hours=2; out="$HERE/docs/perf/raw"; checkpoint=15; resume=0
 while [ $# -gt 0 ]; do
-    case "$1" in --hours) hours="$2"; shift ;; --out) out="$2"; shift ;; -h|--help) sed -n '2,20p' "$0"; exit 0 ;; *) echo "unknown option: $1" >&2; exit 2 ;; esac
+    case "$1" in
+        --hours) hours="$2"; shift ;; --out) out="$2"; shift ;; --checkpoint) checkpoint="$2"; shift ;; --resume) resume=1 ;;
+        -h|--help) sed -n '2,26p' "$0"; exit 0 ;; *) echo "unknown option: $1" >&2; exit 2 ;;
+    esac
     shift
 done
 ROOT="${ISLAND_SESSION_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/dynamicisland-session}"
 seconds="$(python3 -c "print(int(float('$hours') * 3600))")"
 mkdir -p "$out"
+csv="$out/soak.1.csv"; code="$("$D" code)"
+if [ -e "$csv" ]; then
+    if "$D" check "$csv" --seconds "$seconds" --code "$code" >/dev/null; then
+        [ $resume -eq 1 ] && { echo "soak: soak.1.csv is marked as done, kept"; exit 0; }
+    elif ! "$D" check "$csv" >/dev/null; then              # no mark at all: it was cut off
+        cut="$out/soak.cut-$(date -r "$csv" +%Y%m%d-%H%M).csv"
+        mv "$csv" "$cut" && echo "soak: the run that was cut off is kept as $(basename "$cut")"
+    fi
+fi
 
 "$S" pid kwin_wayland >/dev/null 2>&1 || "$S" start --audio || exit 1
 "$S" install >/dev/null || exit 1
@@ -38,7 +59,7 @@ sleep 20
 also=()
 for name in kwin_wayland ksystemstats; do p="$("$S" pid "$name" 2>/dev/null)"; [ -n "$p" ] && also+=(--also "$name=$p"); done
 "$HERE/tools/bench/sample" --pid "$("$S" pid plasmashell)" --name plasmashell "${also[@]}" --interval 10 --duration "$seconds" \
-    --children --label soak --out "$out/soak.1.csv" &
+    --children --label soak --sync "$((checkpoint * 60))" --out "$csv" &
 sampler=$!
 
 theme() { python3 -c "import json,sys; print(json.dumps(json.load(open(sys.argv[1]))['style']))" "$HERE/catalog/themes/$1.islandtheme.json"; }
@@ -67,8 +88,17 @@ while [ "$(date +%s)" -lt "$end" ] && kill -0 "$sampler" 2>/dev/null; do
     "$S" set language "$([ $((minute % 2)) -eq 0 ] && echo tr || echo en)"
     sleep 5
     "$S" set catEnabled "$([ $((minute % 6)) -eq 3 ] && echo false || echo true)" ambientGlow "$([ $((minute % 3)) -eq 0 ] && echo true || echo false)"
+    if [ $((minute % checkpoint)) -eq 0 ]; then       # about now the sampler writes to the disk: say where the memory is
+        echo "soak: $((minute / 60)):$(printf %02d $((minute % 60))) of $((seconds / 3600)):$(printf %02d $((seconds % 3600 / 60))), $(awk -F, '$3 == "plasmashell" { r = $8; p = $9 } END { printf "RSS %.0f MB, PSS %.0f MB", r / 1024, p / 1024 }' "$csv")"
+    fi
     left=$(( 60 - ($(date +%s) - began) )); [ "$left" -gt 0 ] && sleep "$left"
 done
 wait "$sampler" 2>/dev/null
 for p in $("$S" ps | awk '/tools\/demo\/player|pw-play/ {print $1}'); do kill "$p" 2>/dev/null; done
-echo "soak: $minute minutes; $out/soak.1.csv"
+# Whole only when the shell lived to the end: one row of it every ten seconds.
+if [ "$(awk -F, '$3 == "plasmashell"' "$csv" | wc -l)" -ge $((seconds / 10 - 1)) ]; then
+    "$D" mark "$csv" --seconds "$seconds" --warmup 20 --code "$code"
+    echo "soak: $minute minutes; $csv"
+else
+    echo "soak: $csv does not hold the whole run (did the shell end?), not marked" >&2; exit 1
+fi

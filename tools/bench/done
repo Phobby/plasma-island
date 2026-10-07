@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+# done — the marks that say a measurement was taken whole.
+#
+#   tools/bench/done mark FILE [--seconds N] [--warmup N] [--code ID] [--finished TIME]
+#   tools/bench/done check FILE [--seconds N] [--warmup N] [--code ID]
+#         exit 0 when FILE has its mark and is the file that was marked;
+#         otherwise exit 1 and one line saying what is wrong
+#   tools/bench/done code           the id of the island's code in this checkout
+#   tools/bench/done list DIR       the marks of a folder
+#
+# A measurement of hours can be cut off (the computer goes off). When a
+# repetition has ended, tools/bench/run and tools/bench/soak write its file to
+# the disk for good (fsync) and then add a line to `done.tsv` beside it: the
+# file's name and SHA-256, for how long it was measured and warmed up, the
+# code it measured and when it ended. `--resume` keeps what has such a line
+# and measures the rest again: a file without one was cut off, one with
+# another checksum was damaged or changed, one measured of other code says
+# nothing about this code.
+#
+# The code's id is a checksum over everything under org.phobby.dynamicisland/
+# and native/ (without native/build): what `tools/nested-session install` puts
+# into the session. A measurement without the island (the baseline) has the
+# id "-" and is kept whatever the code.
+import argparse, hashlib, os, sys, time
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent.parent
+TABLE = "done.tsv"
+FIELDS = ["file", "sha256", "seconds", "warmup", "code", "finished"]
+
+def sha(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""): h.update(block)
+    return h.hexdigest()
+
+def code():
+    h = hashlib.sha256()
+    for top in ("org.phobby.dynamicisland", "native"):
+        for folder, folders, files in os.walk(REPO / top):
+            folders[:] = sorted(d for d in folders if d != "__pycache__" and not (d == "build" and Path(folder) == REPO / "native"))
+            for name in sorted(files):
+                if name.endswith((".qmlc", ".jsc")): continue          # Qt's caches
+                path = Path(folder) / name
+                h.update(str(path.relative_to(REPO)).encode() + b"\0" + path.read_bytes() + b"\0")
+    return h.hexdigest()[:12]
+
+def number(x):
+    return f"{float(x):g}"
+
+def marks(folder):
+    """file name → its last whole line (a line cut off by a power cut is no mark)"""
+    out = {}
+    try:
+        lines = (Path(folder) / TABLE).read_text(errors="replace").splitlines()
+    except OSError:
+        return out
+    for line in lines[1:]:
+        parts = line.split("\t")
+        if len(parts) == len(FIELDS) and "\0" not in line: out[parts[0]] = dict(zip(FIELDS, parts))
+    return out
+
+def to_disk(path):
+    fd = os.open(path, os.O_RDONLY)
+    try: os.fsync(fd)
+    finally: os.close(fd)
+
+def mark(path, seconds, warmup, code_, finished):
+    path = Path(path); to_disk(path)
+    table = path.parent / TABLE
+    text = table.read_bytes() if table.exists() else b""
+    with open(table, "a") as f:
+        if not text: f.write("\t".join(FIELDS) + "\n")
+        elif not text.endswith(b"\n"): f.write("\n")                    # after a line that was cut off
+        f.write("\t".join([path.name, sha(path), number(seconds), number(warmup), code_, finished or time.strftime("%Y-%m-%dT%H:%M:%S%z")]) + "\n")
+        f.flush(); os.fsync(f.fileno())
+    to_disk(path.parent)
+
+def wrong(path, seconds, warmup, code_):
+    """What keeps a file from counting as measured; "" when nothing does."""
+    path = Path(path)
+    if not path.exists(): return "not there"
+    m = marks(path.parent).get(path.name)
+    if not m: return "no mark: it was cut off, or measured before there were marks"
+    if m["sha256"] != sha(path): return "not the file that was marked"
+    if seconds is not None and m["seconds"] != number(seconds): return f"measured for {m['seconds']} s"
+    if warmup is not None and m["warmup"] != number(warmup): return f"warmed up for {m['warmup']} s"
+    if code_ is not None and m["code"] != code_: return "measured of other code"
+    return ""
+
+def main():
+    ap = argparse.ArgumentParser(add_help=False)
+    ap.add_argument("what", nargs="?"); ap.add_argument("path", nargs="?")
+    ap.add_argument("--seconds", type=float); ap.add_argument("--warmup", type=float)
+    ap.add_argument("--code"); ap.add_argument("--finished")
+    ap.add_argument("-h", "--help", action="store_true")
+    a = ap.parse_args()
+    if a.what == "code":
+        print(code())
+    elif a.what == "mark" and a.path:
+        mark(a.path, a.seconds or 0, a.warmup or 0, a.code or "-", a.finished)
+    elif a.what == "check" and a.path:
+        why = wrong(a.path, a.seconds, a.warmup, a.code)
+        if why: print(why); sys.exit(1)
+    elif a.what == "list" and a.path:
+        for m in marks(a.path).values():
+            ok = not wrong(Path(a.path) / m["file"], None, None, None)
+            print(f"{m['file']:32} {m['seconds']:>5} s  code {m['code']:12}  {m['finished']}  {'' if ok else 'NOT the marked file'}")
+    else:
+        print("".join(l[2:] if l.startswith("# ") else "\n" for l in Path(__file__).read_text().splitlines(True)[1:23]))
+
+if __name__ == "__main__":
+    main()

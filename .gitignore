@@ -4,3 +4,4 @@ lib/
 *.jsc
 tests/.run/
 __pycache__/
+docs/perf/chain.log

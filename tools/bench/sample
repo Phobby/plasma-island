@@ -2,7 +2,7 @@
 # sample — what a process costs, read from /proc at a fixed pace, as CSV.
 #
 #   tools/bench/sample --pid 1234 [--also NAME=PID …] [--interval 1] [--duration 120]
-#                      [--children] [--gpu] [--out run.csv] [--label text]
+#                      [--children] [--gpu] [--out run.csv] [--label text] [--sync SECONDS]
 #
 # One row per interval and process:
 #   cpu_ms        CPU time used in the interval (utime + stime of /proc/<pid>/stat, all threads)
@@ -18,6 +18,10 @@
 #   gpu_pct gpu_mem_mb   the process's share of the GPU and its memory there (--gpu, NVIDIA: nvidia-smi pmon;
 #                 otherwise the whole card's gpu_busy_percent, as gpu_all_pct)
 # Nothing is asked of the process itself, and nothing here needs root.
+#
+# The file is written to the disk for good (fsync) when the measurement ends,
+# and with --sync also every so many seconds on the way: what a long run has
+# measured until then outlasts a power cut.
 import argparse, csv, os, subprocess, sys, time
 
 TICK = os.sysconf("SC_CLK_TCK")
@@ -137,6 +141,7 @@ def main():
     ap.add_argument("--gpu", action="store_true")
     ap.add_argument("--label", default="")
     ap.add_argument("--out", default="-")
+    ap.add_argument("--sync", type=float, default=0, metavar="SECONDS", help="write the file to the disk for good this often on the way")
     a = ap.parse_args()
 
     procs = {a.name or open(f"/proc/{a.pid}/comm").read().strip(): a.pid}
@@ -157,7 +162,7 @@ def main():
     for name, pid in procs.items():
         last[pid] = snapshot(pid)
     known = set(children(pids)) if a.children else set()
-    start = time.monotonic(); n = 0
+    start = synced = time.monotonic(); n = 0
     try:
         while True:
             n += 1
@@ -191,12 +196,15 @@ def main():
                             len(names) if a.children else "", " ".join(names), share[0], share[1]])
                 last[pid] = (s, vol, inv)
             out.flush()
+            if a.sync and out is not sys.stdout and time.monotonic() - synced >= a.sync:
+                os.fsync(out.fileno()); synced = time.monotonic()
             if n * a.interval >= a.duration: break
     except KeyboardInterrupt:
         pass
     finally:
         if gpu: gpu.close()
-        if out is not sys.stdout: out.close()
+        if out is not sys.stdout:
+            out.flush(); os.fsync(out.fileno()); out.close()
 
 if __name__ == "__main__":
     main()
