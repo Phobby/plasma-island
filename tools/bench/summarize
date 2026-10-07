@@ -183,9 +183,43 @@ def soak_chart(raw, path):
     Path(path).write_text("\n".join(o) + "\n")
     return facts
 
+# The short table of the READMEs: scenario → what it is called there, in English and in Turkish.
+SHORT = [
+    ("baseline", "The same desktop without the island", "Adasız aynı masaüstü"),
+    ("everything-off", "The island with everything switched off", "Her şeyi kapalı ada"),
+    ("idle-dot", "Idle, shrunk to a dot", "Boşta, noktaya küçülmüş"),
+    ("idle-no-cat", "Idle, the pill with the clock, no cat", "Boşta, saatli hap, kedisiz"),
+    ("idle", "Idle with default settings (the cat asleep)", "Boşta, varsayılan ayarlar (kedi uyuyor)"),
+    ("cat-awake", "The cat awake", "Kedi uyanık"),
+    ("media", "Music playing", "Müzik çalıyor"),
+    ("media-cat", "Music playing, the cat with its headphones", "Müzik çalıyor, kedi kulaklıkla"),
+    ("media-glow", "Music playing with the ambient glow", "Müzik çalıyor, ortam ışığı açık"),
+    ("media-glow-cat", "Music, glow and the cat", "Müzik, ışık ve kedi"),
+    ("download", "A download being tracked", "Bir indirme izleniyor"),
+    ("notifications", "200 notifications in 80 s", "80 saniyede 200 bildirim"),
+]
+
+def short_table(summary, turkish):
+    head = ("| Durum | plasmashell | + KWin | + algılayıcı servisi | Uyanma/sn | Bellek (RSS / PSS) |" if turkish
+            else "| State | plasmashell | + KWin | + sensor service | Wakeups/s | Memory (RSS / PSS) |")
+    rows = [head, "|---|---|---|---|---|---|"]
+    for name, english, turkce in SHORT:
+        if name not in summary: continue
+        s = summary[name]
+        pct = lambda v: (f"%{v:.2f}".replace(".", ",") if turkish else f"{v:.2f} %")
+        rows.append(f"| {turkce if turkish else english} | {pct(s['cpu'])} | {pct(s['kwin'])} | {pct(s['sensors'])} | {s['wake']:.0f} | {s['rss']:.0f} / {s['pss']:.0f} MB |")
+    return "\n".join(rows)
+
+def between(path, begin, end, text):
+    """Replace what stands between two marker lines of a file."""
+    s = Path(path).read_text()
+    a, b = s.index(begin) + len(begin), s.index(end)
+    Path(path).write_text(s[:a] + "\n" + text.strip("\n") + "\n" + s[b:])
+
 def main():
     ap = argparse.ArgumentParser(description="The CSV files of tools/bench/run as tables and pictures.")
     ap.add_argument("--raw", default=str(REPO / "docs" / "perf" / "raw")); ap.add_argument("--out", default=str(REPO / "docs" / "perf"))
+    ap.add_argument("--readme", action="store_true", help="also write the short table into README.md and README.tr.md (between their PERF marks)")
     a = ap.parse_args()
     runs = load(a.raw)
     runs.pop("soak", None)
@@ -210,6 +244,19 @@ def main():
     cpu_chart(summary, names, labels, out / "cpu.svg")
     facts = soak_chart(a.raw, out / "soak.svg")
     print("\n".join(md))
+    if a.readme:
+        note = ("CPU as per cent of **one** core (the machine has twelve threads), medians of three runs of two minutes each, in an isolated "
+                "session on a 60 Hz screen; \"+ KWin\" and \"+ sensor service\" are what the compositor and Plasma's sensor daemon use beside "
+                "the shell. Measured on one desktop PC (Ryzen 5 7500F, RTX 4060, Plasma 6.6.6 on Wayland): on yours it will differ, and on a "
+                "display with a higher refresh rate whatever animates costs more. The method, every scenario, the long run and how to take "
+                "your own: [docs/PERFORMANCE.md](docs/PERFORMANCE.md).")
+        not_ = ("CPU, **tek** çekirdeğin yüzdesi olarak (makinede on iki iş parçacığı var); her biri iki dakikalık üç koşunun ortancası, 60 Hz "
+                "ekranlı izole bir oturumda. \"+ KWin\" ve \"+ algılayıcı servisi\", kabuğun yanında bileşikleyicinin ve Plasma'nın algılayıcı "
+                "servisinin kullandığıdır. Tek bir masaüstü bilgisayarda ölçüldü (Ryzen 5 7500F, RTX 4060, Wayland üzerinde Plasma 6.6.6): sizin "
+                "sisteminizde farklı olacaktır; yenileme hızı daha yüksek bir ekranda hareket eden her şey daha pahalıdır. Yöntem, tüm senaryolar, "
+                "uzun koşu ve kendi ölçümünüzü nasıl alacağınız: [docs/PERFORMANCE.md](docs/PERFORMANCE.md) (İngilizce).")
+        between(REPO / "README.md", "<!-- PERF:BEGIN -->", "<!-- PERF:END -->", short_table(summary, False) + "\n\n" + note)
+        between(REPO / "README.tr.md", "<!-- PERF:BEGIN -->", "<!-- PERF:END -->", short_table(summary, True) + "\n\n" + not_)
     if facts:
         print(f"\nsoak: {facts['hours']:.2f} h; RSS {facts['rss_first']:.0f} → {facts['rss_last']:.0f} MB ({facts['rss_slope']:+.2f} MB/h), "
               f"PSS {facts['pss_first']:.0f} → {facts['pss_last']:.0f} MB ({facts['pss_slope']:+.2f} MB/h), threads {facts['threads'][0]:.0f}–{facts['threads'][1]:.0f}, "
