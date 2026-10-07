@@ -2,7 +2,8 @@
 
 The island itself is licensed under the GNU General Public License, version 2
 or (at your option) any later version (`GPL-2.0-or-later`); every source file
-says so in its first lines. What it ships of others, and what it talks to:
+says so in its first lines, and the licence's text is in
+[`LICENSE`](../LICENSE). What it ships of others, and what it talks to:
 
 ## Shipped in this repository
 
