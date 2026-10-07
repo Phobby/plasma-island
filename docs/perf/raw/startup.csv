@@ -1,0 +1,11 @@
+shell,rep,shell_answers_s,island_service_s
+baseline,1,0.278,
+baseline,2,0.301,
+baseline,3,0.302,
+baseline,4,0.303,
+baseline,5,0.298,
+island,1,0.449,0.46
+island,2,0.463,0.474
+island,3,0.47,0.481
+island,4,0.476,0.487
+island,5,0.472,0.482
