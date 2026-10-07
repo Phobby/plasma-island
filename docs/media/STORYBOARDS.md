@@ -56,7 +56,7 @@ settings named in the row (`tools/nested-session set KEY VALUE`).
 | `ai-question.gif` | `showAi`, `aiSources`, `aiDefault` from `settings.tsv` (the demo provider) | hover; AI tab; type "How long should tea brew?"; Enter; the dots; the answer |
 | `cloud-browse.gif` | `showCloud`; an rclone remote "Demo Drive" of type alias on the session's `demo/cloud` | hover; Cloud tab; open "Photos"; drag a file to the desktop; drop a file from the desktop on the page; confirm |
 | `clipboard-history.gif` | copy three made-up texts in the session first (`wl-copy` or a text editor there) | hover; Clipboard tab; click one; type in the search |
-| `suggestions-card.gif` | `showRecording` on; start a screen recording in the session (Spectacle there) | the island asks; "Yes"; then Settings → Suggestions |
+| `suggestions-card.gif` | `suggestionsEnabled` and `showRecording` on; start a screen recording in the session (Spectacle there) | the island asks; "Yes"; then Settings → Suggestions |
 | `cat-petting.gif` | `catSleepSeconds` 600 | move the pointer over the cat from side to side five times |
 | `cat-annoyed.gif` | `catSleepSeconds` 5, wait until it sleeps | click the cat twice; leave; it sulks |
 | `appearance-themes.gif` | the settings window open on Appearance | Custom; a ready-made look; the gradient's angle; "Export Theme…"; "Add New…" → From a File |

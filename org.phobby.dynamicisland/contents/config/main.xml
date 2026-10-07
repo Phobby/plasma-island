@@ -201,10 +201,10 @@
     <entry name="notesResume" type="Bool"><default>true</default></entry>
     <entry name="notesLastOpen" type="String"><default></default></entry>
 
-    <!-- Suggestions: on/off; the least pause between two of them (minutes); written by the widget:
+    <!-- Suggestions: on/off (off until the user switches them on); the least pause between two of them (minutes); written by the widget:
          the rules this system can make (for the settings page) and, only when the native module
          is missing, what was learned (it is a file otherwise; see SuggestionStore.qml) -->
-    <entry name="suggestionsEnabled" type="Bool"><default>true</default></entry>
+    <entry name="suggestionsEnabled" type="Bool"><default>false</default></entry>
     <entry name="suggestionGapMinutes" type="Int">
       <default>5</default>
       <min>1</min>
