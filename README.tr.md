@@ -5,7 +5,7 @@
 Ekranın üst ortasında duran, o an ne olup bittiğini (müzik, zamanlayıcı, indirme, arama, bildirim) gösteren ve imleç üzerine gelince sayfalara açılan bir hap.
 
 [![Lisans: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#lisans-ve-teşekkürler)
-![Sürüm 1.0.0](https://img.shields.io/badge/version-1.0.0-informational.svg)
+![Sürüm 0.1.0](https://img.shields.io/badge/version-0.1.0-informational.svg)
 ![Plasma 6](https://img.shields.io/badge/Plasma-6-1d99f3.svg)
 
 [English](README.md) · **Türkçe**
@@ -328,7 +328,7 @@ Birkaç belirli anda ada tek kısa bir soru sorabilir ("Ekran kaydedilirken bild
 
 Kurallar: bir takvim etkinliğinden önce, ekran kaydı sırasında ve Pomodoro odak turunda Rahatsız Etmeyin; görüntülü toplantıdan önce, mikrofon kullanıldığında ve kulaklık çıkınca medyayı duraklatma; pil azaldığında güç tasarrufu.
 
-**Ayarlar → Öneriler:** açık/kapalı (**varsayılan olarak açık**), iki öneri arasındaki en az süre, her kural, anahtarı ve öğrendikleriyle, ve "unut".
+**Ayarlar → Öneriler:** açık/kapalı (**varsayılan olarak kapalı**: siz açana kadar ada hiçbir şey önermez ve hiçbir şey öğrenmez), iki öneri arasındaki en az süre, her kural, anahtarı ve öğrendikleriyle, ve "unut".
 
 ## Kedi
 
@@ -450,7 +450,7 @@ Bilinmesi gereken üç şey daha:
 - **Bildirimler iki kez görünür**: Plasma'nın penceresi ve adanınki. Ada tam ekran pencerelerin üzerinde kalabilir.
 - **Adaya sürükleme:** yalnızca görünen ada bir sürüklemeyi alır; ada ile başka bir program arasında dosya sürükleme Qt'nin sunduğu biçimde yazıldı ama iki program arasında denenemedi.
 - **İndirme takibi:** bir Flatpak tarayıcı, `git clone`, `wget`, `curl`, `pip download`, `apt download` ve bir PackageKit indirmesiyle denendi. `sudo apt update/install`, bir Chromium tarayıcı, Snap olarak Firefox ve tarayıcı içinde duraklatma denenmedi.
-- **Takvim:** bağlantılar aralıklarla yoklanır; var olan bir etkinlik adadan düzenlenemez; bir etkinlik 20 sn'ye kadar geç pinlenebilir. Bağladığınız takvim dosyası için boyut sınırı yoktur.
+- **Takvim:** bağlantılar aralıklarla yoklanır; var olan bir etkinlik adadan düzenlenemez; bir etkinlik 20 sn'ye kadar geç pinlenebilir. Bir takvim bağlantısı en çok 10 MB gönderebilir ve en çok 30 saniye sürebilir; daha büyük ya da daha yavaş olan okunmaz (ada bunu söyler ve son sağlam kopyayı göstermeyi sürdürür).
 - **Yapay Zeka:** Claude Code'un bir soru kutusu olarak kalması, komutun kendi seçeneklerine uymasına dayanır; ada her yanıttan önce komutun kendisi hakkında söylediklerini denetler ve aksi halde durdurur. Ollama dışındaki model sunucuları burada kurulu değildi; gerçek bir anahtarla sohbet bir vekil sunucuya karşı, gerçek servislere karşı ise yalnızca reddedilen bir anahtar denendi.
 - **Bulut:** rclone üzerinden Google Drive, OneDrive ya da Nextcloud için senkron durumu yoktur; Syncthing ve Dropbox durumları vekillere karşı denendi.
 - **Güncellemeler** PackageKit'in paketlerini sayar (apt, dnf); Flatpak güncellemeleri sayılmaz.
@@ -470,7 +470,7 @@ Her parça için neyin denendiğini de içeren uzun liste [başvuru belgesindedi
 
 ## Lisans ve teşekkürler
 
-Ada, **GNU Genel Kamu Lisansı sürüm 2 ya da (tercihinize göre) daha sonraki bir sürümü** (`GPL-2.0-or-later`) altında özgür yazılımdır.
+Ada, **GNU Genel Kamu Lisansı sürüm 2 ya da (tercihinize göre) daha sonraki bir sürümü** (`GPL-2.0-or-later`) altında özgür yazılımdır; lisansın metni [LICENSE](LICENSE) dosyasındadır.
 
 Başkalarının emeği üzerinde durur; her lisansla birlikte tam liste [docs/CREDITS.md](docs/CREDITS.md) içindedir:
 

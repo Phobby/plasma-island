@@ -5,7 +5,7 @@
 A pill at the top centre of the screen that shows what is going on right now (music, a timer, a download, a call, a notification) and opens into pages when the pointer rests on it.
 
 [![Licence: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#licence-and-thanks)
-![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-informational.svg)
+![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-informational.svg)
 ![Plasma 6](https://img.shields.io/badge/Plasma-6-1d99f3.svg)
 
 **English** · [Türkçe](README.tr.md)
@@ -326,7 +326,7 @@ At a few moments the island may ask one short question ("Hide notifications whil
 
 The rules: Do Not Disturb before a calendar event, during a screen recording and in a Pomodoro focus round; pause media before a video meeting, when the microphone is used and when the headphones go away; power saving when the battery is low.
 
-**Settings → Suggestions:** on/off (**on by default**), the pause between two suggestions, every rule with its switch and what it has learned, and "forget".
+**Settings → Suggestions:** on/off (**off by default**: the island suggests nothing, and learns nothing, until you switch them on), the pause between two suggestions, every rule with its switch and what it has learned, and "forget".
 
 ## The cat
 
@@ -448,7 +448,7 @@ Three more things worth knowing:
 - **Notifications appear twice**, Plasma's popup and the island's. The island can stay above full-screen windows.
 - **Dragging onto the island:** only the visible island takes a drag; dragging a file between the island and another program was written the way Qt offers it but could not be tried between two programs.
 - **Download tracking:** tried with a Flatpak browser, `git clone`, `wget`, `curl`, `pip download`, `apt download` and a PackageKit download. `sudo apt update/install`, a Chromium browser, Firefox as a Snap and pausing inside the browser were not tried.
-- **Calendar:** links are polled; an existing event cannot be edited from the island; an event may be pinned up to 20 s late. There is no size limit on a calendar file you connect.
+- **Calendar:** links are polled; an existing event cannot be edited from the island; an event may be pinned up to 20 s late. A calendar link may send up to 10 MB and take up to 30 seconds; one that is larger or slower is not read (the island says so and keeps showing its last good copy).
 - **AI:** that Claude Code stays a question box rests on the command honouring its own options; the island checks what the command says about itself before every answer and stops it otherwise. The model servers other than Ollama were not installed here; a chat with a real key was tried against a stand-in, only a refused key against the real services.
 - **Cloud:** there is no sync state for Google Drive, OneDrive or Nextcloud through rclone; Syncthing's and Dropbox's were tried against stand-ins.
 - **Updates** count PackageKit's packages (apt, dnf); Flatpak updates are not counted.
@@ -468,7 +468,7 @@ The long list, with what was tried for each part, is in the [reference](docs/REF
 
 ## Licence and thanks
 
-The island is free software under the **GNU General Public License, version 2 or (at your option) any later version** (`GPL-2.0-or-later`).
+The island is free software under the **GNU General Public License, version 2 or (at your option) any later version** (`GPL-2.0-or-later`); its text is in [LICENSE](LICENSE).
 
 It stands on the work of others; the full list with every licence is in [docs/CREDITS.md](docs/CREDITS.md):
 

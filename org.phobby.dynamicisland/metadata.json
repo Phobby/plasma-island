@@ -15,7 +15,7 @@
         "License": "GPL-2.0-or-later",
         "Name": "Dynamic Island",
         "Name[tr]": "Dinamik Ada",
-        "Version": "1.0.0"
+        "Version": "0.1.0"
     },
     "X-Plasma-API-Minimum-Version": "6.0"
 }

@@ -169,8 +169,9 @@ switched off ("At least one tab has to stay on"). *Modules*: the parts inside
 a page that can be switched (the volume slider in Controls).
 **Weather** tab: the place (search by name, or forget it), the units and the
 alert; see "Weather" below.
-**Suggestions** tab: on/off, the least pause between two suggestions (5
-minutes), and every rule with its switch, its mode (asks / automatic), what
+**Suggestions** tab: on/off (off until you switch them on: nothing is
+suggested and nothing learned before), the least pause between two
+suggestions (5 minutes), and every rule with its switch, its mode (asks / automatic), what
 it has learned so far and "forget" for it; "Forget everything that was
 learned" (asks first). A rule this system cannot make says so. What is
 changed there holds at once; see "Suggestions" below.
@@ -375,7 +376,11 @@ can be added and deleted from the island.
 
 **View only** — no account details are entered. Each calendar is an iCalendar
 (.ics) subscription link; the widget downloads it periodically and parses it
-off the GUI thread.
+off the GUI thread. A link may send up to 10 MB and take up to 30 seconds
+(`backend/IcsDownload.qml`): one that says it is larger is not downloaded,
+one that grows past that or is not there in time is cut off and dropped
+whole. The settings page then says which link and why, and the calendar
+keeps the link's last good copy.
 
 - The wizard explains where to find the link (Google: "Secret address in iCal
   format"; Apple: make the calendar public and copy its share link), downloads
