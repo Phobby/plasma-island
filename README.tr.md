@@ -83,6 +83,12 @@ cd plasma-island
 systemctl --user restart plasma-plasmashell
 ```
 
+Ya da hepsi, kopyalayıp yapıştırılacak tek satır olarak:
+
+```bash
+git clone https://github.com/Phobby/plasma-island.git && cd plasma-island && ./install.sh && systemctl --user restart plasma-plasmashell
+```
+
 `install.sh` parola istemez ve hiçbir şey indirmez: widget'ı `kpackagetool6` ile kullanıcınıza kurar, yerel modülü CMake ile derleyip `~/.local/lib/qml` altına koyar, `island-push` aracını `~/.local/bin` altına koyar ve modülü plasmashell'e görünür kılar (`~/.config/environment.d/90-dynamicisland.conf` içinde `QML_IMPORT_PATH`). Yeniden çalıştırmak yerinde günceller.
 
 | | |

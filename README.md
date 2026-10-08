@@ -81,6 +81,12 @@ cd plasma-island
 systemctl --user restart plasma-plasmashell
 ```
 
+Or all of it as one line to copy and paste:
+
+```bash
+git clone https://github.com/Phobby/plasma-island.git && cd plasma-island && ./install.sh && systemctl --user restart plasma-plasmashell
+```
+
 `install.sh` asks for no password and downloads nothing: it installs the widget for your user with `kpackagetool6`, builds the native module with CMake and puts it in `~/.local/lib/qml`, puts `island-push` in `~/.local/bin`, and makes the module visible to plasmashell (`QML_IMPORT_PATH` in `~/.config/environment.d/90-dynamicisland.conf`). Running it again upgrades in place.
 
 | | |
