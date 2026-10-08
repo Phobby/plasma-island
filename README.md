@@ -458,7 +458,7 @@ Three more things worth knowing:
 | A scroll turns the page instead of the list (or the other way round) | `QT_LOGGING_RULES="island.wheel.debug=true"` in plasmashell's environment logs who got each wheel step |
 | Volume shows twice | Plasma's own popup and the island's: see the end of [Installing](#installing-updating-removing) |
 | A keyboard shortcut to open the island | There is none of the island's own. Plasma's per-widget shortcut was not tried |
-| The journal lists `qt.qml.usedbeforedeclared … IcsWorker.js` at every start | Harmless: they come from the calendar library (ical.js), which is shipped unmodified |
+| The journal lists `qt.qml.usedbeforedeclared … IcsWorker.js` at every start | Harmless: they come from the code of the calendar library (ical.js) |
 | To look at every pose of the cat | `DYNAMICISLAND_CAT_GALLERY=1` in plasmashell's environment opens a window with all of them |
 
 ## Known limits

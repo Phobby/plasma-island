@@ -64,8 +64,8 @@ things changed in the island, and no scenario was measured again:
   default settings were measured (`idle`, `idle-dot`, `idle-no-cat`,
   `cat-awake`, `cat-still`), so those are of an island with suggestions
   switched on;
-- the version number and the website in the widget's `metadata.json`, and the
-  address of the theme store.
+- the version number and the website in the widget's `metadata.json`, the
+  address of the theme store, and the hints of three text fields.
 
 `cat-still` rests on a single run, and that run's memory (339 MB resident) is
 56 MB above every other scenario with the island. Nothing explains it yet;

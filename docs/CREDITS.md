@@ -9,7 +9,7 @@ says so in its first lines, and the licence's text is in
 
 | What | Where | From | Licence |
 |---|---|---|---|
-| ical.js 1.5.0, unmodified: reads calendar files | `contents/ui/backend/IcsWorker.js` (above the marked banner; the island's own glue is below it) | [kewisch/ical.js](https://github.com/kewisch/ical.js), © Philipp Kewisch and contributors | MPL-2.0 (`contents/ui/backend/IcsWorker.LICENSE.ical.js`) |
+| ical.js 1.5.0 with three changes, each marked "Local change" in the file: reads calendar files | `contents/ui/backend/IcsWorker.js` (above the marked banner; the island's own glue is below it) | [kewisch/ical.js](https://github.com/kewisch/ical.js), © Philipp Kewisch and contributors | MPL-2.0 (`contents/ui/backend/IcsWorker.LICENSE.ical.js`) |
 | Weather pictures | `contents/icons/weather/*.svg`, drawn through `contents/ui/WeatherIcons.js` | [Lucide](https://lucide.dev); some of them come from [Feather](https://feathericons.com) | ISC (Lucide), MIT (the Feather ones); both texts in `contents/icons/weather/LICENSE` |
 | The AI tab's "sparkles" | `contents/icons/ai/sparkles*.svg` | Lucide | ISC (`contents/icons/ai/LICENSE`) |
 | The marks of Apple, Google, Joplin and Simplenote | `contents/icons/{apple,google,joplin,simplenote}.svg` | [Simple Icons](https://simpleicons.org) 16.33.0 | CC0-1.0. The marks are trademarks of their owners; they only label the calendar options and the note sources of those names. The island is not affiliated with or endorsed by any of them. |

@@ -32,6 +32,10 @@ The first numbered release.
 - **The theme store has its address**: the `catalog/` folder of this
   repository's `main` branch. It was a placeholder, with which the store
   asked nothing.
+- **No examples in the fields for a place and for a habit.** The Weather
+  page's search says "City", the Habits page's fields "New habit, every day…"
+  and "Extra activity…": the island comes with no place and no habit, and
+  suggests none.
 - The outline of where the island takes clicks is switched on only by
   `DYNAMICISLAND_DEBUG_REGION=1` in the shell's environment; the hidden
   setting `debugInputRegion` is gone.

@@ -9562,7 +9562,8 @@ ICAL.ComponentParser = (function() {
 /* ==========================================================================
  * Dynamic Island glue — SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Everything ABOVE this banner is ical.js 1.5.0, unmodified (MPL-2.0, see
+ * Everything ABOVE this banner is ical.js 1.5.0 with three changes, each
+ * marked "Local change" (MPL-2.0, see
  * IcsWorker.LICENSE.ical.js). QML's WorkerScript cannot import a classic
  * script, so the library and this glue share one file.
  *

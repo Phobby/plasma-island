@@ -460,7 +460,7 @@ Bilinmesi gereken üç şey daha:
 | Kaydırma liste yerine sayfayı çeviriyor (ya da tersi) | plasmashell'in ortamında `QT_LOGGING_RULES="island.wheel.debug=true"` her tekerlek adımını kimin aldığını günlüğe yazar |
 | Ses iki kez görünüyor | Plasma'nın kendi penceresi ve adanınki: [Kurulum](#kurulum-güncelleme-kaldırma) bölümünün sonuna bakın |
 | Adayı açmak için klavye kısayolu | Adanın kendine ait bir kısayolu yoktur. Plasma'nın widget başına kısayolu denenmedi |
-| Günlük her başlangıçta `qt.qml.usedbeforedeclared … IcsWorker.js` satırları listeliyor | Zararsızdır: değiştirilmeden paketlenen takvim kütüphanesinden (ical.js) gelirler |
+| Günlük her başlangıçta `qt.qml.usedbeforedeclared … IcsWorker.js` satırları listeliyor | Zararsızdır: takvim kütüphanesinin (ical.js) kodundan gelirler |
 | Kedinin tüm pozlarına bakmak | plasmashell'in ortamında `DYNAMICISLAND_CAT_GALLERY=1` hepsini gösteren bir pencere açar |
 
 ## Bilinen sınırlar
