@@ -5,7 +5,7 @@
 A pill at the top centre of the screen that shows what is going on right now (music, a timer, a download, a call, a notification) and opens into pages when the pointer rests on it.
 
 [![Licence: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#licence-and-thanks)
-![Version 0.2.1](https://img.shields.io/badge/version-0.2.1-informational.svg)
+![Version 0.2.2](https://img.shields.io/badge/version-0.2.2-informational.svg)
 ![Plasma 6](https://img.shields.io/badge/Plasma-6-1d99f3.svg)
 
 **English** · [Türkçe](README.tr.md)
@@ -99,10 +99,30 @@ git clone https://github.com/Phobby/plasma-island.git && cd plasma-island && ./i
 **Updating keeps everything.** An update only replaces the widget's files and the native module; nothing is removed first. Your settings, connected accounts, themes and data stay as they are, whichever way you update.
 
 - **From the island (0.2.0 or newer).** Once a day the island reads the newest version number from this repository. When there is a newer one it asks on the island: *Update* downloads that version (the tag's archive from GitHub), builds and installs it for your user, and restarts the desktop shell; the island shows how far it is meanwhile. Settings → General → *New versions of the island* chooses between *Never look*, *Ask me* (as it comes) and *Install by itself* (it then asks only before the shell restarts). Installing needs the native module and `curl`; without the module the island only says that a new version exists.
-- **One command**, without the folder you cloned: `sh ~/.local/share/plasma/plasmoids/org.phobby.dynamicisland/contents/scripts/island-update.sh latest --restart`
-- **By hand:** `git pull`, then `./install.sh`, then restart plasmashell. From 0.1.0 this is the way: it has no updater yet.
+- **By hand, with commands.** Which version is installed and which is the newest (0.2.2 or newer):
 
-Removing leaves your data where it is: `~/.local/share/dynamicisland/` (themes you added, what the suggestions learned, a kept AI chat), `~/.cache/dynamicisland/` (files fetched from a cloud), the folder "Dynamic Island" in KDE Wallet, and the widget's settings in Plasma's own file until you take the widget off the desktop. Delete them by hand if you want them gone.
+  ```bash
+  sh ~/.local/share/plasma/plasmoids/org.phobby.dynamicisland/contents/scripts/island-update.sh --check
+  ```
+
+  It prints `installed 0.2.1` and `newest 0.2.2`. With an older island: `grep Version ~/.local/share/plasma/plasmoids/org.phobby.dynamicisland/metadata.json` (the newest is the badge at the top of this page).
+
+  Updating to the newest version, without the folder you cloned (0.2.0 or newer); it downloads, builds, installs and restarts the shell:
+
+  ```bash
+  sh ~/.local/share/plasma/plasmoids/org.phobby.dynamicisland/contents/scripts/island-update.sh latest --restart
+  ```
+
+  In the folder you cloned (the only way from 0.1.0, which has no updater):
+
+  ```bash
+  git pull && ./install.sh && systemctl --user restart plasma-plasmashell
+  ```
+
+**Taken off the desktop and put back, the island comes as it was** (0.2.2 or newer, with the native module). Plasma deletes a widget's settings when the widget is removed; the island therefore also keeps them in `~/.local/share/dynamicisland/settings.json` (readable by you only), and a widget that is new reads them from there once. To start from nothing instead, delete that file before adding the widget (or use *Defaults* in the settings).
+
+
+Removing leaves your data where it is: `~/.local/share/dynamicisland/` (the copy of your settings, themes you added, what the suggestions learned, a kept AI chat), `~/.cache/dynamicisland/` (files fetched from a cloud), the folder "Dynamic Island" in KDE Wallet, and the widget's settings in Plasma's own file until you take the widget off the desktop. Delete them by hand if you want them gone.
 
 **Putting it on the screen.** The island is a window of its own, so it does not matter where the widget goes:
 
@@ -436,7 +456,7 @@ There is **no telemetry**: the island reports nothing to anybody, and has no acc
 
 | Part | Talks to the network | Starts programs | Keeps on disk |
 |---|---|---|---|
-| The island itself, System, notifications, media | never | `pw-dump` (one, for the microphone/camera/recording indicators); Plasma's sensor service | its settings, in Plasma's own settings file |
+| The island itself, System, notifications, media | never | `pw-dump` (one, for the microphone/camera/recording indicators); Plasma's sensor service | its settings, in Plasma's own settings file and, so that they outlive the widget, in `~/.local/share/dynamicisland/settings.json` (a private calendar link you pasted is in both, as plain text; passwords and keys are in neither) |
 | Ambient glow (off by default) | never | `pw-record` while music plays | nothing |
 | Weather | Open-Meteo, **only after you choose a place**: the name you type goes to its search, the place's coordinates to its forecast (at most every 15 minutes) | none | the place, in the settings |
 | Calendar | **only after you connect one**: the `.ics` links you pasted (every 5 minutes), or iCloud / Google for a connected account | the browser, once, for the Google sign-in | links and account names in the settings (a private link is a secret: it is stored as plain text there); passwords and tokens in KDE Wallet |

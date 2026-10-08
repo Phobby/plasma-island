@@ -97,7 +97,8 @@ Memos), **Clipboard** (what was copied recently: texts, code, images, files).
 
 | Setting | Description |
 |---|---|
-| Appearance | Follow the system, or a custom look: see [Appearance](#appearance) |
+| Appearance | Follow the system (its colours; opacity, blur, place, size, roundness, border and shadow can still be set under Fine tuning, apart from the custom look's), or a custom look: see [Appearance](#appearance) |
+| Kept beyond the widget | Every setting is also written to `~/.local/share/dynamicisland/settings.json` (owner only) a moment after it changed; a widget that is new (never seen before, and the file was written by another widget) reads them from there once. Not kept: what a settings page previews and what the island notes for itself. Needs the native module |
 | Clock | Clock when idle and in the expanded header |
 | Distance from top / below panels | Position |
 | Notifications, display time | Behaviour when a notification arrives |

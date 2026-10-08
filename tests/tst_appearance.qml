@@ -33,6 +33,25 @@ Item {
             placed.destroy();
         }
 
+        function test_following_the_system_as_it_comes_and_tuned() {
+            const t = Qt.createQmlObject('import "../org.phobby.dynamicisland/contents/ui"; Theme {}', root);
+            // as it always was
+            compare([t.scale, t.roundness, t.borderWidth, t.shadowLevel, t.blurWanted, t.blurLevel], [1, 1, 1, 1, true, 1]);
+            fuzzyCompare(t.alpha, 0.92, 0.001);
+            t.blurActive = true;
+            fuzzyCompare(t.alpha, 0.82, 0.001);
+            t.systemStyle = Styles.parseFollow(JSON.stringify({ opacity: 40, blur: false, scale: 110, radius: 50, border: false, shadow: 0, background: "#ff0000", top: 30 }));
+            compare([t.scale, t.roundness, t.borderWidth, t.shadowLevel, t.blurWanted], [1.1, 0.5, 0, 0, false]);
+            fuzzyCompare(t.alpha, 0.4, 0.001);
+            compare(t.material, "flat", "the look itself stays the system's");
+            // what cannot be read is as it comes; what is out of range is brought into it
+            compare(Styles.parseFollow("nonsense"), Styles.followDefaults());
+            compare(Styles.parseFollow("[1]"), Styles.followDefaults());
+            const odd = Styles.parseFollow(JSON.stringify({ scale: 500, radius: -3, shadow: "x", blur: "yes", opacity: -20 }));
+            compare([odd.scale, odd.radius, odd.shadow, odd.blur, odd.opacity], [120, 0, 1, true, -1]);
+            t.destroy();
+        }
+
         function test_solid_presets_are_what_they_were() {
             for (const preset of ["oxygen", "breezeDark", "breezeLight", "glass", "contrast"]) {
                 const s = Styles.defaults(preset);

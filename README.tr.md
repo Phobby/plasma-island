@@ -5,7 +5,7 @@
 Ekranın üst ortasında duran, o an ne olup bittiğini (müzik, zamanlayıcı, indirme, arama, bildirim) gösteren ve imleç üzerine gelince sayfalara açılan bir hap.
 
 [![Lisans: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#lisans-ve-teşekkürler)
-![Sürüm 0.2.1](https://img.shields.io/badge/version-0.2.1-informational.svg)
+![Sürüm 0.2.2](https://img.shields.io/badge/version-0.2.2-informational.svg)
 ![Plasma 6](https://img.shields.io/badge/Plasma-6-1d99f3.svg)
 
 [English](README.md) · **Türkçe**
@@ -101,10 +101,30 @@ git clone https://github.com/Phobby/plasma-island.git && cd plasma-island && ./i
 **Güncelleme her şeyi korur.** Güncelleme yalnızca widget'ın dosyalarını ve yerel modülü değiştirir; önce hiçbir şey kaldırılmaz. Ayarlarınız, bağlı hesaplarınız, temalarınız ve verileriniz, hangi yolla güncellerseniz güncelleyin, olduğu gibi kalır.
 
 - **Adadan (0.2.0 ve sonrası).** Ada günde bir kez bu depodan en yeni sürüm numarasını okur. Daha yenisi varsa adada sorar: *Güncelle* o sürümü indirir (GitHub'daki etiketin arşivi), derler, kullanıcınız için kurar ve masaüstü kabuğunu yeniden başlatır; bu sırada ada ne kadar ilerlediğini gösterir. Ayarlar → Genel → *Adanın yeni sürümleri* ile *Hiç bakma*, *Bana sor* (geldiği hali) ve *Kendiliğinden kur* (o zaman yalnızca kabuk yeniden başlamadan önce sorar) arasında seçilir. Kurulum için yerel modül ve `curl` gerekir; modül yoksa ada yalnızca yeni sürüm olduğunu söyler.
-- **Tek komut**, klonladığınız klasör olmadan: `sh ~/.local/share/plasma/plasmoids/org.phobby.dynamicisland/contents/scripts/island-update.sh latest --restart`
-- **Elle:** `git pull`, sonra `./install.sh`, sonra plasmashell'i yeniden başlatın. 0.1.0'dan yol budur: onda güncelleyici yok.
+- **Elle, komutlarla.** Hangi sürüm kurulu, en yenisi hangisi (0.2.2 ve sonrası):
 
-Kaldırma verilerinizi yerinde bırakır: `~/.local/share/dynamicisland/` (eklediğiniz temalar, önerilerin öğrendikleri, saklanan Yapay Zeka sohbeti), `~/.cache/dynamicisland/` (buluttan alınan dosyalar), KDE Cüzdan'daki "Dynamic Island" klasörü ve widget'ı masaüstünden kaldırana kadar Plasma'nın kendi dosyasındaki ayarları. Gitmesini istiyorsanız elle silin.
+  ```bash
+  sh ~/.local/share/plasma/plasmoids/org.phobby.dynamicisland/contents/scripts/island-update.sh --check
+  ```
+
+  `installed 0.2.1` ve `newest 0.2.2` yazdırır. Daha eski bir adada: `grep Version ~/.local/share/plasma/plasmoids/org.phobby.dynamicisland/metadata.json` (en yenisi bu sayfanın başındaki rozettedir).
+
+  En yeni sürüme güncelleme, klonladığınız klasör olmadan (0.2.0 ve sonrası); indirir, derler, kurar ve kabuğu yeniden başlatır:
+
+  ```bash
+  sh ~/.local/share/plasma/plasmoids/org.phobby.dynamicisland/contents/scripts/island-update.sh latest --restart
+  ```
+
+  Klonladığınız klasörde (güncelleyicisi olmayan 0.1.0'dan tek yol):
+
+  ```bash
+  git pull && ./install.sh && systemctl --user restart plasma-plasmashell
+  ```
+
+**Masaüstünden kaldırılıp geri eklenen ada olduğu gibi gelir** (0.2.2 ve sonrası, yerel modülle). Plasma, widget kaldırılınca ayarlarını siler; ada bu yüzden ayarları `~/.local/share/dynamicisland/settings.json` dosyasında da tutar (yalnızca siz okuyabilirsiniz) ve yeni eklenen widget onları bir kez oradan okur. Sıfırdan başlamak için widget'ı eklemeden önce o dosyayı silin (ya da ayarlarda *Varsayılanlar*'ı kullanın).
+
+
+Kaldırma verilerinizi yerinde bırakır: `~/.local/share/dynamicisland/` (ayarlarınızın kopyası, eklediğiniz temalar, önerilerin öğrendikleri, saklanan Yapay Zeka sohbeti), `~/.cache/dynamicisland/` (buluttan alınan dosyalar), KDE Cüzdan'daki "Dynamic Island" klasörü ve widget'ı masaüstünden kaldırana kadar Plasma'nın kendi dosyasındaki ayarları. Gitmesini istiyorsanız elle silin.
 
 **Ekrana yerleştirme.** Ada kendi başına bir penceredir, bu yüzden widget'ın nereye eklendiği önemli değildir:
 
@@ -438,7 +458,7 @@ CPU, **tek** çekirdeğin yüzdesi olarak (makinede on iki iş parçacığı var
 
 | Parça | Ağla konuşur mu | Program başlatır mı | Diske ne yazar |
 |---|---|---|---|
-| Adanın kendisi, Sistem, bildirimler, medya | asla | `pw-dump` (bir tane; mikrofon/kamera/kayıt göstergeleri için); Plasma'nın algılayıcı servisi | ayarlarını, Plasma'nın kendi ayar dosyasına |
+| Adanın kendisi, Sistem, bildirimler, medya | asla | `pw-dump` (bir tane; mikrofon/kamera/kayıt göstergeleri için); Plasma'nın algılayıcı servisi | ayarlarını, Plasma'nın kendi ayar dosyasına ve widget'tan uzun yaşasınlar diye `~/.local/share/dynamicisland/settings.json` içinde (yapıştırdığınız özel bir takvim bağlantısı ikisinde de düz metindir; parolalar ve anahtarlar hiçbirinde değildir) |
 | Ortam ışığı (varsayılan kapalı) | asla | müzik çalarken `pw-record` | hiçbir şey |
 | Hava Durumu | Open-Meteo ile, **yalnızca siz bir yer seçtikten sonra**: yazdığınız ad aramasına, yerin koordinatları tahminine gider (en sık 15 dakikada bir) | hiçbiri | yeri, ayarlara |
 | Takvim | **yalnızca bir takvim bağladıktan sonra**: yapıştırdığınız `.ics` bağlantıları (5 dakikada bir) ya da bağlı bir hesap için iCloud / Google | Google girişi için bir kez tarayıcı | bağlantıları ve hesap adlarını ayarlara (özel bir bağlantı bir sırdır: orada düz metin olarak durur); parolalar ve belirteçler KDE Cüzdan'da |

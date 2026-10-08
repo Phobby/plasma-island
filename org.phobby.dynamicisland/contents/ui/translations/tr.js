@@ -565,7 +565,7 @@ var table = {
     "High Contrast": "Yüksek Kontrast",
     "Look:": "Görünüm:",
     "Follow the system": "Sistemi takip et",
-    "Background, text, border and accent colour come from Plasma and change with it at once: the colour scheme, dark and light, the accent colour. Of what is below, only where the island sits applies: its distance from the top and its horizontal position.": "Arka plan, metin, kenarlık ve vurgu rengi Plasma'dan gelir ve onunla birlikte anında değişir: renk şeması, koyu ve açık, vurgu rengi. Aşağıdakilerden yalnızca adanın yeri uygulanır: üstten uzaklığı ve yatay konumu.",
+    "Background, text, border and accent colour come from Plasma and change with it at once: the colour scheme, dark and light, the accent colour. The colours below do not apply; opacity, blur, place, size, roundness, border and shadow under Fine tuning can still be set.": "Arka plan, metin, kenarlık ve vurgu rengi Plasma'dan gelir ve onunla birlikte anında değişir: renk şeması, koyu ve açık, vurgu rengi. Aşağıdaki renkler uygulanmaz; İnce ayar altındaki opaklık, bulanıklık, konum, boyut, yuvarlaklık, kenarlık ve gölge yine ayarlanabilir.",
     "Custom": "Özel",
     "The island keeps the look set below, whatever the system's theme is.": "Sistem teması ne olursa olsun ada aşağıda ayarlanan görünümde kalır.",
     "Ready-made looks": "Hazır temalar",

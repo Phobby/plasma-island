@@ -7,6 +7,7 @@
 # `git pull && ./install.sh` does, without needing the folder it was cloned to).
 #
 #   island-update.sh latest|VERSION [--restart]   fetch, build, install
+#   island-update.sh --check                      which version is installed, which is the newest
 #   island-update.sh --restart-only               restart the desktop shell
 #
 # The island runs it when you choose "Update"; it can be run by hand too:
@@ -43,6 +44,16 @@ main() {
     version_in() { sed -n 's/.*"Version"[[:space:]]*:[[:space:]]*"\([0-9.]*\)".*/\1/p' "$1" | head -n 1; }
 
     [ "${1:-}" = "--restart-only" ] && { restart_shell; exit 0; }
+    if [ "${1:-}" = "--check" ]; then
+        # (this file is contents/scripts/ of the installed widget)
+        here="$(cd "$(dirname "$0")" && pwd)"
+        installed="$(version_in "$here/../../metadata.json" 2>/dev/null)"
+        echo "installed ${installed:-unknown}"
+        newest="$(curl -fsSL --max-time 30 "$raw/main/$id/metadata.json" 2>/dev/null | sed -n 's/.*"Version"[[:space:]]*:[[:space:]]*"\([0-9.]*\)".*/\1/p' | head -n 1)"
+        [ -n "$newest" ] || { echo "newest unknown (the repository could not be reached)"; exit 1; }
+        echo "newest $newest"
+        exit 0
+    fi
     version="${1:-}"; restart=0
     [ "${2:-}" = "--restart" ] && restart=1
     command -v curl >/dev/null 2>&1 || fail "curl is not installed"

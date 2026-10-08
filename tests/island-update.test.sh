@@ -33,6 +33,7 @@ check "nothing is left of the download" "$(ls "$box/home/.cache/dynamicisland/up
 check "latest" "$(update latest | tail -n 1)" "DONE 0.2.0"
 check "without --restart the shell stays" "$(update 0.2.0 | grep -c 'STEP restart')" 0
 check "only the restart" "$(update --restart-only)" "STEP restart"
+check "which version" "$(update --check | tr '\n' ' ')" "installed $(sed -n 's/.*"Version": "\(.*\)".*/\1/p' "$here/../org.phobby.dynamicisland/metadata.json") newest 0.2.0 "
 
 # no tag of that version: `main`, when it is that version
 archive 0.3.0 "$box/repo/archive/refs/heads/main.tar.gz"

@@ -69,6 +69,7 @@ PlasmoidItem {
         systemScheme: colorSchemes.colors
         systemTop: root.previewing ? root.cfg.previewTop : root.cfg.topMargin
         systemOffsetX: Math.max(-100, Math.min(100, root.previewing ? root.cfg.previewOffsetX : root.cfg.horizontalOffset))
+        systemStyle: Styles.parseFollow(root.previewing ? root.cfg.previewFollowStyle : root.cfg.followStyle)
         blurActive: blur.active
     }
     // No settings window can be open when the shell starts: a preview left behind
@@ -255,6 +256,13 @@ PlasmoidItem {
     }
     readonly property var core: coreLoader.status === Loader.Ready ? coreLoader.item : null
     Binding { target: root.core; property: "updatesEnabled"; value: root.cfg.showUpdates; when: root.core !== null }
+    // The settings outlive the widget: taken off the desktop and put back, it comes as it was.
+    SettingsKeeper {
+        cfg: root.cfg
+        local: root.core !== null ? root.core.local : null
+        appletId: Plasmoid.id
+        onRestored: count => console.info("org.phobby.dynamicisland: " + count + " settings of an earlier island were brought back")
+    }
 
     // Timer / alarm sound (QtMultimedia; optional). Loaded on first use only,
     // so an idle island never initialises the multimedia stack.

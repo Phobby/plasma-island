@@ -59,6 +59,37 @@ Item {
             page.cfg_appearanceMode = 0; page.cfg_topMargin = 6;
         }
 
+        // Following the system only the colours are Plasma's: opacity, blur, size, roundness,
+        // border and shadow are set as in a custom look, and kept apart from it.
+        function test_appearance_following_the_system_can_be_tuned() {
+            if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = appearance.item;
+            const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
+            page.cfg_appearanceMode = 1;
+            page.cfg_customStyle = JSON.stringify(Styles.defaults("oxygen"));
+            page.cfg_appearanceMode = 0;
+            page.cfg_followStyle = "";
+            compare(page.tuning, Styles.followDefaults());
+            compare([page.look.scale, page.look.radius, page.look.shadow, page.look.border, page.look.blur], [100, 100, 1, true, true]);
+            for (const name of ["opacitySlider", "sizeSlider", "radiusSlider"]) verify(find(page, name).enabled, name);
+            find(page, "sizeSlider").moved(112.3);
+            find(page, "radiusSlider").moved(40);
+            find(page, "opacitySlider").moved(55);
+            page.put("shadow", 2); page.put("border", false); page.put("blur", false);
+            compare(JSON.parse(page.cfg_followStyle), { opacity: 55, blur: false, blurLevel: 1, scale: 112, radius: 40, border: false, borderWidth: 1, shadow: 2 });
+            compare([page.look.scale, page.look.opacity], [112, 55]);
+            compare(page.style, Styles.defaults("oxygen"), "the custom style is left alone");
+            // a colour is not set in this look
+            page.put("background", "#ff0000");
+            compare(JSON.parse(page.cfg_followStyle).background, undefined);
+            // the custom look shows and changes its own
+            page.cfg_appearanceMode = 1;
+            compare([page.look.scale, page.look.opacity], [100, 82]);
+            page.put("scale", 90);
+            compare([page.style.scale, JSON.parse(page.cfg_followStyle).scale], [90, 112]);
+            page.cfg_appearanceMode = 0; page.cfg_followStyle = "";
+        }
+
         function test_appearance_solid_and_gradient_looks() {
             if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
             const page = appearance.item;

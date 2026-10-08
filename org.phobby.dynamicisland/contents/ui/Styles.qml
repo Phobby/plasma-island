@@ -52,6 +52,20 @@ QtObject {
              : preset === "sunset" ? Lang.i18n("Sunset") : preset === "ocean" ? Lang.i18n("Ocean")
              : preset === "midnight" ? Lang.i18n("Midnight Blue") : preset;
     }
+    // Following the system the colours are Plasma's; this much is still the user's to set
+    // (where the island sits is kept apart: topMargin, horizontalOffset). opacity -1 = the
+    // island's own choice, which stays readable with and without blur.
+    function followDefaults(): var { return { opacity: -1, blur: true, blurLevel: 1, scale: 100, radius: 100, border: true, borderWidth: 1, shadow: 1 }; }
+    function parseFollow(json: string): var {
+        const out = followDefaults();
+        let g = null;
+        try { g = JSON.parse(json || ""); } catch (e) {}
+        if (!g || typeof g !== "object" || Array.isArray(g)) return out;
+        const num = (key, min, max) => { const v = Number(g[key]); if (g[key] !== undefined && g[key] !== null && isFinite(v)) out[key] = Math.max(min, Math.min(max, Math.round(v))); };
+        num("opacity", -1, 100); num("blurLevel", 0, 2); num("scale", 80, 120); num("radius", 0, 100); num("borderWidth", 1, 4); num("shadow", 0, 2);
+        for (const key of ["blur", "border"]) if (typeof g[key] === "boolean") out[key] = g[key];
+        return out;
+    }
     // The preset as it comes, as a style of its own.
     function defaults(preset: string): var {
         const key = presets[preset] !== undefined ? preset : "oxygen";

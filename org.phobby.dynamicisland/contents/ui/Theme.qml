@@ -19,6 +19,9 @@ QtObject {
     // screen and from its centre (Settings → Appearance; the first also in General).
     property int systemTop: 6
     property int systemOffsetX: 0
+    // What is the user's to set while following the system (Styles.parseFollow): opacity,
+    // blur, size, roundness, border, shadow. The colours stay Plasma's.
+    property var systemStyle: Styles.followDefaults()
     // KWin really blurs what is behind the island (native helper + Blur effect).
     property bool blurActive: false
 
@@ -50,14 +53,14 @@ QtObject {
     readonly property bool strong: !follow && style.strong === true
     readonly property color base: follow ? systemBackground : gradientFill ? gradientAverage : style.background === "accent" ? systemAccent : style.background
     readonly property bool dark: luminance(base) < 0.179     // white reads better on it than black
-    readonly property bool blurWanted: follow ? true : style.blur
-    readonly property int blurLevel: follow ? 1 : style.blurLevel
-    readonly property real scale: follow ? 1 : style.scale / 100
-    readonly property real roundness: follow ? 1 : style.radius / 100
+    readonly property bool blurWanted: follow ? systemStyle.blur : style.blur
+    readonly property int blurLevel: follow ? systemStyle.blurLevel : style.blurLevel
+    readonly property real scale: follow ? systemStyle.scale / 100 : style.scale / 100
+    readonly property real roundness: follow ? systemStyle.radius / 100 : style.radius / 100
     readonly property int topOffset: follow ? systemTop : style.top
     readonly property int offsetX: follow ? systemOffsetX : style.offsetX
-    readonly property int borderWidth: follow ? 1 : style.border ? style.borderWidth : 0
-    readonly property int shadowLevel: follow ? 1 : style.shadow
+    readonly property int borderWidth: follow ? (systemStyle.border ? systemStyle.borderWidth : 0) : style.border ? style.borderWidth : 0
+    readonly property int shadowLevel: follow ? systemStyle.shadow : style.shadow
     // A corner radius under the roundness setting (100% = as designed, a full capsule).
     function rounded(radius: real): real { return radius * roundness; }
 
@@ -154,7 +157,7 @@ QtObject {
     // ---- colors -------------------------------------------------------------
     // Following the system keeps the surface readable without blur; a custom
     // style takes the opacity as it is set.
-    readonly property real alpha: follow ? (blurActive ? 0.82 : 0.92) : style.opacity / 100
+    readonly property real alpha: follow ? (systemStyle.opacity < 0 ? (blurActive ? 0.82 : 0.92) : systemStyle.opacity / 100) : style.opacity / 100
     function shade(c: color, factor: real, a: real): color {
         return Qt.rgba(Math.min(1, c.r * factor), Math.min(1, c.g * factor), Math.min(1, c.b * factor), a);
     }

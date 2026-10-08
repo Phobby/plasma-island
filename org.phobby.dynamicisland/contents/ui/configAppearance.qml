@@ -38,6 +38,21 @@ KCM.SimpleKCM {
     // Where the island sits while following the system (a custom style brings its own).
     property int cfg_topMargin
     property int cfg_horizontalOffset
+    // And what else is set by hand in that look: opacity, blur, size, roundness, border, shadow (Styles.parseFollow).
+    property string cfg_followStyle
+    readonly property var tuning: Styles.parseFollow(cfg_followStyle)
+    // What the fine tuning shows and changes: the custom style, or the system look's own settings.
+    readonly property var look: custom ? style : Object.assign({}, tuning, {
+        top: cfg_topMargin, offsetX: cfg_horizontalOffset, opacity: tuning.opacity < 0 ? Math.round(shown.alpha * 100) : tuning.opacity })
+    function put(key: string, value: var): void {
+        if (custom) { set(key, value); return; }
+        if (key === "top") { cfg_topMargin = value; return; }
+        if (key === "offsetX") { cfg_horizontalOffset = value; return; }
+        if (tuning[key] === undefined || look[key] === value) return;
+        const next = Object.assign({}, tuning);
+        next[key] = value;
+        cfg_followStyle = JSON.stringify(next);
+    }
     // The Habits calendar: 0 = GitHub's greens, 1 = the system's accent colour (also in Habits).
     property int cfg_habitsColorSource
 
@@ -134,6 +149,7 @@ KCM.SimpleKCM {
         c.previewStyle = JSON.stringify(style);
         c.previewTop = cfg_topMargin;
         c.previewOffsetX = cfg_horizontalOffset;
+        c.previewFollowStyle = cfg_followStyle;
         c.previewActive = true;
         published = true;
     }
@@ -143,6 +159,7 @@ KCM.SimpleKCM {
     onCfg_followSourceChanged: publish()
     onCfg_topMarginChanged: publish()
     onCfg_horizontalOffsetChanged: publish()
+    onCfg_followStyleChanged: publish()
     Component.onCompleted: {
         style = stored();
         publish();
@@ -157,6 +174,7 @@ KCM.SimpleKCM {
         follow: !page.custom
         systemSource: page.cfg_followSource
         systemScheme: page.systemScheme
+        systemStyle: page.tuning
         style: page.style
         blurActive: true
     }
@@ -307,7 +325,7 @@ KCM.SimpleKCM {
             onToggled: if (checked) page.cfg_appearanceMode = 0
         }
         Hint {
-            text: Lang.i18n("Background, text, border and accent colour come from Plasma and change with it at once: the colour scheme, dark and light, the accent colour. Of what is below, only where the island sits applies: its distance from the top and its horizontal position.")
+            text: Lang.i18n("Background, text, border and accent colour come from Plasma and change with it at once: the colour scheme, dark and light, the accent colour. The colours below do not apply; opacity, blur, place, size, roundness, border and shadow under Fine tuning can still be set.")
         }
         QQC2.ComboBox {
             id: sourceCombo
@@ -470,71 +488,67 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: Lang.i18n("Fine tuning")
         }
         ValueSlider {
+            objectName: "opacitySlider"
             Kirigami.FormData.label: Lang.i18n("Opacity:")
-            enabled: page.custom
             from: 0; to: 100
-            value: page.style.opacity
-            valueText: Lang.percent(page.style.opacity)
-            onMoved: value => page.set("opacity", Math.round(value))
+            value: page.look.opacity
+            valueText: Lang.percent(page.look.opacity)
+            onMoved: value => page.put("opacity", Math.round(value))
         }
         RowLayout {
             Kirigami.FormData.label: Lang.i18n("Blur:")
-            enabled: page.custom
             Check {
                 text: Lang.i18n("Blur what is behind the island")
-                on: page.style.blur
-                onToggled: page.set("blur", checked)
+                on: page.look.blur
+                onToggled: page.put("blur", checked)
             }
             Choice {
-                enabled: page.style.blur
+                enabled: page.look.blur
                 model: [Lang.i18n("Low"), Lang.i18n("Medium"), Lang.i18n("High")]
-                index: page.style.blurLevel
-                onActivated: page.set("blurLevel", currentIndex)
+                index: page.look.blurLevel
+                onActivated: page.put("blurLevel", currentIndex)
             }
         }
         Hint {
             text: Lang.i18n("Needs the optional native helper and the KWin Blur effect. How strongly KWin blurs is one setting for the whole desktop (System Settings → Desktop Effects → Blur); the level here adds frosting over it.")
         }
-        // Where the island sits is set in both looks: a custom style keeps its own place,
-        // following the system has one of its own (the distance is General's, up to 200 px there).
+        // What follows is set in both looks (page.look, page.put): a custom style keeps its own,
+        // following the system has settings of its own (the distance is General's, up to 200 px there).
         ValueSlider {
             id: topSlider
             objectName: "topSlider"
-            readonly property int shown: page.custom ? page.style.top : page.cfg_topMargin
+            readonly property int shown: page.look.top
             Kirigami.FormData.label: Lang.i18n("Distance from top:")
             from: 0; to: page.custom ? 40 : 200
             value: shown
             valueText: Lang.i18n("%1 px", shown)
-            onMoved: value => { if (page.custom) page.set("top", Math.round(value)); else page.cfg_topMargin = Math.round(value); }
+            onMoved: value => page.put("top", Math.round(value))
         }
         ValueSlider {
             id: offsetSlider
             objectName: "offsetSlider"
-            readonly property int shown: page.custom ? page.style.offsetX : page.cfg_horizontalOffset
+            readonly property int shown: page.look.offsetX
             Kirigami.FormData.label: Lang.i18n("Horizontal position:")
             from: -100; to: 100
             value: shown
             valueText: shown === 0 ? Lang.i18n("Centred") : Lang.i18n("%1 px", (shown > 0 ? "+" : "") + shown)
-            onMoved: value => {
-                const px = Math.abs(value) < 4 ? 0 : Math.round(value);
-                if (page.custom) page.set("offsetX", px); else page.cfg_horizontalOffset = px;
-            }
+            onMoved: value => page.put("offsetX", Math.abs(value) < 4 ? 0 : Math.round(value))
         }
         ValueSlider {
+            objectName: "sizeSlider"
             Kirigami.FormData.label: Lang.i18n("Size:")
-            enabled: page.custom
             from: 80; to: 120
-            value: page.style.scale
-            valueText: Lang.percent(page.style.scale)
-            onMoved: value => page.set("scale", Math.round(value))
+            value: page.look.scale
+            valueText: Lang.percent(page.look.scale)
+            onMoved: value => page.put("scale", Math.round(value))
         }
         ValueSlider {
+            objectName: "radiusSlider"
             Kirigami.FormData.label: Lang.i18n("Corner roundness:")
-            enabled: page.custom
             from: 0; to: 100
-            value: page.style.radius
-            valueText: page.style.radius === 100 ? Lang.i18n("Capsule") : page.style.radius === 0 ? Lang.i18n("Sharp") : Lang.percent(page.style.radius)
-            onMoved: value => page.set("radius", Math.round(value))
+            value: page.look.radius
+            valueText: page.look.radius === 100 ? Lang.i18n("Capsule") : page.look.radius === 0 ? Lang.i18n("Sharp") : Lang.percent(page.look.radius)
+            onMoved: value => page.put("radius", Math.round(value))
         }
         RowLayout {
             Kirigami.FormData.label: Lang.i18n("Background:")
@@ -639,20 +653,19 @@ KCM.SimpleKCM {
         }
         RowLayout {
             Kirigami.FormData.label: Lang.i18n("Border:")
-            enabled: page.custom
             Check {
                 text: Lang.i18n("Show")
-                on: page.style.border
-                onToggled: page.set("border", checked)
+                on: page.look.border
+                onToggled: page.put("border", checked)
             }
             QQC2.SpinBox {
-                enabled: page.style.border
+                enabled: page.look.border
                 id: widthSpin
                 from: 1; to: 4
-                Binding { target: widthSpin; property: "value"; value: page.style.borderWidth }
+                Binding { target: widthSpin; property: "value"; value: page.look.borderWidth }
                 textFromValue: v => Lang.i18n("%1 px", v)
                 valueFromText: t => parseInt(t)
-                onValueModified: page.set("borderWidth", value)
+                onValueModified: page.put("borderWidth", value)
             }
         }
         RowLayout {
@@ -670,10 +683,9 @@ KCM.SimpleKCM {
         }
         Choice {
             Kirigami.FormData.label: Lang.i18n("Shadow:")
-            enabled: page.custom
             model: [Lang.i18n("None"), Lang.i18n("Light"), Lang.i18n("Strong")]
-            index: page.style.shadow
-            onActivated: page.set("shadow", currentIndex)
+            index: page.look.shadow
+            onActivated: page.put("shadow", currentIndex)
         }
 
         // ---- the Habits calendar (whatever the look above is) -------------------------

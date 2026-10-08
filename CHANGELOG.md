@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.2 (2026-10-08)
+
+### Added
+- **The settings outlive the widget.** Plasma deletes a widget's settings
+  when it is taken off the desktop: put back, the island came as new. The
+  settings are now also kept in `~/.local/share/dynamicisland/settings.json`
+  (for the owner only), and a widget that is new reads them from there once.
+  Delete the file to start from nothing. Needs the native module.
+- **Following the system, the fine tuning works.** With *Follow the system*
+  every control under it was greyed out. The colours stay Plasma's; opacity,
+  blur and its level, place, size, corner roundness, border and shadow are
+  now set in that look too, apart from the custom style's.
+- `island-update.sh --check` says which version is installed and which is
+  the newest. Both READMEs give the commands to check and to update by hand.
+
 ## 0.2.1 (2026-10-08)
 
 ### Fixed
