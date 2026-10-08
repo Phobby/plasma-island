@@ -1,6 +1,22 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 (2026-10-08)
+
+### Added
+- **The island updates itself.** Once a day it reads the newest version number
+  from its repository; when there is a newer one it asks on the island.
+  *Update* fetches that version from GitHub, builds and installs it and
+  restarts the desktop shell, and the island shows how far it is meanwhile.
+  Settings and data are kept. Settings → General → *New versions of the
+  island*: *Never look*, *Ask me* (as it comes), *Install by itself*. The same
+  by hand, without the cloned folder:
+  `contents/scripts/island-update.sh latest --restart`. From 0.1.0, update
+  once more with `git pull` and `./install.sh`: it has no updater.
+
+### Changed
+- **With the settings as they come the island now makes one network request
+  a day** (the version number, from `raw.githubusercontent.com`). 0.1.0 made
+  none. *Never look* switches it off.
 
 ### Fixed
 - **Added twice, the island stood there twice.** The widget added a second

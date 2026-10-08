@@ -44,6 +44,9 @@ else
     echo "node not found: skipped"
 fi
 
+echo "== the island's updater"
+sh tests/island-update.test.sh || failed=1
+
 echo "== QML (qmltestrunner)"
 runner="$(command -v qmltestrunner || true)"
 for candidate in /usr/lib/qt6/bin/qmltestrunner /usr/lib64/qt6/bin/qmltestrunner; do

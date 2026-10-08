@@ -5,7 +5,7 @@
 A pill at the top centre of the screen that shows what is going on right now (music, a timer, a download, a call, a notification) and opens into pages when the pointer rests on it.
 
 [![Licence: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#licence-and-thanks)
-![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-informational.svg)
+![Version 0.2.0](https://img.shields.io/badge/version-0.2.0-informational.svg)
 ![Plasma 6](https://img.shields.io/badge/Plasma-6-1d99f3.svg)
 
 **English** · [Türkçe](README.tr.md)
@@ -93,8 +93,14 @@ git clone https://github.com/Phobby/plasma-island.git && cd plasma-island && ./i
 |---|---|
 | Widget only, no native module | `./install.sh --no-native` |
 | By hand | `kpackagetool6 -t Plasma/Applet -i org.phobby.dynamicisland` (`-u` to upgrade) |
-| Update | `git pull`, then `./install.sh` and restart plasmashell |
+| Update | The island asks when there is a new version: *Update* fetches it, builds it, installs it and restarts the shell (see below). By hand: `git pull`, then `./install.sh` and restart plasmashell |
 | Remove | `./install.sh --remove`, then restart plasmashell |
+
+**Updating keeps everything.** An update only replaces the widget's files and the native module; nothing is removed first. Your settings, connected accounts, themes and data stay as they are, whichever way you update.
+
+- **From the island (0.2.0 or newer).** Once a day the island reads the newest version number from this repository. When there is a newer one it asks on the island: *Update* downloads that version (the tag's archive from GitHub), builds and installs it for your user, and restarts the desktop shell; the island shows how far it is meanwhile. Settings → General → *New versions of the island* chooses between *Never look*, *Ask me* (as it comes) and *Install by itself* (it then asks only before the shell restarts). Installing needs the native module and `curl`; without the module the island only says that a new version exists.
+- **One command**, without the folder you cloned: `sh ~/.local/share/plasma/plasmoids/org.phobby.dynamicisland/contents/scripts/island-update.sh latest --restart`
+- **By hand:** `git pull`, then `./install.sh`, then restart plasmashell. From 0.1.0 this is the way: it has no updater yet.
 
 Removing leaves your data where it is: `~/.local/share/dynamicisland/` (themes you added, what the suggestions learned, a kept AI chat), `~/.cache/dynamicisland/` (files fetched from a cloud), the folder "Dynamic Island" in KDE Wallet, and the widget's settings in Plasma's own file until you take the widget off the desktop. Delete them by hand if you want them gone.
 
@@ -426,7 +432,7 @@ CPU as per cent of **one** core (the machine has twelve threads), medians of thr
 
 ## Privacy and the network
 
-There is **no telemetry**: the island reports nothing to anybody, and has no account. With the settings as they come, it makes **no network request at all** (checked: 170 s of a fresh start with default settings under `strace`, no connection outside the computer). What each part does once you use it:
+There is **no telemetry**: the island reports nothing to anybody, and has no account. With the settings as they come, it makes **one network request a day**: it reads the newest version number of the island from this repository (`raw.githubusercontent.com`), and sends nothing but that request. Settings → General → *New versions of the island* → *Never look* switches it off; then there is no network request at all (checked with 0.1.0, which had no such check: 170 s of a fresh start with default settings under `strace`, no connection outside the computer). What each part does once you use it:
 
 | Part | Talks to the network | Starts programs | Keeps on disk |
 |---|---|---|---|
@@ -439,6 +445,7 @@ There is **no telemetry**: the island reports nothing to anybody, and has no acc
 | Cloud (off by default) | through `rclone`, for the remotes you set up: a listing when you open a folder, how full each cloud is every three hours | `rclone`; `dropbox status` if you use it | files you fetched, in `~/.cache/dynamicisland/cloud` (with a size limit) |
 | Theme store | `raw.githubusercontent.com` (this repository's `catalog/`), **only when you open its tab** or press Download | none | themes you add, in `~/.local/share/dynamicisland/themes/` |
 | Updates | never (it reads PackageKit's list on this computer) | none | nothing |
+| The island's own new versions | `raw.githubusercontent.com` once a day for the version number (not with *Never look*); `github.com` for the archive, **only when an update is installed** | `sh`, `curl`, `tar` and the downloaded `install.sh`, only for an update | the download while it is installed, and the installer's last output, in `~/.cache/dynamicisland/update` |
 | Download tracking | never | none (it reads the process list and the download folder) | nothing |
 | Suggestions | never | none | what it learned, in `~/.local/share/dynamicisland/suggestions.json` |
 | Habits, Pomodoro, Apps, Tools | never | the applications you start | their data, in the settings |

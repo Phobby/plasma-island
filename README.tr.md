@@ -5,7 +5,7 @@
 Ekranın üst ortasında duran, o an ne olup bittiğini (müzik, zamanlayıcı, indirme, arama, bildirim) gösteren ve imleç üzerine gelince sayfalara açılan bir hap.
 
 [![Lisans: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#lisans-ve-teşekkürler)
-![Sürüm 0.1.0](https://img.shields.io/badge/version-0.1.0-informational.svg)
+![Sürüm 0.2.0](https://img.shields.io/badge/version-0.2.0-informational.svg)
 ![Plasma 6](https://img.shields.io/badge/Plasma-6-1d99f3.svg)
 
 [English](README.md) · **Türkçe**
@@ -95,8 +95,14 @@ git clone https://github.com/Phobby/plasma-island.git && cd plasma-island && ./i
 |---|---|
 | Yalnızca widget, yerel modül olmadan | `./install.sh --no-native` |
 | Elle | `kpackagetool6 -t Plasma/Applet -i org.phobby.dynamicisland` (güncellemek için `-u`) |
-| Güncelleme | `git pull`, sonra `./install.sh` ve plasmashell'i yeniden başlatın |
+| Güncelleme | Yeni sürüm çıkınca ada sorar: *Güncelle* onu indirir, derler, kurar ve kabuğu yeniden başlatır (aşağıya bakın). Elle: `git pull`, sonra `./install.sh` ve plasmashell'i yeniden başlatın |
 | Kaldırma | `./install.sh --remove`, sonra plasmashell'i yeniden başlatın |
+
+**Güncelleme her şeyi korur.** Güncelleme yalnızca widget'ın dosyalarını ve yerel modülü değiştirir; önce hiçbir şey kaldırılmaz. Ayarlarınız, bağlı hesaplarınız, temalarınız ve verileriniz, hangi yolla güncellerseniz güncelleyin, olduğu gibi kalır.
+
+- **Adadan (0.2.0 ve sonrası).** Ada günde bir kez bu depodan en yeni sürüm numarasını okur. Daha yenisi varsa adada sorar: *Güncelle* o sürümü indirir (GitHub'daki etiketin arşivi), derler, kullanıcınız için kurar ve masaüstü kabuğunu yeniden başlatır; bu sırada ada ne kadar ilerlediğini gösterir. Ayarlar → Genel → *Adanın yeni sürümleri* ile *Hiç bakma*, *Bana sor* (geldiği hali) ve *Kendiliğinden kur* (o zaman yalnızca kabuk yeniden başlamadan önce sorar) arasında seçilir. Kurulum için yerel modül ve `curl` gerekir; modül yoksa ada yalnızca yeni sürüm olduğunu söyler.
+- **Tek komut**, klonladığınız klasör olmadan: `sh ~/.local/share/plasma/plasmoids/org.phobby.dynamicisland/contents/scripts/island-update.sh latest --restart`
+- **Elle:** `git pull`, sonra `./install.sh`, sonra plasmashell'i yeniden başlatın. 0.1.0'dan yol budur: onda güncelleyici yok.
 
 Kaldırma verilerinizi yerinde bırakır: `~/.local/share/dynamicisland/` (eklediğiniz temalar, önerilerin öğrendikleri, saklanan Yapay Zeka sohbeti), `~/.cache/dynamicisland/` (buluttan alınan dosyalar), KDE Cüzdan'daki "Dynamic Island" klasörü ve widget'ı masaüstünden kaldırana kadar Plasma'nın kendi dosyasındaki ayarları. Gitmesini istiyorsanız elle silin.
 
@@ -428,7 +434,7 @@ CPU, **tek** çekirdeğin yüzdesi olarak (makinede on iki iş parçacığı var
 
 ## Gizlilik ve ağ
 
-**Telemetri yoktur**: ada kimseye hiçbir şey bildirmez ve hesabı yoktur. Ayarlar geldiği gibi bırakıldığında **hiçbir ağ isteği yapmaz** (doğrulandı: varsayılan ayarlarla sıfırdan bir başlangıç `strace` altında 170 sn izlendi, bilgisayarın dışına hiçbir bağlantı yok). Her parça, siz onu kullanınca şunları yapar:
+**Telemetri yoktur**: ada kimseye hiçbir şey bildirmez ve hesabı yoktur. Ayarlar geldiği gibi bırakıldığında **günde bir ağ isteği yapar**: adanın en yeni sürüm numarasını bu depodan okur (`raw.githubusercontent.com`) ve o istekten başka hiçbir şey göndermez. Ayarlar → Genel → *Adanın yeni sürümleri* → *Hiç bakma* bunu kapatır; o zaman hiçbir ağ isteği yapılmaz (bu denetimin olmadığı 0.1.0 ile doğrulandı: varsayılan ayarlarla sıfırdan bir başlangıç `strace` altında 170 sn izlendi, bilgisayarın dışına hiçbir bağlantı yok). Her parça, siz onu kullanınca şunları yapar:
 
 | Parça | Ağla konuşur mu | Program başlatır mı | Diske ne yazar |
 |---|---|---|---|
@@ -441,6 +447,7 @@ CPU, **tek** çekirdeğin yüzdesi olarak (makinede on iki iş parçacığı var
 | Bulut (varsayılan kapalı) | kurduğunuz uzaklar için `rclone` üzerinden: bir klasör açtığınızda listeleme, üç saatte bir her bulutun doluluğu | `rclone`; kullanıyorsanız `dropbox status` | aldığınız dosyalar `~/.cache/dynamicisland/cloud` içinde (boyut sınırıyla) |
 | Tema mağazası | `raw.githubusercontent.com` (bu deponun `catalog/` klasörü), **yalnızca sekmesini açtığınızda** ya da İndir'e bastığınızda | hiçbiri | eklediğiniz temalar `~/.local/share/dynamicisland/themes/` içinde |
 | Güncellemeler | asla (PackageKit'in bu bilgisayardaki listesini okur) | hiçbiri | hiçbir şey |
+| Adanın kendi yeni sürümleri | sürüm numarası için günde bir kez `raw.githubusercontent.com` (*Hiç bakma* seçiliyken değil); arşiv için `github.com`, **yalnızca bir güncelleme kurulurken** | yalnızca güncelleme için `sh`, `curl`, `tar` ve indirilen `install.sh` | kurulurken indirilen arşiv ve kurucunun son çıktısı, `~/.cache/dynamicisland/update` içinde |
 | İndirme takibi | asla | hiçbiri (süreç listesini ve indirme klasörünü okur) | hiçbir şey |
 | Öneriler | asla | hiçbiri | öğrendiklerini `~/.local/share/dynamicisland/suggestions.json` içine |
 | Alışkanlıklar, Pomodoro, Uygulamalar, Araçlar | asla | başlattığınız uygulamalar | verilerini ayarlara |

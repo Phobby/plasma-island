@@ -591,6 +591,18 @@ PlasmoidItem {
             announced: root.cfg.updatesAnnounced
             onAnnouncedEdited: value => root.cfg.updatesAnnounced = value
         }
+        // The island's own new versions (the system's are UpdatesProvider's).
+        SelfUpdateProvider {
+            manager: activities
+            theme: theme
+            core: root.core
+            mode: root.cfg.updateMode
+            current: Plasmoid.metaData.version
+            previous: root.cfg.installedVersion
+            onVersionSeen: version => root.cfg.installedVersion = version
+            asked: root.cfg.updateAsked
+            onAskedAbout: mark => root.cfg.updateAsked = mark
+        }
         DbusProvider {
             manager: activities
             theme: theme

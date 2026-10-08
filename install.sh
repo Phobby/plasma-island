@@ -58,9 +58,17 @@ fi
 
 if [[ $native -eq 1 ]]; then
     echo "==> Building native modules"
+    # (the island's own updater reads how far the build is: "PROGRESS 42" on descriptor 3)
+    build() {
+        if [[ -n "${ISLAND_INSTALL_PROGRESS:-}" ]]; then
+            cmake --build "$HERE/native/build" -j"$(nproc)" | sed -un 's/^\[ *\([0-9]*\)%\].*/PROGRESS \1/p' >&3
+        else
+            cmake --build "$HERE/native/build" -j"$(nproc)" >/dev/null
+        fi
+    }
     if ! cmake -S "$HERE/native" -B "$HERE/native/build" -DCMAKE_BUILD_TYPE=Release \
              -DCMAKE_INSTALL_PREFIX="$HOME/.local" -DQML_INSTALL_DIR="$QML_DIR" >/dev/null \
-       || ! cmake --build "$HERE/native/build" -j"$(nproc)" >/dev/null; then
+       || ! build; then
         echo "!! Native build failed. The widget still works without: blur, screen recording,"
         echo "   privacy indicators, unlock, calls, updates and the D-Bus API are then disabled."
         exit 1

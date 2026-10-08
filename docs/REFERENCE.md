@@ -101,6 +101,7 @@ Memos), **Clipboard** (what was copied recently: texts, code, images, files).
 | Clock | Clock when idle and in the expanded header |
 | Distance from top / below panels | Position |
 | Notifications, display time | Behaviour when a notification arrives |
+| New versions of the island | *Never look* (no request at all), *Ask me* (as it comes: once a day the version number is read from the repository's `metadata.json`; a newer one is asked about on the island, at most once a day per version) or *Install by itself* (installs without asking, then asks before the shell restarts). An update is `contents/scripts/island-update.sh`: the archive of the tag `v<version>` from GitHub (`main` when there is no such tag, and only if it is that version), its `install.sh`, then a restart of plasmashell. Needs the native module, `curl` and `tar`; the installer's output is in `~/.cache/dynamicisland/update/install.log`. Settings and data are not touched |
 | Hover delay / close on leave | Default 120 ms / 400 ms |
 | Preferred player | E.g. `spotify`. This player is shown if it is playing (or nothing else is); if empty Plasma chooses. Matches the identity/desktop file name case-insensitively. A player that says "Playing" while its position stands still for ~9 s (Spotify after a Spotify Connect session was stopped on the phone) counts as not playing |
 | Volume | The volume slider in Controls (Layout → Modules) |

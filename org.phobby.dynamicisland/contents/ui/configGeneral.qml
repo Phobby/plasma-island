@@ -29,6 +29,7 @@ KCM.SimpleKCM {
     property alias cfg_dotEvents: dotEventsCombo.currentIndex
     property alias cfg_dotCriticalExpand: dotCriticalCheck.checked
     property alias cfg_systemView: systemViewCombo.currentIndex
+    property alias cfg_updateMode: updateModeCombo.currentIndex
 
     Kirigami.FormLayout {
         Kirigami.Separator {
@@ -175,6 +176,25 @@ KCM.SimpleKCM {
             id: systemViewCombo
             Kirigami.FormData.label: Lang.i18n("System view:")
             model: [Lang.i18n("Fixed (5 cards)"), Lang.i18n("Dynamic (active metrics grow)")]
+        }
+
+        Kirigami.Separator {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: Lang.i18n("New versions of the island")
+        }
+        QQC2.ComboBox {
+            id: updateModeCombo
+            Kirigami.FormData.label: Lang.i18n("When there is one:")
+            model: [Lang.i18n("Never look"), Lang.i18n("Ask me"), Lang.i18n("Install by itself")]
+        }
+        QQC2.Label {
+            textFormat: Text.PlainText
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
+            wrapMode: Text.Wrap
+            opacity: 0.7
+            text: updateModeCombo.currentIndex === 0 ? Lang.i18n("The island asks nobody about new versions. To update by hand: git pull in its folder, then ./install.sh.")
+                : Lang.i18n("Once a day the island reads the newest version number from its repository on GitHub; nothing about you is sent. An update is fetched from there, built and installed for your user only, and keeps your settings. Installing needs the native module.")
+                  + (updateModeCombo.currentIndex === 2 ? " " + Lang.i18n("By itself it installs without asking, and asks only before the desktop shell restarts.") : "")
         }
     }
 }

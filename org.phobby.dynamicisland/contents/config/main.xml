@@ -52,6 +52,12 @@
       <default>true</default>
     </entry>
 
+    <!-- The island's own new versions: 0 = never look, 1 = ask before installing, 2 = install by itself -->
+    <entry name="updateMode" type="Int"><default>1</default></entry>
+    <!-- Written by the widget: "version|when" of the last one asked about; the version that ran last -->
+    <entry name="updateAsked" type="String"><default></default></entry>
+    <entry name="installedVersion" type="String"><default></default></entry>
+
     <!-- Behavior -->
     <entry name="showNotifications" type="Bool">
       <default>true</default>
