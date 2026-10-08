@@ -1,3 +1,7 @@
+/*
+    SPDX-License-Identifier: GPL-2.0-or-later
+    The pages of the settings window, in their order.
+*/
 import QtQuick
 import org.kde.kirigami as Kirigami
 import "../ui"
