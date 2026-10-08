@@ -15,7 +15,7 @@
         "License": "GPL-2.0-or-later",
         "Name": "Dynamic Island",
         "Name[tr]": "Dinamik Ada",
-        "Version": "0.2.0",
+        "Version": "0.2.1",
         "Website": "https://github.com/Phobby/plasma-island"
     },
     "X-Plasma-API-Minimum-Version": "6.0"

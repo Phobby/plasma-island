@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "localtools.h"
+#include "userpaths.h"
 
 #include <QDir>
 #include <QFile>
@@ -29,15 +30,10 @@ LocalTools::LocalTools(QObject *parent)
     connect(&m_watcher, &QFileSystemWatcher::fileChanged, this, &LocalTools::pathChanged);
 }
 
-QString LocalTools::findExecutable(const QString &name) const
+QString LocalTools::findExecutable(const QString &name, const QString &home) const
 {
-    const QString found = QStandardPaths::findExecutable(name);
-    if (!found.isEmpty()) {
-        return found;
-    }
-    // plasmashell's PATH does not always include it.
-    const QFileInfo local(QDir::homePath() + QLatin1String("/.local/bin/") + name);
-    return local.isExecutable() && !local.isDir() ? local.absoluteFilePath() : QString();
+    // plasmashell's PATH is not a terminal's: see userpaths.h
+    return UserPaths::findExecutable(name, home);
 }
 
 QString LocalTools::dataHome() const
@@ -175,6 +171,7 @@ void LocalTools::start(const QString &program, const QStringList &arguments, con
     });
     process->setProgram(program);
     process->setArguments(arguments);
+    process->setProcessEnvironment(UserPaths::environmentFor(program));
     if (input) {
         const QByteArray bytes = *input;
         connect(process, &QProcess::started, process, [process, bytes] {

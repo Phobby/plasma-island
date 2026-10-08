@@ -5,7 +5,7 @@
 Ekranın üst ortasında duran, o an ne olup bittiğini (müzik, zamanlayıcı, indirme, arama, bildirim) gösteren ve imleç üzerine gelince sayfalara açılan bir hap.
 
 [![Lisans: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#lisans-ve-teşekkürler)
-![Sürüm 0.2.0](https://img.shields.io/badge/version-0.2.0-informational.svg)
+![Sürüm 0.2.1](https://img.shields.io/badge/version-0.2.1-informational.svg)
 ![Plasma 6](https://img.shields.io/badge/Plasma-6-1d99f3.svg)
 
 [English](README.md) · **Türkçe**
@@ -471,6 +471,7 @@ Bilinmesi gereken üç şey daha:
 | Ada açılınca iki ada ya da iki kedi görünüyor | Araç aynı ekrana iki kez eklenmiş. Artık yalnızca ilki görünür; diğerini kaldırın (ipucu metni gizli olduğunu söyler) |
 | BetterNotes kurulu ama "bulunamadı" | Ada `betternotes` komutunu (`PATH` üzerinde, `~/.local/bin` içinde) ve menü girdisini (Flatpak'inkini de) arar. Yalnızca indirildiği yerden çalıştırılan bir AppImage'ın ikisi de yoktur: `./BetterNotes-….AppImage install`. Sayfa yerel yardımcının eksik olduğunu söylüyorsa `./install.sh` çalıştırıp plasmashell'i yeniden başlatın |
 | BetterNotes: kaydedemiyor, açamıyor, kilitli not | Kaydetmek için BetterNotes 0.1.13, bir notu uygulamada açmak için 0.1.14, kilitli notlar için 0.1.15 gerekir. Güncelledikten sonra çalışan eski BetterNotes'u kapatıp yeniden başlatın. `betternotes --diagnostics` kendi raporunu yazdırır |
+| Yapay Zeka: Claude Code ya da Antigravity kurulu ve giriş yapılmış, ama sekme "bulunamadı" diyor (ya da yalnızca anahtar isteyen kaynakları öneriyor) | 0.2.0'a kadar ada yalnızca masaüstü kabuğunun `PATH`'ine ve `~/.local/bin`'e bakıyordu; npm ile (nvm, kendi önekiniz, bun, Volta…) kurulan bir `claude` yalnızca uçbirimin `PATH`'indedir. 0.2.1 o klasörlere de bakar ve yerel modülünü gerektirir (`./install.sh` ya da adadaki *Güncelle*). Hâlâ bulunamıyorsa: uçbirimde `ln -s "$(command -v claude)" ~/.local/bin/claude`, sonra sekmeyi yeniden açın |
 | Bulut: "rclone bulunamadı" | rclone'u kurun ve kendi uçbiriminizde bir uzak ekleyin (`rclone config`); sayfa kopyalanacak komutları gösterir, hiçbirini çalıştırmaz |
 | Hava Durumu hiçbir şey göstermiyor | Bilerek boş başlar: sayfada *Konum Seç* |
 | Kaydırma liste yerine sayfayı çeviriyor (ya da tersi) | plasmashell'in ortamında `QT_LOGGING_RULES="island.wheel.debug=true"` her tekerlek adımını kimin aldığını günlüğe yazar |

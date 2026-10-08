@@ -5,7 +5,7 @@
 A pill at the top centre of the screen that shows what is going on right now (music, a timer, a download, a call, a notification) and opens into pages when the pointer rests on it.
 
 [![Licence: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#licence-and-thanks)
-![Version 0.2.0](https://img.shields.io/badge/version-0.2.0-informational.svg)
+![Version 0.2.1](https://img.shields.io/badge/version-0.2.1-informational.svg)
 ![Plasma 6](https://img.shields.io/badge/Plasma-6-1d99f3.svg)
 
 **English** · [Türkçe](README.tr.md)
@@ -469,6 +469,7 @@ Three more things worth knowing:
 | Two islands, or two cats, when the island opens | The widget was added twice to one screen. Only the first one shows now; remove the other (its tooltip says that it is hidden) |
 | BetterNotes is installed but "not found" | The island looks for the `betternotes` command (on the `PATH`, in `~/.local/bin`) and for its menu entry (also the Flatpak's). An AppImage that is only run in place has neither: `./BetterNotes-….AppImage install`. If the page says the native helper is missing, run `./install.sh` and restart plasmashell |
 | BetterNotes: cannot save, cannot open, a locked note | Saving needs BetterNotes 0.1.13, opening a note in the app 0.1.14, locked notes 0.1.15. Quit a running older BetterNotes and start it again after updating. `betternotes --diagnostics` prints its own report |
+| AI: Claude Code or Antigravity is installed and signed in, but the tab says "not found" (or only offers sources that need a key) | Up to 0.2.0 the island only looked on the desktop shell's `PATH` and in `~/.local/bin`; a `claude` installed with npm (nvm, a prefix of your own, bun, Volta…) is on a terminal's `PATH` only. 0.2.1 looks in those folders too, and needs its native module (`./install.sh`, or *Update* on the island). Still not found: `ln -s "$(command -v claude)" ~/.local/bin/claude` in a terminal, then open the tab again |
 | Cloud: "rclone was not found" | Install rclone and add a remote in your own terminal (`rclone config`); the page shows the commands to copy and runs none of them |
 | Weather shows nothing | It starts empty on purpose: *Choose a Location* on the page |
 | A scroll turns the page instead of the list (or the other way round) | `QT_LOGGING_RULES="island.wheel.debug=true"` in plasmashell's environment logs who got each wheel step |

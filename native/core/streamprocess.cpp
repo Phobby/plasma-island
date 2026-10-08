@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "streamprocess.h"
+#include "userpaths.h"
 
 #include <QDir>
 #include <QFile>
@@ -55,6 +56,7 @@ bool StreamProcess::start(const QString &program, const QStringList &arguments, 
     m_process = new QProcess(this);
     m_process->setProgram(program);
     m_process->setArguments(arguments);
+    m_process->setProcessEnvironment(UserPaths::environmentFor(program));
     m_process->setWorkingDirectory(directory.absolutePath());
     if (m_merge) {
         m_process->setProcessChannelMode(QProcess::MergedChannels);

@@ -29,8 +29,10 @@ class LocalTools : public QObject
 public:
     explicit LocalTools(QObject *parent = nullptr);
 
-    // Full path of a command on the PATH or in ~/.local/bin; "" if there is none.
-    Q_INVOKABLE QString findExecutable(const QString &name) const;
+    // Full path of a command: on the PATH, else in one of the folders a user's own commands are
+    // installed to (~/.local/bin, npm's, nvm's, bun's…: userpaths.h); "" if there is none.
+    // `home`: only those folders, under this folder instead of the user's home (for tests).
+    Q_INVOKABLE QString findExecutable(const QString &name, const QString &home = QString()) const;
     // The user's data directory ($XDG_DATA_HOME, else ~/.local/share).
     Q_INVOKABLE QString dataHome() const;
     // An environment variable of the shell's ("" when it is not set): hidden switches for looking

@@ -792,7 +792,7 @@ to be copied, never run.
 
 | Source | How it connects |
 |---|---|
-| **Claude Code** | The `claude` command of this computer (on the PATH or in `~/.local/bin`), already signed in: no key, and the island never sees an account. Found by itself. See below for what it is run with |
+| **Claude Code** | The `claude` command of this computer, already signed in. It is looked for on plasmashell's PATH and then where such commands are installed for one user: `~/.local/bin`, `~/bin`, `~/.claude/local`, npm's folders (`~/.npm-global/bin`, the `prefix` of `~/.npmrc`), every Node of nvm and fnm (the newest first), bun, Volta, yarn, pnpm, asdf and mise shims, Nix, Homebrew, `/snap/bin`. No shell is started to ask for its PATH; a command found there is started with its own folder first on the PATH, so that it finds the `node` it was installed with. Antigravity's `agy`, `rclone`, `ollama` and `betternotes` are looked for the same way: no key, and the island never sees an account. Found by itself. See below for what it is run with |
 | **Antigravity** | The `agy` command of this computer, already signed in: no key. Offered only when it is found. It cannot be started without its tools; see below for what is done about that |
 | **Ollama** | `http://localhost:11434/v1`, found by itself: answering, installed but not running ("Start it": `ollama serve` to copy), or not found (the install command to copy). No account, no key; nothing leaves the device |
 | **LM Studio**, **llama.cpp**, **Jan**, **KoboldCpp** | Looked for at the address each listens on unless told otherwise (`localhost:1234`, `127.0.0.1:8080`, `localhost:1337`, `localhost:5001`, each `/v1`); offered only while one answers there with a list of models. No account, no key |

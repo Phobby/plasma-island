@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.1 (2026-10-08)
+
+### Fixed
+- **Claude Code and Antigravity were "not found" although installed and
+  signed in.** The AI tab looked for `claude` and `agy` on the desktop
+  shell's PATH and in `~/.local/bin` only. A shell adds folders to its PATH
+  in its own start-up files, which plasmashell never reads: a `claude`
+  installed with npm under nvm or fnm, with a prefix of npm's own, with bun,
+  Volta, pnpm or Homebrew was there in every terminal and unknown to the
+  island, which then only had sources that ask for a key. Those folders are
+  looked into now (native/core/userpaths.h; no shell is started to ask), and
+  a command found there is started with its own folder first on the PATH, so
+  that a script finds the `node` it was installed with. The same search finds
+  `rclone`, `ollama` and `betternotes`. Needs the new native module.
+
 ## 0.2.0 (2026-10-08)
 
 ### Added

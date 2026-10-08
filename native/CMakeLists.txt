@@ -59,6 +59,7 @@ qt_add_qml_module(dynamicislandcore
         core/secretstore.h core/secretstore.cpp
         core/loopbackserver.h core/loopbackserver.cpp
         core/localtools.h core/localtools.cpp
+        core/userpaths.h core/userpaths.cpp
         core/popupwatcher.h core/popupwatcher.cpp
         core/audiolevels.h core/audiolevels.cpp
         core/streamprocess.h core/streamprocess.cpp

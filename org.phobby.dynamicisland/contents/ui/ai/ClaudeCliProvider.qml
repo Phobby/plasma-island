@@ -46,7 +46,7 @@ AiProvider {
         return local !== null && process !== null;
     }
     property string sandbox: local ? local.dataHome() + "/dynamicisland/ai-sandbox" : ""
-    // The command's name: looked for on the PATH and in ~/.local/bin.
+    // The command's name: looked for on the PATH and where a user's own commands are installed (native/core/userpaths.h).
     property string commandName: "claude"
     property string command: ""             // its full path, once found
     property string version: ""
