@@ -337,6 +337,8 @@ Item {
             compare([dialog.added, library.themes.length], [null, 1]);
 
             // the store's tab with the placeholder address: nothing is asked
+            // (set here: as it comes the page has the published address, and no test asks that)
+            page.themeStore.catalogUrl = "https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/catalog";
             compare(page.themeStore.requests, 0);
             dialog.section = 1;
             compare([page.themeStore.configured, page.themeStore.state, page.themeStore.requests], [false, "error", 0]);
