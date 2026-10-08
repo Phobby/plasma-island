@@ -1,4 +1,4 @@
-<!-- Before publishing: docs/RELEASE-CHECKLIST.md lists every placeholder in this file (OWNER/REPOSITORY, the hero video, the catalog's address). -->
+<!-- docs/RELEASE-CHECKLIST.md lists what is still open in this file: the hero video, the clips that are not recorded yet, the roadmap. -->
 
 # Dynamic Island for KDE Plasma 6
 
@@ -11,7 +11,6 @@ A pill at the top centre of the screen that shows what is going on right now (mu
 **English** · [Türkçe](README.tr.md)
 
 <!-- TODO(owner): hero video / GIF here -->
-> **The main video goes here.** It is being prepared by the owner; until then the short clips below show each page.
 
 ## Contents
 
@@ -76,8 +75,8 @@ Without the native module the widget still runs; what needs it hides itself: the
 ## Installing, updating, removing
 
 ```bash
-git clone https://github.com/OWNER/REPOSITORY.git
-cd REPOSITORY
+git clone https://github.com/Phobby/plasma-island.git
+cd plasma-island
 ./install.sh               # the widget, the native module and island-push
 systemctl --user restart plasma-plasmashell
 ```
@@ -351,7 +350,7 @@ A small cat sits beside the pill. It falls asleep when nothing happens (after 20
 
 **Theme files.** *Export Theme…* writes the look as one `*.islandtheme.json` file. *Add New…* takes one back, from a file or from the store. A theme is **data only**: at most 64 kB of JSON with known fields, no code, no QML, no pictures; anything else is refused, and a download whose checksum is not the catalog's is refused too. Themes you add are kept in `~/.local/share/dynamicisland/themes/`.
 
-**The store** lists the `catalog/` folder of this repository. It makes a request only when you open its tab and when you press *Download*. Its address is one constant (`CATALOG_URL` in `contents/ui/ThemeFile.js`) and is a **placeholder until the repository is published**: until then the store says it has no address and asks nothing. Adding a theme of your own to the catalog: [CONTRIBUTING.md](CONTRIBUTING.md).
+**The store** lists the `catalog/` folder of this repository. It makes a request only when you open its tab and when you press *Download*. Its address is one constant (`CATALOG_URL` in `contents/ui/ThemeFile.js`): the `catalog/` folder of this repository's `main` branch, as `raw.githubusercontent.com` serves it. Adding a theme of your own to the catalog: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Layout and language
 
@@ -376,7 +375,7 @@ island-push --flash --title "Backup done" --icon document-save --color green
 ```
 
 ```bash
-source /path/to/REPOSITORY/tools/notify-done.sh    # in ~/.bashrc or ~/.zshrc
+source /path/to/plasma-island/tools/notify-done.sh    # in ~/.bashrc or ~/.zshrc
 notify-done make -j16          # on the island while it runs, then "Done" or "Failed"; the exit code is kept
 ```
 
@@ -431,7 +430,7 @@ There is **no telemetry**: the island reports nothing to anybody, and has no acc
 | Notes | **only for a connected app**: Joplin on this computer, Simplenote's servers, your Memos server; BetterNotes never | the `betternotes` command | tokens in KDE Wallet (the notes themselves stay in their apps) |
 | AI (off by default) | **only when you send a question**, to the source you chose | `claude` or `agy` for those sources | keys in KDE Wallet; the chat only if you ask for it (`~/.local/share/dynamicisland/ai-chat.json`, readable by you only) |
 | Cloud (off by default) | through `rclone`, for the remotes you set up: a listing when you open a folder, how full each cloud is every three hours | `rclone`; `dropbox status` if you use it | files you fetched, in `~/.cache/dynamicisland/cloud` (with a size limit) |
-| Theme store | **only when you open its tab** or press Download (and not at all while its address is the placeholder) | none | themes you add, in `~/.local/share/dynamicisland/themes/` |
+| Theme store | `raw.githubusercontent.com` (this repository's `catalog/`), **only when you open its tab** or press Download | none | themes you add, in `~/.local/share/dynamicisland/themes/` |
 | Updates | never (it reads PackageKit's list on this computer) | none | nothing |
 | Download tracking | never | none (it reads the process list and the download folder) | nothing |
 | Suggestions | never | none | what it learned, in `~/.local/share/dynamicisland/suggestions.json` |

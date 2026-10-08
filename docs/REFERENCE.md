@@ -284,14 +284,14 @@ A custom look can leave the settings as a file and come back from one.
 `contents/ui/ThemeFile.js`, holds the published address of `catalog/`:
 
 ```js
-const CATALOG_URL = "https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/catalog";
+const CATALOG_URL = "https://raw.githubusercontent.com/Phobby/plasma-island/main/catalog";
 ```
 
-As it comes it is a placeholder (`OWNER/REPOSITORY/BRANCH`): the store then
-says that it has no address yet and asks nothing. Replace the three words
-with the repository's owner, its name and the branch the catalog is published
-from (the result is the address under which
-`…/catalog/index.json` opens in a browser), and install again.
+That is the `catalog/` folder of this repository's `main` branch (the address
+under which `…/catalog/index.json` opens in a browser). A copy of the
+repository with a catalog of its own puts its owner, its name and its branch
+there and installs again. With the placeholder `OWNER/REPOSITORY/BRANCH` in
+it the store says that it has no address yet and asks nothing.
 
 **Privacy.** The store makes a request only when you open its tab (the list:
 `index.json`) and when you press Download (that one theme file). They are

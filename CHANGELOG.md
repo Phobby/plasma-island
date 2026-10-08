@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (2026-10-07)
+## 0.1.0 (2026-10-08)
 
 The first numbered release.
 
@@ -29,6 +29,9 @@ The first numbered release.
 ### Changed
 - **Suggestions are off until you switch them on** (Settings → Suggestions);
   they were on by default. Nothing is suggested and nothing learned before.
+- **The theme store has its address**: the `catalog/` folder of this
+  repository's `main` branch. It was a placeholder, with which the store
+  asked nothing.
 - The outline of where the island takes clicks is switched on only by
   `DYNAMICISLAND_DEBUG_REGION=1` in the shell's environment; the hidden
   setting `debugInputRegion` is gone.
@@ -46,5 +49,7 @@ The first numbered release.
   on where it was cut off.
 - `README.tr.md`, `docs/REFERENCE.md`, `docs/ARCHITECTURE.md`,
   `docs/PERFORMANCE.md`, `docs/CREDITS.md`, `SECURITY.md`.
+- `tools/link-check` (part of `tools/run-tests`): every link and picture of
+  the documents leads to a file and a heading that are there.
 
 Earlier changes are in the git history.

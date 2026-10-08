@@ -21,9 +21,11 @@
 // Where the catalog is published: the address of the repository's catalog/
 // folder as raw.githubusercontent.com serves it,
 //   https://raw.githubusercontent.com/<owner>/<repository>/<branch>/catalog
-// A placeholder until the repository is published: while OWNER/REPOSITORY/BRANCH
-// stand here the store says that it has no address yet and asks nothing.
-const CATALOG_URL = "https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/catalog";
+// here the catalog/ folder of the main branch. A copy of the repository that
+// publishes a catalog of its own puts its address here; with the placeholder
+// OWNER/REPOSITORY/BRANCH in it the store says that it has no address yet and
+// asks nothing.
+const CATALOG_URL = "https://raw.githubusercontent.com/Phobby/plasma-island/main/catalog";
 
 const SCHEMA = 1;
 const SUFFIX = ".islandtheme.json";

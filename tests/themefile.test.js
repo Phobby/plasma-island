@@ -179,8 +179,9 @@ test("the catalog's list: only whole entries, paths stay inside themes/", () => 
     check("too large", T.parseIndex(" ".repeat(T.MAX_INDEX_BYTES + 1)).error, "size");
 });
 
-test("the catalog address is a placeholder until it is set", () => {
-    check("the placeholder", [T.CATALOG_URL, T.configured(T.CATALOG_URL)], ["https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/catalog", false]);
+test("the catalog has its address; the placeholder is none", () => {
+    check("the address", [T.CATALOG_URL, T.configured(T.CATALOG_URL)], ["https://raw.githubusercontent.com/Phobby/plasma-island/main/catalog", true]);
+    check("the placeholder", T.configured("https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/catalog"), false);
     check("an address", [T.configured("https://raw.githubusercontent.com/someone/plasma-island/main/catalog"), T.configured("http://127.0.0.1:8123"), T.configured(""), T.configured("ftp://x")],
           [true, true, false, false]);
 });

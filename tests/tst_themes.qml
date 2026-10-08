@@ -223,7 +223,7 @@ Item {
             port = 0;
             // the placeholder address: nothing is asked at all
             const made = store.requests;
-            store.catalogUrl = ThemeFile.CATALOG_URL;
+            store.catalogUrl = "https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/catalog";
             compare(store.configured, false);
             store.browse();
             compare([store.state, store.requests], ["error", made]);

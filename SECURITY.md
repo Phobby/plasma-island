@@ -3,9 +3,10 @@
 ## Reporting a problem
 
 Please report a security problem **privately**, not in a public issue:
-
-<!-- TODO(owner): the address or the "Report a vulnerability" link of the repository (GitHub → Security → Advisories). -->
-- through the repository's private vulnerability report (*Security → Report a vulnerability*), once the repository is published.
+through GitHub's private vulnerability report. On the repository's page,
+*Security* → *Report a vulnerability*
+(<https://github.com/Phobby/plasma-island/security/advisories/new>). Only the
+maintainer sees such a report until an advisory is published.
 
 Say what you did, what happened and what you expected; a way to see it again
 helps most. Please leave out anything secret of your own (keys, tokens, the

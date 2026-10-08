@@ -1,4 +1,4 @@
-<!-- Yayın öncesi: bu dosyadaki tüm yer tutucular (OWNER/REPOSITORY, ana video, katalog adresi) docs/RELEASE-CHECKLIST.md içinde listelidir. -->
+<!-- Bu dosyada hâlâ açık olanlar docs/RELEASE-CHECKLIST.md içinde listelidir: ana video, henüz kaydedilmemiş klipler, yol haritası. -->
 
 # KDE Plasma 6 için Dinamik Ada
 
@@ -11,9 +11,8 @@ Ekranın üst ortasında duran, o an ne olup bittiğini (müzik, zamanlayıcı, 
 [English](README.md) · **Türkçe**
 
 <!-- TODO(owner): hero video / GIF here -->
-> **Ana tanıtım videosu buraya gelecek.** Sahibi tarafından hazırlanıyor; o zamana kadar aşağıdaki kısa klipler her sayfayı gösterir.
->
-> Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarlar → Dil).
+
+Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarlar → Dil).
 
 ## İçindekiler
 
@@ -78,8 +77,8 @@ Yerel modül olmadan widget yine çalışır; ona ihtiyaç duyan kısımlar kend
 ## Kurulum, güncelleme, kaldırma
 
 ```bash
-git clone https://github.com/OWNER/REPOSITORY.git
-cd REPOSITORY
+git clone https://github.com/Phobby/plasma-island.git
+cd plasma-island
 ./install.sh               # widget, yerel modül ve island-push
 systemctl --user restart plasma-plasmashell
 ```
@@ -353,7 +352,7 @@ Hapın yanında küçük bir kedi oturur. Hiçbir şey olmayınca uykuya dalar (
 
 **Tema dosyaları.** *Temayı Dışa Aktar…* görünümü tek bir `*.islandtheme.json` dosyası olarak yazar. *Yeni Ekle…* bir dosyadan ya da mağazadan geri alır. Bir tema **yalnızca veridir**: bilinen alanlardan oluşan en fazla 64 kB JSON; kod yok, QML yok, resim yok. Başka her şey reddedilir; sağlama toplamı katalogdakiyle uyuşmayan bir indirme de reddedilir. Eklediğiniz temalar `~/.local/share/dynamicisland/themes/` altında tutulur.
 
-**Mağaza** bu deponun `catalog/` klasörünü listeler. Yalnızca sekmesini açtığınızda ve *İndir*'e bastığınızda istek yapar. Adresi tek bir sabittir (`contents/ui/ThemeFile.js` içinde `CATALOG_URL`) ve **depo yayınlanana kadar bir yer tutucudur**: o zamana kadar mağaza adresinin olmadığını söyler ve hiçbir şey istemez. Kataloğa kendi temanızı eklemek için: [CONTRIBUTING.md](CONTRIBUTING.md) (İngilizce).
+**Mağaza** bu deponun `catalog/` klasörünü listeler. Yalnızca sekmesini açtığınızda ve *İndir*'e bastığınızda istek yapar. Adresi tek bir sabittir (`contents/ui/ThemeFile.js` içinde `CATALOG_URL`): bu deponun `main` dalındaki `catalog/` klasörü, `raw.githubusercontent.com`'un sunduğu biçimiyle. Kataloğa kendi temanızı eklemek için: [CONTRIBUTING.md](CONTRIBUTING.md) (İngilizce).
 
 ## Düzen ve dil
 
@@ -378,7 +377,7 @@ island-push --flash --title "Backup done" --icon document-save --color green
 ```
 
 ```bash
-source /path/to/REPOSITORY/tools/notify-done.sh    # ~/.bashrc ya da ~/.zshrc içine
+source /path/to/plasma-island/tools/notify-done.sh    # ~/.bashrc ya da ~/.zshrc içine
 notify-done make -j16          # çalışırken adada, sonra "Bitti" ya da "Başarısız"; çıkış kodu korunur
 ```
 
@@ -433,7 +432,7 @@ CPU, **tek** çekirdeğin yüzdesi olarak (makinede on iki iş parçacığı var
 | Notlar | **yalnızca bağlı bir uygulama için**: bu bilgisayardaki Joplin, Simplenote'un sunucuları, Memos sunucunuz; BetterNotes asla | `betternotes` komutu | belirteçler KDE Cüzdan'da (notların kendisi uygulamalarında kalır) |
 | Yapay Zeka (varsayılan kapalı) | **yalnızca bir soru gönderdiğinizde**, seçtiğiniz kaynağa | o kaynaklar için `claude` ya da `agy` | anahtarlar KDE Cüzdan'da; sohbet yalnızca siz isterseniz (`~/.local/share/dynamicisland/ai-chat.json`, yalnızca sizin okuyabildiğiniz) |
 | Bulut (varsayılan kapalı) | kurduğunuz uzaklar için `rclone` üzerinden: bir klasör açtığınızda listeleme, üç saatte bir her bulutun doluluğu | `rclone`; kullanıyorsanız `dropbox status` | aldığınız dosyalar `~/.cache/dynamicisland/cloud` içinde (boyut sınırıyla) |
-| Tema mağazası | **yalnızca sekmesini açtığınızda** ya da İndir'e bastığınızda (adresi yer tutucuyken hiç) | hiçbiri | eklediğiniz temalar `~/.local/share/dynamicisland/themes/` içinde |
+| Tema mağazası | `raw.githubusercontent.com` (bu deponun `catalog/` klasörü), **yalnızca sekmesini açtığınızda** ya da İndir'e bastığınızda | hiçbiri | eklediğiniz temalar `~/.local/share/dynamicisland/themes/` içinde |
 | Güncellemeler | asla (PackageKit'in bu bilgisayardaki listesini okur) | hiçbiri | hiçbir şey |
 | İndirme takibi | asla | hiçbiri (süreç listesini ve indirme klasörünü okur) | hiçbir şey |
 | Öneriler | asla | hiçbiri | öğrendiklerini `~/.local/share/dynamicisland/suggestions.json` içine |
