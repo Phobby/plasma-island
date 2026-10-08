@@ -22,7 +22,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 PLACE = {"name": "Reykjavik", "admin": "Capital Region", "country": "Iceland", "latitude": 64.13548, "longitude": -21.89541}
-HABITS = ["Water the plants", "Read 20 pages", "Stretch for ten minutes", "Practise the guitar", "Go for a walk"]
+HABITS = ["Water the plants", "Tidy the desk", "Stretch for ten minutes", "Write three lines", "Go for a walk"]
 NOTES = [
     ("Ideas for the garden", "- raised bed along the fence\n- herbs by the kitchen door\n- ask about the apple tree"),
     ("Packing list", "tent, sleeping bag, stove\nmap of the lake\nrain jacket"),

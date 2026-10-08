@@ -116,7 +116,7 @@ Item {
             const asked = new RegExp("^GET /open-meteo-search\\.json\\?name=Testwick&count=8&language=en&format=json$");
             verify(asked.test(log()[0]), log()[0]);
             compare(page.found.length, 6);
-            compare([page.found[0].name, page.found[0].admin, page.found[0].country], ["Tëstwick", "Tëstwick", "Republic of Exampleland"]);
+            compare([page.found[0].name, page.found[0].admin, page.found[0].country], ["Tëstwick", "Tëstwick", "Commonwealth of Exampleland"]);
 
             page.pick(page.found[0]);
             compare(picked.count, 1);
@@ -129,7 +129,7 @@ Item {
             compare(log().length, 2);
             verify(/^GET \/open-meteo-forecast\.json\?latitude=12\.3457&longitude=45\.6789&current=/.test(log()[1]), log()[1]);
             verify(log()[1].indexOf("stwick") < 0, "the name is not sent with the coordinates");
-            compare([backend.placeName, backend.placeLabel], ["Tëstwick", "Tëstwick, Republic of Exampleland"]);
+            compare([backend.placeName, backend.placeLabel], ["Tëstwick", "Tëstwick, Commonwealth of Exampleland"]);
         }
 
         function test_3_now_and_the_days() {

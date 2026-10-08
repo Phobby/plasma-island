@@ -58,7 +58,7 @@ Item {
         readonly property string mon: "2026-10-05"
         readonly property string tue: "2026-10-06"
         readonly property string wed: "2026-10-07"
-        readonly property var five: ["Çiçekleri sula", "Yürüyüş yap", "Günlük yaz", "Gitar çalış", "Erken kalk"]
+        readonly property var five: ["Birinci alışkanlık", "İkinci alışkanlık", "Üçüncü alışkanlık", "Dördüncü alışkanlık", "Beşinci alışkanlık"]
         function at(day, hour, minute) { return new Date(2026, 9, day, hour, minute || 0); }
 
         function start() {
@@ -99,7 +99,7 @@ Item {
         function test_asked_at_the_review_time_once() {
             const p = start();
             for (const name of five) p.addHabit(name);
-            for (const name of ["Yürüyüş yap", "Günlük yaz", "Erken kalk"]) p.setDone(mon, refOf(p, mon, name), true);
+            for (const name of ["İkinci alışkanlık", "Üçüncü alışkanlık", "Beşinci alışkanlık"]) p.setDone(mon, refOf(p, mon, name), true);
             compare(Habits.cell(p.record, mon).level, 3);
             pass(p, at(5, 21, 29));
             compare(p.pending, "");
@@ -140,7 +140,7 @@ Item {
         function test_shell_not_running_at_the_time_asks_at_the_next_start() {
             let p = start();
             for (const name of five) p.addHabit(name);
-            for (const name of ["Yürüyüş yap", "Günlük yaz"]) p.setDone(mon, refOf(p, mon, name), true);
+            for (const name of ["İkinci alışkanlık", "Üçüncü alışkanlık"]) p.setDone(mon, refOf(p, mon, name), true);
             pass(p, at(5, 20, 0));
             // plasmashell is closed before the review time…
             p.destroy();
@@ -162,7 +162,7 @@ Item {
             activities.activateEvent();
             compare(openedSpy.count, 1);
             compare([p.reviewDay, p.reviewStep, p.reviewTarget], [mon, 1, tue]);
-            p.setDone(mon, refOf(p, mon, "Erken kalk"), true);
+            p.setDone(mon, refOf(p, mon, "Beşinci alışkanlık"), true);
             p.continueReview();
             p.finishReview();
 
@@ -198,7 +198,7 @@ Item {
         function test_asleep_at_the_time_asks_after_the_wakeup_and_the_unlock() {
             const p = start();
             for (const name of five) p.addHabit(name);
-            p.setDone(mon, refOf(p, mon, "Yürüyüş yap"), true);
+            p.setDone(mon, refOf(p, mon, "İkinci alışkanlık"), true);
             pass(p, at(5, 19, 0));
             // suspended at 19:05, locked; awake again on Tuesday 07:30: no tick came in between
             nativeCore.screenLocked = true;
@@ -214,7 +214,7 @@ Item {
             tryVerify(shown);
             compare(activities.currentEvent.title, "How was yesterday?");
             activities.activateEvent();
-            p.setDone(mon, refOf(p, mon, "Günlük yaz"), true);
+            p.setDone(mon, refOf(p, mon, "Üçüncü alışkanlık"), true);
             p.continueReview();
             p.finishReview();
             compare([Habits.cell(p.record, mon).done, Habits.cell(p.record, mon).reviewed], [2, true]);
@@ -250,7 +250,7 @@ Item {
             compare(["2026-10-09", "2026-10-10"].map(k => Habits.cell(p.record, k).known), [false, false]);
 
             // filled in later from the calendar: thereby reviewed
-            p.setDone("2026-10-09", refOf(p, "2026-10-09", "Yürüyüş yap"), true);
+            p.setDone("2026-10-09", refOf(p, "2026-10-09", "İkinci alışkanlık"), true);
             compare([Habits.cell(p.record, "2026-10-09").level, p.record.days["2026-10-09"].r], [1, 1]);
             compare(p.record.days["2026-10-10"].r, 0);
         }
@@ -335,13 +335,13 @@ Item {
             compare(Habits.items(p.record, tue).length, 5);
             // Monday is still the day to review, and editable
             compare(p.pending, mon);
-            p.setDone(mon, refOf(p, mon, "Yürüyüş yap"), true);
+            p.setDone(mon, refOf(p, mon, "İkinci alışkanlık"), true);
             compare([Habits.cell(p.record, mon).done, p.record.days[mon].r], [1, 0], "the waiting day is not marked by an edit");
         }
 
         function test_setup_keeps_the_time() {
             const p = start();
-            p.addHabit("Yürüyüş yap");
+            p.addHabit("İkinci alışkanlık");
             compare(p.record.setup, 0);
             p.finishSetup("20:15");
             compare([p.record.setup, settings.habitsReviewTime], [1, "20:15"]);

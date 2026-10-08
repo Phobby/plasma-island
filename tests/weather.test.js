@@ -115,8 +115,8 @@ test("units", () => {
 test("searching a place", () => {
     const found = W.parseSearch(fixture("open-meteo-search.json"));
     check("results", found.length, 6);
-    check("the first", found[0], { name: "Tëstwick", admin: "Tëstwick", country: "Republic of Exampleland", latitude: 12.34567, longitude: 45.67891 });
-    check("its label", [W.placeLabel(found[0]), W.placeLabel(found[1])], ["Tëstwick, Republic of Exampleland", "Tëstwickham, Northshire, Republic of Exampleland"]);
+    check("the first", found[0], { name: "Tëstwick", admin: "Tëstwick", country: "Commonwealth of Exampleland", latitude: 12.34567, longitude: 45.67891 });
+    check("its label", [W.placeLabel(found[0]), W.placeLabel(found[1])], ["Tëstwick, Commonwealth of Exampleland", "Tëstwickham, Northshire, Commonwealth of Exampleland"]);
     check("nothing found", W.parseSearch('{"generationtime_ms":0.06}'), []);
     check("not an answer", [W.parseSearch("<html>"), W.parseSearch("")], [[], []]);
     check("results without a name or coordinates are left out",
