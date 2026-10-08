@@ -4,8 +4,8 @@ only to label the "Apple Calendar (iCloud)" and "Google Calendar" options and
 the Joplin and Simplenote note sources.
 
 betternotes.svg is the application icon of BetterNotes
-(https://github.com/thebanri/BetterNotes), released under the MIT licence; it
-is only used to label that note source.
+(https://github.com/thebanri/BetterNotes), released under the MIT licence
+(its text: betternotes.LICENSE); it is only used to label that note source.
 
 calculator-symbolic.svg was drawn for this widget (GPL-2.0-or-later): the
 Calculator button of the Controls page needs a single-colour icon and the

@@ -273,6 +273,7 @@ Küçük hapa tıklamak onu yoldan çekilsin diye bir noktaya çevirir (15 px, a
 - **Nasıl kullanılır:** yazıp Enter'a basın: varsayılan uygulamada hızlı not; büyüteç arar; tıklama notu düzenlemek için açar (yazmayı bırakınca, Ctrl+S ile ve geri dönünce kaydedilir). Ada, düzenlemekte olduğunuz nota geri döner.
 - **Kaynaklar:** BetterNotes (bu bilgisayarda, hesapsız), Joplin (Web Clipper servisi ve belirteci), Simplenote (hesap), Memos (sunucunuz ve bir belirteç).
 - **Ayarlar:** Ayarlar → Notlar: bağlı uygulamalar, hızlı notların nereye gideceği, ne sıklıkla alınacakları, son notta devam etme.
+- **Teşekkür:** BetterNotes'u [thebanri](https://github.com/thebanri/BetterNotes) geliştiriyor. Uygulama ve bu sayfanın konuştuğu komut satırı arayüzü için teşekkürler.
 - **Gereksinim ve sınırlar:** belirteçler KDE Cüzdan'da tutulur. Kilitli bir BetterNotes notu ana parolayı sorar (BetterNotes 0.1.15 ya da daha yenisi; daha eskisiyle ada notu uygulamada açmayı önerir); parola komutun standart girdisine gider ve hiçbir yerde saklanmaz. Zengin metinli notlar düz metin olarak gösterilir ve salt okunurdur.
 
 ### Yapay Zeka

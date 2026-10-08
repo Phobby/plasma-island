@@ -13,7 +13,7 @@ says so in its first lines, and the licence's text is in
 | Weather pictures | `contents/icons/weather/*.svg`, drawn through `contents/ui/WeatherIcons.js` | [Lucide](https://lucide.dev); some of them come from [Feather](https://feathericons.com) | ISC (Lucide), MIT (the Feather ones); both texts in `contents/icons/weather/LICENSE` |
 | The AI tab's "sparkles" | `contents/icons/ai/sparkles*.svg` | Lucide | ISC (`contents/icons/ai/LICENSE`) |
 | The marks of Apple, Google, Joplin and Simplenote | `contents/icons/{apple,google,joplin,simplenote}.svg` | [Simple Icons](https://simpleicons.org) 16.33.0 | CC0-1.0. The marks are trademarks of their owners; they only label the calendar options and the note sources of those names. The island is not affiliated with or endorsed by any of them. |
-| The BetterNotes icon | `contents/icons/betternotes.svg` | [BetterNotes](https://github.com/thebanri/BetterNotes) | MIT; it only labels that note source |
+| The BetterNotes icon | `contents/icons/betternotes.svg` | [BetterNotes](https://github.com/thebanri/BetterNotes) | MIT (`contents/icons/betternotes.LICENSE`); it only labels that note source |
 | The calculator icon | `contents/icons/calculator-symbolic.svg` | drawn for this widget | GPL-2.0-or-later |
 
 The six themes in `catalog/themes/` are the project's own (their `author`

@@ -271,6 +271,7 @@ A click on the small pill turns it into a dot (15 px, 10–28 in the settings) s
 - **How to use:** type and press Enter for a quick note in the default app; the magnifier searches; a click opens a note for editing (saved when you stop typing, on Ctrl+S and when you go back). The island comes back to the note you were editing.
 - **Sources:** BetterNotes (on this computer, no account), Joplin (its Web Clipper service and token), Simplenote (the account), Memos (your server and a token).
 - **Settings:** Settings → Notes: the connected apps, where quick notes go, how often they are fetched, carrying on in the last note.
+- **Thanks:** BetterNotes is made by [thebanri](https://github.com/thebanri/BetterNotes). Thank you for the app and for its command-line interface, which is what this page talks to.
 - **Requirements and limits:** tokens are kept in KDE Wallet. A locked BetterNotes note asks for the master password (BetterNotes 0.1.15 or newer; with an older one the island offers to open it in the app); the password goes to the command's standard input and is kept nowhere. Rich-text notes are shown as plain text and are read-only.
 
 ### AI
