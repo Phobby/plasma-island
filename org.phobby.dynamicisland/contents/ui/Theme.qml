@@ -15,8 +15,10 @@ QtObject {
     // true = the system's colours (Plasma), false = `style` (see Styles.qml)
     property bool follow: true
     property var style: Styles.defaults("oxygen")
-    // Distance from the top of the screen while following the system (Settings → General).
+    // Where the island sits while following the system: distance from the top of the
+    // screen and from its centre (Settings → Appearance; the first also in General).
     property int systemTop: 6
+    property int systemOffsetX: 0
     // KWin really blurs what is behind the island (native helper + Blur effect).
     property bool blurActive: false
 
@@ -53,7 +55,7 @@ QtObject {
     readonly property real scale: follow ? 1 : style.scale / 100
     readonly property real roundness: follow ? 1 : style.radius / 100
     readonly property int topOffset: follow ? systemTop : style.top
-    readonly property int offsetX: follow ? 0 : style.offsetX
+    readonly property int offsetX: follow ? systemOffsetX : style.offsetX
     readonly property int borderWidth: follow ? 1 : style.border ? style.borderWidth : 0
     readonly property int shadowLevel: follow ? 1 : style.shadow
     // A corner radius under the roundness setting (100% = as designed, a full capsule).

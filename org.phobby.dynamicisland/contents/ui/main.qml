@@ -39,7 +39,8 @@ PlasmoidItem {
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
     preferredRepresentation: compactRepresentation
     toolTipMainText: Lang.i18n("Dynamic Island")
-    toolTipSubText: backend.hasMedia ? backend.track : ""
+    toolTipSubText: !root.leads ? Lang.i18n("Another Dynamic Island is already on this screen, so this one stays hidden. Remove one of the two.")
+                    : backend.hasMedia ? backend.track : ""
     // (a title is whatever a player or a web page says it is)
     toolTipTextFormat: Text.PlainText
 
@@ -66,12 +67,17 @@ PlasmoidItem {
         style: root.previewing ? Styles.parse(root.cfg.previewStyle, null) : root.storedStyle
         systemSource: root.previewing ? root.cfg.previewSource : root.cfg.followSource
         systemScheme: colorSchemes.colors
-        systemTop: root.cfg.topMargin
+        systemTop: root.previewing ? root.cfg.previewTop : root.cfg.topMargin
+        systemOffsetX: Math.max(-100, Math.min(100, root.previewing ? root.cfg.previewOffsetX : root.cfg.horizontalOffset))
         blurActive: blur.active
     }
     // No settings window can be open when the shell starts: a preview left behind
     // (the shell was stopped while one was open) ends here.
-    Component.onCompleted: if (root.cfg.previewActive) root.cfg.previewActive = false
+    Component.onCompleted: {
+        if (root.cfg.previewActive) root.cfg.previewActive = false;
+        Islands.join(root);
+    }
+    Component.onDestruction: Islands.leave(root)
     // The custom style as stored; before one was ever stored, the look of the
     // earlier settings (opacity, blur, distance from top, light metal).
     readonly property var storedStyle: Styles.parse(root.cfg.customStyle, {
@@ -742,6 +748,15 @@ PlasmoidItem {
         return Qt.rect(g.x + a.x, g.y + a.y, a.width, a.height);
     }
 
+    // Added twice to one screen, only the first island shows (see Islands.qml).
+    readonly property string screenKey: {
+        const c = Plasmoid.containment;
+        const g = c ? c.screenGeometry : Qt.rect(0, 0, 0, 0);
+        return g.width > 0 && g.height > 0 ? g.x + "," + g.y : Screen.virtualX + "," + Screen.virtualY;
+    }
+    readonly property bool leads: Islands.leads(root)
+    onLeadsChanged: if (!leads) console.info("org.phobby.dynamicisland: another island is already on this screen; this one stays hidden")
+
     // The island is laid out at its designed size and scaled as a whole (the size
     // setting); the window and the blur region are that much larger or smaller.
     // (with a companion beside it the window keeps room for it on both sides, so the island stays in the middle)
@@ -767,7 +782,7 @@ PlasmoidItem {
         location: PlasmaCore.Types.Floating
         backgroundHints: PlasmaCore.Dialog.NoBackground
         hideOnWindowDeactivate: false
-        visible: true
+        visible: root.leads
 
         x: Math.round(root.screenRect.x + (root.screenRect.width - width) / 2 + theme.offsetX)
         y: Math.round(root.screenRect.y + theme.topOffset - theme.windowTopPad * theme.scale)

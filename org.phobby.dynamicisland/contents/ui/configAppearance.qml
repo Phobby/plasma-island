@@ -35,7 +35,9 @@ KCM.SimpleKCM {
     property int cfg_surfaceOpacity
     property bool cfg_blurEnabled
     property int cfg_themeMode
+    // Where the island sits while following the system (a custom style brings its own).
     property int cfg_topMargin
+    property int cfg_horizontalOffset
     // The Habits calendar: 0 = GitHub's greens, 1 = the system's accent colour (also in Habits).
     property int cfg_habitsColorSource
 
@@ -130,6 +132,8 @@ KCM.SimpleKCM {
         c.previewMode = cfg_appearanceMode;
         c.previewSource = cfg_followSource;
         c.previewStyle = JSON.stringify(style);
+        c.previewTop = cfg_topMargin;
+        c.previewOffsetX = cfg_horizontalOffset;
         c.previewActive = true;
         published = true;
     }
@@ -137,6 +141,8 @@ KCM.SimpleKCM {
     onStyleChanged: publish()
     onCfg_appearanceModeChanged: publish()
     onCfg_followSourceChanged: publish()
+    onCfg_topMarginChanged: publish()
+    onCfg_horizontalOffsetChanged: publish()
     Component.onCompleted: {
         style = stored();
         publish();
@@ -301,7 +307,7 @@ KCM.SimpleKCM {
             onToggled: if (checked) page.cfg_appearanceMode = 0
         }
         Hint {
-            text: Lang.i18n("Background, text, border and accent colour come from Plasma and change with it at once: the colour scheme, dark and light, the accent colour. Nothing below applies.")
+            text: Lang.i18n("Background, text, border and accent colour come from Plasma and change with it at once: the colour scheme, dark and light, the accent colour. Of what is below, only where the island sits applies: its distance from the top and its horizontal position.")
         }
         QQC2.ComboBox {
             id: sourceCombo
@@ -489,21 +495,30 @@ KCM.SimpleKCM {
         Hint {
             text: Lang.i18n("Needs the optional native helper and the KWin Blur effect. How strongly KWin blurs is one setting for the whole desktop (System Settings → Desktop Effects → Blur); the level here adds frosting over it.")
         }
+        // Where the island sits is set in both looks: a custom style keeps its own place,
+        // following the system has one of its own (the distance is General's, up to 200 px there).
         ValueSlider {
+            id: topSlider
+            objectName: "topSlider"
+            readonly property int shown: page.custom ? page.style.top : page.cfg_topMargin
             Kirigami.FormData.label: Lang.i18n("Distance from top:")
-            enabled: page.custom
-            from: 0; to: 40
-            value: page.style.top
-            valueText: Lang.i18n("%1 px", page.style.top)
-            onMoved: value => page.set("top", Math.round(value))
+            from: 0; to: page.custom ? 40 : 200
+            value: shown
+            valueText: Lang.i18n("%1 px", shown)
+            onMoved: value => { if (page.custom) page.set("top", Math.round(value)); else page.cfg_topMargin = Math.round(value); }
         }
         ValueSlider {
+            id: offsetSlider
+            objectName: "offsetSlider"
+            readonly property int shown: page.custom ? page.style.offsetX : page.cfg_horizontalOffset
             Kirigami.FormData.label: Lang.i18n("Horizontal position:")
-            enabled: page.custom
             from: -100; to: 100
-            value: page.style.offsetX
-            valueText: page.style.offsetX === 0 ? Lang.i18n("Centred") : Lang.i18n("%1 px", (page.style.offsetX > 0 ? "+" : "") + page.style.offsetX)
-            onMoved: value => page.set("offsetX", Math.abs(value) < 4 ? 0 : Math.round(value))
+            value: shown
+            valueText: shown === 0 ? Lang.i18n("Centred") : Lang.i18n("%1 px", (shown > 0 ? "+" : "") + shown)
+            onMoved: value => {
+                const px = Math.abs(value) < 4 ? 0 : Math.round(value);
+                if (page.custom) page.set("offsetX", px); else page.cfg_horizontalOffset = px;
+            }
         }
         ValueSlider {
             Kirigami.FormData.label: Lang.i18n("Size:")

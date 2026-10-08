@@ -24,6 +24,15 @@ Item {
         function use(preset, changes) { theme.style = styled(preset, changes); }
         function gradient(stops, changes) { use("oxygen", Object.assign({ fill: "gradient", gradientStops: stops }, changes || {})); }
 
+        function test_where_it_sits() {
+            const placed = Qt.createQmlObject('import "../org.phobby.dynamicisland/contents/ui"; Theme { systemTop: 20; systemOffsetX: -30 }', root);
+            placed.style = styled("oxygen", { top: 9, offsetX: 70 });
+            compare([placed.topOffset, placed.offsetX], [20, -30], "following the system: its own place");
+            placed.follow = false;
+            compare([placed.topOffset, placed.offsetX], [9, 70], "a custom style: the style's");
+            placed.destroy();
+        }
+
         function test_solid_presets_are_what_they_were() {
             for (const preset of ["oxygen", "breezeDark", "breezeLight", "glass", "contrast"]) {
                 const s = Styles.defaults(preset);

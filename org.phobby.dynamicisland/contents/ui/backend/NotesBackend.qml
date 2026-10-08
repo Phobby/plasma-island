@@ -16,7 +16,9 @@
                   the content on standard input) and shows a note as its
                   sticky window (`open <id>`, 0.1.14+); the change date, lock state
                   and next reminder come from its SQLite database, which is
-                  only ever read. A note is edited here as plain text; notes
+                  only ever read. Installed as a Flatpak it is started with
+                  `flatpak run` and its notes are in the sandbox's own folder.
+                  A note is edited here as plain text; notes
                   with rich text stay read-only (BetterNotes has its own
                   editor for those). A locked note is read and written with
                   its master password on the command's standard input
@@ -90,30 +92,50 @@ QtObject {
 
     // ---- BetterNotes (local) -----------------------------------------------------
     readonly property var local: core !== null ? core.local : null
-    // Its command: on the PATH or in ~/.local/bin, else the one its menu entry starts
-    // (an AppImage that was only added to the menu). "" = not installed.
-    function betterNotesCommand(): string {
-        if (!local) return "";
+    // Without the native module nothing on this computer can be looked for or run:
+    // BetterNotes is then not "not found", it cannot be asked for.
+    readonly property bool canLookForApps: local !== null
+    // How BetterNotes is started here: { program, args (before its own), flatpak }; null = not installed.
+    // On the PATH or in ~/.local/bin, else what its menu entry starts: an AppImage that was
+    // only added to the menu, or the Flatpak (`flatpak run org.betternotes.BetterNotes`).
+    function betterNotesLaunch(): var {
+        if (!local) return null;
         const found = local.findExecutable(betterNotesName);
-        if (found.length > 0) return found;
+        if (found.length > 0) return { program: found, args: [], flatpak: false };
         for (const dir of desktopDirs) {
-            const exec = /^Exec=("([^"]+)"|(\S+))/m.exec(local.readTextFile(dir + "/org.betternotes.BetterNotes.desktop"));
-            const program = exec ? (exec[2] || exec[3]) : "";
+            const exec = /^Exec=("([^"]+)"|(\S+))(.*)$/m.exec(local.readTextFile(dir + "/" + betterNotesApp + ".desktop"));
+            let program = exec ? (exec[2] || exec[3]) : "";
             if (program.length === 0) continue;
-            if (program.indexOf("/") < 0) { const onPath = local.findExecutable(program); if (onPath.length > 0) return onPath; }
-            else if (core.existingPaths([program]).length > 0) return program;
+            if (program.indexOf("/") < 0) program = local.findExecutable(program);
+            else if (core.existingPaths([program]).length === 0) program = "";
+            if (program.length === 0) continue;
+            if (/(^|\/)flatpak$/.test(program) && /(^|\s)run(\s|$)/.test(exec[4])) return { program: program, args: ["run", betterNotesApp], flatpak: true };
+            return { program: program, args: [], flatpak: false };
         }
-        return "";
+        return null;
+    }
+    // Its command; "" = not installed.
+    function betterNotesCommand(): string {
+        const launch = betterNotesLaunch();
+        return launch ? launch.program : "";
     }
     property string betterNotesName: "betternotes"
-    property var desktopDirs: ["~/.local/share/applications", "/usr/local/share/applications", "/usr/share/applications"]
+    readonly property string betterNotesApp: "org.betternotes.BetterNotes"
+    property var desktopDirs: ["~/.local/share/applications", "/usr/local/share/applications", "/usr/share/applications",
+                               "~/.local/share/flatpak/exports/share/applications", "/var/lib/flatpak/exports/share/applications"]
+    // Where its notes are: its own data folder, or the sandbox's when it is the Flatpak.
     property string betterNotesData: local ? local.dataHome() + "/betternotes" : ""
+    property string betterNotesSandboxData: local && typeof local.environment === "function"
+        ? local.environment("HOME") + "/.var/app/" + betterNotesApp + "/data/betternotes" : ""
+    // (known since BetterNotes was last looked for)
+    property bool betterNotesSandboxed: false
+    readonly property string betterNotesFolder: betterNotesSandboxed && betterNotesSandboxData.length > 0 ? betterNotesSandboxData : betterNotesData
     readonly property bool hasBetterNotes: sources.some(s => s.type === "betternotes")
     // Its database changed (a note was edited in the app): list again, at once.
     readonly property Binding watchBinding: Binding {
         target: backend.local
         property: "watchedPaths"
-        value: backend.enabled && backend.hasBetterNotes ? [backend.betterNotesData] : []
+        value: backend.enabled && backend.hasBetterNotes ? [backend.betterNotesFolder] : []
         when: backend.local !== null
     }
     readonly property Connections watchEvents: Connections {
@@ -128,7 +150,7 @@ QtObject {
     // the -wal. `betterNotesSeen` is that, as it was after the last listing.
     property string betterNotesSeen: ""
     function betterNotesStamp(done: var): void {
-        const db = betterNotesData + "/notes.sqlite3";
+        const db = betterNotesFolder + "/notes.sqlite3";
         local.run("stat", ["-c", "%s %y", "--", db, db + "-wal"], (code, out) => {
             const lines = out.trim().split("\n");
             // (an empty -wal is one that was only just made: the same as none)
@@ -160,8 +182,7 @@ QtObject {
     // A locked note needs `password` (0.1.15+): the error is then "locked" (none given, or a BetterNotes
     // too old for it) or "wrong". The password goes to the command's standard input, nowhere else.
     function loadText(item: var, done: var, password: var): void {
-        const command = betterNotesCommand();
-        if (!item || item.type !== "betternotes" || command.length === 0) { done(Lang.i18n("BetterNotes was not found."), ""); return; }
+        if (!item || item.type !== "betternotes" || betterNotesLaunch() === null) { done(Lang.i18n("BetterNotes was not found."), ""); return; }
         const secret = item.locked === true;
         if (secret && (!betterNotesUnlocks || typeof password !== "string" || password.length === 0)) { done("locked", ""); return; }
         const shown = (code, out, err) => {
@@ -176,21 +197,23 @@ QtObject {
                 text = text.replace(/<br\s*\/?>|<\/(p|div|li|h[1-6])>/gi, "\n").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\n{3,}/g, "\n\n").trim();
             done("", text, rich);
         };
-        if (secret) local.runWithInput(command, ["show", item.id, "--password-stdin"], password + "\n", shown);
-        else local.run(command, ["show", item.id], shown);
+        if (secret) runBetterNotes(["show", item.id, "--password-stdin"], password + "\n", shown);
+        else runBetterNotes(["show", item.id], null, shown);
     }
     // Runs `betternotes` with `input` on its standard input where args hold "--body", "-".
     // An older native module cannot write to standard input: the content then goes
     // as one argument instead (no shell is involved, line breaks stay as they are).
     function runBetterNotes(args: var, input: var, done: var): void {
-        const command = betterNotesCommand();
-        if (command.length === 0) { done(-1, "", Lang.i18n("BetterNotes was not found.")); return; }
-        if (input === null || input === undefined) local.run(command, args, done);
-        else if (typeof local.runWithInput === "function") local.runWithInput(command, args, input, done);
+        const launch = betterNotesLaunch();
+        if (launch === null) { done(-1, "", Lang.i18n("BetterNotes was not found.")); return; }
+        betterNotesSandboxed = launch.flatpak;
+        const command = launch.program, before = launch.args;
+        if (input === null || input === undefined) local.run(command, before.concat(args), done);
+        else if (typeof local.runWithInput === "function") local.runWithInput(command, before.concat(args), input, done);
         else if (args.indexOf("--password-stdin") >= 0) done(4, "", "");      // (an old native module cannot hand over a password)
         else {
             const at = args.indexOf("-");
-            local.run(command, args.slice(0, at).concat([input]).concat(args.slice(at + 1)), done);
+            local.run(command, before.concat(args.slice(0, at)).concat([input]).concat(args.slice(at + 1)), done);
         }
     }
     // What went wrong, in words a user can act on.
@@ -209,8 +232,8 @@ QtObject {
     }
     // Opens BetterNotes itself (what an older one can do instead of openNote()).
     function openBetterNotes(): void {
-        const command = betterNotesCommand();
-        if (command.length > 0) core.startDetached(command, []);
+        const launch = betterNotesLaunch();
+        if (launch !== null) core.startDetached(launch.program, launch.args);
     }
     // "BetterNotes 0.1.14", asked with every listing until it is new enough for
     // `open <id>`: an older command takes `open` as a plain launch.
@@ -225,9 +248,8 @@ QtObject {
         return m !== null && (Number(m[1]) * 1e6 + Number(m[2]) * 1e3 + Number(m[3])) >= 1015;
     }
     function checkBetterNotes(): void {
-        const command = betterNotesCommand();
-        if (command.length === 0) { betterNotesVersion = ""; return; }
-        local.run(command, ["--version"], (code, out) => { betterNotesVersion = code === 0 ? out.trim() : ""; });
+        if (betterNotesLaunch() === null) { betterNotesVersion = ""; return; }
+        runBetterNotes(["--version"], null, (code, out) => { betterNotesVersion = code === 0 ? out.trim() : ""; });
     }
     // Shows the note's sticky window, or brings it forward; BetterNotes is started in
     // the background when it is not running, and a locked note asks for its password
@@ -435,13 +457,12 @@ QtObject {
                 if (backend.betterNotesCommand().length === 0) done(Lang.i18n("BetterNotes was not found on this computer.")); else done("", "local", { server: "", user: "" });
             },
             list: function (source, token, done) {
-                const command = backend.betterNotesCommand();
-                if (command.length === 0) { done("missing", []); return; }
+                if (backend.betterNotesLaunch() === null) { done("missing", []); return; }
                 if (!backend.betterNotesUnlocks) backend.checkBetterNotes();
-                backend.local.run(command, ["list"], (code, out, err) => {
+                backend.runBetterNotes(["list"], null, (code, out, err) => {
                     if (code !== 0) { done((err || out).trim() || Lang.i18n("BetterNotes could not list its notes."), []); return; }
                     // What the command does not print: change date, lock, next reminder (read-only).
-                    const db = backend.betterNotesData + "/notes.sqlite3", extra = {};
+                    const db = backend.betterNotesFolder + "/notes.sqlite3", extra = {};
                     let rows = backend.local.sqliteQuery(db, "SELECT n.id AS id, n.updated_at AS updated, n.is_locked AS locked, "
                         + "(SELECT MIN(r.remind_at) FROM reminders r WHERE r.note_id = n.id AND r.dismissed = 0) AS reminder FROM notes n");
                     if (rows.length === 0) rows = backend.local.sqliteQuery(db, "SELECT id, updated_at AS updated FROM notes");
@@ -481,7 +502,7 @@ QtObject {
                     const m = /^\s*(\d+)\s*$/.exec(out) || /Created note #(\d+)/.exec(out);
                     if (m) { made(backend.note(source, m[1], title, Date.now(), null)); return; }
                     // No id printed: the newest note with this title.
-                    backend.local.run(backend.betterNotesCommand(), ["list"], (code2, out2) => {
+                    backend.runBetterNotes(["list"], null, (code2, out2) => {
                         const rows = code2 === 0 ? backend.parseBetterNotesList(out2).filter(r => r.title === title) : [];
                         if (rows.length === 0) { done(Lang.i18n("BetterNotes created the note but did not say which one; it appears with the next refresh.")); return; }
                         const id = rows.map(r => Number(r.id)).reduce((a, b) => Math.max(a, b));

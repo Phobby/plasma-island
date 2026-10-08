@@ -30,6 +30,35 @@ Item {
         name: "Settings"
         when: windowShown
 
+        // Where the island sits can be set in both looks: following the system has a
+        // place of its own (it could not be moved at all), a custom style keeps its.
+        function test_appearance_the_place_is_set_in_both_looks() {
+            if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = appearance.item;
+            const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
+            const top = find(page, "topSlider"), offset = find(page, "offsetSlider");
+            verify(top !== null && offset !== null);
+            page.cfg_appearanceMode = 1;
+            page.cfg_customStyle = JSON.stringify(Styles.defaults("oxygen"));
+            page.cfg_topMargin = 6; page.cfg_horizontalOffset = 0;
+            for (const mode of [0, 1]) { page.cfg_appearanceMode = mode; verify(top.enabled && offset.enabled, "mode " + mode); }
+
+            page.cfg_appearanceMode = 0;
+            top.moved(31); offset.moved(-42.4);
+            compare([page.cfg_topMargin, page.cfg_horizontalOffset], [31, -42]);
+            compare([page.style.top, page.style.offsetX], [6, 0], "the custom style is left alone");
+            compare([top.shown, offset.shown], [31, -42]);
+            offset.moved(3);
+            compare(page.cfg_horizontalOffset, 0, "near the middle it is the middle");
+
+            page.cfg_appearanceMode = 1;
+            compare([top.shown, offset.shown], [6, 0]);
+            top.moved(12); offset.moved(55);
+            compare([page.style.top, page.style.offsetX], [12, 55]);
+            compare([page.cfg_topMargin, page.cfg_horizontalOffset], [31, 0], "and the system's place too");
+            page.cfg_appearanceMode = 0; page.cfg_topMargin = 6;
+        }
+
         function test_appearance_solid_and_gradient_looks() {
             if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
             const page = appearance.item;

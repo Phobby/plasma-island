@@ -646,7 +646,8 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                             text: card.modelData === "joplin" ? (page.found.joplinRunning ? Lang.i18n("Found, running · Connect") : card.here ? Lang.i18n("Found · Connect") : Lang.i18n("Desktop app"))
                                 : card.modelData === "simplenote" ? (card.here ? Lang.i18n("Found · Sign in") : Lang.i18n("Account"))
-                                : card.modelData === "betternotes" ? (card.here ? Lang.i18n("On this device, no account") : page.detected ? Lang.i18n("Not found · Install") : Lang.i18n("On this device"))
+                                : card.modelData === "betternotes" ? (card.here ? Lang.i18n("On this device, no account") : !page.notes.canLookForApps ? Lang.i18n("Needs the native helper")
+                                                                      : page.detected ? Lang.i18n("Not found · Install") : Lang.i18n("On this device"))
                                 : Lang.i18n("Your own server")
                             color: card.here ? page.theme.readable(page.theme.live, page.theme.surface) : page.theme.subText
                             font.pointSize: page.theme.fontSmall * 0.85
@@ -820,6 +821,8 @@ Item {
     }
 
     // ---- BetterNotes is not installed: how to get it (never run from here) ----------
+    // Without the island's native helper it cannot be looked for at all: that is said instead.
+    readonly property string helperCommand: "./install.sh"
     ColumnLayout {
         anchors.fill: parent
         visible: page.view === "install"
@@ -839,7 +842,7 @@ Item {
             Text {
                 textFormat: Text.PlainText
                 Layout.fillWidth: true
-                text: Lang.i18n("BetterNotes was not found")
+                text: page.notes.canLookForApps ? Lang.i18n("BetterNotes was not found") : Lang.i18n("The native helper is missing")
                 color: page.theme.text
                 font.pointSize: page.theme.fontSmall
                 font.weight: Font.DemiBold
@@ -850,7 +853,9 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             wrapMode: Text.Wrap
-            text: Lang.i18n("A notes app without an account. To install it, run this command in your own terminal, then come back and choose BetterNotes again.") + " " + page.localOnly
+            text: page.notes.canLookForApps
+                ? Lang.i18n("A notes app without an account. To install it, run this command in your own terminal, then come back and choose BetterNotes again.") + " " + page.localOnly
+                : Lang.i18n("BetterNotes may well be installed: the island looks for it and talks to it through its native helper, which is not installed or did not load. Run this in the island's folder (it needs cmake and the Qt 6 and KDE development packages), then restart the shell.")
             color: page.theme.text
             font.pointSize: page.theme.fontSmall * 0.9
             elide: Text.ElideRight
@@ -872,7 +877,7 @@ Item {
                     verticalAlignment: TextEdit.AlignVCenter
                     readOnly: true
                     selectByMouse: true
-                    text: page.notes.betterNotesInstall
+                    text: page.notes.canLookForApps ? page.notes.betterNotesInstall : page.helperCommand
                     color: page.theme.text
                     selectionColor: page.theme.control
                     font.family: "monospace"

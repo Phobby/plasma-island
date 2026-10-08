@@ -234,8 +234,8 @@ style's.)
 | Ready-made looks | Oxygen Metallic (the original), Breeze Dark, Breeze Light, Pure Glass (Minimal), High Contrast (text and status colours at 4.5:1 or more, controls and border at 3:1 or more, nothing translucent to read on), and four gradients: Aurora, Sunset, Ocean, Midnight Blue (every colour of them dark enough for the light text, 4.5:1 or more). Each card shows the look itself. Choosing one keeps where the island sits and how large it is. "Reset to the preset" undoes the fine tuning |
 | Opacity | 0–100 %, as set (independent of blur) |
 | Blur | On/off and a level. KWin blurs with one strength for the whole desktop (System Settings → Desktop Effects → Blur), so the level adds frosting over the blurred background |
-| Distance from top | 0–40 px (while following the system: the one in General) |
-| Horizontal position | −100…+100 px from the centre |
+| Distance from top | 0–40 px. Also set while following the system: that look has a distance of its own (the one in General, up to 200 px) |
+| Horizontal position | −100…+100 px from the centre. Also set while following the system, which has a position of its own |
 | Size | 80–120 %: the whole island is scaled, text stays sharp |
 | Corner roundness | From sharp corners to a full capsule |
 | Background | One colour (or the system's accent colour), or a gradient: two or three colours, linear at any angle (0–360°, as in CSS: 0° runs upwards, 90° to the right) or radial from the middle. Opacity and blur apply to it as to a solid colour |
@@ -437,7 +437,7 @@ local service answers) and offers the ones it finds first.
 | **Joplin** | The desktop app's local Web Clipper API (`http://localhost:41184`). In Joplin: Tools → Options → Web Clipper → "Enable Web Clipper Service", then copy the token under "Advanced options" and paste it into the island. Joplin has to be running. |
 | **Simplenote** | Email and password of the account. The password is only used to sign in (through Simperium, the service behind Simplenote); the island keeps the access token it gets back. |
 | **Memos** | Address of your own server and an access token (Memos → Settings → My Account → Access Tokens). |
-| **BetterNotes** | Nothing to connect: an account-less notes app on this computer. If its `betternotes` command is found (on the PATH, in `~/.local/bin`, or through its menu entry) one click shows its notes; if not, the page shows the install command to copy (it never runs it). |
+| **BetterNotes** | Nothing to connect: an account-less notes app on this computer. If its `betternotes` command is found (on the PATH, in `~/.local/bin`, or through its menu entry: an AppImage, or the Flatpak, which is started with `flatpak run` and whose notes are in `~/.var/app/org.betternotes.BetterNotes`) one click shows its notes; if not, the page shows the install command to copy (it never runs it). An AppImage that is only run where it was downloaded has no menu entry and is not found: `./BetterNotes-….AppImage install` gives it one. Looking for it needs the island's native module; without that the page says so instead. |
 
 - All connected apps are shown in one list, newest first, each note with the
   logo of its app. Several apps can be connected at once.

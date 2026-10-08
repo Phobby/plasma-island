@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- **Added twice, the island stood there twice.** The widget added a second
+  time to one screen (twice to the desktop, to a panel and to the desktop)
+  put a second island exactly over the first. They looked like one until one
+  of them opened: then the other still stood there as a pill, with a second
+  cat. On one screen only the island that came first shows now; the other
+  widget's tooltip says why it is hidden. One island per screen stays possible.
+- **Following the system, the island could not be moved.** With *Follow the
+  system* chosen, *Distance from top* and *Horizontal position* in Settings →
+  Appearance were greyed out, and the horizontal position could not be set
+  anywhere. Both are set there in both looks now; following the system has a
+  place of its own, a custom style keeps its.
+- **BetterNotes installed as a Flatpak was not found.** Its menu entry is now
+  looked for in Flatpak's folders too; it is started with `flatpak run` and
+  its notes are read from the sandbox's folder. (Written from BetterNotes'
+  documentation and tried with a stand-in; not tried with the real Flatpak.)
+- **"BetterNotes was not found" without the native module.** The island looks
+  for BetterNotes through its native module. Where that is not installed the
+  Notes page said BetterNotes was missing and showed how to install it; it
+  now says that the native module is missing, and how to get it.
+
 ## 0.1.0 (2026-10-08)
 
 The first numbered release.
