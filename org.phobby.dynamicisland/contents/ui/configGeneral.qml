@@ -17,6 +17,7 @@ KCM.SimpleKCM {
     property alias cfg_showClock: clockCheck.checked
     property alias cfg_topMargin: topMarginSpin.value
     property alias cfg_avoidPanels: avoidPanelsCheck.checked
+    property bool cfg_notchMode
     property alias cfg_showNotifications: notificationsCheck.checked
     property alias cfg_notificationDuration: durationSpin.value
     property alias cfg_hoverDelay: hoverSpin.value
@@ -55,7 +56,7 @@ KCM.SimpleKCM {
             id: topMarginSpin
             Kirigami.FormData.label: Lang.i18n("Distance from top:")
             // A custom look brings its own distance (Appearance).
-            enabled: page.cfg_appearanceMode === 0
+            enabled: page.cfg_appearanceMode === 0 && !page.cfg_notchMode
             from: 0
             to: 200
             textFromValue: (v) => Lang.i18n("%1 px", v)
@@ -63,7 +64,16 @@ KCM.SimpleKCM {
         }
         QQC2.CheckBox {
             id: avoidPanelsCheck
+            enabled: !page.cfg_notchMode
             text: Lang.i18n("Place below top panels")
+        }
+        QQC2.Label {
+            textFormat: Text.PlainText
+            visible: page.cfg_notchMode
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
+            wrapMode: Text.Wrap
+            font: Kirigami.Theme.smallFont
+            text: Lang.i18n("Not in notch mode: the island sits at the top edge itself (Notch).")
         }
 
         Kirigami.Separator {

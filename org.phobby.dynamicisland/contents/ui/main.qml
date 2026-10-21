@@ -808,6 +808,9 @@ PlasmoidItem {
         return root.ownScreen;
     }
     readonly property var notchPanel: root.notchWanted ? panels.topPanelAt(root.notchScreen.x, root.notchScreen.y) : null
+    // (for the settings page: what was found there)
+    readonly property int notchPanelSeen: !panels.ready ? -1 : root.notchPanel !== null ? root.notchPanel.height : 0
+    onNotchPanelSeenChanged: if (root.notchWanted && root.cfg.notchPanelSeen !== notchPanelSeen) root.cfg.notchPanelSeen = notchPanelSeen
     // Its height in px: as set, or the top panel's; 0 = the island's own.
     readonly property int notchPixels: root.cfg.notchHeightMode === 1 ? root.cfg.notchHeight : root.notchPanel !== null ? root.notchPanel.height : 0
     readonly property var notchQtScreen: {

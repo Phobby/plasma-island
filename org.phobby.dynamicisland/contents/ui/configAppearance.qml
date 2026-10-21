@@ -37,6 +37,8 @@ KCM.SimpleKCM {
     property int cfg_themeMode
     // Where the island sits while following the system (a custom style brings its own).
     property int cfg_topMargin
+    // In notch mode the island sits at the top edge itself: the distance from it does not apply.
+    property bool cfg_notchMode
     property int cfg_horizontalOffset
     // And what else is set by hand in that look: opacity, blur, size, roundness, border, shadow (Styles.parseFollow).
     property string cfg_followStyle
@@ -519,10 +521,15 @@ KCM.SimpleKCM {
             objectName: "topSlider"
             readonly property int shown: page.look.top
             Kirigami.FormData.label: Lang.i18n("Distance from top:")
+            enabled: !page.cfg_notchMode
             from: 0; to: page.custom ? 40 : 200
             value: shown
             valueText: Lang.i18n("%1 px", shown)
             onMoved: value => page.put("top", Math.round(value))
+        }
+        Hint {
+            visible: page.cfg_notchMode
+            text: Lang.i18n("Not in notch mode: the island sits at the top edge itself (Notch).")
         }
         ValueSlider {
             id: offsetSlider

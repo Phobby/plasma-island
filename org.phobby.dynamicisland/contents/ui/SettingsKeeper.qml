@@ -33,7 +33,8 @@ QtObject {
     signal restored(int count)
 
     readonly property var skipped: ["settingsKept", "previewActive", "previewMode", "previewSource", "previewStyle", "previewTop", "previewOffsetX",
-                                    "previewFollowStyle", "systemScheme", "calendarStatus", "updateAsked", "installedVersion"]
+                                    "previewFollowStyle", "systemScheme", "calendarStatus", "updateAsked", "installedVersion",
+                                    "notchPanelSeen"]
     // (asked for each time: when `cfg` or `local` has only just been set, nothing here may lag behind it)
     // (Plasma's map also lists every setting's default, as "<name>Default": those are not settings)
     function kept(): var {

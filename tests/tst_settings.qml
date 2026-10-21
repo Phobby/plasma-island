@@ -23,6 +23,7 @@ Item {
     Loader { id: ai; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configAi.qml" }
     Loader { id: cloud; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configCloud.qml" }
     Loader { id: cat; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configCat.qml" }
+    Loader { id: notch; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configNotch.qml" }
     PageCatalog { id: pages }
     QtObject { id: stored; property string suggestionsData: ""; property string suggestionsAvailable: "" }
 
@@ -348,6 +349,43 @@ Item {
             mouseClick(button, button.width / 2, button.height / 2);
             compare([page.gallery, mind.active], [false, true]);
             cat.visible = false;
+        }
+
+        // Notch: its preview follows what is set; the widest is "no limit" below 80 px; in notch mode
+        // the distance from the top is not to be set in Appearance.
+        function test_notch_page_preview_and_limits() {
+            if (notch.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = notch.item;
+            const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
+            const preview = find(page, "notchPreview"), slider = find(page, "notchWidthSlider");
+            verify(preview !== null && slider !== null);
+            const outline = preview.children.find(c => c.ear !== undefined);
+            verify(outline !== undefined);
+            page.cfg_notchPanelSeen = 40;
+            page.cfg_notchHeightMode = 0;
+            compare(outline.height, 40, "as high as the panel the island found");
+            page.cfg_notchHeightMode = 1; page.cfg_notchHeight = 30;
+            compare(outline.height, 30, "or as set");
+            page.cfg_notchMaxWidth = 0;
+            const free = outline.width;
+            slider.moved();
+            slider.value = 120; slider.moved();
+            compare(page.cfg_notchMaxWidth, 120);
+            compare(outline.width, 120);
+            slider.value = 50; slider.moved();
+            compare(page.cfg_notchMaxWidth, 0, "below 80 px: no limit");
+            compare(outline.width, free);
+            page.cfg_notchColor = 0;
+            compare(String(outline.fillColor), "#000000");
+            page.cfg_notchEars = false;
+            compare(outline.ear, 0);
+
+            if (appearance.status !== Loader.Ready) return;
+            const top = find(appearance.item, "topSlider");
+            appearance.item.cfg_notchMode = true;
+            verify(!top.enabled);
+            appearance.item.cfg_notchMode = false;
+            verify(top.enabled);
         }
 
         function test_theme_file_through_the_page() {

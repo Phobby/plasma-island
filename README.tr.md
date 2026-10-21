@@ -170,6 +170,10 @@ Küçük hapa tıklamak onu yoldan çekilsin diye bir noktaya çevirir (15 px, a
 
 **Ayarlar → Genel → Nokta modu:** açık/kapalı, başlangıç durumu (bırakıldığı gibi, her zaman hap, her zaman nokta), nokta boyutu, üzerine gelince açılıp açılmayacağı, nokta modunda olaylar, kritik olaylarda her zaman genişleme.
 
+### Çentik modu
+
+Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğrudan üst kenarda durabilir: kenarla birleştiği yerde köşesiz, altta yuvarlak, panelin (kendini gizleyen bir panelin de) hep üstünde, aşağıya doğru açılır. Varsayılan olarak opak siyah; istenirse adanın kendi renkleri. Altında kalan panel kısmına tıklanamaz: panelinizin ortasında saat ya da görev düğmeleri varsa genişliğini sınırlayın. **Ayarlar → Çentik** (varsayılan kapalı); ayrıntılar [REFERENCE](docs/REFERENCE.md#notch-mode) içinde.
+
 ## Sayfalar
 
 ### Etkinlikler

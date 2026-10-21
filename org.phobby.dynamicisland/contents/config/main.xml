@@ -71,6 +71,8 @@
     <entry name="notchHeight" type="Int"><default>36</default><min>24</min><max>72</max></entry>
     <!-- Small inward curves where the notch meets the edge -->
     <entry name="notchEars" type="Bool"><default>true</default></entry>
+    <!-- Written by the widget while the notch is on: the top panel's height there, 0 = none, -1 = not known (for the settings page) -->
+    <entry name="notchPanelSeen" type="Int"><default>-1</default></entry>
 
     <!-- Written by the widget: this widget's settings were looked at by SettingsKeeper (a new widget reads the kept ones once) -->
     <entry name="settingsKept" type="Bool"><default>false</default></entry>

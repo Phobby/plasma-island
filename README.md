@@ -168,6 +168,10 @@ A click on the small pill turns it into a dot (15 px, 10–28 in the settings) s
 
 **Settings → General → Dot mode:** on/off, start as (as it was left, always the pill, always the dot), dot size, whether hovering opens it, events in dot mode, always open for critical events.
 
+### Notch mode
+
+With a panel at the top of the screen the island can sit at the top edge itself, like a laptop's notch: square where it meets the edge, rounded below, always over the panel (also one that hides itself), opening downwards. Opaque black by default, or the island's own colours. The panel under it cannot be clicked: if a clock or task buttons sit in the middle of your panel, limit its width. **Settings → Notch** (off by default); details in [REFERENCE](docs/REFERENCE.md#notch-mode).
+
 ## The pages
 
 ### Activities

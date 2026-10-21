@@ -77,6 +77,49 @@ bubble, and nothing while it is hidden. To see the region, start plasmashell
 with `DYNAMICISLAND_DEBUG_REGION=1` in its environment: a red outline is
 drawn around it.
 
+### Notch mode
+
+Settings → Notch (off by default). The island is welded to the top edge of
+the screen like a laptop's notch: no room above it, square where it meets
+the edge (with two small inward curves there, *Soften where it meets the
+edge*), only its lower corners rounded. It opens, shows notifications and
+events and shrinks to a dot as it always does, hanging from the edge; the
+dot is a small half circle there, the split island's circle a small notch
+of its own, the glow of the cover comes from its lower edge.
+
+- **Over the panel.** On Wayland it is a window of its own in the
+  compositor's overlay layer: over a top panel whether that panel is
+  always shown, hides itself, floats or not, and not pushed down by it. The
+  island's usual window shares the panels' layer and can lie under one (see
+  ARCHITECTURE, "Notch mode"). It is never shown on the lock screen.
+- **Full screen:** *Hide* (default) while the active window fills that
+  screen; *Show* keeps it over the window.
+- **Screen:** the top panel's screen (default), or the primary one; without
+  a top panel, the island's own. A panel at the bottom or a side has nothing
+  to do with it. One notch at a time: not on every screen.
+- **Height:** the top panel's (read from plasmashell, followed when the
+  panel changes, also while it is hidden), or set by hand (24–72 px).
+- **Colour:** opaque black with light text (default), or the island's own
+  colours (Appearance, a gradient too) made opaque. No blur, border or
+  shadow: nothing shines where it meets the panel.
+- **What it covers:** the panel under the notch cannot be clicked; beside
+  it the panel takes its clicks as before. The notch takes the pointer on
+  its own outline, the topmost row of pixels too (push the pointer against
+  the edge to open it). Where a panel's widgets are cannot be read, so if a
+  clock or task buttons sit in the middle of the panel, limit the notch with
+  *Widest* (the small notch and the split island; notifications and the open
+  island are wider for as long as they show).
+- **The cat** is hidden in notch mode (it would stand on the panel's
+  widgets and take their clicks); *Hide the cat in notch mode* can be
+  switched off.
+- **Not used in notch mode:** the distance from the top (Appearance and
+  General), *Place below top panels*, and the look's blur, opacity, border
+  and shadow. The horizontal position, the size, the roundness and dot mode
+  still apply. Switching the mode slides the island to its new place; no
+  restart.
+- **X11, or no LayerShellQt:** the island's usual window goes to the top
+  edge; whether it stays over the panel is the window manager's matter.
+
 Expanded pages: **Activities** (all ongoing activities, actions and privacy
 details), **Media**, **System** (information only: CPU, CPU temperature, GPU,
 RAM, battery, network ↓/↑ and disk cards; Fixed or Dynamic view),

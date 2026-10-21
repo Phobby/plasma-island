@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **Notch mode** (Settings → Notch, off by default). The island welded to
+  the top edge of the screen like a laptop's notch: square where it meets
+  the edge, only its lower corners rounded, opaque black or the island's
+  own colours, as high as the top panel and always over it, also when that
+  panel hides itself; hidden over a full-screen window unless wanted there,
+  never on the lock screen. It takes the pointer on its own outline, the
+  topmost row of pixels too; its widest can be limited for a clock or task
+  buttons in the middle of the panel. Switched on and off without a restart.
+
 ## 0.2.2 (2026-10-08)
 
 ### Added
