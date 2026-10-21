@@ -32,4 +32,7 @@ Window {
                                                       : LayerShell.Window.KeyboardInteractivityNone
     LayerShell.Window.activateOnShow: false
     LayerShell.Window.scope: "dynamicisland-notch"
+    // (on the screen main.qml puts it on; without this LayerShellQt 6.6 takes the primary one, whatever
+    // the window's or its own `screen` say. It logs that this is deprecated.)
+    LayerShell.Window.screenConfiguration: LayerShell.Window.ScreenFromQWindow
 }

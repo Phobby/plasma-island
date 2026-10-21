@@ -818,6 +818,12 @@ PlasmoidItem {
             if (s.virtualX === root.notchScreen.x && s.virtualY === root.notchScreen.y) return s;
         return null;
     }
+    Loader {
+        id: screenPlacer
+        active: root.notchWanted
+        source: "ScreenBridge.qml"
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old to put the notch on another screen; run install.sh again");
+    }
     // Its window, made anew when the notch goes to another screen (a layer surface keeps the one it was made on).
     Loader {
         id: notchLoader
@@ -826,11 +832,16 @@ PlasmoidItem {
         Component.onCompleted: reload()
         function reload(): void {
             if (target === null) { source = ""; return; }
-            if (item !== null && item.screen === target) return;
+            // (two objects can stand for one screen: known by name)
+            if (item !== null && item.screen !== null && item.screen.name === target.name) return;
+            // (made anew once the old one is gone: made in the same turn, it lands on the old screen)
             source = "";
-            setSource("NotchWindow.qml", { screen: target });
+            Qt.callLater(() => { if (target !== null && String(source) === "") source = "NotchWindow.qml"; });
         }
         onLoaded: {
+            // (before it is shown: its surface is made on the screen it has then)
+            item.screen = target;
+            if (screenPlacer.item !== null) screenPlacer.item.place(item, target.name);
             item.width = Qt.binding(() => Math.round(root.windowWidth * theme.scale) + 2 * Math.abs(theme.offsetX));
             item.height = Qt.binding(() => Math.round(root.windowHeight * theme.scale));
             item.keyboard = Qt.binding(() => island.wantsKeyboard);

@@ -96,7 +96,10 @@ of its own, the glow of the cover comes from its lower edge.
   screen; *Show* keeps it over the window.
 - **Screen:** the top panel's screen (default), or the primary one; without
   a top panel, the island's own. A panel at the bottom or a side has nothing
-  to do with it. One notch at a time: not on every screen.
+  to do with it. One notch at a time: not on every screen. Putting it on a
+  screen other than the primary one needs the native module (LayerShellQt
+  takes no screen from QML); a panel moved to another screen is followed
+  within a few seconds (as soon as plasmashell reports the move).
 - **Height:** the top panel's (read from plasmashell, followed when the
   panel changes, also while it is hidden), or set by hand (24–72 px).
 - **Colour:** opaque black with light text (default), or the island's own

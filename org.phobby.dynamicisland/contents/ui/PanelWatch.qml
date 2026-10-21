@@ -5,8 +5,9 @@
     plasmashell's order, the primary first) and, for every panel at the top of
     a screen, how high it is and whether it hides. Asked of plasmashell's own
     scripting interface (evaluateScript: the script below only reads), when the
-    notch is switched on and again whenever plasmashellrc, where the shell
-    keeps its panels, changes; nothing is polled.
+    notch is switched on and again whenever the files where the shell keeps its
+    panels change, or the room they leave on the island's screen; nothing is
+    polled.
 
     Where a panel's widgets are cannot be learnt this way (their geometry
     reads as 0×0), nor at all from a widget on the desktop.
@@ -62,23 +63,25 @@ Item {
     onCoreChanged: refresh()
     Component.onCompleted: refresh()
 
-    // The shell writes its panels to plasmashellrc, some seconds after a change and as a new file
-    // each time: the watch is set again after every change (on the folder until there is a file).
+    // The shell writes its panels to plasmashellrc (height, hiding) and to its applets' file (which
+    // screen), some seconds after a change and as a new file each time: the watch is set again after
+    // every change (on the folder while one of them is not there yet).
+    readonly property var files: ["~/.config/plasmashellrc", "~/.config/plasma-org.kde.plasma.desktop-appletsrc"]
     function paths(): var {
-        const file = "~/.config/plasmashellrc";
-        return watch.core !== null && watch.core.existingPaths([file]).length > 0 ? [file] : ["~/.config"];
+        const there = watch.core !== null ? watch.core.existingPaths(files) : [];
+        return there.length === files.length ? there : there.concat(["~/.config"]);
     }
     Loader {
-        id: files
+        id: fileWatch
         active: watch.enabled && watch.core !== null
         source: "LocalBridge.qml"
         onLoaded: item.watchedPaths = watch.paths()
         onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old to follow the panels; run install.sh again")
     }
     Connections {
-        target: files.item
+        target: fileWatch.item
         function onPathChanged() {
-            files.item.watchedPaths = [];
+            fileWatch.item.watchedPaths = [];
             rearm.restart();
         }
     }
@@ -87,8 +90,15 @@ Item {
         id: rearm
         interval: 400
         onTriggered: {
-            if (files.item) files.item.watchedPaths = watch.paths();
+            if (fileWatch.item) fileWatch.item.watchedPaths = watch.paths();
             watch.refresh();
+            settle.restart();
         }
+    }
+    // Once more when it has settled: a panel moved to another screen says so only a little later.
+    Timer {
+        id: settle
+        interval: 2000
+        onTriggered: watch.refresh()
     }
 }
