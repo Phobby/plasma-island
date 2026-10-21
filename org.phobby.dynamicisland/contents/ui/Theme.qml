@@ -31,6 +31,8 @@ QtObject {
     property bool notchBlack: true
     // Small inward curves where it meets the edge.
     property bool notchEars: true
+    // Its height in px (the top panel's, or as set); 0 = the island's own.
+    property int notchPixels: 0
     readonly property bool notchDark: notch && notchBlack
 
     // ---- the system's colours -------------------------------------------------
@@ -120,7 +122,9 @@ QtObject {
     // ---- metrics --------------------------------------------------------------
     readonly property real gu: Kirigami.Units.gridUnit          // ~18px @ 1x
     readonly property real pillWidth: Math.round(gu * 10)       // ~180
-    readonly property real pillHeight: Math.round(gu * 2)       // ~36
+    // (the notch is as high as asked, within reason: the small views are made for about this)
+    readonly property real pillHeight: notch && notchPixels > 0 ? Math.round(Math.max(20, Math.min(72, notchPixels / scale)))
+                                                                : Math.round(gu * 2)       // ~36
     readonly property real liveWidth: Math.round(gu * 13)
     readonly property real notificationWidth: Math.round(gu * 22)
     readonly property real notificationHeight: Math.round(gu * 4)

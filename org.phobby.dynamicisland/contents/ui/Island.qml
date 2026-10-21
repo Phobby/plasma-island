@@ -148,7 +148,14 @@ Item {
                                  : primary ? "live"
                                  : "idle"
 
-    readonly property real liveWidth: primary && primary.compactWidth > 0 ? primary.compactWidth : theme.liveWidth
+    // The notch's widest while it is small (Settings → Notch: so that it leaves a panel's widgets free); 0 = no limit.
+    property real maxWidth: 0
+    function limited(width: real): real { return notch && maxWidth > 0 ? Math.max(2 * theme.pillHeight, Math.min(width, maxWidth)) : width; }
+    readonly property real pillWidth: limited(theme.pillWidth)
+    readonly property real liveWidth: limited(primary && primary.compactWidth > 0 ? primary.compactWidth : theme.liveWidth)
+    // (the split island's pill and bubble together)
+    readonly property real splitMainWidth: notch && maxWidth > 0 ? limited(theme.splitMainWidth + theme.splitGap + theme.bubbleSize) - theme.splitGap - theme.bubbleSize
+                                                                 : theme.splitMainWidth
     // A page may ask for a wider island (the Habits year).
     readonly property bool wide: expanded && expandedContent.wide
     readonly property real expandedWidth: wide ? theme.wideWidth : theme.expandedWidth
@@ -160,9 +167,9 @@ Item {
                                       : mode === "notification" ? theme.notificationWidth
                                       : mode === "event" ? (currentEvent.width || theme.eventWidth)
                                       : mode === "dot" ? (notch ? 2 * dotSize : dotSize)
-                                      : mode === "split" ? theme.splitMainWidth
+                                      : mode === "split" ? splitMainWidth
                                       : mode === "live" ? liveWidth
-                                      : theme.pillWidth
+                                      : pillWidth
     readonly property real targetHeight: mode === "expanded" ? expandedHeight
                                        : mode === "notification" ? theme.notificationHeight
                                        : mode === "event" ? (currentEvent.height || theme.eventHeight)
@@ -383,7 +390,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         // smaller than the pill (the dot): in the middle of where the pill is; the notch's at the edge
         y: island.notch ? 0 : island.theme.windowTopPad + Math.max(0, (island.theme.pillHeight - height) / 2)
-        width: island.theme.pillWidth
+        width: island.pillWidth
         height: island.theme.pillHeight
         radius: island.notch ? island.theme.notchRadius : island.theme.rounded(island.theme.pillHeight / 2)
 
@@ -481,7 +488,7 @@ Item {
         // idle
         Layer {
             layerMode: "idle"
-            width: island.theme.pillWidth
+            width: island.pillWidth
             height: island.theme.pillHeight
 
             Clock {
@@ -521,7 +528,7 @@ Item {
             readonly property bool shownAlso: island.mode === "split"
             opacity: shown || shownAlso ? 1 : 0
             scale: shown || shownAlso ? 1 : 0.94
-            width: island.mode === "split" ? island.theme.splitMainWidth : island.liveWidth
+            width: island.mode === "split" ? island.splitMainWidth : island.liveWidth
             height: island.theme.pillHeight
 
             ActivityView {

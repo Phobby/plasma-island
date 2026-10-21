@@ -74,6 +74,7 @@ PlasmoidItem {
         notch: root.notchWanted
         notchBlack: root.cfg.notchColor === 0
         notchEars: root.cfg.notchEars
+        notchPixels: root.notchPixels
     }
     // No settings window can be open when the shell starts: a preview left behind
     // (the shell was stopped while one was open) ends here.
@@ -789,6 +790,7 @@ PlasmoidItem {
         id: panels
         core: root.core
         enabled: root.notchWanted
+        hint: Plasmoid.containment ? Plasmoid.containment.availableScreenRegion : null
     }
     // The whole of the island's own screen (the panels not left out).
     readonly property rect ownScreen: {
@@ -927,6 +929,7 @@ PlasmoidItem {
             showClock: root.cfg.showClock
             hoverDelay: root.cfg.hoverDelay
             collapseDelay: root.cfg.collapseDelay
+            maxWidth: root.cfg.notchMaxWidth
             dotMode: root.cfg.dotMode
             dotSize: Math.max(10, Math.min(28, root.cfg.dotSize))
             dotHoverExpand: root.cfg.dotHoverExpand

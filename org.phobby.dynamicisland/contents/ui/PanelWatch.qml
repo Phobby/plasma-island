@@ -18,6 +18,10 @@ Item {
 
     property var core: null                 // NativeBridge, or null
     property bool enabled: false
+    // Changes when a panel that keeps its room changes (the island's containment's
+    // availableScreenRegion): asked again at once, before the shell writes its file.
+    property var hint: null
+    onHintChanged: if (enabled) rearm.restart()
     // [{ x, y, width, height }], plasmashell's screens; [0] is the primary one
     property var screens: []
     // [{ screen: { x, y, width, height }, height, autohide, floating }]: panels at the top of a screen
@@ -58,12 +62,17 @@ Item {
     onCoreChanged: refresh()
     Component.onCompleted: refresh()
 
-    // The shell writes its panels to plasmashellrc (a new file each time: the watch is set again after every change).
+    // The shell writes its panels to plasmashellrc, some seconds after a change and as a new file
+    // each time: the watch is set again after every change (on the folder until there is a file).
+    function paths(): var {
+        const file = "~/.config/plasmashellrc";
+        return watch.core !== null && watch.core.existingPaths([file]).length > 0 ? [file] : ["~/.config"];
+    }
     Loader {
         id: files
         active: watch.enabled && watch.core !== null
         source: "LocalBridge.qml"
-        onLoaded: item.watchedPaths = ["~/.config/plasmashellrc"]
+        onLoaded: item.watchedPaths = watch.paths()
         onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old to follow the panels; run install.sh again")
     }
     Connections {
@@ -78,7 +87,7 @@ Item {
         id: rearm
         interval: 400
         onTriggered: {
-            if (files.item) files.item.watchedPaths = ["~/.config/plasmashellrc"];
+            if (files.item) files.item.watchedPaths = watch.paths();
             watch.refresh();
         }
     }
