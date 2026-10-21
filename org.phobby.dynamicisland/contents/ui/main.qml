@@ -71,6 +71,7 @@ PlasmoidItem {
         systemOffsetX: Math.max(-100, Math.min(100, root.previewing ? root.cfg.previewOffsetX : root.cfg.horizontalOffset))
         systemStyle: Styles.parseFollow(root.previewing ? root.cfg.previewFollowStyle : root.cfg.followStyle)
         blurActive: blur.active
+        notch: root.notchWanted
     }
     // No settings window can be open when the shell starts: a preview left behind
     // (the shell was stopped while one was open) ends here.
@@ -769,10 +770,94 @@ PlasmoidItem {
     }
 
     // Added twice to one screen, only the first island shows (see Islands.qml).
+    // (the notch counts as being on the screen it is on)
     readonly property string screenKey: {
+        if (root.notchWanted) return root.notchScreen.x + "," + root.notchScreen.y;
         const c = Plasmoid.containment;
         const g = c ? c.screenGeometry : Qt.rect(0, 0, 0, 0);
         return g.width > 0 && g.height > 0 ? g.x + "," + g.y : Screen.virtualX + "," + Screen.virtualY;
+    }
+
+    // ---- notch mode -----------------------------------------------------------------
+    // The island welded to the top edge of a screen, over the panel there. On Wayland it moves
+    // into a window of its own (NotchWindow.qml, a layer-shell overlay surface); elsewhere, or
+    // without LayerShellQt, the Dialog goes to the edge. See docs/ARCHITECTURE.md, "Notch mode".
+    readonly property bool notchWanted: root.cfg.notchMode
+    PanelWatch {
+        id: panels
+        core: root.core
+        enabled: root.notchWanted
+    }
+    // The whole of the island's own screen (the panels not left out).
+    readonly property rect ownScreen: {
+        const c = Plasmoid.containment;
+        const g = c ? c.screenGeometry : Qt.rect(0, 0, 0, 0);
+        return g.width > 0 && g.height > 0 ? g : Qt.rect(Screen.virtualX, Screen.virtualY, Screen.width, Screen.height);
+    }
+    // Its screen: the top panel's (that on the island's own screen first), or the primary one;
+    // the island's own when there is no such.
+    readonly property rect notchScreen: {
+        const r = s => Qt.rect(s.x, s.y, s.width, s.height);
+        if (root.cfg.notchScreen === 1 && panels.screens.length > 0) return r(panels.screens[0]);
+        if (root.cfg.notchScreen === 0 && panels.topPanels.length > 0)
+            return r((panels.topPanelAt(root.ownScreen.x, root.ownScreen.y) || panels.topPanels[0]).screen);
+        return root.ownScreen;
+    }
+    readonly property var notchPanel: root.notchWanted ? panels.topPanelAt(root.notchScreen.x, root.notchScreen.y) : null
+    // Its height in px: as set, or the top panel's; 0 = the island's own.
+    readonly property int notchPixels: root.cfg.notchHeightMode === 1 ? root.cfg.notchHeight : root.notchPanel !== null ? root.notchPanel.height : 0
+    readonly property var notchQtScreen: {
+        for (const s of Qt.application.screens)
+            if (s.virtualX === root.notchScreen.x && s.virtualY === root.notchScreen.y) return s;
+        return null;
+    }
+    // Its window, made anew when the notch goes to another screen (a layer surface keeps the one it was made on).
+    Loader {
+        id: notchLoader
+        readonly property var target: root.notchWanted && root.leads && Qt.platform.pluginName.startsWith("wayland") ? root.notchQtScreen : null
+        onTargetChanged: reload()
+        Component.onCompleted: reload()
+        function reload(): void {
+            if (target === null) { source = ""; return; }
+            if (item !== null && item.screen === target) return;
+            source = "";
+            setSource("NotchWindow.qml", { screen: target });
+        }
+        onLoaded: {
+            item.width = Qt.binding(() => Math.round(root.windowWidth * theme.scale) + 2 * Math.abs(theme.offsetX));
+            item.height = Qt.binding(() => Math.round(root.windowHeight * theme.scale));
+            item.keyboard = Qt.binding(() => island.wantsKeyboard);
+            item.visible = Qt.binding(() => !root.notchHidden);
+        }
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: LayerShellQt (org.kde.layershell) not found; the notch stays in the island's usual window, which may lie under a panel");
+    }
+    readonly property var notchWindow: notchLoader.status === Loader.Ready ? notchLoader.item : null
+    // While a window fills the notch's screen it steps aside, unless it is to stay (a Dialog lies under such a window anyway).
+    Loader {
+        id: notchFullscreen
+        active: root.notchWindow !== null && root.cfg.notchFullscreen === 0
+        source: "backend/FullscreenBackend.qml"
+        onLoaded: item.screen = Qt.binding(() => root.notchScreen)
+    }
+    readonly property bool notchHidden: notchFullscreen.item !== null && notchFullscreen.item.active
+    // Where the window the island is in has its left edge (for the companion's room).
+    readonly property real windowX: root.notchWindow !== null ? root.notchScreen.x + (root.notchScreen.width - root.notchWindow.width) / 2 : dialog.x
+
+    // Switched on or off, the island slides from where it was to where it goes instead of jumping.
+    // The window keeps room below for it while it slides down.
+    readonly property real usualTop: root.screenRect.y + theme.topOffset
+    property real slideRoom: 0
+    onNotchWantedChanged: {
+        const from = root.notchWanted ? root.usualTop - root.notchScreen.y : root.notchScreen.y - root.usualTop;
+        slideAnim.stop();
+        root.slideRoom = Math.max(0, from);
+        slide.y = from;
+        slideAnim.start();
+    }
+    SequentialAnimation {
+        id: slideAnim
+        NumberAnimation { target: slide; property: "y"; to: 0; duration: 320; easing.type: Easing.OutCubic }
+        ScriptAction { script: root.slideRoom = 0 }
     }
     readonly property bool leads: Islands.leads(root)
     onLeadsChanged: if (!leads) console.info("org.phobby.dynamicisland: another island is already on this screen; this one stays hidden")
@@ -785,11 +870,11 @@ PlasmoidItem {
                                          : 2 * theme.smallHalfWidth) + 2 * theme.windowSidePad + 2 * companion.reserve
     readonly property real windowHeight: (island.needsTallWindow ? theme.tallHeight
                                           : island.needsLargeWindow ? Math.max(theme.expandedHeight, theme.notificationHeight)
-                                          : theme.pillHeight) + theme.windowTopPad + theme.windowBottomPad
+                                          : theme.pillHeight) + theme.windowTopPad + theme.windowBottomPad + root.slideRoom / theme.scale
 
     Connections {
         target: island
-        function onWantsKeyboardChanged() { if (island.wantsKeyboard) dialog.requestActivate(); }
+        function onWantsKeyboardChanged() { if (island.wantsKeyboard) (root.notchWindow !== null ? root.notchWindow : dialog).requestActivate(); }
     }
 
     PlasmaCore.Dialog {
@@ -802,107 +887,122 @@ PlasmoidItem {
         location: PlasmaCore.Types.Floating
         backgroundHints: PlasmaCore.Dialog.NoBackground
         hideOnWindowDeactivate: false
-        visible: root.leads
+        // (in notch mode the island is in its own window, when there is one)
+        visible: root.leads && root.notchWindow === null
 
-        x: Math.round(root.screenRect.x + (root.screenRect.width - width) / 2 + theme.offsetX)
-        y: Math.round(root.screenRect.y + theme.topOffset - theme.windowTopPad * theme.scale)
+        // In notch mode without its window: at the top edge itself.
+        x: root.notchWanted ? Math.round(root.notchScreen.x + (root.notchScreen.width - width) / 2 + theme.offsetX)
+                            : Math.round(root.screenRect.x + (root.screenRect.width - width) / 2 + theme.offsetX)
+        y: root.notchWanted ? root.notchScreen.y : Math.round(root.screenRect.y + theme.topOffset - theme.windowTopPad * theme.scale)
 
         mainItem: Item {
+            id: dialogBody
             width: Math.round(root.windowWidth * theme.scale)
             height: Math.round(root.windowHeight * theme.scale)
+        }
+    }
 
-            Island {
-                id: island
-                width: parent.width / theme.scale
-                height: parent.height / theme.scale
-                transformOrigin: Item.TopLeft
-                scale: theme.scale
-                theme: theme
-                backend: backend
-                network: root.networkBackend
-                manager: activities
-                showClock: root.cfg.showClock
-                hoverDelay: root.cfg.hoverDelay
-                collapseDelay: root.cfg.collapseDelay
-                dotMode: root.cfg.dotMode
-                dotSize: Math.max(10, Math.min(28, root.cfg.dotSize))
-                dotHoverExpand: root.cfg.dotHoverExpand
-                dotEvents: root.cfg.dotEvents
-                dotCriticalExpand: root.cfg.dotCriticalExpand
-                // as it was left, always the pill, or always the dot
-                Component.onCompleted: dot = root.cfg.dotMode && (root.cfg.dotStart === 2 || (root.cfg.dotStart === 0 && root.cfg.dotState))
-                onDotChanged: if (root.cfg.dotState !== dot) root.cfg.dotState = dot
-                showMediaModule: root.cfg.showMediaModule
-                showSystemModule: root.cfg.showSystemModule
-                showVolumeModule: root.cfg.showVolumeModule
-                showNotificationModule: root.cfg.showNotificationModule
-                pageOrder: root.cfg.pageOrder
-                debugRegion: root.debugRegion
-                suggestions: suggestionProvider
-                dropPage: root.cfg.showCloud && root.cloudBackend !== null ? "cloud" : ""
-                ambientGlow: root.cfg.ambientGlow
-                onAmbientGlowToggled: root.cfg.ambientGlow = !root.cfg.ambientGlow
-                systemView: root.cfg.systemView === 0 ? "fixed" : "dynamic"
-                // The gear in the expanded header: Plasma's settings window of this widget.
-                onSettingsRequested: {
-                    island.expanded = false;
-                    Plasmoid.internalAction("configure").trigger();
-                }
-                // A System card was clicked: btop with only that metric's graph.
-                onSystemMetricClicked: key => {
-                    if (root.core) root.core.startDetached("sh", [String(Qt.resolvedUrl("../scripts/btop-view.sh")).replace(/^file:\/\//, ""), key]);
-                }
-                extraPages: [
-                    // The weather tab shows the weather itself: its icon and, where there is room, the temperature.
-                    { key: "weather", icon: "weather:" + (root.weatherBackend ? root.weatherBackend.icon : "cloud-sun"),
-                      label: root.weatherBackend && root.weatherBackend.ready ? root.weatherBackend.degrees(root.weatherBackend.temperature) : "",
-                      title: Lang.i18n("Weather"), component: weatherPage, visible: root.cfg.showWeather && root.weatherBackend !== null },
-                    { key: "apps", icon: "view-app-grid-symbolic", title: Lang.i18n("Apps"), component: appsPage, visible: root.cfg.showApps && root.appsBackend !== null },
-                    { key: "quicksettings", icon: "configure", title: Lang.i18n("Controls"), component: quickSettingsPage, visible: root.cfg.showQuickSettings },
-                    { key: "tools", icon: "chronometer", title: Lang.i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },
-                    // The dot: a day's evening review is waiting.
-                    { key: "habits", icon: "view-calendar-tasks", title: Lang.i18n("Habits"), component: habitsPage, visible: root.cfg.showHabits,
-                      dot: habitsProvider.pending !== "" },
-                    { key: "calendar", icon: "view-calendar", title: Lang.i18n("Calendar"), component: calendarPage,
-                      visible: root.cfg.showCalendar && calendarProviderLoader.item !== null },
-                    { key: "notes", icon: "view-pim-notes", title: Lang.i18n("Notes"), component: notesPage, visible: root.cfg.showNotes },
-                    // The dot: an answer arrived while another page (or none) was shown.
-                    { key: "ai", icon: "lucide:sparkles", title: Lang.i18n("AI"), component: aiPage, visible: root.cfg.showAi && root.aiBackend !== null,
-                      dot: root.aiBackend !== null && root.aiBackend.unseen },
-                    // The dot: a cloud is nearly full, or a sync has an error.
-                    { key: "cloud", icon: "folder-cloud", title: Lang.i18n("Cloud"), component: cloudPage, visible: root.cfg.showCloud && root.cloudBackend !== null,
-                      dot: root.cloudBackend !== null && (root.cloudBackend.storageWarning || root.cloudBackend.syncError) },
-                    { key: "clipboard", icon: "edit-paste", title: Lang.i18n("Clipboard"), component: clipboardPage,
-                      visible: root.cfg.showClipboard && root.clipboardBackend !== null }
-                ]
+    // The island, in the Dialog or in the notch's window; moved between them without being made anew.
+    Item {
+        id: islandHost
+        parent: root.notchWindow !== null ? root.notchWindow.contentItem : dialogBody
+        // (the notch's window is centred by the compositor: it is wider by the offset on both sides)
+        x: root.notchWindow !== null ? Math.abs(theme.offsetX) + theme.offsetX : 0
+        width: Math.round(root.windowWidth * theme.scale)
+        height: Math.round(root.windowHeight * theme.scale)
+        transform: Translate { id: slide }
 
-                // The companion: a cat beside the pill (contents/ui/companion). It reads from the island and
-                // the activities; it changes nothing of them, keeps nothing and asks nothing of the network.
-                Companion {
-                    id: companion
-                    island: island
-                    theme: root.islandTheme
-                    enabled: root.cfg.catEnabled
-                    sideSetting: root.cfg.catSide
-                    sizePercent: root.cfg.catSize
-                    fur: root.cfg.catFur
-                    furColor: root.cfg.catFurColor
-                    music: root.cfg.catMusic
-                    thoughts: root.cfg.catThoughts
-                    events: root.cfg.catEvents
-                    petting: root.cfg.catPetting
-                    clicks: root.cfg.catClicks
-                    noAnger: root.cfg.catNoAnger
-                    sulkSeconds: root.cfg.catSulkSeconds
-                    sleepSeconds: root.cfg.catSleepSeconds
-                    dotBehaviour: root.cfg.catDot
-                    reduceMotion: root.cfg.catReduceMotion
-                    ai: root.aiBackend
-                    spaceLeft: (dialog.x + dialog.width / 2 - root.screenRect.x) / root.islandTheme.scale
-                    spaceRight: (root.screenRect.x + root.screenRect.width - dialog.x - dialog.width / 2) / root.islandTheme.scale
-                    onHideRequested: root.cfg.catEnabled = false
-                    onSettingsRequested: Plasmoid.internalAction("configure").trigger()
-                }
+        Island {
+            id: island
+            width: parent.width / theme.scale
+            height: parent.height / theme.scale
+            transformOrigin: Item.TopLeft
+            scale: theme.scale
+            theme: theme
+            backend: backend
+            network: root.networkBackend
+            manager: activities
+            showClock: root.cfg.showClock
+            hoverDelay: root.cfg.hoverDelay
+            collapseDelay: root.cfg.collapseDelay
+            dotMode: root.cfg.dotMode
+            dotSize: Math.max(10, Math.min(28, root.cfg.dotSize))
+            dotHoverExpand: root.cfg.dotHoverExpand
+            dotEvents: root.cfg.dotEvents
+            dotCriticalExpand: root.cfg.dotCriticalExpand
+            // as it was left, always the pill, or always the dot
+            Component.onCompleted: dot = root.cfg.dotMode && (root.cfg.dotStart === 2 || (root.cfg.dotStart === 0 && root.cfg.dotState))
+            onDotChanged: if (root.cfg.dotState !== dot) root.cfg.dotState = dot
+            showMediaModule: root.cfg.showMediaModule
+            showSystemModule: root.cfg.showSystemModule
+            showVolumeModule: root.cfg.showVolumeModule
+            showNotificationModule: root.cfg.showNotificationModule
+            pageOrder: root.cfg.pageOrder
+            debugRegion: root.debugRegion
+            suggestions: suggestionProvider
+            dropPage: root.cfg.showCloud && root.cloudBackend !== null ? "cloud" : ""
+            ambientGlow: root.cfg.ambientGlow
+            onAmbientGlowToggled: root.cfg.ambientGlow = !root.cfg.ambientGlow
+            systemView: root.cfg.systemView === 0 ? "fixed" : "dynamic"
+            // The gear in the expanded header: Plasma's settings window of this widget.
+            onSettingsRequested: {
+                island.expanded = false;
+                Plasmoid.internalAction("configure").trigger();
+            }
+            // A System card was clicked: btop with only that metric's graph.
+            onSystemMetricClicked: key => {
+                if (root.core) root.core.startDetached("sh", [String(Qt.resolvedUrl("../scripts/btop-view.sh")).replace(/^file:\/\//, ""), key]);
+            }
+            extraPages: [
+                // The weather tab shows the weather itself: its icon and, where there is room, the temperature.
+                { key: "weather", icon: "weather:" + (root.weatherBackend ? root.weatherBackend.icon : "cloud-sun"),
+                  label: root.weatherBackend && root.weatherBackend.ready ? root.weatherBackend.degrees(root.weatherBackend.temperature) : "",
+                  title: Lang.i18n("Weather"), component: weatherPage, visible: root.cfg.showWeather && root.weatherBackend !== null },
+                { key: "apps", icon: "view-app-grid-symbolic", title: Lang.i18n("Apps"), component: appsPage, visible: root.cfg.showApps && root.appsBackend !== null },
+                { key: "quicksettings", icon: "configure", title: Lang.i18n("Controls"), component: quickSettingsPage, visible: root.cfg.showQuickSettings },
+                { key: "tools", icon: "chronometer", title: Lang.i18n("Tools"), component: toolsPage, visible: root.cfg.showTools },
+                // The dot: a day's evening review is waiting.
+                { key: "habits", icon: "view-calendar-tasks", title: Lang.i18n("Habits"), component: habitsPage, visible: root.cfg.showHabits,
+                  dot: habitsProvider.pending !== "" },
+                { key: "calendar", icon: "view-calendar", title: Lang.i18n("Calendar"), component: calendarPage,
+                  visible: root.cfg.showCalendar && calendarProviderLoader.item !== null },
+                { key: "notes", icon: "view-pim-notes", title: Lang.i18n("Notes"), component: notesPage, visible: root.cfg.showNotes },
+                // The dot: an answer arrived while another page (or none) was shown.
+                { key: "ai", icon: "lucide:sparkles", title: Lang.i18n("AI"), component: aiPage, visible: root.cfg.showAi && root.aiBackend !== null,
+                  dot: root.aiBackend !== null && root.aiBackend.unseen },
+                // The dot: a cloud is nearly full, or a sync has an error.
+                { key: "cloud", icon: "folder-cloud", title: Lang.i18n("Cloud"), component: cloudPage, visible: root.cfg.showCloud && root.cloudBackend !== null,
+                  dot: root.cloudBackend !== null && (root.cloudBackend.storageWarning || root.cloudBackend.syncError) },
+                { key: "clipboard", icon: "edit-paste", title: Lang.i18n("Clipboard"), component: clipboardPage,
+                  visible: root.cfg.showClipboard && root.clipboardBackend !== null }
+            ]
+
+            // The companion: a cat beside the pill (contents/ui/companion). It reads from the island and
+            // the activities; it changes nothing of them, keeps nothing and asks nothing of the network.
+            Companion {
+                id: companion
+                island: island
+                theme: root.islandTheme
+                enabled: root.cfg.catEnabled
+                sideSetting: root.cfg.catSide
+                sizePercent: root.cfg.catSize
+                fur: root.cfg.catFur
+                furColor: root.cfg.catFurColor
+                music: root.cfg.catMusic
+                thoughts: root.cfg.catThoughts
+                events: root.cfg.catEvents
+                petting: root.cfg.catPetting
+                clicks: root.cfg.catClicks
+                noAnger: root.cfg.catNoAnger
+                sulkSeconds: root.cfg.catSulkSeconds
+                sleepSeconds: root.cfg.catSleepSeconds
+                dotBehaviour: root.cfg.catDot
+                reduceMotion: root.cfg.catReduceMotion
+                ai: root.aiBackend
+                spaceLeft: (root.windowX + islandHost.x + islandHost.width / 2 - root.screenRect.x) / root.islandTheme.scale
+                spaceRight: (root.screenRect.x + root.screenRect.width - root.windowX - islandHost.x - islandHost.width / 2) / root.islandTheme.scale
+                onHideRequested: root.cfg.catEnabled = false
+                onSettingsRequested: Plasmoid.internalAction("configure").trigger()
             }
         }
     }
@@ -915,8 +1015,8 @@ PlasmoidItem {
         id: mask
         source: "MaskBridge.qml"
         onLoaded: {
-            item.window = dialog;
-            const scaled = r => Qt.rect(r.x * theme.scale, r.y * theme.scale, r.width * theme.scale, r.height * theme.scale);
+            item.window = Qt.binding(() => root.notchWindow !== null ? root.notchWindow : dialog);
+            const scaled = r => Qt.rect(islandHost.x + r.x * theme.scale, r.y * theme.scale, r.width * theme.scale, r.height * theme.scale);
             item.region = Qt.binding(() => scaled(island.hitRect));
             item.radius = Qt.binding(() => island.hitRadius * theme.scale);
             item.region2 = Qt.binding(() => scaled(island.bubbleRect));

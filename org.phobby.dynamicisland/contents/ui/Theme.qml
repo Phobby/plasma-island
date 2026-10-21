@@ -24,6 +24,8 @@ QtObject {
     property var systemStyle: Styles.followDefaults()
     // KWin really blurs what is behind the island (native helper + Blur effect).
     property bool blurActive: false
+    // Notch mode: welded to the top edge of the screen (no room above it; main.qml places it).
+    property bool notch: false
 
     // ---- the system's colours -------------------------------------------------
     // Two things can be "the system" inside plasmashell:
@@ -145,7 +147,7 @@ QtObject {
     // drop shadow and for OutBack overshoot).
     readonly property real shadowSize: shadowLevel === 0 ? 0 : shadowLevel === 1 ? 12 : 18
     readonly property real windowSidePad: 26
-    readonly property real windowTopPad: 6
+    readonly property real windowTopPad: notch ? 0 : 6
     readonly property real windowBottomPad: 28
 
     // ---- motion ---------------------------------------------------------------
