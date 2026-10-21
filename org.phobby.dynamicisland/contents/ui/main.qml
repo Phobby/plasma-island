@@ -1023,9 +1023,9 @@ PlasmoidItem {
         onLoaded: {
             item.window = Qt.binding(() => root.notchWindow !== null ? root.notchWindow : dialog);
             const scaled = r => Qt.rect(islandHost.x + r.x * theme.scale, r.y * theme.scale, r.width * theme.scale, r.height * theme.scale);
-            item.region = Qt.binding(() => scaled(island.hitRect));
+            item.region = Qt.binding(() => scaled(island.maskRect));
             item.radius = Qt.binding(() => island.hitRadius * theme.scale);
-            item.region2 = Qt.binding(() => scaled(island.bubbleRect));
+            item.region2 = Qt.binding(() => scaled(island.maskBubbleRect));
             // the companion's body (a module from before it: the cat is only looked at)
             if (item.shapes !== undefined) item.shapes = Qt.binding(() => companion.maskShapes.map(scaled));
             item.enabled = true;

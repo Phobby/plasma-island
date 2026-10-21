@@ -201,14 +201,22 @@ Item {
     // Where the island takes the pointer: its shape (see main.qml, native/windowmask.h).
     // The dot is smaller than a comfortable target: it takes the pointer a little around itself too.
     readonly property real dotTarget: 24
+    // (the notch's dot: from the edge down, so that the pointer pushed against the edge finds it)
     readonly property rect hitRect: mode === "dot" ? Qt.rect(surface.x - Math.max(0, dotTarget - surface.width) / 2,
-                                                             surface.y - Math.max(0, dotTarget - surface.height) / 2,
+                                                             notch ? 0 : surface.y - Math.max(0, dotTarget - surface.height) / 2,
                                                              Math.max(dotTarget, surface.width), Math.max(dotTarget, surface.height))
                                                    : surfaceRect
     readonly property real hitRadius: mode === "dot" ? Math.min(hitRect.width, hitRect.height) / 2 : surfaceRadius
     // Draws that region's outline (DYNAMICISLAND_DEBUG_REGION in the shell's environment).
     property bool debugRegion: false
     readonly property rect bubbleRect: bubble.opacity > 0.05 ? Qt.rect(bubble.x, bubble.y, bubble.width, bubble.height) : Qt.rect(0, 0, 0, 0)
+    // The same as the window's mask asks for them: rounded rectangles. The notch has no upper
+    // corners: its rectangles reach above the window by their radius, where nothing is, and what
+    // is left inside is straight along the top edge (the topmost row of pixels takes the pointer).
+    readonly property rect maskRect: notch ? Qt.rect(hitRect.x, hitRect.y - hitRadius, hitRect.width, hitRect.height + hitRadius) : hitRect
+    readonly property rect maskBubbleRect: notch && bubbleRect.width > 0
+        ? Qt.rect(bubbleRect.x, bubbleRect.y - Math.min(bubbleRect.width, bubbleRect.height) / 2, bubbleRect.width, bubbleRect.height + Math.min(bubbleRect.width, bubbleRect.height) / 2)
+        : bubbleRect
 
     Binding { target: island.manager; property: "holdEvents"; value: island.expanded }
     Binding { target: island.manager; property: "hovered"; value: island.hovered }
@@ -737,13 +745,13 @@ Item {
     // the pointer region, outlined (for looking at it)
     Rectangle {
         visible: island.debugRegion
-        x: island.hitRect.x; y: island.hitRect.y; width: island.hitRect.width; height: island.hitRect.height
+        x: island.maskRect.x; y: island.maskRect.y; width: island.maskRect.width; height: island.maskRect.height
         radius: Math.min(island.hitRadius, Math.min(width, height) / 2)
         color: "transparent"; border.width: 1; border.color: "red"; z: 100
     }
     Rectangle {
         visible: island.debugRegion && island.bubbleRect.width > 0
-        x: island.bubbleRect.x; y: island.bubbleRect.y; width: island.bubbleRect.width; height: island.bubbleRect.height
+        x: island.maskBubbleRect.x; y: island.maskBubbleRect.y; width: island.maskBubbleRect.width; height: island.maskBubbleRect.height
         radius: Math.min(width, height) / 2
         color: "transparent"; border.width: 1; border.color: "red"; z: 100
     }
