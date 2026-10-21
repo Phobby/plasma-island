@@ -157,6 +157,32 @@ own notification popups use the same method. The window only has two sizes
 window is not resized on every frame. Once the shrink animation ends the
 window shrinks.
 
+**Notch mode: why a window of its own.** Measured in `tools/nested-session`
+(KWin and plasmashell 6.6.6, Wayland), by reading `workspace.stackingOrder`
+from a KWin script and by pictures:
+
+| Window | KWin layer | over a top panel |
+|---|---|---|
+| `PlasmaCore.Dialog`, any type (Notification, OnScreenDisplay, CriticalNotification, Dock, PopupMenu) | 3, the panels' own (`dock=true`) | only if made after the panel: the island made at start-up lies *under* a panel made later |
+| the same with KWin's "keep above" (a KWin script) | still 3 | no change |
+| the island as a widget in the panel itself | 3 | over it because it was made later; covers the panel's clock under it, cannot reach below the panel without a second window |
+| layer-shell `top` (LayerShellQt) | 3 | as the Dialog: order of making |
+| layer-shell `overlay` | 9 | always; also over an active full-screen window (layer 5) |
+
+Nothing of these is drawn on the lock screen (checked with
+`tools/nested-session start --lockscreen`), and an active full-screen window
+covers everything of layer 3. So the notch is a layer-shell `overlay` surface
+anchored to the top edge (`NotchWindow.qml`, Wayland only); "hide over full
+screen" is the island's own decision (the task manager's model says whether
+the active window on that screen fills it), "show" simply keeps it. The
+island's item moves between the Dialog and this window when the setting
+changes, so nothing restarts. On X11, or without LayerShellQt, the Dialog
+itself goes to the top edge (no guarantee over the panel there).
+The panels (where, how high, which screen) are read from plasmashell's own
+scripting interface (`evaluateScript`, read only), again whenever
+`plasmashellrc` changes. Where on a panel its widgets are cannot be read
+(their geometry reads as 0×0), so the notch's width is the user's to limit.
+
 **Blur:** KWin only blurs the region a window asks for. `PlasmaQuick::Dialog`
 computes this region from the SVG mask of the theme frame and it cannot be
 changed from QML (verified in `libPlasmaQuick`). For a pill-shaped region the

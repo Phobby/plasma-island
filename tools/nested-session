@@ -4,10 +4,12 @@
 # empty desktop and nothing of yours in it. For measuring (tools/bench), for
 # recording (tools/demo) and for trying a first run with empty settings.
 #
-#   tools/nested-session start [--windowed] [--audio] [--host-system-bus]
+#   tools/nested-session start [--windowed] [--audio] [--host-system-bus] [--lockscreen] [--outputs N]
 #         headless by default (KWin draws with the GPU into a screen nobody
 #         sees: 1920x1080, scale 1); --windowed opens it as a window on your
-#         screen instead. --audio gives it a PipeWire of its own with no sound
+#         screen instead. --lockscreen lets it lock (`run qdbus6
+#         org.freedesktop.ScreenSaver /ScreenSaver Lock`); --outputs gives it
+#         N screens side by side. --audio gives it a PipeWire of its own with no sound
 #         card: what plays there is heard by nobody. --host-system-bus lets it
 #         see the computer's own system services (see below).
 #   tools/nested-session install        the island of this checkout into its home (builds native/)
@@ -104,9 +106,14 @@ wait_for_shell() {
 case "${1:-}" in
 start)
     shift
-    windowed=0; audio=0; host_bus=0
-    for a in "$@"; do
-        case "$a" in --windowed) windowed=1 ;; --audio) audio=1 ;; --host-system-bus) host_bus=1 ;; *) echo "unknown option: $a" >&2; exit 2 ;; esac
+    windowed=0; audio=0; host_bus=0; lock="--no-lockscreen"; outputs=1
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --windowed) windowed=1 ;; --audio) audio=1 ;; --host-system-bus) host_bus=1 ;; --lockscreen) lock="" ;;
+            --outputs) outputs="$2"; shift ;;
+            *) echo "unknown option: $1" >&2; exit 2 ;;
+        esac
+        shift
     done
     [ -z "$(pids)" ] || { echo "already running (tools/nested-session stop)"; exit 1; }
     mkdir -p "$HOME_/.config" "$HOME_/.local/share/dbus-1/services" "$HOME_/.cache" "$HOME_/.local/state" "$LOGS"
@@ -152,10 +159,10 @@ CONF
     fi
     if [ $windowed -eq 1 ]; then
         inside env WAYLAND_DISPLAY="$HOST_RUNTIME/$HOST_WAYLAND" setsid kwin_wayland --width "$W" --height "$H" --socket "$SOCKET" \
-            --no-lockscreen --no-global-shortcuts --no-kactivities >"$LOGS/kwin.log" 2>&1 &
+            --output-count "$outputs" $lock --no-global-shortcuts --no-kactivities >"$LOGS/kwin.log" 2>&1 &
     else
         inside env -u WAYLAND_DISPLAY setsid kwin_wayland --virtual --width "$W" --height "$H" --socket "$SOCKET" \
-            --no-lockscreen --no-global-shortcuts --no-kactivities >"$LOGS/kwin.log" 2>&1 &
+            --output-count "$outputs" $lock --no-global-shortcuts --no-kactivities >"$LOGS/kwin.log" 2>&1 &
     fi
     for _ in $(seq 100); do [ -S "$RUN/$SOCKET" ] && break; sleep 0.1; done
     [ -S "$RUN/$SOCKET" ] && echo "started ($([ $windowed -eq 1 ] && echo windowed || echo headless), ${W}x${H}) in $ROOT" \
