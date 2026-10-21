@@ -25,7 +25,13 @@ QtObject {
     // KWin really blurs what is behind the island (native helper + Blur effect).
     property bool blurActive: false
     // Notch mode: welded to the top edge of the screen (no room above it; main.qml places it).
+    // Opaque, without blur, border or shadow (nothing may shine where it meets the edge or a
+    // panel); black, or the island's own colours.
     property bool notch: false
+    property bool notchBlack: true
+    // Small inward curves where it meets the edge.
+    property bool notchEars: true
+    readonly property bool notchDark: notch && notchBlack
 
     // ---- the system's colours -------------------------------------------------
     // Two things can be "the system" inside plasmashell:
@@ -50,19 +56,19 @@ QtObject {
     readonly property real systemFrameContrast: Kirigami.Theme.frameContrast > 0 ? Kirigami.Theme.frameContrast : 0.2
 
     // ---- the look ---------------------------------------------------------------
-    readonly property string material: follow ? "flat" : style.material
+    readonly property string material: follow || notch ? "flat" : style.material
     // High contrast: nothing translucent that text has to be read on or with.
     readonly property bool strong: !follow && style.strong === true
-    readonly property color base: follow ? systemBackground : gradientFill ? gradientAverage : style.background === "accent" ? systemAccent : style.background
+    readonly property color base: notchDark ? "#000000" : follow ? systemBackground : gradientFill ? gradientAverage : style.background === "accent" ? systemAccent : style.background
     readonly property bool dark: luminance(base) < 0.179     // white reads better on it than black
-    readonly property bool blurWanted: follow ? systemStyle.blur : style.blur
+    readonly property bool blurWanted: notch ? false : follow ? systemStyle.blur : style.blur
     readonly property int blurLevel: follow ? systemStyle.blurLevel : style.blurLevel
     readonly property real scale: follow ? systemStyle.scale / 100 : style.scale / 100
     readonly property real roundness: follow ? systemStyle.radius / 100 : style.radius / 100
     readonly property int topOffset: follow ? systemTop : style.top
     readonly property int offsetX: follow ? systemOffsetX : style.offsetX
-    readonly property int borderWidth: follow ? (systemStyle.border ? systemStyle.borderWidth : 0) : style.border ? style.borderWidth : 0
-    readonly property int shadowLevel: follow ? systemStyle.shadow : style.shadow
+    readonly property int borderWidth: notch ? 0 : follow ? (systemStyle.border ? systemStyle.borderWidth : 0) : style.border ? style.borderWidth : 0
+    readonly property int shadowLevel: notch ? 0 : follow ? systemStyle.shadow : style.shadow
     // A corner radius under the roundness setting (100% = as designed, a full capsule).
     function rounded(radius: real): real { return radius * roundness; }
 
@@ -72,7 +78,7 @@ QtObject {
     // is derived from the background (dark or light, the automatic text colour,
     // readable(), the frame) takes the gradient's average then, so text is
     // chosen against the mean brightness of what it sits on.
-    readonly property bool gradientFill: !follow && style.fill === "gradient"
+    readonly property bool gradientFill: !follow && !notchDark && style.fill === "gradient"
     readonly property string gradientKind: gradientFill ? style.gradientType : ""
     readonly property real gradientAngle: gradientFill ? style.gradientAngle : 0
     function fromHex(text: string): color {
@@ -125,6 +131,9 @@ QtObject {
     // And one that needs it downwards (the AI tab's conversation) makes it this tall.
     readonly property real tallHeight: Math.round(gu * 20)
     readonly property real expandedRadius: rounded(28)
+    // The notch's lower corners while it is small (it has no upper ones), and its curves at the edge.
+    readonly property real notchRadius: rounded(Math.round(pillHeight * 0.36))
+    readonly property real notchEar: notch && notchEars ? Math.round(pillHeight * 0.22) : 0
     readonly property real notificationRadius: rounded(26)
     // Transient system events (charging, Bluetooth, volume…): a wide pill.
     readonly property real eventWidth: Math.round(gu * 19)
@@ -159,7 +168,7 @@ QtObject {
     // ---- colors -------------------------------------------------------------
     // Following the system keeps the surface readable without blur; a custom
     // style takes the opacity as it is set.
-    readonly property real alpha: follow ? (systemStyle.opacity < 0 ? (blurActive ? 0.82 : 0.92) : systemStyle.opacity / 100) : style.opacity / 100
+    readonly property real alpha: notch ? 1 : follow ? (systemStyle.opacity < 0 ? (blurActive ? 0.82 : 0.92) : systemStyle.opacity / 100) : style.opacity / 100
     function shade(c: color, factor: real, a: real): color {
         return Qt.rgba(Math.min(1, c.r * factor), Math.min(1, c.g * factor), Math.min(1, c.b * factor), a);
     }
@@ -199,7 +208,7 @@ QtObject {
     readonly property color frost: !blurActive || blurLevel === 0 ? "transparent"
         : Qt.rgba(1, 1, 1, (dark ? [0, 0.05, 0.11] : [0, 0.18, 0.34])[blurLevel])
 
-    readonly property color text: follow ? systemText : style.text.length > 0 ? style.text : dark ? "#f4f5f7" : "#16171a"
+    readonly property color text: notchDark ? "#f4f5f7" : follow ? systemText : style.text.length > 0 ? style.text : dark ? "#f4f5f7" : "#16171a"
     readonly property color subText: strong ? mix(text, base, 0.12) : Qt.rgba(text.r, text.g, text.b, dark ? 0.62 : 0.74)
     readonly property color faint: dark ? Qt.rgba(1, 1, 1, strong ? 0.20 : 0.12) : Qt.rgba(0, 0, 0, strong ? 0.16 : 0.10)
     readonly property color track: dark ? Qt.rgba(1, 1, 1, strong ? 0.42 : 0.16) : Qt.rgba(0, 0, 0, strong ? 0.45 : 0.14)

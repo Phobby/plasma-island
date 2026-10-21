@@ -11,6 +11,9 @@
       expanded      paged modules                                (hover)
       dot           a small dot in the pill's place               (dot mode: a click)
 
+    In notch mode (theme.notch) the same states hang from the top edge of the
+    screen: only the lower corners rounded, the dot a small half circle.
+
     What is live / queued is decided by the ActivityManager. While a banner or
     event is shown, hovering pauses it instead of expanding, so it can be clicked.
     Privacy dots (mic / camera / screen) always sit right of the island.
@@ -152,10 +155,11 @@ Item {
     // Or for a taller one (the AI tab's conversation).
     readonly property bool tall: expanded && expandedContent.tall
     readonly property real expandedHeight: tall ? theme.tallHeight : theme.expandedHeight
+    readonly property bool notch: theme.notch
     readonly property real targetWidth: mode === "expanded" ? expandedWidth
                                       : mode === "notification" ? theme.notificationWidth
                                       : mode === "event" ? (currentEvent.width || theme.eventWidth)
-                                      : mode === "dot" ? dotSize
+                                      : mode === "dot" ? (notch ? 2 * dotSize : dotSize)
                                       : mode === "split" ? theme.splitMainWidth
                                       : mode === "live" ? liveWidth
                                       : theme.pillWidth
@@ -167,7 +171,8 @@ Item {
     readonly property real targetRadius: mode === "expanded" ? theme.expandedRadius
                                        : mode === "notification" ? theme.notificationRadius
                                        : mode === "event" ? theme.rounded(Math.min((currentEvent.height || theme.eventHeight) / 2, 26))
-                                       : mode === "dot" ? dotSize / 2
+                                       : mode === "dot" ? (notch ? dotSize : dotSize / 2)
+                                       : notch ? theme.notchRadius
                                        : theme.rounded(theme.pillHeight / 2)
 
     // The window has to stay large while the surface is still bigger than
@@ -371,12 +376,16 @@ Item {
         // a hint of the colour on the small pill, less on the large card
         glowTint: island.mode === "expanded" ? 0.06 : 0.13
         bodyScale: glow.visibleAtAll ? glow.bodyScale : 1
+        notch: island.notch
+        ear: island.theme.notchEar
+        // (the notch's dot grows from the edge it hangs from)
+        transformOrigin: island.notch ? Item.Top : Item.Center
         anchors.horizontalCenter: parent.horizontalCenter
-        // smaller than the pill (the dot): in the middle of where the pill is
-        y: island.theme.windowTopPad + Math.max(0, (island.theme.pillHeight - height) / 2)
+        // smaller than the pill (the dot): in the middle of where the pill is; the notch's at the edge
+        y: island.notch ? 0 : island.theme.windowTopPad + Math.max(0, (island.theme.pillHeight - height) / 2)
         width: island.theme.pillWidth
         height: island.theme.pillHeight
-        radius: island.theme.rounded(island.theme.pillHeight / 2)
+        radius: island.notch ? island.theme.notchRadius : island.theme.rounded(island.theme.pillHeight / 2)
 
         HoverHandler {
             id: hover
@@ -630,6 +639,7 @@ Item {
     IslandShape {
         id: bubble
         theme: island.theme
+        notch: island.notch
         z: -1
         width: island.theme.bubbleSize
         height: island.theme.bubbleSize

@@ -72,6 +72,8 @@ PlasmoidItem {
         systemStyle: Styles.parseFollow(root.previewing ? root.cfg.previewFollowStyle : root.cfg.followStyle)
         blurActive: blur.active
         notch: root.notchWanted
+        notchBlack: root.cfg.notchColor === 0
+        notchEars: root.cfg.notchEars
     }
     // No settings window can be open when the shell starts: a preview left behind
     // (the shell was stopped while one was open) ends here.
@@ -983,7 +985,8 @@ PlasmoidItem {
                 id: companion
                 island: island
                 theme: root.islandTheme
-                enabled: root.cfg.catEnabled
+                // (in notch mode it would stand on the panel's widgets beside it, unless the user wants it there)
+                enabled: root.cfg.catEnabled && !(root.notchWanted && root.cfg.notchHideCat)
                 sideSetting: root.cfg.catSide
                 sizePercent: root.cfg.catSize
                 fur: root.cfg.catFur

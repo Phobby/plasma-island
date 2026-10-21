@@ -10,6 +10,11 @@
     any angle or radial, under the same frosting, gloss and border.
     Children are placed in a clipped, padded content item.
 
+    As the notch (`notch`): the upper edge straight and one with the screen's,
+    only the lower corners rounded, and where it meets the edge two small
+    inward curves (`ear` px wide, beside its own width); opaque, so the body
+    is the one shape of that outline (NotchOutline) and nothing else is drawn.
+
     Optional ambient glow (AmbientGlow.qml): a coloured light around the edge
     (RectangularShadow, drawn by the GPU), a faint tint of the body and a
     small scale of the *drawn* surface only: the content and the input area
@@ -28,6 +33,9 @@ Item {
     default property alias content: contentItem.data
     property real contentPadding: 0
 
+    property bool notch: false
+    property real ear: 0
+
     property real glowShown: 0          // 0..1, fades the whole glow in and out
     property real glowStrength: 0       // 0..1, follows the music
     property color glowColor: "white"
@@ -44,8 +52,11 @@ Item {
 
     // The glow: below the body, shifted down so that it spills out under the
     // island and stays inside the window's margins (6 px above, 26 at the sides).
+    // The notch's comes from its lower part only: its lower edge glows, not where it meets the screen's.
     Loader {
-        anchors.fill: parent
+        width: parent.width
+        y: shape.notch ? parent.height * 0.45 : 0
+        height: shape.notch ? parent.height * 0.55 : parent.height
         active: shape.glowShown > 0.001
         sourceComponent: RectangularShadow {
             radius: shape.radius
@@ -72,7 +83,7 @@ Item {
     // the cover's colour (the tint below) lies over it.
     Loader {
         anchors.fill: parent
-        active: shape.theme.gradientFill
+        active: shape.theme.gradientFill && !shape.notch
         sourceComponent: Shape {
             id: fill
             readonly property real r: Math.max(0.01, Math.min(shape.radius, width / 2, height / 2))
@@ -119,9 +130,24 @@ Item {
         }
     }
 
+    // The notch's body
+    Loader {
+        anchors.fill: parent
+        active: shape.notch
+        sourceComponent: NotchOutline {
+            radius: shape.radius
+            ear: shape.ear
+            fillColor: shape.theme.gradientFill ? "transparent" : shape.theme.bodyMid
+            gradientColors: shape.theme.gradientFill ? shape.theme.gradientBody : []
+            gradientKind: shape.theme.gradientKind
+            gradientAngle: shape.theme.gradientAngle
+        }
+    }
+
     // Body (for a gradient style only its border: the shape above is the fill)
     Rectangle {
         anchors.fill: parent
+        visible: !shape.notch
         radius: shape.radius
         color: "transparent"
         border.width: shape.theme.borderWidth
@@ -146,10 +172,20 @@ Item {
     // The cover's colour over the metal, faintly
     Rectangle {
         anchors.fill: parent
-        visible: shape.glowShown > 0.001 && shape.glowTint > 0
+        visible: !shape.notch && shape.glowShown > 0.001 && shape.glowTint > 0
         radius: shape.radius
         color: shape.glowColor
         opacity: shape.glowShown * shape.glowTint
+    }
+    Loader {
+        anchors.fill: parent
+        active: shape.notch && shape.glowShown > 0.001 && shape.glowTint > 0
+        sourceComponent: NotchOutline {
+            radius: shape.radius
+            ear: shape.ear
+            fillColor: shape.glowColor
+            opacity: shape.glowShown * shape.glowTint
+        }
     }
 
     // Inner shadow (inset depth)
