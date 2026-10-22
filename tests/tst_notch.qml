@@ -5,12 +5,14 @@
     hangs from the top edge, only its lower corners rounded; where it takes the
     pointer is that shape, the topmost row of pixels included; the pointer that
     leaves the open notch for the panel beside it does not open it again; the
-    dot is a half circle at the edge; the width limit; its colours; and, off,
-    the island as it always was.
+    dot is a half circle at the edge; the width limit; its colours; one shape
+    and nothing else drawn (looked at in pixels); the cat beside it, clear of
+    its curves; and, off, the island as it always was.
 */
 import QtQuick
 import QtTest
 import "../org.phobby.dynamicisland/contents/ui"
+import "../org.phobby.dynamicisland/contents/ui/companion"
 
 Item {
     id: root
@@ -37,6 +39,8 @@ Item {
         dotMode: true
         pageOrder: "other"
         extraPages: [{ key: "other", icon: "chronometer", title: "Other", component: otherPage, visible: true }]
+        // (only where it is looked at: elsewhere the pointer moves over where it would stand)
+        Companion { id: cat; island: island; theme: islandTheme; enabled: false; reduceMotion: true; sleepSeconds: 3600 }
     }
 
     TestCase {
@@ -49,7 +53,7 @@ Item {
         function cleanup() {
             away(); island.hoverSpent = false;
             stopwatch.active = false; timer.active = false;
-            island.expanded = false; island.dot = false; island.maxWidth = 0;
+            island.expanded = false; island.dot = false; island.maxWidth = 0; cat.enabled = false;
             islandTheme.notch = true; islandTheme.notchBlack = true; islandTheme.notchPixels = 0;
             wait(60); settled();
         }
@@ -162,7 +166,72 @@ Item {
             islandTheme.style = Styles.defaults("oxygen");
         }
 
-        function test_7_off_it_is_the_island_as_ever() {
+        function test_7_one_shape_and_nothing_else() {
+            // nothing of the glass is drawn over or around it
+            compare([islandTheme.shadowSize, String(islandTheme.frost), String(islandTheme.innerShadow), String(islandTheme.highlight)],
+                    [0, String(Qt.rgba(0, 0, 0, 0)), String(Qt.rgba(0, 0, 0, 0)), String(Qt.rgba(0, 0, 0, 0))]);
+            for (const open of [false, true]) {
+                island.expanded = open;
+                settled();
+                wait(400);   // (the content's fade)
+                const img = grabImage(island);
+                const s = island.surfaceRect, e = islandTheme.notchEar;
+                const black = (x, y) => { const c = img.pixel(x, y); return c.a > 0.99 && c.r < 0.01 && c.g < 0.01 && c.b < 0.01; };
+                // (what the test's window shows where nothing is drawn)
+                const ground = img.pixel(2, island.height - 2);
+                const empty = (x, y) => Qt.colorEqual(img.pixel(x, y), ground);
+                // the top row: black from one curve to the other, no gap at the edge
+                for (let x = Math.ceil(s.x - e / 2); x < s.x + s.width + e / 2; ++x) verify(black(x, 0), "top row at " + x);
+                // its sides straight below the curves, its lower corners rounded and alike
+                for (let y = e + 1; y < s.height - s.height / 2; y += 3) {
+                    verify(black(s.x + 1, y) && black(s.x + s.width - 2, y), "sides at " + y);
+                    verify(empty(s.x - 2, y) && empty(s.x + s.width + 1, y), "nothing beside it at " + y);
+                }
+                verify(empty(s.x + 1, s.height - 2) && empty(s.x + s.width - 2, s.height - 2), "the lower corners are rounded");
+                verify(black(s.x + s.width / 2, s.height - 2), "the lower edge");
+                // inside it, along its edges, no second outline or pill: black right up to the content
+                const r = island.surfaceRadius;
+                for (let y = 1; y < s.height - r; y += 2)
+                    for (let d = 1; d < 7; ++d) verify(black(s.x + d, y) && black(s.x + s.width - 1 - d, y), "inside its sides at " + d + ", " + y);
+                for (let x = s.x + r; x < s.x + s.width - r; x += 3)
+                    for (const y of [1, 2, 3, s.height - 4, s.height - 3, s.height - 2]) verify(black(x, y), "inside its top and bottom at " + x + ", " + y);
+                // no shadow, glow or ring under or around it
+                for (let x = s.x - 20; x < s.x + s.width + 20; x += 5) verify(empty(x, s.height + 3), "nothing under it at " + x);
+                // the two halves alike, at the edge and at the lower corners
+                for (let y = 0; y < s.height; y += 2)
+                    for (const d of [-e, -e / 2, 0, 2, 5])
+                        compare(black(Math.floor(s.x + d), y), black(Math.ceil(s.x + s.width - 1 - d), y), "symmetric at " + d + ", " + y);
+            }
+        }
+
+        function test_8_the_cat_beside_it() {
+            cat.enabled = true;
+            settled();
+            tryVerify(() => cat.maskShapes.length > 0, 2000);
+            const s = island.surfaceRect, e = islandTheme.notchEar;
+            const spot = cat.character.parent;
+            // against the notch, beyond its curves at the edge, on whichever side it stands
+            if (cat.side === "left") {
+                verify(spot.x + spot.width <= s.x - e + 1, "left: clear of the curve");
+                verify(spot.x + spot.width >= s.x - e - 2, "left: against it");
+            } else {
+                verify(spot.x >= s.x + s.width + e - 1, "right: clear of the curve");
+                verify(spot.x <= s.x + s.width + e + 2, "right: against it");
+            }
+            // on the panel: no taller than the notch, standing on its lower edge
+            compare(spot.height, island.surfaceRect.height);
+            compare(spot.y + spot.height, island.surfaceRect.height);
+            // where it takes the pointer is not the notch's
+            for (const r of cat.maskShapes)
+                verify(r.x + r.width <= s.x - e + 1 || r.x >= s.x + s.width + e - 1, "its body is not over the notch");
+            // with the notch open it moves aside with it
+            island.expanded = true;
+            settled();
+            tryVerify(() => cat.side === "left" ? spot.x + spot.width <= island.surfaceRect.x - e + 1
+                                                : spot.x >= island.surfaceRect.x + island.surfaceRect.width + e - 1, 2000);
+        }
+
+        function test_9_off_it_is_the_island_as_ever() {
             islandTheme.notch = false;
             settled();
             compare(island.surfaceRect.y, islandTheme.windowTopPad);

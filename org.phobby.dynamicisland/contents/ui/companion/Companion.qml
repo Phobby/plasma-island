@@ -17,6 +17,9 @@
       the right. On the right (a setting, or no room on the left) it keeps
       clear of both. A change of sides is a walk across, not a jump.
       A dot: hidden, or asleep beside the dot (a setting).
+      Beside the notch: on the panel, standing on its lower edge and no taller
+      than it (the notch is as high as the panel), against the notch's side
+      beyond its curves at the screen's edge.
 
     Where it takes the pointer
       On its body only (`maskShapes`, see main.qml and native/windowmask.h):
@@ -67,7 +70,8 @@ Item {
     signal settingsRequested()
 
     // ---- size ------------------------------------------------------------------------
-    readonly property real tall: Math.round(theme.pillHeight * Math.max(100, Math.min(180, sizePercent)) / 100)
+    // (beside the notch it stays on the panel: no taller than the notch, which is as high as the panel)
+    readonly property real tall: Math.round(theme.pillHeight * (theme.notch ? 1 : Math.max(100, Math.min(180, sizePercent)) / 100))
     readonly property real wide: Math.round(tall * Poses.W / Poses.H)
     readonly property real bubbleSize: Math.max(15, Math.round(tall * 0.4))
     readonly property real bubbleRoom: Math.ceil(bubbleSize * 1.25 * 0.8)
@@ -107,11 +111,15 @@ Item {
     Behavior on pushed { enabled: !companion.calm; NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
     // The pill's edges (the dot's own, a little around it).
     readonly property rect pill: island.mode === "dot" ? island.hitRect : island.surfaceRect
+    // The notch's curves where it meets the screen's edge reach beyond its sides (NotchOutline):
+    // the cat leans against the notch beyond them.
+    readonly property real ear: theme.notch ? Math.min(theme.notchEar, island.surfaceRect.height / 4) : 0
     function restX(where: string): real {
-        return where === "left" ? pill.x - wide + 1 : pill.x + pill.width + pushed - 1;
+        return where === "left" ? pill.x - ear - wide + 1 : pill.x + pill.width + ear + pushed - 1;
     }
-    readonly property real restY: Math.max(1, Math.min(island.height - tall - 1,
-        theme.windowTopPad + theme.pillHeight / 2 + (tall - theme.pillHeight) * 0.25 - tall / 2))
+    // (beside the notch: standing on the panel's lower edge, which is the notch's)
+    readonly property real restY: theme.notch ? theme.pillHeight - tall
+        : Math.max(1, Math.min(island.height - tall - 1, theme.windowTopPad + theme.pillHeight / 2 + (tall - theme.pillHeight) * 0.25 - tall / 2))
 
     // ---- where it takes the pointer (in the island's coordinates) -----------------------------
     readonly property var maskShapes: shown && presence > 0.99

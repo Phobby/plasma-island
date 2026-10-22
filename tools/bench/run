@@ -148,7 +148,7 @@ SCENARIOS = [
     ("idle", "the pill with the clock, default settings; the cat has fallen asleep", True, {}, None, False),
     ("idle-dot", "shrunk to a dot (the cat hidden)", True, {"dotMode": "true", "dotStart": "2"}, None, False),
     ("idle-no-cat", "the pill, default settings, without the cat", True, {"catEnabled": "false"}, None, False),
-    ("notch", "notch mode at the top edge (its cat hidden, as by default)", True, {"notchMode": "true"}, None, False),
+    ("notch", "notch mode at the top edge, its cat hidden", True, {"notchMode": "true", "notchHideCat": "true"}, None, False),
     ("everything-off", "every page, module, alert and watcher switched off", True, ALL_OFF, None, False),
     ("cat-awake", "the cat kept awake (sitting, its fidgets)", True, {"catSleepSeconds": "3600"}, None, False),
     ("cat-still", "the cat with \"Reduce motion\"", True, {"catReduceMotion": "true"}, None, False),

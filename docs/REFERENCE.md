@@ -112,9 +112,9 @@ of its own, the glow of the cover comes from its lower edge.
   clock or task buttons sit in the middle of the panel, limit the notch with
   *Widest* (the small notch and the split island; notifications and the open
   island are wider for as long as they show).
-- **The cat** is hidden in notch mode (it would stand on the panel's
-  widgets and take their clicks); *Hide the cat in notch mode* can be
-  switched off.
+- **The cat** stands beside the notch, on the panel, against its side
+  (beyond its curves at the edge), and takes the clicks where its body is;
+  *Hide the cat in notch mode* keeps it away while the notch shows.
 - **Not used in notch mode:** the distance from the top (Appearance and
   General), *Place below top panels*, and the look's blur, opacity, border
   and shadow. The horizontal position, the size, the roundness and dot mode

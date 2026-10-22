@@ -234,7 +234,7 @@ KCM.SimpleKCM {
             text: Lang.i18n("Hide the cat in notch mode")
         }
         Hint {
-            text: Lang.i18n("Beside the notch it would stand on the panel, over its widgets, and take their clicks.")
+            text: Lang.i18n("Beside the notch it stands on the panel, against the notch's side, and takes the clicks where it is.")
         }
         Hint {
             Kirigami.FormData.label: Lang.i18n("Not in notch mode:")

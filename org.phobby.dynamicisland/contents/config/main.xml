@@ -66,8 +66,8 @@
     <entry name="notchScreen" type="Int"><default>0</default></entry>
     <!-- The widest the small notch gets, px at 100 % size; 0 = no limit -->
     <entry name="notchMaxWidth" type="Int"><default>0</default><min>0</min><max>600</max></entry>
-    <!-- The cat is not shown while the notch is (it would stand on the panel's widgets) -->
-    <entry name="notchHideCat" type="Bool"><default>true</default></entry>
+    <!-- The cat is not shown while the notch is (beside it, it stands on the panel and takes the clicks there) -->
+    <entry name="notchHideCat" type="Bool"><default>false</default></entry>
     <!-- Its height: 0 = the top panel's (the island's own without one), 1 = notchHeight -->
     <entry name="notchHeightMode" type="Int"><default>0</default></entry>
     <entry name="notchHeight" type="Int"><default>36</default><min>24</min><max>72</max></entry>
