@@ -27,7 +27,7 @@ QtObject {
     // Notch mode: welded to the top edge of the screen (no room above it; main.qml places it).
     // Without border or shadow (nothing may shine where it meets the edge or a panel); black,
     // or the island's own colours, opaque and flat, or the island's own look (notchLook: its
-    // material, see-through and blur, matte: no gloss or inner shadow at the edge).
+    // material, see-through and blur, its gloss from the edge down; no inner shadow).
     property bool notch: false
     property bool notchBlack: true
     property bool notchLook: false
@@ -208,7 +208,7 @@ QtObject {
         : material === "glass" ? (dark ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(0, 0, 0, 0.12))
         : rimTop
 
-    readonly property color highlight: notch ? "transparent" : metal ? (dark ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.55))
+    readonly property color highlight: notchFlat ? "transparent" : metal ? (dark ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.55))
         : material === "glass" ? (dark ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.30)) : "transparent"
     readonly property color innerShadow: notch || !metal ? "transparent" : dark ? Qt.rgba(0, 0, 0, 0.45) : Qt.rgba(0, 0, 0, 0.10)
     readonly property color dropShadow: shadowLevel === 0 ? "transparent"

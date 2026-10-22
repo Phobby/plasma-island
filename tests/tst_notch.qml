@@ -40,7 +40,7 @@ Item {
         pageOrder: "other"
         extraPages: [{ key: "other", icon: "chronometer", title: "Other", component: otherPage, visible: true }]
         // (only where it is looked at: elsewhere the pointer moves over where it would stand)
-        Companion { id: cat; island: island; theme: islandTheme; enabled: false; reduceMotion: true; sleepSeconds: 3600 }
+        Companion { id: cat; island: island; theme: islandTheme; enabled: false; reduceMotion: true; sleepSeconds: 3600; sizePercent: 120 }
     }
 
     TestCase {
@@ -53,7 +53,7 @@ Item {
         function cleanup() {
             away(); island.hoverSpent = false;
             stopwatch.active = false; timer.active = false;
-            island.expanded = false; island.dot = false; island.maxWidth = 0; cat.enabled = false;
+            island.expanded = false; island.dot = false; island.maxWidth = 0; cat.enabled = false; cat.sizePercent = 120;
             islandTheme.notch = true; islandTheme.notchBlack = true; islandTheme.notchLook = false; islandTheme.notchPixels = 0;
             wait(60); settled();
         }
@@ -208,18 +208,24 @@ Item {
             cat.enabled = true;
             settled();
             tryVerify(() => cat.maskShapes.length > 0, 2000);
-            const s = island.surfaceRect, e = islandTheme.notchEar;
+            const s = island.surfaceRect, e = islandTheme.notchEar + cat.notchGap;
             const spot = cat.character.parent;
-            // against the notch, beyond its curves at the edge, on whichever side it stands
+            // a little away from the notch (and its curves at the edge), on whichever side it stands
             if (cat.side === "left") {
-                verify(spot.x + spot.width <= s.x - e + 1, "left: clear of the curve");
-                verify(spot.x + spot.width >= s.x - e - 2, "left: against it");
+                verify(spot.x + spot.width <= s.x - e + 1, "left: clear of it");
+                verify(spot.x + spot.width >= s.x - e - 2, "left: near it");
             } else {
-                verify(spot.x >= s.x + s.width + e - 1, "right: clear of the curve");
-                verify(spot.x <= s.x + s.width + e + 2, "right: against it");
+                verify(spot.x >= s.x + s.width + e - 1, "right: clear of it");
+                verify(spot.x <= s.x + s.width + e + 2, "right: near it");
             }
-            // on the panel: no taller than the notch, standing on its lower edge
-            compare(spot.height, island.surfaceRect.height);
+            // its size as set; as high as the panel or less it stands on the panel's lower edge, larger from the screen's edge
+            compare(spot.height, Math.round(islandTheme.pillHeight * cat.sizePercent / 100));
+            compare(spot.y, Math.max(0, island.surfaceRect.height - spot.height));
+            cat.sizePercent = 160;
+            tryCompare(spot, "height", Math.round(islandTheme.pillHeight * 1.6));
+            compare(spot.y, 0);
+            cat.sizePercent = 100;
+            tryCompare(spot, "height", islandTheme.pillHeight);
             compare(spot.y + spot.height, island.surfaceRect.height);
             // where it takes the pointer is not the notch's
             for (const r of cat.maskShapes)
@@ -238,10 +244,11 @@ Item {
             islandTheme.notchLook = true;
             islandTheme.style = Styles.parse(JSON.stringify({ preset: "oxygen", material: "metal", opacity: 82, blur: true, border: true, shadow: 2,
                                                                background: "#1a1b1d" }), null);
-            // its material, see-through and blur; never a border or shadow, matte at the edge
+            // its material, see-through and blur, its gloss; never a border, shadow or inner shadow
             compare([islandTheme.material, islandTheme.alpha, islandTheme.blurWanted, islandTheme.borderWidth, islandTheme.shadowLevel],
                     ["metal", 0.82, true, 0, 0]);
-            compare([String(islandTheme.highlight), String(islandTheme.innerShadow)], [String(Qt.rgba(0, 0, 0, 0)), String(Qt.rgba(0, 0, 0, 0))]);
+            verify(islandTheme.highlight.a > 0);
+            compare(String(islandTheme.innerShadow), String(Qt.rgba(0, 0, 0, 0)));
             // metal from top to bottom, in the notch's one outline
             compare(islandTheme.notchBody.length, 3);
             compare(islandTheme.notchBodyAngle, 180);

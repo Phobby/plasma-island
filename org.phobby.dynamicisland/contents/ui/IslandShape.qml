@@ -14,8 +14,9 @@
     only the lower corners rounded, and where it meets the edge (if asked) two
     small inward curves (`ear` px wide, beside its own width). The body is
     the one shape of that outline (NotchOutline), opaque, or see-through in
-    the island's own look with its frosting in the same outline; no border,
-    gloss or inner shadow, nothing else is drawn.
+    the island's own look with its frosting and, for glass and metal, its
+    top gloss in the same outline; no border or inner shadow, nothing else
+    is drawn.
 
     Optional ambient glow (AmbientGlow.qml): a coloured light around the edge
     (RectangularShadow, drawn by the GPU), a faint tint of the body and a
@@ -206,7 +207,19 @@ Item {
         border.color: shape.theme.innerShadow
     }
 
-    // Top gloss
+    // Top gloss (the notch's: in its outline, from the screen's edge down)
+    Loader {
+        width: parent.width
+        height: Math.min(parent.height * 0.5, 60)
+        active: shape.notch && shape.theme.highlight.a > 0
+        sourceComponent: NotchOutline {
+            ear: shape.ear
+            fillColor: "transparent"
+            readonly property color clear: Qt.rgba(shape.theme.highlight.r, shape.theme.highlight.g, shape.theme.highlight.b, 0)
+            gradientColors: [shape.theme.highlight, Qt.rgba(clear.r, clear.g, clear.b, shape.theme.highlight.a * 0.35), clear]
+            gradientAngle: 180
+        }
+    }
     Rectangle {
         anchors {
             left: parent.left
@@ -214,7 +227,7 @@ Item {
             top: parent.top
             margins: shape.theme.borderWidth
         }
-        visible: shape.theme.highlight.a > 0
+        visible: !shape.notch && shape.theme.highlight.a > 0
         height: Math.min(parent.height * 0.5, 60)
         radius: Math.max(0, shape.radius - shape.theme.borderWidth)
         gradient: Gradient {

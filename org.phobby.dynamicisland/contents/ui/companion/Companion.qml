@@ -17,9 +17,10 @@
       the right. On the right (a setting, or no room on the left) it keeps
       clear of both. A change of sides is a walk across, not a jump.
       A dot: hidden, or asleep beside the dot (a setting).
-      Beside the notch: on the panel, standing on its lower edge and no taller
-      than it (the notch is as high as the panel), against the notch's side
-      beyond its curves at the screen's edge.
+      Beside the notch: on the panel, a little away from the notch's side
+      (beyond its curves at the screen's edge, if it has them), its size as
+      set; as high as the panel or less it stands on the panel's lower edge
+      (the notch's), larger it hangs from the screen's edge.
 
     Where it takes the pointer
       On its body only (`maskShapes`, see main.qml and native/windowmask.h):
@@ -70,8 +71,7 @@ Item {
     signal settingsRequested()
 
     // ---- size ------------------------------------------------------------------------
-    // (beside the notch it stays on the panel: no taller than the notch, which is as high as the panel)
-    readonly property real tall: Math.round(theme.pillHeight * (theme.notch ? 1 : Math.max(100, Math.min(180, sizePercent)) / 100))
+    readonly property real tall: Math.round(theme.pillHeight * Math.max(100, Math.min(180, sizePercent)) / 100)
     readonly property real wide: Math.round(tall * Poses.W / Poses.H)
     readonly property real bubbleSize: Math.max(15, Math.round(tall * 0.4))
     readonly property real bubbleRoom: Math.ceil(bubbleSize * 1.25 * 0.8)
@@ -113,12 +113,14 @@ Item {
     readonly property rect pill: island.mode === "dot" ? island.hitRect : island.surfaceRect
     // The notch's curves where it meets the screen's edge reach beyond its sides (NotchOutline):
     // the cat leans against the notch beyond them.
-    readonly property real ear: theme.notch ? Math.min(theme.notchEar, island.surfaceRect.height / 4) : 0
+    // (and keeps a little room from it, as from the panel's widgets)
+    readonly property real ear: theme.notch ? Math.min(theme.notchEar, island.surfaceRect.height / 4) + notchGap : 0
+    readonly property real notchGap: 10
     function restX(where: string): real {
         return where === "left" ? pill.x - ear - wide + 1 : pill.x + pill.width + ear + pushed - 1;
     }
-    // (beside the notch: standing on the panel's lower edge, which is the notch's)
-    readonly property real restY: theme.notch ? theme.pillHeight - tall
+    // (beside the notch: standing on the panel's lower edge, which is the notch's, or from the screen's edge down)
+    readonly property real restY: theme.notch ? Math.max(0, theme.pillHeight - tall)
         : Math.max(1, Math.min(island.height - tall - 1, theme.windowTopPad + theme.pillHeight / 2 + (tall - theme.pillHeight) * 0.25 - tall / 2))
 
     // ---- where it takes the pointer (in the island's coordinates) -----------------------------

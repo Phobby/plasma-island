@@ -1286,7 +1286,7 @@ var table = {
     "Opaque black, like a real notch. Text and icons are light.": "Gerçek bir çentik gibi opak siyah. Metin ve simgeler açık renkli.",
     "The colours of Appearance, a gradient too, but opaque: no blur, no border, no shadow. Text and icons keep a readable contrast.": "Görünüm'deki renkler, gradyan da olur, ama opak: bulanıklık, kenarlık ve gölge yok. Metin ve simgeler okunur bir karşıtlıkta kalır.",
     "The island's look (Appearance)": "Adanın görünümü (Görünüm)",
-    "The look of Appearance: its material (metal too), how see-through it is and its blur. Matte: no gloss at the edge, no border, no shadow.": "Görünüm'deki görünüm: malzemesi (metal de olur), saydamlığı ve bulanıklığı. Mat: kenarda parlaklık, kenarlık ve gölge yok.",
+    "The look of Appearance: its material (metal too, with its glassy gloss), how see-through it is and its blur. No border, no shadow.": "Görünüm'deki görünüm: malzemesi (metal de olur, camsı parlaklığıyla), saydamlığı ve bulanıklığı. Kenarlık ve gölge yok.",
     "Upper corners:": "Üst köşeler:",
     "Soften where it meets the edge (small curves outwards)": "Kenarla birleştiği yeri yumuşat (yana doğru küçük kıvrımlar)",
     "Screen:": "Ekran:",

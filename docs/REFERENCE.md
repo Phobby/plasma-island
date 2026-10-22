@@ -104,8 +104,8 @@ of its own, the glow of the cover comes from its lower edge.
   panel changes, also while it is hidden), or set by hand (24–72 px).
 - **Colour:** opaque black with light text (default), the island's own
   colours (Appearance, a gradient too) made opaque, or the island's own
-  look: its material (metal from top to bottom), opacity and blur, matte
-  (no gloss or inner shadow at the edge). Never a border or shadow:
+  look: its material (metal from top to bottom, with its gloss from the
+  edge down), opacity and blur; no inner shadow. Never a border or shadow:
   nothing shines where it meets the panel.
 - **What it covers:** the panel under the notch cannot be clicked; beside
   it the panel takes its clicks as before. The notch takes the pointer on
@@ -114,8 +114,10 @@ of its own, the glow of the cover comes from its lower edge.
   clock or task buttons sit in the middle of the panel, limit the notch with
   *Widest* (the small notch and the split island; notifications and the open
   island are wider for as long as they show).
-- **The cat** stands beside the notch, on the panel, against its side
-  (beyond its curves at the edge), and takes the clicks where its body is;
+- **The cat** stands beside the notch, on the panel, a little away from its
+  side (and its curves at the edge), at the size set in Settings → Cat (as
+  high as the panel or less it stands on the panel's lower edge, larger it
+  hangs from the screen's edge), and takes the clicks where its body is;
   *Hide the cat in notch mode* keeps it away while the notch shows.
 - **Not used in notch mode:** the distance from the top (Appearance and
   General), *Place below top panels*, the look's border and shadow, and
