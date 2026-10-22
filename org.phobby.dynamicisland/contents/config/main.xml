@@ -42,6 +42,8 @@
     <entry name="showClock" type="Bool">
       <default>true</default>
     </entry>
+    <!-- How the time is written: 0 as the system (its region's time format), 1 always 24 hours, 2 always 12 hours -->
+    <entry name="clockFormat" type="Int"><default>0</default></entry>
     <entry name="topMargin" type="Int">
       <default>6</default>
     </entry>

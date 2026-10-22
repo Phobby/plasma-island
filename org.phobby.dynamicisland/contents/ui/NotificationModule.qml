@@ -1,7 +1,7 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
     Notification center: most recent first, each with its arrival time
-    (HH:mm), quick reply, and a clear-all button with a confirmation bubble.
+    (as the clock writes it), quick reply, and a clear-all button with a confirmation bubble.
     Only instantiates delegates while shown (model is detached otherwise).
 */
 import QtQuick
@@ -32,11 +32,11 @@ Item {
 
     implicitHeight: rowHeight * maximumCount + 4 * (maximumCount - 1)
 
-    // Arrival time: "14:32" today, "30 Sep 14:32" otherwise.
+    // Arrival time: "14:32" today, "30 Sep 14:32" otherwise (12 or 24 hours as the clock).
     function arrivalTime(d: date): string {
         const now = new Date();
         const today = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-        return today ? Qt.formatTime(d, "HH:mm") : Lang.locale.toString(d, "d MMM HH:mm");
+        return today ? Qt.formatTime(d, Lang.timeFormat) : Lang.locale.toString(d, "d MMM ") + Qt.formatTime(d, Lang.timeFormat);
     }
 
     // Header: count + clear-all

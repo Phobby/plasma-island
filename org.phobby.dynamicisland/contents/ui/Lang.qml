@@ -25,6 +25,21 @@ QtObject {
     readonly property var locale: language === systemLanguage ? Qt.locale() : Qt.locale(language === "tr" ? "tr_TR" : "en_US")
     readonly property var tables: ({ tr: Tr.table })
 
+    // How the island writes the time (Settings → General): 0 as the system does (its
+    // region's time format, LC_TIME, whatever the island's language), 1 always in 24
+    // hours, 2 always in 12. Plasma has no 24-hour switch of its own beyond the region.
+    property int clockSetting: 0
+    readonly property string timeFormat: shortTime(Qt.locale().timeFormat(Locale.ShortFormat), clockSetting)
+    // A short time format made 24- or 12-hour (as Plasma's digital clock does it): the
+    // morning/afternoon marker (AP, ap, A, a) taken out or added, the hours' letter changed.
+    function shortTime(format: string, mode: int): string {
+        if (mode === 1)
+            return format.replace(/[\s  ]*[aA][pP]?[\s  ]*/g, " ").replace(/[hH]+/g, "HH").trim();
+        if (mode === 2)
+            return /[aA]/.test(format) ? format.replace(/H+/g, "h") : format.replace(/[hH]+/g, "h") + " AP";
+        return format;
+    }
+
     function lookup(key: string, fallback: var): var {
         const table = tables[language];
         const found = table ? table[key] : undefined;

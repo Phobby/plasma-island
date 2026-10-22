@@ -11,7 +11,7 @@ Text {
     property bool running: true
     property date now: new Date()
 
-    text: Qt.formatTime(now, Lang.locale.timeFormat(Locale.ShortFormat))
+    text: Qt.formatTime(now, Lang.timeFormat)
     font.features: { "tnum": 1 }
 
     function tick(): void {

@@ -34,6 +34,7 @@ PlasmoidItem {
     readonly property var cfg: Plasmoid.configuration
     // The widget's language (Settings → Language), for every text of the island.
     Binding { target: Lang; property: "setting"; value: root.cfg.language }
+    Binding { target: Lang; property: "clockSetting"; value: root.cfg.clockFormat }
 
     Plasmoid.icon: "view-media-track"
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground

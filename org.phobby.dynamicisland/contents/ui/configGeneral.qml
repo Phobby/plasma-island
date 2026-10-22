@@ -15,6 +15,7 @@ KCM.SimpleKCM {
 
     property int cfg_appearanceMode
     property alias cfg_showClock: clockCheck.checked
+    property alias cfg_clockFormat: clockFormatCombo.currentIndex
     property alias cfg_topMargin: topMarginSpin.value
     property alias cfg_avoidPanels: avoidPanelsCheck.checked
     property bool cfg_notchMode
@@ -50,6 +51,17 @@ KCM.SimpleKCM {
             id: clockCheck
             Kirigami.FormData.label: Lang.i18n("Idle:")
             text: Lang.i18n("Show clock")
+        }
+
+        QQC2.ComboBox {
+            id: clockFormatCombo
+            Kirigami.FormData.label: Lang.i18n("Time format:")
+            // (the system's: its region's time format, System Settings → Region & Language → Time)
+            model: [
+                Lang.i18n("As the system (%1)", Qt.formatTime(new Date(2026, 0, 1, 19, 41), Lang.shortTime(Qt.locale().timeFormat(Locale.ShortFormat), 0))),
+                Lang.i18n("24-hour (%1)", Qt.formatTime(new Date(2026, 0, 1, 19, 41), Lang.shortTime(Qt.locale().timeFormat(Locale.ShortFormat), 1))),
+                Lang.i18n("12-hour (%1)", Qt.formatTime(new Date(2026, 0, 1, 19, 41), Lang.shortTime(Qt.locale().timeFormat(Locale.ShortFormat), 2)))
+            ]
         }
 
         QQC2.SpinBox {

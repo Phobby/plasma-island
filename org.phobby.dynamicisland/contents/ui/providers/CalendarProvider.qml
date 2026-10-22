@@ -117,7 +117,7 @@ Item {
         return Lang.i18nc("@info hours and minutes, short", "%1 h %2 min", Math.floor(m / 60), m % 60);
     }
     function clock(t: real): string {
-        return Qt.formatTime(new Date(t), Lang.locale.timeFormat(Locale.ShortFormat));
+        return Qt.formatTime(new Date(t), Lang.timeFormat);
     }
     function timeRange(e: var): string {
         if (e.allDay) return Lang.i18n("All day");

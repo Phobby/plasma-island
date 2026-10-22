@@ -25,6 +25,8 @@ KCM.SimpleKCM {
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
+    property int cfg_clockFormat
+    Binding { target: Lang; property: "clockSetting"; value: page.cfg_clockFormat; restoreMode: Binding.RestoreNone }
 
     property alias cfg_catEnabled: enabledCheck.checked
     property alias cfg_catSide: sideCombo.currentIndex
@@ -100,7 +102,7 @@ KCM.SimpleKCM {
                     QQC2.Label {
                         textFormat: Text.PlainText
                         anchors.centerIn: parent
-                        text: Qt.formatTime(new Date(), Lang.locale.timeFormat(Locale.ShortFormat))
+                        text: Qt.formatTime(new Date(), Lang.timeFormat)
                         color: "#f4f5f7"
                         font.weight: Font.DemiBold
                     }

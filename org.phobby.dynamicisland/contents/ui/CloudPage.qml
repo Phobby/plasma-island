@@ -117,7 +117,7 @@ Item {
     function when(t: real): string {
         if (!(t > 0)) return "";
         const d = new Date(t), now = new Date();
-        return d.toDateString() === now.toDateString() ? Qt.formatTime(d, Lang.locale.timeFormat(Locale.ShortFormat))
+        return d.toDateString() === now.toDateString() ? Qt.formatTime(d, Lang.timeFormat)
              : d.toLocaleDateString(Lang.locale, d.getFullYear() === now.getFullYear() ? "d MMM" : "d MMM yyyy");
     }
     property string status: ""

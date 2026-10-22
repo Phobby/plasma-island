@@ -22,6 +22,8 @@ KCM.SimpleKCM {
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
+    property int cfg_clockFormat
+    Binding { target: Lang; property: "clockSetting"; value: page.cfg_clockFormat; restoreMode: Binding.RestoreNone }
 
     property alias cfg_notchMode: modeCheck.checked
     property alias cfg_notchColor: colorCombo.currentIndex
@@ -137,7 +139,7 @@ KCM.SimpleKCM {
                     visible: !outline.dot && page.cfg_showClock
                     color: shown.text
                     font.weight: Font.DemiBold
-                    text: Qt.formatTime(new Date(2026, 0, 1, 9, 41), Lang.locale.timeFormat(Locale.ShortFormat))
+                    text: Qt.formatTime(new Date(2026, 0, 1, 9, 41), Lang.timeFormat)
                 }
             }
         }
