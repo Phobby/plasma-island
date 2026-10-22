@@ -11,7 +11,8 @@
   never on the lock screen. It takes the pointer on its own outline, the
   topmost row of pixels too; its widest can be limited for a clock or task
   buttons in the middle of the panel. Switched on and off without a restart.
-  The cat stands beside it, against its side.
+  The cat stands beside it, against its side. Its colour can also be the
+  island's own look, see-through and blurred, metal too, matte.
 - **Time format** (Settings → General): the island writes the time as the
   system's region does (its time format, also when the island speaks
   another language), or always in 24 or 12 hours.

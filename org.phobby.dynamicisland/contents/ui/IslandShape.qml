@@ -11,9 +11,11 @@
     Children are placed in a clipped, padded content item.
 
     As the notch (`notch`): the upper edge straight and one with the screen's,
-    only the lower corners rounded, and where it meets the edge two small
-    inward curves (`ear` px wide, beside its own width); opaque, so the body
-    is the one shape of that outline (NotchOutline) and nothing else is drawn.
+    only the lower corners rounded, and where it meets the edge (if asked) two
+    small inward curves (`ear` px wide, beside its own width). The body is
+    the one shape of that outline (NotchOutline), opaque, or see-through in
+    the island's own look with its frosting in the same outline; no border,
+    gloss or inner shadow, nothing else is drawn.
 
     Optional ambient glow (AmbientGlow.qml): a coloured light around the edge
     (RectangularShadow, drawn by the GPU), a faint tint of the body and a
@@ -137,10 +139,10 @@ Item {
         sourceComponent: NotchOutline {
             radius: shape.radius
             ear: shape.ear
-            fillColor: shape.theme.gradientFill ? "transparent" : shape.theme.bodyMid
-            gradientColors: shape.theme.gradientFill ? shape.theme.gradientBody : []
-            gradientKind: shape.theme.gradientKind
-            gradientAngle: shape.theme.gradientAngle
+            fillColor: shape.theme.notchBody.length === 3 ? "transparent" : shape.theme.bodyMid
+            gradientColors: shape.theme.notchBody
+            gradientKind: shape.theme.notchBodyKind
+            gradientAngle: shape.theme.notchBodyAngle
         }
     }
 
@@ -162,9 +164,14 @@ Item {
     }
 
     // Frosting over the blurred background (the blur level)
+    Loader {
+        anchors.fill: parent
+        active: shape.notch && shape.theme.frost.a > 0
+        sourceComponent: NotchOutline { radius: shape.radius; ear: shape.ear; fillColor: shape.theme.frost }
+    }
     Rectangle {
         anchors.fill: parent
-        visible: shape.theme.frost.a > 0
+        visible: !shape.notch && shape.theme.frost.a > 0
         radius: shape.radius
         color: shape.theme.frost
     }

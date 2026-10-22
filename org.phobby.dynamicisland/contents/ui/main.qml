@@ -74,6 +74,7 @@ PlasmoidItem {
         blurActive: blur.active
         notch: root.notchWanted
         notchBlack: root.cfg.notchColor === 0
+        notchLook: root.cfg.notchColor === 2
         notchEars: root.cfg.notchEars
         notchPixels: root.notchPixels
     }
@@ -1060,11 +1061,14 @@ PlasmoidItem {
         readonly property bool active: status === Loader.Ready && item && item.available
         source: theme.blurWanted ? "BlurBridge.qml" : ""
         onLoaded: {
-            item.window = dialog;
-            const scaled = r => Qt.rect(r.x * theme.scale, r.y * theme.scale, r.width * theme.scale, r.height * theme.scale);
-            item.rect = Qt.binding(() => scaled(island.surfaceRect));
+            // (the notch in the island's own look is blurred in its window too)
+            item.window = Qt.binding(() => root.notchWindow !== null ? root.notchWindow : dialog);
+            const scaled = r => Qt.rect(islandHost.x + r.x * theme.scale, r.y * theme.scale, r.width * theme.scale, r.height * theme.scale);
+            // The notch has no upper corners: as the mask's, its rounded rectangles reach above the window by their radius.
+            const above = (r, radius) => theme.notch && r.width > 0 ? Qt.rect(r.x, r.y - radius, r.width, r.height + radius) : r;
+            item.rect = Qt.binding(() => scaled(above(island.surfaceRect, island.surfaceRadius)));
             item.radius = Qt.binding(() => island.surfaceRadius * theme.scale);
-            item.rect2 = Qt.binding(() => scaled(island.bubbleRect));
+            item.rect2 = Qt.binding(() => scaled(above(island.bubbleRect, Math.min(island.bubbleRect.width, island.bubbleRect.height) / 2)));
             item.enabled = true;
         }
         onStatusChanged: if (status === Loader.Error) {

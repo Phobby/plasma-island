@@ -81,8 +81,8 @@ drawn around it.
 
 Settings → Notch (off by default). The island is welded to the top edge of
 the screen like a laptop's notch: no room above it, square where it meets
-the edge (with two small inward curves there, *Soften where it meets the
-edge*), only its lower corners rounded. It opens, shows notifications and
+the edge and straight there (two small curves outwards can be switched on,
+*Soften where it meets the edge*), only its lower corners rounded. It opens, shows notifications and
 events and shrinks to a dot as it always does, hanging from the edge; the
 dot is a small half circle there, the split island's circle a small notch
 of its own, the glow of the cover comes from its lower edge.
@@ -102,9 +102,11 @@ of its own, the glow of the cover comes from its lower edge.
   within a few seconds (as soon as plasmashell reports the move).
 - **Height:** the top panel's (read from plasmashell, followed when the
   panel changes, also while it is hidden), or set by hand (24–72 px).
-- **Colour:** opaque black with light text (default), or the island's own
-  colours (Appearance, a gradient too) made opaque. No blur, border or
-  shadow: nothing shines where it meets the panel.
+- **Colour:** opaque black with light text (default), the island's own
+  colours (Appearance, a gradient too) made opaque, or the island's own
+  look: its material (metal from top to bottom), opacity and blur, matte
+  (no gloss or inner shadow at the edge). Never a border or shadow:
+  nothing shines where it meets the panel.
 - **What it covers:** the panel under the notch cannot be clicked; beside
   it the panel takes its clicks as before. The notch takes the pointer on
   its own outline, the topmost row of pixels too (push the pointer against
@@ -116,8 +118,8 @@ of its own, the glow of the cover comes from its lower edge.
   (beyond its curves at the edge), and takes the clicks where its body is;
   *Hide the cat in notch mode* keeps it away while the notch shows.
 - **Not used in notch mode:** the distance from the top (Appearance and
-  General), *Place below top panels*, and the look's blur, opacity, border
-  and shadow. The horizontal position, the size, the roundness and dot mode
+  General), *Place below top panels*, the look's border and shadow, and
+  its blur and opacity unless the colour is the island's look. The horizontal position, the size, the roundness and dot mode
   still apply. Switching the mode slides the island to its new place; no
   restart.
 - **X11, or no LayerShellQt:** the island's usual window goes to the top

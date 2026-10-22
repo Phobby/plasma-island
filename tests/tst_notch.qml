@@ -54,7 +54,7 @@ Item {
             away(); island.hoverSpent = false;
             stopwatch.active = false; timer.active = false;
             island.expanded = false; island.dot = false; island.maxWidth = 0; cat.enabled = false;
-            islandTheme.notch = true; islandTheme.notchBlack = true; islandTheme.notchPixels = 0;
+            islandTheme.notch = true; islandTheme.notchBlack = true; islandTheme.notchLook = false; islandTheme.notchPixels = 0;
             wait(60); settled();
         }
 
@@ -231,7 +231,37 @@ Item {
                                                 : spot.x >= island.surfaceRect.x + island.surfaceRect.width + e - 1, 2000);
         }
 
-        function test_9_off_it_is_the_island_as_ever() {
+        function test_9_the_islands_own_look() {
+            // straight where it meets the edge unless asked otherwise
+            compare(islandTheme.notchEar, 0);
+            islandTheme.notchBlack = false;
+            islandTheme.notchLook = true;
+            islandTheme.style = Styles.parse(JSON.stringify({ preset: "oxygen", material: "metal", opacity: 82, blur: true, border: true, shadow: 2,
+                                                               background: "#1a1b1d" }), null);
+            // its material, see-through and blur; never a border or shadow, matte at the edge
+            compare([islandTheme.material, islandTheme.alpha, islandTheme.blurWanted, islandTheme.borderWidth, islandTheme.shadowLevel],
+                    ["metal", 0.82, true, 0, 0]);
+            compare([String(islandTheme.highlight), String(islandTheme.innerShadow)], [String(Qt.rgba(0, 0, 0, 0)), String(Qt.rgba(0, 0, 0, 0))]);
+            // metal from top to bottom, in the notch's one outline
+            compare(islandTheme.notchBody.length, 3);
+            compare(islandTheme.notchBodyAngle, 180);
+            verify(islandTheme.notchBody[0].hslLightness > islandTheme.notchBody[2].hslLightness);
+            settled();
+            wait(100);
+            const img = grabImage(island), s = island.surfaceRect;
+            const ground = img.pixel(2, island.height - 2);
+            // see-through: the top row shows the ground through it, but is drawn edge to edge
+            for (let x = Math.ceil(s.x) + 1; x < s.x + s.width - 1; x += 4) {
+                const c = img.pixel(x, 0);
+                verify(!Qt.colorEqual(c, ground), "drawn at " + x);
+            }
+            verify(Qt.colorEqual(img.pixel(s.x - 2, 1), ground), "nothing beside it at the edge");
+            verify(islandTheme.contrast(islandTheme.text, islandTheme.surface) >= 4.5);
+            islandTheme.notchLook = false;
+            islandTheme.style = Styles.defaults("oxygen");
+        }
+
+        function test_10_off_it_is_the_island_as_ever() {
             islandTheme.notch = false;
             settled();
             compare(island.surfaceRect.y, islandTheme.windowTopPad);

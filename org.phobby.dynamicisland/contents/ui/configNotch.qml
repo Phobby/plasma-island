@@ -61,6 +61,7 @@ KCM.SimpleKCM {
         style: Styles.parse(page.cfg_customStyle, { opacity: page.cfg_surfaceOpacity, blur: page.cfg_blurEnabled, top: page.cfg_topMargin, light: page.cfg_themeMode === 2 })
         notch: true
         notchBlack: colorCombo.currentIndex === 0
+        notchLook: colorCombo.currentIndex === 2
         notchEars: earsCheck.checked
         // the panel the island found there (36 px where it has not looked yet), or as set
         notchPixels: heightCombo.currentIndex === 1 ? heightSpin.value : page.cfg_notchPanelSeen > 0 ? page.cfg_notchPanelSeen : 36
@@ -129,10 +130,10 @@ KCM.SimpleKCM {
                 height: dot ? page.cfg_dotSize : shown.pillHeight
                 radius: dot ? page.cfg_dotSize : shown.notchRadius
                 ear: shown.notchEar
-                fillColor: shown.gradientFill ? "transparent" : shown.bodyMid
-                gradientColors: shown.gradientFill ? shown.gradientBody : []
-                gradientKind: shown.gradientKind
-                gradientAngle: shown.gradientAngle
+                fillColor: shown.notchBody.length === 3 ? "transparent" : shown.bodyMid
+                gradientColors: shown.notchBody
+                gradientKind: shown.notchBodyKind
+                gradientAngle: shown.notchBodyAngle
                 QQC2.Label {
                     textFormat: Text.PlainText
                     anchors.centerIn: parent
@@ -148,16 +149,17 @@ KCM.SimpleKCM {
         QQC2.ComboBox {
             id: colorCombo
             Kirigami.FormData.label: Lang.i18n("Colour:")
-            model: [Lang.i18n("Black"), Lang.i18n("The island's colours (Appearance)")]
+            model: [Lang.i18n("Black"), Lang.i18n("The island's colours (Appearance)"), Lang.i18n("The island's look (Appearance)")]
         }
         Hint {
             text: colorCombo.currentIndex === 0 ? Lang.i18n("Opaque black, like a real notch. Text and icons are light.")
-                : Lang.i18n("The colours of Appearance, a gradient too, but opaque: no blur, no border, no shadow. Text and icons keep a readable contrast.")
+                : colorCombo.currentIndex === 1 ? Lang.i18n("The colours of Appearance, a gradient too, but opaque: no blur, no border, no shadow. Text and icons keep a readable contrast.")
+                : Lang.i18n("The look of Appearance: its material (metal too), how see-through it is and its blur. Matte: no gloss at the edge, no border, no shadow.")
         }
         QQC2.CheckBox {
             id: earsCheck
             Kirigami.FormData.label: Lang.i18n("Upper corners:")
-            text: Lang.i18n("Soften where it meets the edge")
+            text: Lang.i18n("Soften where it meets the edge (small curves outwards)")
         }
 
         // ---- where -----------------------------------------------------------------------

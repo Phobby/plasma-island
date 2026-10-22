@@ -25,15 +25,19 @@ QtObject {
     // KWin really blurs what is behind the island (native helper + Blur effect).
     property bool blurActive: false
     // Notch mode: welded to the top edge of the screen (no room above it; main.qml places it).
-    // Opaque, without blur, border or shadow (nothing may shine where it meets the edge or a
-    // panel); black, or the island's own colours.
+    // Without border or shadow (nothing may shine where it meets the edge or a panel); black,
+    // or the island's own colours, opaque and flat, or the island's own look (notchLook: its
+    // material, see-through and blur, matte: no gloss or inner shadow at the edge).
     property bool notch: false
     property bool notchBlack: true
+    property bool notchLook: false
     // Small inward curves where it meets the edge.
-    property bool notchEars: true
+    property bool notchEars: false
     // Its height in px (the top panel's, or as set); 0 = the island's own.
     property int notchPixels: 0
     readonly property bool notchDark: notch && notchBlack
+    // The notch as before the look could be kept: opaque and flat.
+    readonly property bool notchFlat: notch && (notchBlack || !notchLook)
 
     // ---- the system's colours -------------------------------------------------
     // Two things can be "the system" inside plasmashell:
@@ -58,12 +62,12 @@ QtObject {
     readonly property real systemFrameContrast: Kirigami.Theme.frameContrast > 0 ? Kirigami.Theme.frameContrast : 0.2
 
     // ---- the look ---------------------------------------------------------------
-    readonly property string material: follow || notch ? "flat" : style.material
+    readonly property string material: follow || notchFlat ? "flat" : style.material
     // High contrast: nothing translucent that text has to be read on or with.
     readonly property bool strong: !follow && style.strong === true
     readonly property color base: notchDark ? "#000000" : follow ? systemBackground : gradientFill ? gradientAverage : style.background === "accent" ? systemAccent : style.background
     readonly property bool dark: luminance(base) < 0.179     // white reads better on it than black
-    readonly property bool blurWanted: notch ? false : follow ? systemStyle.blur : style.blur
+    readonly property bool blurWanted: notchFlat ? false : follow ? systemStyle.blur : style.blur
     readonly property int blurLevel: follow ? systemStyle.blurLevel : style.blurLevel
     readonly property real scale: follow ? systemStyle.scale / 100 : style.scale / 100
     readonly property real roundness: follow ? systemStyle.radius / 100 : style.radius / 100
@@ -172,7 +176,7 @@ QtObject {
     // ---- colors -------------------------------------------------------------
     // Following the system keeps the surface readable without blur; a custom
     // style takes the opacity as it is set.
-    readonly property real alpha: notch ? 1 : follow ? (systemStyle.opacity < 0 ? (blurActive ? 0.82 : 0.92) : systemStyle.opacity / 100) : style.opacity / 100
+    readonly property real alpha: notchFlat ? 1 : follow ? (systemStyle.opacity < 0 ? (blurActive ? 0.82 : 0.92) : systemStyle.opacity / 100) : style.opacity / 100
     function shade(c: color, factor: real, a: real): color {
         return Qt.rgba(Math.min(1, c.r * factor), Math.min(1, c.g * factor), Math.min(1, c.b * factor), a);
     }
@@ -186,6 +190,10 @@ QtObject {
     readonly property color bodyTop: shade(base, !metal ? 1 : dark ? 2 : 1.107, alpha)
     readonly property color bodyMid: shade(base, 1, alpha)
     readonly property color bodyBottom: shade(base, !metal ? 1 : dark ? 0.45 : 0.905, alpha)
+    // The notch's fill (NotchOutline): the gradient style's, metal's from top to bottom, or one colour.
+    readonly property var notchBody: gradientFill ? gradientBody : metal ? [bodyTop, bodyMid, bodyBottom] : []
+    readonly property string notchBodyKind: gradientFill ? gradientKind : "linear"
+    readonly property real notchBodyAngle: gradientFill ? gradientAngle : 180
 
     // The border. Its own colour: metal a silver rim, brighter at the top; glass
     // a hairline of light; flat the system's frame colour (text into background).
@@ -200,9 +208,9 @@ QtObject {
         : material === "glass" ? (dark ? Qt.rgba(1, 1, 1, 0.14) : Qt.rgba(0, 0, 0, 0.12))
         : rimTop
 
-    readonly property color highlight: metal ? (dark ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.55))
+    readonly property color highlight: notch ? "transparent" : metal ? (dark ? Qt.rgba(1, 1, 1, 0.10) : Qt.rgba(1, 1, 1, 0.55))
         : material === "glass" ? (dark ? Qt.rgba(1, 1, 1, 0.05) : Qt.rgba(1, 1, 1, 0.30)) : "transparent"
-    readonly property color innerShadow: !metal ? "transparent" : dark ? Qt.rgba(0, 0, 0, 0.45) : Qt.rgba(0, 0, 0, 0.10)
+    readonly property color innerShadow: notch || !metal ? "transparent" : dark ? Qt.rgba(0, 0, 0, 0.45) : Qt.rgba(0, 0, 0, 0.10)
     readonly property color dropShadow: shadowLevel === 0 ? "transparent"
         : shadowLevel === 1 ? (dark ? Qt.rgba(0, 0, 0, 0.26) : Qt.rgba(0, 0, 0, 0.14))
         : dark ? Qt.rgba(0, 0, 0, 0.45) : Qt.rgba(0, 0, 0, 0.22)
