@@ -157,7 +157,6 @@ Plasma'nın kendi ses açılır penceresi adanınkinin yanında görünmeye deva
 ## Adanın durumları
 
 <!-- GIF: island-states.gif | Küçük hap saati, sonra göndereni ve ilk satırıyla bir bildirimi, sonra "Bitti" ile sonlanan ilerleme halkalı bir etkinliği gösteriyor. | Küçük adanın durumları -->
-<p align="center"><img src="docs/media/island-states.gif" alt="Küçük hap saati, sonra göndereni ve ilk satırıyla bir bildirimi, sonra &quot;Bitti&quot; ile sonlanan ilerleme halkalı bir etkinliği gösteriyor." width="800"><br><sub>Küçük adanın durumları</sub></p>
 
 | Durum | Ne zaman | Ne görürsünüz |
 |---|---|---|
@@ -202,12 +201,9 @@ Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğ
 *Ne çalıyor ve denetimleri.*
 
 <!-- GIF: media-controls.gif | Hap bir kapak, parçanın adını ve bir ekolayzer gösteriyor; sonraki parça geliyor; duraklatılıp yeniden çalınıyor. | Hapta medya: parça değişimi, duraklat ve çal -->
-<p align="center"><img src="docs/media/media-controls.gif" alt="Hap bir kapak, parçanın adını ve bir ekolayzer gösteriyor; sonraki parça geliyor; duraklatılıp yeniden çalınıyor." width="800"><br><sub>Hapta medya: parça değişimi, duraklat ve çal</sub></p>
 <!-- GIF: media-page.gif | Açık Medya sayfası: kapak, başlık ve sanatçı, önceki, çal ve sonraki, konum sürükleniyor. | Medya: sayfa ve denetimleri -->
 <!-- GIF: media-glow.gif | Müzik çalarken hapın kenarı kapağın renginde parlamaya ve müzikle hareket etmeye başlıyor; sonra ışık yeniden kapatılıyor. | Medya: ortam ışığı -->
-<p align="center"><img src="docs/media/media-glow.gif" alt="Müzik çalarken hapın kenarı kapağın renginde parlamaya ve müzikle hareket etmeye başlıyor; sonra ışık yeniden kapatılıyor." width="800"><br><sub>Medya: ortam ışığı</sub></p>
 <!-- GIF: media-cat.gif | Hapın yanındaki kedi müzik çalarken kulaklık takıp kafasını sallıyor. | Medya: kedi de dinliyor -->
-<p align="center"><img src="docs/media/media-cat.gif" alt="Hapın yanındaki kedi müzik çalarken kulaklık takıp kafasını sallıyor." width="800"><br><sub>Medya: kedi de dinliyor</sub></p>
 
 - **Ne görürsünüz:** hapta kapak, parçanın adı ve bir ekolayzer; sayfada kapak, başlık, sanatçı, konum, önceki / çal / sonraki.
 - **Nasıl kullanılır:** düğmeler ve konum çubuğu oynatıcıyı yönetir. Sağ üstteki dalga düğmesi **ortam ışığını** açıp kapatır: adanın kenarı kapağın rengini alır, müziğin yüksekliği ve basıyla hareket eder.
@@ -296,7 +292,6 @@ Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğ
 
 <!-- GIF: calendar-connect.gif | Takvim sayfasındaki dişli "Takvim Bağla"yı açıyor: Google ya da Apple seçiliyor, bir bağlantı yapıştırılıyor, ay etkinliklerle doluyor. | Takvim: bir takvim bağlama -->
 <!-- GIF: calendar-pinned.gif | Haptaki etkinlik son saniyelerini sayıyor, odası ve Katıl düğmesiyle "başladı"ya dönüyor, sonra kalan süreyi gösteriyor. | Takvim: adadaki sonraki etkinlik -->
-<p align="center"><img src="docs/media/calendar-pinned.gif" alt="Haptaki etkinlik son saniyelerini sayıyor, odası ve Katıl düğmesiyle &quot;başladı&quot;ya dönüyor, sonra kalan süreyi gösteriyor." width="800"><br><sub>Takvim: adadaki sonraki etkinlik</sub></p>
 
 - **Ne görürsünüz:** bir ay, seçilen günün etkinlikleri ve ayrıntıları (yer, notlar, toplantı bağlantısı). Bir etkinlik başlamadan 15 dakika önce geri sayımla hapa pinlenir; başlangıçta bir ses çalar ve bitişten sonra 10 dakika kalır.
 - **Nasıl kullanılır:** dişli → *Takvim Bağla* → Google ya da Apple → ya takvimin özel `.ics` bağlantısını yapıştırın (salt okunur) ya da hesabı bağlayın (o zaman adadan etkinlik eklenip silinebilir).
@@ -353,7 +348,6 @@ Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğ
 ## İndirmeler ve dosya aktarımları
 
 <!-- GIF: downloads-tracking.gif | Yerel bir test sunucusundan curl ile başlatılan indirme, megabaytı ve dolan bir halkayla hapta görünüyor; sonra boyutu ve süresiyle "İşlem bitti". | İndirme takibi (yerel bir test sunucusundan indirme) -->
-<p align="center"><img src="docs/media/downloads-tracking.gif" alt="Yerel bir test sunucusundan curl ile başlatılan indirme, megabaytı ve dolan bir halkayla hapta görünüyor; sonra boyutu ve süresiyle &quot;İşlem bitti&quot;." width="800"><br><sub>İndirme takibi (yerel bir test sunucusundan indirme)</sub></p>
 
 Dosya taşıyan her şey için tek tür etkinlik: adı, "412 MB / 1,8 GB", yüzde, hız, kalan süre ve sonunda dosyayı ya da klasörünü açan bir düğme.
 
@@ -380,7 +374,6 @@ Kurallar: bir takvim etkinliğinden önce, ekran kaydı sırasında ve Pomodoro 
 ## Kedi
 
 <!-- GIF: cat-sleep.gif | Hapın yanındaki kedi kıvrılıp uyuyor; bir bildirim geliyor ve başını kaldırıyor. | Kedi: uykuda ve uyanık -->
-<p align="center"><img src="docs/media/cat-sleep.gif" alt="Hapın yanındaki kedi kıvrılıp uyuyor; bir bildirim geliyor ve başını kaldırıyor." width="800"><br><sub>Kedi: uykuda ve uyanık</sub></p>
 <!-- GIF: cat-petting.gif | İmleç kediyi sağdan sola okşuyor ve kalpler yükseliyor. | Kedi: okşama -->
 <!-- GIF: cat-annoyed.gif | Uyuyan kediye tıklanıyor; sinirleniyor ve küsüyor. | Kedi: uyandırılınca -->
 
@@ -415,7 +408,6 @@ Hapın yanında küçük bir kedi oturur. Hiçbir şey olmayınca uykuya dalar (
 Her program D-Bus üzerinden adada bir etkinlik gösterebilir (oturum veri yolunda servis, yol ve arayüz `org.phobby.DynamicIsland`).
 
 <!-- GIF: island-push.gif | Hapta "Backup" adlı bir etkinlik, dolan bir ilerleme halkasıyla beliriyor, sonra yeşil bir "bitti". | island-push ile gönderilen bir etkinlik -->
-<p align="center"><img src="docs/media/island-push.gif" alt="Hapta &quot;Backup&quot; adlı bir etkinlik, dolan bir ilerleme halkasıyla beliriyor, sonra yeşil bir &quot;bitti&quot;." width="800"><br><sub>island-push ile gönderilen bir etkinlik</sub></p>
 
 ```bash
 island-push --id build --title "Build" --progress 40 --icon run-build

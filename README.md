@@ -155,7 +155,6 @@ Plasma's own volume popup keeps appearing beside the island's. To keep only one:
 ## The island, state by state
 
 <!-- GIF: island-states.gif | The small pill shows the clock, then a notification with its sender and first line, then an activity with a progress ring that ends in "Done". | The states of the small island -->
-<p align="center"><img src="docs/media/island-states.gif" alt="The small pill shows the clock, then a notification with its sender and first line, then an activity with a progress ring that ends in &quot;Done&quot;." width="800"><br><sub>The states of the small island</sub></p>
 
 | State | When | What you see |
 |---|---|---|
@@ -200,12 +199,9 @@ The default shape joins the screen's top edge like a laptop's notch: square abov
 *What is playing, and its controls.*
 
 <!-- GIF: media-controls.gif | The pill shows a cover, a track's name and an equalizer; the next track comes; it is paused and played again. | Media on the pill: the track changes, pause and play -->
-<p align="center"><img src="docs/media/media-controls.gif" alt="The pill shows a cover, a track's name and an equalizer; the next track comes; it is paused and played again." width="800"><br><sub>Media on the pill: the track changes, pause and play</sub></p>
 <!-- GIF: media-page.gif | The open Media page: cover, title and artist, previous, play and next, the position being dragged. | Media: the page and its controls -->
 <!-- GIF: media-glow.gif | With music playing the pill's edge starts to glow in the cover's colour and moves with the music; then the glow is switched off again. | Media: the ambient glow -->
-<p align="center"><img src="docs/media/media-glow.gif" alt="With music playing the pill's edge starts to glow in the cover's colour and moves with the music; then the glow is switched off again." width="800"><br><sub>Media: the ambient glow</sub></p>
 <!-- GIF: media-cat.gif | The cat beside the pill puts on headphones and nods while music plays. | Media: the cat listens too -->
-<p align="center"><img src="docs/media/media-cat.gif" alt="The cat beside the pill puts on headphones and nods while music plays." width="800"><br><sub>Media: the cat listens too</sub></p>
 
 - **What you see:** on the pill the cover, the track's name and an equalizer; on the page cover, title, artist, position, previous / play / next.
 - **How to use:** the buttons and the position bar control the player. The wave button at the top right switches the **ambient glow**: the island's edge takes the cover's colour and moves with the music's loudness and bass.
@@ -294,7 +290,6 @@ The default shape joins the screen's top edge like a laptop's notch: square abov
 
 <!-- GIF: calendar-connect.gif | The gear on the Calendar page opens "Connect a Calendar": Google or Apple is chosen, a link is pasted, the month fills with events. | Calendar: connecting one -->
 <!-- GIF: calendar-pinned.gif | An event on the pill counts down its last seconds, turns into "started" with its room and a Join button, then shows the time left. | Calendar: the next event on the island -->
-<p align="center"><img src="docs/media/calendar-pinned.gif" alt="An event on the pill counts down its last seconds, turns into &quot;started&quot; with its room and a Join button, then shows the time left." width="800"><br><sub>Calendar: the next event on the island</sub></p>
 
 - **What you see:** a month, the events of the chosen day and their details (place, notes, a meeting link). 15 minutes before an event starts it is pinned to the pill with a countdown; at the start a sound plays and it stays 10 minutes after the end.
 - **How to use:** the gear → *Connect a Calendar* → Google or Apple → either paste the calendar's private `.ics` link (read only), or connect the account (then events can be added and deleted from the island).
@@ -351,7 +346,6 @@ The default shape joins the screen's top edge like a laptop's notch: square abov
 ## Downloads and file transfers
 
 <!-- GIF: downloads-tracking.gif | A download started with curl from a local test server appears on the pill with its megabytes and a ring that fills, then "Finished" with its size and time. | Download tracking (a download from a local test server) -->
-<p align="center"><img src="docs/media/downloads-tracking.gif" alt="A download started with curl from a local test server appears on the pill with its megabytes and a ring that fills, then &quot;Finished&quot; with its size and time." width="800"><br><sub>Download tracking (a download from a local test server)</sub></p>
 
 One kind of activity for everything that moves files: its name, "412 MB / 1.8 GB", per cent, speed, time left, and at the end a button to open the file or its folder.
 
@@ -378,7 +372,6 @@ The rules: Do Not Disturb before a calendar event, during a screen recording and
 ## The cat
 
 <!-- GIF: cat-sleep.gif | The cat beside the pill curls up and sleeps; a notification arrives and it looks up. | The cat: asleep and awake -->
-<p align="center"><img src="docs/media/cat-sleep.gif" alt="The cat beside the pill curls up and sleeps; a notification arrives and it looks up." width="800"><br><sub>The cat: asleep and awake</sub></p>
 <!-- GIF: cat-petting.gif | The pointer strokes the cat from side to side and hearts rise. | The cat: stroking -->
 <!-- GIF: cat-annoyed.gif | The sleeping cat is clicked; it gets annoyed and sulks. | The cat: woken up -->
 
@@ -413,7 +406,6 @@ A small cat sits beside the pill. It falls asleep when nothing happens (after 20
 Any program can show an activity on the island over D-Bus (service, path and interface `org.phobby.DynamicIsland`, on the session bus).
 
 <!-- GIF: island-push.gif | An activity named "Backup" appears on the pill with a progress ring that fills, then a green "done". | An activity pushed with island-push -->
-<p align="center"><img src="docs/media/island-push.gif" alt="An activity named &quot;Backup&quot; appears on the pill with a progress ring that fills, then a green &quot;done&quot;." width="800"><br><sub>An activity pushed with island-push</sub></p>
 
 ```bash
 island-push --id build --title "Build" --progress 40 --icon run-build

@@ -13,7 +13,10 @@ island), 128 colours.
 
 ## Recorded by script, headless
 
-`tools/demo/scenes --headless` records these without anybody at the screen:
+`tools/demo/scenes --headless` records these without anybody at the screen.
+The clips of this table showed the old rounded pill and were taken out when
+the notch became the island's shape; they are to be recorded again with the
+notch:
 
 | Clip | What it shows |
 |---|---|
