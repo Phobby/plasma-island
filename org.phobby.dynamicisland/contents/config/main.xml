@@ -370,6 +370,11 @@
     <entry name="controlTiles" type="String">
       <default>dnd,nightlight,power,bluetooth,wifi,updates</default>
     </entry>
+    <!-- The Controls page's buttons' colours: on, one for all ("" = each its own); off, one for all ("" = as the
+         island's buttons); a button's own (JSON { key: "#rrggbb" }: vivid on, a muted tone of it off) -->
+    <entry name="controlOnColor" type="String"><default></default></entry>
+    <entry name="controlOffColor" type="String"><default></default></entry>
+    <entry name="controlTileColors" type="String"><default>{}</default></entry>
     <!-- Colour schemes the "Dark mode" button switches between (remembered when it switches away) -->
     <entry name="darkColorScheme" type="String"><default></default></entry>
     <entry name="lightColorScheme" type="String"><default></default></entry>

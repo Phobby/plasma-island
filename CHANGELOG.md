@@ -17,6 +17,9 @@
   default): out of sight while a window fills the screen, down when the
   pointer is pushed against the top edge, back up when left; a size and width
   of its own for that can be set. Hide and Show are as they were.
+- **The Controls buttons' colours** (Settings → Controls): on, each its own
+  or one for all; off, as the island's buttons or one for all; and a
+  colour of a button's own, vivid on, muted off.
 - **Button colour** (Appearance, Fine tuning): the fill of the island's
   buttons, tiles and cards, automatic as before or a colour of one's own, made
   lighter or darker as far as the text on it needs; kept in themes too.

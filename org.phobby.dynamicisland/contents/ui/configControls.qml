@@ -2,13 +2,16 @@
     SPDX-License-Identifier: GPL-2.0-or-later
     The buttons of the Controls page: which ones (at most six) and in what
     order (drag by the handle). The others are listed below to add. The same
-    choice can be changed in the island by holding a button.
+    choice can be changed in the island by holding a button. And their
+    colours: on (each its own, or one for all), off (as the island's buttons,
+    or one for all), and a colour of a button's own.
 */
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
+import org.kde.kquickcontrols as KQC
 
 KCM.SimpleKCM {
     id: page
@@ -17,6 +20,25 @@ KCM.SimpleKCM {
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
 
     property string cfg_controlTiles
+    property string cfg_controlOnColor
+    property string cfg_controlOffColor
+    property string cfg_controlTileColors
+    readonly property var tileColours: { try { const v = JSON.parse(cfg_controlTileColors || "{}"); return v && typeof v === "object" && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } }
+    function setTileColour(key: string, hex: string): void {
+        const next = Object.assign({}, tileColours);
+        if (hex.length > 0) next[key] = hex; else delete next[key];
+        cfg_controlTileColors = JSON.stringify(next);
+    }
+    function hex(c: color): string { return "#" + [c.r, c.g, c.b].map(v => Math.round(v * 255).toString(16).padStart(2, "0")).join(""); }
+    // The colours a button has on as it comes (as the island's Controls page gives them).
+    Theme { id: tones; follow: false }
+    readonly property var ownTints: ({ dnd: tones.purple, nightlight: tones.orange, power: tones.live, updates: tones.red, airplane: tones.orange,
+                                       record: tones.red, camera: tones.live, darkmode: tones.purple, awake: tones.orange })
+    function tintOf(key: string): color {
+        if (Styles.isColor(tileColours[key])) return tileColours[key];
+        if (Styles.isColor(cfg_controlOnColor)) return cfg_controlOnColor;
+        return ownTints[key] !== undefined ? ownTints[key] : tones.blue;
+    }
 
     ControlCatalog { id: catalog }
     readonly property var chosen: catalog.normalize(cfg_controlTiles)
@@ -48,6 +70,61 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             text: Lang.i18n("The buttons on the Controls page, at most %1. Drag one by its handle to move it. In the island, holding a button changes them too.", catalog.maximum)
+        }
+
+        // ---- colours ----------------------------------------------------------------------
+        Kirigami.Heading {
+            textFormat: Text.PlainText
+            level: 4
+            text: Lang.i18n("Colours")
+        }
+        Kirigami.FormLayout {
+            Layout.fillWidth: true
+            RowLayout {
+                objectName: "controlOnColourRow"
+                Kirigami.FormData.label: Lang.i18n("When on:")
+                QQC2.CheckBox {
+                    id: ownOn
+                    text: Lang.i18n("Each in its own colour")
+                    Binding { target: ownOn; property: "checked"; value: !Styles.isColor(page.cfg_controlOnColor) }
+                    onToggled: page.cfg_controlOnColor = checked ? "" : "#3daee9"
+                }
+                KQC.ColorButton {
+                    id: onButton
+                    objectName: "controlOnColourButton"
+                    enabled: !ownOn.checked
+                    showAlphaChannel: false
+                    Binding { target: onButton; property: "color"; value: Styles.isColor(page.cfg_controlOnColor) ? page.cfg_controlOnColor : "#3daee9" }
+                    onAccepted: c => page.cfg_controlOnColor = page.hex(c)
+                }
+            }
+            RowLayout {
+                objectName: "controlOffColourRow"
+                Kirigami.FormData.label: Lang.i18n("When off:")
+                QQC2.CheckBox {
+                    id: islandOff
+                    text: Lang.i18n("As the island's buttons (Appearance)")
+                    Binding { target: islandOff; property: "checked"; value: !Styles.isColor(page.cfg_controlOffColor) }
+                    onToggled: page.cfg_controlOffColor = checked ? "" : "#3b4252"
+                }
+                KQC.ColorButton {
+                    id: offButton
+                    objectName: "controlOffColourButton"
+                    enabled: !islandOff.checked
+                    showAlphaChannel: false
+                    Binding { target: offButton; property: "color"; value: Styles.isColor(page.cfg_controlOffColor) ? page.cfg_controlOffColor : "#3b4252" }
+                    onAccepted: c => page.cfg_controlOffColor = page.hex(c)
+                }
+            }
+            QQC2.Label {
+                textFormat: Text.PlainText
+                Layout.fillWidth: true
+                Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+                wrapMode: Text.Wrap
+                font: Kirigami.Theme.smallFont
+                opacity: 0.7
+                text: Lang.i18n("A button can also have a colour of its own (the colour button in its row below): vivid while it is on, a muted tone of it while it is off. The icon on it is white or black, whichever reads better; an off colour is made lighter or darker as far as it needs.")
+            }
         }
 
         Kirigami.Heading {
@@ -129,6 +206,24 @@ KCM.SimpleKCM {
                                 opacity: 0.7
                                 elide: Text.ElideRight
                             }
+                        }
+                        KQC.ColorButton {
+                            id: tileColour
+                            objectName: "tileColour_" + model.key
+                            showAlphaChannel: false
+                            Binding { target: tileColour; property: "color"; value: page.tintOf(model.key) }
+                            onAccepted: c => page.setTileColour(model.key, page.hex(c))
+                            QQC2.ToolTip.visible: hovered
+                            QQC2.ToolTip.text: Lang.i18n("Its own colour")
+                        }
+                        QQC2.ToolButton {
+                            visible: Styles.isColor(page.tileColours[model.key])
+                            icon.name: "edit-undo"
+                            text: Lang.i18n("Back to the usual colour")
+                            display: QQC2.AbstractButton.IconOnly
+                            QQC2.ToolTip.visible: hovered
+                            QQC2.ToolTip.text: text
+                            onClicked: page.setTileColour(model.key, "")
                         }
                         QQC2.ToolButton {
                             icon.name: "list-remove"

@@ -113,6 +113,35 @@ Item {
         function initTestCase() { Lang.setting = "en"; }
         function cleanup() { page.detail = ""; page.editing = false; radio.toggled = []; net.asked = []; nativeCore.started = []; }
 
+        // The buttons' colours: each its own when on, the island's button fill when off; one colour for
+        // all when on, one when off; a button's own colour, vivid on and a muted tone of it off; every
+        // off colour keeps the icon on it readable.
+        function test_button_colours() {
+            const circle = key => named("tile_" + key).children[0];
+            tryVerify(() => named("tile_dnd") !== null && named("tile_bluetooth") !== null, 3000);
+            compare(String(named("tile_dnd").tint), String(islandTheme.purple), "Focus: its own colour");
+            compare(String(named("tile_bluetooth").offFill), String(islandTheme.faint), "off: as the island's buttons");
+            page.onColour = "#ff3b30";
+            compare(String(named("tile_dnd").tint), String(Qt.color("#ff3b30")), "one colour for all, on");
+            page.offColour = "#ffd60a";
+            // (as text: a colour read from a property follows the property)
+            const off = String(named("tile_bluetooth").offFill);
+            verify(off !== String(islandTheme.faint), "one colour for all, off");
+            verify(islandTheme.contrast(islandTheme.text, Qt.color(off)) >= 4.49, "the icon reads on it");
+            page.tileColours = { bluetooth: "#30d158" };
+            compare(String(named("tile_bluetooth").tint), String(Qt.color("#30d158")), "its own, on");
+            const muted = String(named("tile_bluetooth").offFill);
+            verify(muted !== off, "its own, off: a tone of it, not the colour for all");
+            verify(islandTheme.contrast(islandTheme.text, Qt.color(muted)) >= 4.49);
+            compare(String(named("tile_dnd").tint), String(Qt.color("#ff3b30")), "the others keep the colour for all");
+            // shown: Bluetooth is on here, its circle has its own colour, vivid (the pointer away from it)
+            mouseMove(page, 2, page.height - 2);
+            verify(named("tile_bluetooth").checked);
+            tryVerify(() => String(circle("bluetooth").color) === String(Qt.color("#30d158")), 1000);
+            page.onColour = ""; page.offColour = ""; page.tileColours = {};
+            compare(String(named("tile_dnd").tint), String(islandTheme.purple));
+        }
+
         function test_another_button_still_edits() {
             hold("dnd");
             compare([page.editing, page.detail, page.holdOpen], [true, "", true]);

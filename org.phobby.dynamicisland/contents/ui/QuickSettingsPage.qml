@@ -38,6 +38,12 @@ Item {
     property bool showBrightness: true
     // The chosen buttons (the controlTiles setting) and where a change goes.
     property string tiles: ""
+    // The buttons' colours (Settings → Controls): on, one colour for all ("" = each its own); off, a colour
+    // for all ("" = as the island's buttons); and a colour of a button's own ({ key: "#rrggbb" }), vivid
+    // while it is on, a muted tone of it while it is off (also a button that is never on, as Lock).
+    property string onColour: ""
+    property string offColour: ""
+    property var tileColours: ({})
     signal tilesEdited(string tiles)
 
     ControlCatalog { id: catalog }
@@ -233,6 +239,14 @@ Item {
         case "settings":
             s.available = has("systemsettings"); s.act = () => run("systemsettings", []); break;
         }
+        const own = tileColours ? tileColours[key] : undefined;
+        if (Styles.isColor(own)) {
+            s.tint = t.fromHex(own);
+            s.offFill = t.ensure(t.mix(t.surface, s.tint, 0.4), t.text, t.minContrast);
+        } else {
+            if (Styles.isColor(onColour)) s.tint = t.fromHex(onColour);
+            s.offFill = Styles.isColor(offColour) ? t.ensure(t.fromHex(offColour), t.text, t.minContrast) : t.faint;
+        }
         return s;
     }
 
@@ -243,6 +257,7 @@ Item {
         property string badge
         property bool checked
         property color tint: page.theme.control
+        property color offFill: page.theme.faint
         property bool available: true
         property bool editing: false
         property int slot: -1                   // position among the chosen buttons (editing: drag)
@@ -266,9 +281,9 @@ Item {
             implicitHeight: 40
             radius: 20
             // on: vivid tint; off: neutral fill. Hover/pressed stay distinguishable in both.
-            readonly property color base: toggle.checked ? toggle.tint : page.theme.faint
+            readonly property color base: toggle.checked ? toggle.tint : toggle.offFill
             color: mouse.pressed ? (toggle.checked ? Qt.darker(toggle.tint, 1.25) : page.theme.pressedFill)
-                 : mouse.containsMouse && !toggle.checked ? page.theme.over(page.theme.hoverFill, page.theme.over(page.theme.faint, page.theme.surface))
+                 : mouse.containsMouse && !toggle.checked ? page.theme.over(page.theme.hoverFill, page.theme.over(toggle.offFill, page.theme.surface))
                  : base
             border.width: mouse.containsMouse ? 1.5 : 0
             border.color: page.theme.readable(toggle.checked ? toggle.tint : page.theme.text, page.theme.surface)
@@ -456,6 +471,7 @@ Item {
                     badge: state_.badge
                     checked: state_.checked
                     tint: state_.tint
+                    offFill: state_.offFill
                     available: state_.available
                     editing: page.editing
                     onClicked: state_.act()

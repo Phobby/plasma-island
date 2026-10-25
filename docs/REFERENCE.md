@@ -205,7 +205,13 @@ first is the priority list of the Activities tab, so privacy indicators,
 calls and screen recording still come first whatever the page order is.
 **Controls** tab: the buttons of the Controls page, like a phone's quick
 settings: at most six, in the order shown (drag by the handle), the others
-listed below to add. Holding a button on the Controls page in the island
+listed below to add. Their colours: on, each its own (Focus purple, Night
+Light orange…) or one colour for all; off, as the island's buttons
+(Appearance) or one colour for all; and a button's own colour (the colour
+button in its row), vivid while it is on, a muted tone of it while it is
+off, so a button that is never on (System Settings, Lock) has a colour too.
+The icon on a colour is white or black, whichever reads better; an off
+colour is made lighter or darker as far as it needs. Holding a button on the Controls page in the island
 edits them there too: the buttons wiggle; drag one sideways to move it (the
 others make room; holding and dragging works in one go), "−" takes one away,
 the others are offered below as round icons to add (the name of the one

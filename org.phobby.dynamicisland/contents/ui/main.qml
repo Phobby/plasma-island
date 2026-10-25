@@ -695,6 +695,9 @@ PlasmoidItem {
             showUpdates: root.cfg.showUpdates
             showVolume: root.cfg.showVolumeModule
             tiles: root.cfg.controlTiles
+            onColour: root.cfg.controlOnColor
+            offColour: root.cfg.controlOffColor
+            tileColours: { try { const v = JSON.parse(root.cfg.controlTileColors || "{}"); return v && typeof v === "object" && !Array.isArray(v) ? v : {}; } catch (e) { return {}; } }
             onTilesEdited: tiles => root.cfg.controlTiles = tiles
         }
     }
