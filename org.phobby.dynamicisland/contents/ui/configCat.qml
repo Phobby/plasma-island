@@ -16,7 +16,6 @@ import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
-import org.kde.kquickcontrols as KQC
 import "companion"
 import "companion/CatPoses.js" as Poses
 
@@ -298,7 +297,7 @@ KCM.SimpleKCM {
                         }
                     }
                 }
-                KQC.ColorButton {
+                ColorPickerButton {
                     id: customCoat
                     objectName: "coat-custom"
                     showAlphaChannel: false

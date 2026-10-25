@@ -17,7 +17,6 @@ import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
-import org.kde.kquickcontrols as KQC
 import org.kde.plasma.plasmoid
 
 KCM.SimpleKCM {
@@ -354,7 +353,7 @@ KCM.SimpleKCM {
         suggestedName: page.activeTheme !== null ? page.activeTheme.name : page.activeProfile !== null ? page.activeProfile.name : ""
     }
 
-    component Swatch: KQC.ColorButton {
+    component Swatch: ColorPickerButton {
         property color value
         signal picked(string hex)
         showAlphaChannel: false

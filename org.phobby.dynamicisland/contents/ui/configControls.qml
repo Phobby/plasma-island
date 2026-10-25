@@ -11,7 +11,6 @@ import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
-import org.kde.kquickcontrols as KQC
 
 KCM.SimpleKCM {
     id: page
@@ -89,7 +88,7 @@ KCM.SimpleKCM {
                     Binding { target: ownOn; property: "checked"; value: !Styles.isColor(page.cfg_controlOnColor) }
                     onToggled: page.cfg_controlOnColor = checked ? "" : "#3daee9"
                 }
-                KQC.ColorButton {
+                ColorPickerButton {
                     id: onButton
                     objectName: "controlOnColourButton"
                     enabled: !ownOn.checked
@@ -107,7 +106,7 @@ KCM.SimpleKCM {
                     Binding { target: islandOff; property: "checked"; value: !Styles.isColor(page.cfg_controlOffColor) }
                     onToggled: page.cfg_controlOffColor = checked ? "" : "#3b4252"
                 }
-                KQC.ColorButton {
+                ColorPickerButton {
                     id: offButton
                     objectName: "controlOffColourButton"
                     enabled: !islandOff.checked
@@ -207,7 +206,7 @@ KCM.SimpleKCM {
                                 elide: Text.ElideRight
                             }
                         }
-                        KQC.ColorButton {
+                        ColorPickerButton {
                             id: tileColour
                             objectName: "tileColour_" + model.key
                             showAlphaChannel: false

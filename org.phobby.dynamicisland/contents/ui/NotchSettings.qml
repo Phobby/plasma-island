@@ -18,7 +18,6 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
-import org.kde.kquickcontrols as KQC
 
 Kirigami.FormLayout {
     id: section
@@ -158,7 +157,7 @@ Kirigami.FormLayout {
         textFromValue: (v) => Lang.i18n("%1 px", v)
         onValueModified: section.page.cfg_notchBorderWidth = value
     }
-    KQC.ColorButton {
+    ColorPickerButton {
         id: borderColorButton
         Kirigami.FormData.label: Lang.i18n("Border colour:")
         enabled: borderCheck.checked
