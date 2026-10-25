@@ -16,7 +16,7 @@ says so in its first lines, and the licence's text is in
 | The BetterNotes icon | `contents/icons/betternotes.svg` | [BetterNotes](https://github.com/thebanri/BetterNotes) | MIT (`contents/icons/betternotes.LICENSE`); it only labels that note source |
 | The calculator icon | `contents/icons/calculator-symbolic.svg` | drawn for this widget | GPL-2.0-or-later |
 
-The six themes in `catalog/themes/` are the project's own (their `author`
+The seven themes in `catalog/themes/` are the project's own (their `author`
 says "Dynamic Island"); a theme is data: colours and numbers.
 
 ## Used at run time, not shipped
@@ -33,7 +33,12 @@ says "Dynamic Island"); a theme is data: colours and numbers.
   `tools/demo/make-media`: sums of sine waves with a drum on the beat, and
   gradients with a few shapes. The track, artist and album names are made up.
   Nobody else's work is in them; they are released under CC0-1.0.
-- The **wallpaper** is one plain colour.
+- The **wallpaper** is one plain colour; the desktop is Plasma's own Breeze
+  Dark with a top panel.
+- A **screen recording** in the clips is a stand-in made in the demo session
+  (a GStreamer stream of black pictures read by a made-up "Recorder"), and an
+  **incoming call** is KDE Connect's D-Bus signal sent there with a made-up
+  caller and a 555 number: no phone, no real recording.
 - Notifications, calendar events, notes, files, a cloud's folders and the AI's
   answers in the clips are made up by the scripts in `tools/demo/`. The AI
   answers come from a local stand-in server with canned answers, not from a

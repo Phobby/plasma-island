@@ -6,14 +6,18 @@ island, with what was tried and what was not. How it is built and tested is in
 
 ## States
 
+The island comes as a notch joined to the screen's top edge ([Notch mode](#notch-mode)); the
+same states then hang from that edge. "Pill" below is the small island in either shape: the
+notch, or the rounded island of Settings → Appearance → Shape.
+
 | State | When | Appearance |
 |---|---|---|
 | Idle | Nothing is going on | Small pill (180×36): clock or status dot; a ⏸ mark when media is paused |
 | Live activity (compact) | The highest-priority ongoing activity | Media: album art + track name + equalizer. Others: coloured icon on the left, time/value or progress ring on the right |
 | Split island | Two ongoing activities at once | The first in the main pill, the second in a circle that splits off to its right like a droplet (minimal view) |
 | Notification | A new notification arrives | App icon (phone badge for KDE Connect), app name, title, first line of the text. Left click runs the default action, middle click dismisses |
-| Momentary event | Charging, Bluetooth, volume, Caps Lock… | Wide pill: icon, title, and a ring / battery / slider / button on the right. After 2–4 s the island returns to where it was |
-| Suggestion | A moment a rule knows (see "Suggestions") | A sentence and its answers as buttons: Yes · Not now · Never suggest this; gone after 10 s |
+| Momentary event | Charging, Bluetooth, volume, Caps Lock… | Wide pill: icon, title, and a ring / battery / slider / button on the right. After a few seconds (3 s by default, Settings → Activities) the island returns to where it was |
+| Suggestion | A moment a rule knows (see "Suggestions"; off until switched on) | A sentence and its answers as buttons: Yes · Always · No, and behind "⋯" Not now · Turn this rule off; gone after 12 s |
 | Expanded | Mouse hover or click | Pages (below) |
 | Privacy dots | Microphone / camera in use | Orange (microphone) / green (camera) dot to the right of the island, visible in every state |
 | Dot | Dot mode: a click on the island | A small circle (15 px, 10–28) in the pill's place; a click on it brings the closed pill back |
@@ -287,7 +291,7 @@ style's.)
 
 | | |
 |---|---|
-| Ready-made looks | Oxygen Metallic (the original), Breeze Dark, Breeze Light, Pure Glass (Minimal), High Contrast (text and status colours at 4.5:1 or more, controls and border at 3:1 or more, nothing translucent to read on), and four gradients: Aurora, Sunset, Ocean, Midnight Blue (every colour of them dark enough for the light text, 4.5:1 or more). Each card shows the look itself. Choosing one keeps where the island sits and how large it is. "Reset to the preset" undoes the fine tuning |
+| Ready-made looks | Oxygen Metallic (the original), Breeze Dark, Breeze Light, Pure Glass (Minimal), High Contrast (text and status colours at 4.5:1 or more, controls and border at 3:1 or more, nothing translucent to read on), and five gradients: Symbiot Black (the default), Aurora, Sunset, Ocean, Midnight Blue (every colour of them dark enough for the light text, 4.5:1 or more). Each card shows the look itself. Choosing one keeps where the island sits and how large it is. "Reset to the preset" undoes the fine tuning |
 | Opacity | 0–100 %, as set (independent of blur) |
 | Blur | On/off and a level. KWin blurs with one strength for the whole desktop (System Settings → Desktop Effects → Blur), so the level adds frosting over the blurred background |
 | Distance from top | 0–40 px. Also set while following the system: that look has a distance of its own (the one in General, up to 200 px) |

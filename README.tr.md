@@ -2,7 +2,7 @@
 
 # KDE Plasma 6 için Dinamik Ada
 
-KDE Plasma masaüstünün üst kenarıyla birleşen bir çentik. Müzik, indirmeler, zamanlayıcılar, aramalar ve bildirimler burada görünür; imleç üzerine gelince sayfalar aşağıya açılır.
+KDE Plasma masaüstünün üst kenarıyla birleşen bir çentik: müzik, indirmeler, zamanlayıcılar, aramalar ve bildirimler onda görünür, üzerine gelince sayfaları aşağıya açılır.
 
 [![Lisans: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#lisans-ve-teşekkürler)
 ![Sürüm 0.2.2](https://img.shields.io/badge/version-0.2.2-informational.svg)
@@ -10,54 +10,100 @@ KDE Plasma masaüstünün üst kenarıyla birleşen bir çentik. Müzik, indirme
 
 [English](README.md) · **Türkçe**
 
-## Ön planda çentik, görünümü sizin elinizde
+<!-- TODO(owner): ana video buraya (docs/RELEASE-CHECKLIST.md). -->
 
-![Symbiot Siyahı çentik önizlemesi](docs/media/notch-hero.svg)
+<!-- GIF: notch-states.gif | Ekranın üstünde, koyu bir üst panelin üzerindeki çentik saati gösteriyor, yanında kedi; bir mesaj geliyor ve çentik genişleyip göndereni ve ilk satırı gösteriyor; sonra dolan ilerleme halkasıyla bir derleme "Done" ile bitiyor. | Çentik: boşta, bir bildirim, bir etkinlik -->
+<p align="center"><img src="docs/media/notch-states.gif" alt="Ekranın üstünde, koyu bir üst panelin üzerindeki çentik saati gösteriyor, yanında kedi; bir mesaj geliyor ve çentik genişleyip göndereni ve ilk satırı gösteriyor; sonra dolan ilerleme halkasıyla bir derleme &quot;Done&quot; ile bitiyor." width="800"><br><sub>Çentik: boşta, bir bildirim, bir etkinlik</sub></p>
 
-Yeni kurulumlarda varsayılan görünüm **Symbiot Siyahı gradyanlı çentik**: koyu gri `#292c30`, `#202326` ve siyaha yakın `#0e1012`; koyu Plasma masaüstünden alınan soluk gri vurgu rengiyle. Yukarıdaki çizim çentik biçimini gösterir.
-
-- **Ayarlar → Çentik:** kenarlığı açıp kapatın; rengini, kalınlığını (1–8 px) ve opaklığını (%0–100) seçin. Kenarlık yanları ve alt köşeleri izler, üst kenar ekranla birleşik kalır. Canlı önizleme seçimlerinizi gösterir.
-- **Ayarlar → Görünüm:** **Symbiot Siyahı** veya başka bir hazır görünüm seçin, gradyanı düzenleyin ve görünümünüzü kaydedin.
-- **Yuvarlak sürümü mü tercih ediyorsunuz?** **Ayarlar → Görünüm → Şekil → Yuvarlak ada** seçin. İstediğiniz zaman **Çentik (varsayılan)** seçeneğine dönebilirsiniz.
-
-Mevcut kayıtlı tercihler korunur. Çentik altındaki paneli örter; panel öğelerine yer bırakmak için **Ayarlar → Çentik → En geniş** ayarını kullanın.
-
-
-Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarlar → Dil).
+Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarlar → Dil, [klibi](#düzen-ve-dil) aşağıda).
 
 ## İçindekiler
 
-- [Nedir](#nedir)
+- [Çentik](#çentik): [üst panelle](#üst-panelle) · [Çentik ayarları](#çentik-ayarları) · [Nokta modu](#nokta-modu) · [Durumlar](#durumlar)
+- [Öne çıkanlar](#öne-çıkanlar)
 - [Gereksinimler](#gereksinimler)
 - [Kurulum, güncelleme, kaldırma](#kurulum-güncelleme-kaldırma)
 - [İlk adımlar](#i̇lk-adımlar)
-- [Adanın durumları](#adanın-durumları)
-- [Sayfalar](#sayfalar): [Etkinlikler](#etkinlikler) · [Medya](#medya) · [Sistem](#sistem) · [Hava Durumu](#hava-durumu) · [Bildirimler](#bildirimler) · [Kontroller](#kontroller) · [Uygulamalar](#uygulamalar) · [Araçlar](#araçlar) · [Alışkanlıklar](#alışkanlıklar) · [Takvim](#takvim) · [Notlar](#notlar) · [Yapay Zeka](#yapay-zeka) · [Bulut](#bulut) · [Pano](#pano)
-- [İndirmeler ve dosya aktarımları](#i̇ndirmeler-ve-dosya-aktarımları)
-- [Öneriler](#öneriler)
+- [Sekmeler](#sekmeler): [Etkinlikler](#etkinlikler) · [Medya](#medya) · [Sistem](#sistem) · [Hava Durumu](#hava-durumu) · [Bildirimler](#bildirimler) · [Kontroller](#kontroller) · [Uygulamalar](#uygulamalar) · [Araçlar](#araçlar) · [Alışkanlıklar](#alışkanlıklar) · [Takvim](#takvim) · [Notlar](#notlar) · [Yapay Zeka](#yapay-zeka) · [Bulut](#bulut) · [Pano](#pano)
 - [Kedi](#kedi)
+- [Anlık olaylar](#anlık-olaylar): [ekran kaydı](#ekran-kaydı-ve-paylaşımı) · [bildirimler](#bir-bildirim-geldiğinde) · [indirmeler](#i̇ndirmeler-ve-dosya-aktarımları) · [gelen arama](#gelen-arama) · [gizlilik noktaları](#gizlilik-noktaları) · [öneriler](#öneriler)
 - [Görünüm, temalar ve mağaza](#görünüm-temalar-ve-mağaza)
 - [Düzen ve dil](#düzen-ve-dil)
 - [Geliştiriciler için: kendi etkinliğini gönder](#geliştiriciler-için-kendi-etkinliğini-gönder)
-- [Performans](#performans)
-- [Gizlilik ve ağ](#gizlilik-ve-ağ)
-- [Sorun giderme](#sorun-giderme)
-- [Bilinen sınırlar](#bilinen-sınırlar)
-- [Katkı, güvenlik, lisans](#katkı-ve-güvenlik)
+- [Performans](#performans) · [Gizlilik ve ağ](#gizlilik-ve-ağ) · [Sorun giderme](#sorun-giderme) · [Bilinen sınırlar](#bilinen-sınırlar) · [Katkı ve güvenlik](#katkı-ve-güvenlik) · [Lisans ve teşekkürler](#lisans-ve-teşekkürler)
 
-## Nedir
+## Çentik
+
+Ada, dizüstü ekranlarındaki çentik gibi ekranın üst kenarına birleşik tek bir parçadır: kenarla birleştiği yerde köşesiz ve düz, yalnızca alt köşeleri yuvarlak. Üst panelin (kendini gizleyen bir panelin de) üzerinde durur ve aşağıya doğru büyür: bir bildirim, bir etkinlik ya da üzerine gelince sayfaları için. İmleci üstündeki ekran kenarına dayamak da onu açar: en üst piksel sırası da imleci alır.
+
+<!-- GIF: notch-hover.gif | İmleç çentiğin üzerine geliyor ve çentik aşağıya doğru sayfalarına açılıyor; imleç uzaklaşınca geri küçülüyor; imleç çentiğin üstündeki ekran kenarına dayanıyor ve yeniden açılıyor. | Çentik: üzerine gelme, kapanma, kenara dayama -->
+
+**Symbiot Siyahı** gradyanıyla (koyu gri `#292c30`, `#202326` ve siyaha yakın `#0e1012`) ve ince, soluk gri bir kenarlıkla (`#4c566a`, %70) gelir. Önceki sürümlerin yuvarlak adası hâlâ vardır: **Ayarlar → Görünüm → Şekil → Yuvarlak ada**.
+
+**0.2.2 ya da daha eskisinden güncellerken:** kendi değiştirdiğiniz ayarlar olduğu gibi kalır; hiç değiştirmediğiniz bir ayar yeni varsayılanı alır. Geldiği gibi bırakılmış bir ada bu yüzden Symbiot Siyahı çentiğe dönüşür; *Yuvarlak ada* ve *Sistemi takip et* (Ayarlar → Görünüm) eski görünümü geri getirir.
+
+### Üst panelle
+
+- **Çentik altındakini örter** ve panelin o kısmına tıklanamaz; çentiğin yanında panel tıklamaları eskisi gibi alır. Panelinizin ortasında saat ya da görev düğmeleri varsa çentiği **Ayarlar → Çentik → En geniş** ile daraltın (ada, panelin öğelerinin nerede olduğunu okuyamaz). Bildirimler ve açık ada, gösterildikleri sürece daha geniştir.
+- **Yüksekliği** üst paneli izler (panel gizliyken de) ya da elle ayarlanır. Üst panel yoksa yine üst kenarda, adanın kendi yüksekliğinde durur.
+- **Kedi** çentiğin yanında, panelin üzerinde durur.
+- **Koyu bir panel**, çentiğin ekranın bir parçası gibi göründüğü yerdir: buradaki kliplerde Breeze Dark ve opak, 32 px'lik bir panel kullanıldı.
+
+### Çentik ayarları
+
+| Ayar | Ne yapar |
+|---|---|
+| Çentik modu | *Adayı ekranın üst kenarına yapıştır* (geldiği gibi açık). Değiştirmek yeniden başlatma gerektirmez |
+| Renk | *Adanın renkleri (Görünüm)*: görünümün renkleri ya da gradyanı, opak hale getirilmiş (geldiği gibi); *Siyah*: açık renk metinle opak siyah; *Adanın görünümü (Görünüm)*: malzemesi, opaklığı ve bulanıklığı da |
+| Çentik kenarlığı | *Çentiğin kenarlığını göster*: kalınlık 1–8 px, renk, opaklık %0–100. Yanlar ve alt köşeler boyunca çizilir, ekran kenarı boyunca asla |
+| Üst köşeler | *Kenarla birleştiği yeri yumuşat*: yana doğru iki küçük kıvrım (geldiği gibi kapalı) |
+| Ekran | *Üst panelin olduğu ekran* (geldiği gibi) ya da *Birincil ekran*. Aynı anda tek çentik |
+| Tam ekranın üstünde | Bir pencere o ekranı doldururken *Gizle* (geldiği gibi) ya da *Göster*. Kilit ekranında asla gösterilmez |
+| Yükseklik | *Üst panelinki* ya da *Elle* (24–72 px) |
+| En geniş | *Sınırsız* ya da piksel cinsinden bir genişlik |
+| Kedi | *Çentik modunda kediyi gizle* |
+
+Sayfanın başındaki önizleme çentiği küçük ya da nokta olarak gösterir. Çentik modunda kullanılmayanlar: üstten uzaklık, *Üst panellerin altına yerleş* ve görünümün kendi kenarlığı ile gölgesi. Ayrıntılar [başvuru belgesinde](docs/REFERENCE.md#notch-mode) (İngilizce).
+
+### Nokta modu
+
+Çentiğe tıklamak onu yoldan çekilsin diye bir noktaya küçültür (kenarda küçük bir yarım daire, 15 px; ayarlarda 10–28); noktaya tıklamak çentiği geri getirir. Panelin geri kalanındakiler tıklanabilir kalır.
+
+<!-- GIF: dot-mode.gif | Bir tıklama çentiği üst kenarda küçük bir yarım daireye küçültüyor; hemen yanındaki bir pencerenin düğmesine tıklanıyor; noktaya tıklamak çentiği geri getiriyor. | Nokta modu -->
+
+Noktanın ortası ne olduğunu söyler: mikrofon, kamera ya da ekran kullanımı için turuncu, yeşil ya da kırmızı; canlı etkinlik (nabız gibi atar) ya da bekleyen bildirimler için vurgu rengi. Nokta halindeyken bildirimler ve olaylar sonraya saklanır (ya da gösterilip noktaya dönülür: *Nokta modunda olaylar*). Gelen arama, alarm ve düşük pil, siz kapatmadıkça her durumda adayı açar.
+
+**Ayarlar → Genel → Nokta modu:** açık/kapalı, başlangıç durumu (bırakıldığı gibi, her zaman çentik, her zaman nokta), nokta boyutu, noktanın üzerine gelince adanın açılıp açılmayacağı, nokta modunda olaylar, kritik olaylarda her zaman açılma.
+
+### Durumlar
+
+| Durum | Ne zaman | Ne görürsünüz |
+|---|---|---|
+| Boşta | Hiçbir şey olmuyor | Saat |
+| Canlı etkinlik | Bir şey sürüyor (müzik, zamanlayıcı, aktarım, kayıt, arama) | Solda simgesi ya da kapağı; sağda süresi, değeri ya da ilerleme halkası |
+| Ayrık | İki şey aynı anda sürüyor | İlki çentikte, ikincisi yanında kendine ait küçük bir çentikte |
+| Bildirim | Bir bildirim geldiğinde | Uygulama, başlık, ilk satır. Tıklama varsayılan eylemi çalıştırır, orta tıklama kapatır |
+| Anlık olay | Ses, parlaklık, şarj, Bluetooth, Caps Lock, Wi-Fi… | Birkaç saniye (geldiği gibi 3 sn) daha geniş bir çentik |
+| Öneri | Bir kuralın anı (geldiği gibi kapalı, bkz. [Öneriler](#öneriler)) | Bir cümle ve düğme olarak yanıtları |
+| Açık | Üzerine gelme ya da nokta modu kapalıyken tıklama | Aşağıdaki sayfalar |
+| Gizlilik noktaları | Mikrofon ya da kamera kullanımda | Çentiğin yanında, her durumda turuncu ya da yeşil bir nokta |
+| Nokta | Nokta modunda bir tıklamadan sonra | Kenarda küçük bir yarım daire |
+
+Birden fazla şey sürerken hangisinin öne geçeceği yeniden sıralayabileceğiniz bir listedir (Ayarlar → Etkinlikler): gizlilik, arama, ekran kaydı, anlık olaylar, zamanlayıcı, aktarımlar, medya.
+
+## Öne çıkanlar
 
 | | |
 |---|---|
-| **Canlı etkinlikler** | Küçük çentik, o an süren en önemli şeyi gösterir: kapağıyla müzik, zamanlayıcı, ilerlemesiyle bir aktarım, ekran kaydı, arama. İki şey aynı anda sürüyorsa ada ikiye ayrılır. |
-| **Anlık olaylar** | Ses, parlaklık, şarj, Bluetooth, Caps Lock, yeni bildirim: birkaç saniye gösterilir, sonra ada eski haline döner. |
-| **Sayfalar** | Üzerine gelince ada açılır: Medya, Sistem, Hava Durumu, Bildirimler, Kontroller, Uygulamalar, Araçlar, Alışkanlıklar, Takvim, Notlar, Pano ve (siz açana kadar kapalı) Yapay Zeka ile Bulut. |
-| **Yoldan çekilir** | Bir tıklama onu noktaya küçültür; adanın yanındaki tıklamalar alttaki pencereye gider. |
-| **Sizin görünümünüz** | Symbiot Siyahı ile başlar; Plasma renklerini veya özel bir görünümü seçebilirsiniz: renkler ya da gradyan, opaklık, bulanıklık, köşe yuvarlaklığı. Görünümler dosya olarak dışa aktarılabilir. |
+| **Canlı etkinlikler** | Kapağıyla müzik, zamanlayıcı, ilerlemesiyle bir aktarım, ekran kaydı, arama. İki şey aynı anda sürerse çentik ikiye ayrılır. |
+| **Anlık olaylar** | Ses, parlaklık, şarj, Bluetooth, Caps Lock, yeni bildirim: birkaç saniye, sonra önceki haline döner. |
+| **Sekmeler** | Üzerine gelince açılır: Medya, Sistem, Hava Durumu, Bildirimler, Kontroller, Uygulamalar, Araçlar, Alışkanlıklar, Takvim, Notlar, Pano ve (siz açana kadar kapalı) Yapay Zeka ile Bulut. |
+| **Bir kedi** | Çentiğin yanında: uyur, müzikte kulaklık takar, okşanmayı sever. Kapatılabilir. |
+| **Sizin görünümünüz** | Geldiği gibi Symbiot Siyahı; dokuz hazır görünüm daha, kendi renkleriniz ya da gradyanınız, ya da Plasma'nın renkleri. Görünümler dosya olarak dışa aktarılıp paylaşılır. |
 | **Betiklenebilir** | Her program küçük bir D-Bus API'siyle (`island-push`) kendi etkinliğini gösterebilir. |
-| **Varsayılan olarak gizli** | Telemetri yok. Hava durumu için bir konum seçene, bir takvim ya da not uygulaması bağlayana, Yapay Zeka ya da Bulut'u açana kadar ağdan hiçbir şey istenmez. Bkz. [Gizlilik ve ağ](#gizlilik-ve-ağ). |
+| **Varsayılan olarak gizli** | Telemetri yok. Ayarlar geldiği gibiyken tek istek, günde bir kez en yeni sürüm numarasına bakmaktır; bkz. [Gizlilik ve ağ](#gizlilik-ve-ağ). |
 
-QML ile yazılmış bir Plasma widget'ıdır (plasmoid); QML'in erişemediği kısımlar için isteğe bağlı küçük bir yerel modül (C++) vardır. Her parça isteğe bağlıdır ve kapatılabilir.
+QML ile yazılmış bir Plasma widget'ıdır (plasmoid); QML'in erişemediği kısımlar için isteğe bağlı küçük bir yerel modül (C++) vardır. Her parça kapatılabilir.
 
 ## Gereksinimler
 
@@ -65,24 +111,24 @@ QML ile yazılmış bir Plasma widget'ıdır (plasmoid); QML'in erişemediği k�
 |---|---|
 | Masaüstü | KDE Plasma 6 (widget en düşük Plasma API 6.0 bildirir) |
 | Test edildiği ortam | Kubuntu 26.04, Plasma 6.6.6, Qt 6.10.2, **Wayland** üzerinde KWin, NVIDIA sürücüsü. Başka hiçbir ortam denenmedi. |
-| X11 | **Denenmedi.** Tıklama geçirme bölgesi ikisi için de yazıldı ama yalnızca Wayland'de denendi (bkz. [Bilinen sınırlar](#bilinen-sınırlar)). |
+| X11 | **Denenmedi.** Çentik o zaman üst kenara gider, ama panelin üzerinde kalıp kalmadığı pencere yöneticisine bağlıdır (bkz. [Bilinen sınırlar](#bilinen-sınırlar)). |
 | Yerel modülü derlemek için | `cmake`, `extra-cmake-modules`, Qt 6.5 ya da daha yeni geliştirme dosyaları (Core, Gui, Qml, DBus, Network, Sql), `libkf6windowsystem-dev` |
 | Çalışma zamanında | Mikrofon, kamera ve ekran kaydı göstergeleri için PipeWire'ın `pw-dump` aracı (Ubuntu'da `pipewire-bin` paketi) |
 
-Yerel modül olmadan widget yine çalışır; ona ihtiyaç duyan kısımlar kendini gizler: biçimli bulanıklık, adanın yanındaki tıklamaların alttaki pencereye geçmesi, kayıt, mikrofon ve kamera göstergeleri, kilit açma, KDE Connect aramaları, güncelleme sayısı, D-Bus API'si, takvim hesapları ve tüm parola ve anahtarlar (KDE Cüzdan'da durur), tema dosyaları, indirme takibi, Bulut ve Yapay Zeka yardımcıları.
+Yerel modül olmadan widget yine çalışır; ona ihtiyaç duyan kısımlar kendini gizler: birincil olmayan bir ekranda çentik, biçimli bulanıklık, adanın yanındaki tıklamaların alttaki pencereye geçmesi, kayıt, mikrofon ve kamera göstergeleri, kilit açma, KDE Connect aramaları, güncelleme sayısı, D-Bus API'si, takvim hesapları ve tüm parola ve anahtarlar (KDE Cüzdan'da durur), tema dosyaları, indirme takibi, Bulut ve Yapay Zeka yardımcıları.
 
 **İsteğe bağlı programlar.** Hiçbiri zorunlu değil; her biri bir şey ekler.
 
 | Program | Ne ekler |
 |---|---|
-| [rclone](https://rclone.org) | Bulut sayfası: rclone uzaklarınız (Google Drive, OneDrive, Dropbox, WebDAV…) |
+| [rclone](https://rclone.org) | Bulut sekmesi: rclone uzaklarınız (Google Drive, OneDrive, Dropbox, WebDAV…) |
 | [BetterNotes](https://github.com/thebanri/BetterNotes) 0.1.13+ | Bu bilgisayarda, hesapsız notlar (bir notu uygulamada açmak için 0.1.14, kilitli notlar için 0.1.15) |
-| Joplin (masaüstü), bir Simplenote hesabı, bir Memos sunucusu | Notlar sayfasında onların notları |
+| Joplin (masaüstü), bir Simplenote hesabı, bir Memos sunucusu | Notlar sekmesinde onların notları |
 | KDE Connect | Telefon pili, aramalar, telefondan gelen bildirimler, "telefonumu bul" |
-| Claude Code (`claude`), Antigravity (`agy`) | Yapay Zeka sayfası bunlar üzerinden, tüm araçları kapalı olarak yanıt verir |
-| Ollama, LM Studio, llama.cpp, Jan, KoboldCpp | Yapay Zeka sayfası bu bilgisayardaki bir modelden yanıt verir |
+| Claude Code (`claude`), Antigravity (`agy`) | Yapay Zeka sekmesi bunlar üzerinden, tüm araçları kapalı olarak yanıt verir |
+| Ollama, LM Studio, llama.cpp, Jan, KoboldCpp | Yapay Zeka sekmesi bu bilgisayardaki bir modelden yanıt verir |
 | `btop` 1.4+ | Bir Sistem kartına tıklamak o ölçünün grafiğini uçbirimde açar |
-| Spectacle, Discover, bir kamera uygulaması | Kontroller sayfasındaki ilgili düğmeler |
+| Spectacle, Discover, bir kamera uygulaması | Kontroller sekmesindeki ilgili düğmeler |
 | PackageKit | Bekleyen güncelleme sayısı |
 
 ## Kurulum, güncelleme, kaldırma
@@ -147,119 +193,124 @@ Plasma'nın kendi ses açılır penceresi adanınkinin yanında görünmeye deva
 
 ## İlk adımlar
 
-- Hapın **üzerine gelin**: açılır. Uzaklaşın: kapanır (0,4 sn sonra; iki gecikme de Ayarlar → Genel içindedir).
+- Çentiğin **üzerine gelin**: açılır. Uzaklaşın: kapanır (0,4 sn sonra; iki gecikme de Ayarlar → Genel içindedir).
 - Üstteki **sekmeler** sayfa değiştirir; liste olmayan her yerde fare tekerleği ya da iki parmakla kaydırma da öyle.
-- Küçük hapa **tıklayın**: noktaya küçülür. Noktaya tıklayın: hap geri gelir. ([Nokta modu](#nokta-modu) kapatılabilir.)
+- Çentiğe **tıklayın**: noktaya küçülür. Noktaya tıklayın: çentik geri gelir ([Nokta modu](#nokta-modu) kapatılabilir; o zaman tıklama adayı açar).
 - Menüsü için adaya **sağ tıklayın**; açık adanın sağ üstündeki dişli ayarları açar.
-- **Ayarlar → Düzen** sayfaları gösterir, gizler ve sıralar. Yapay Zeka ve Bulut orada açılana kadar kapalıdır.
+- **Ayarlar → Düzen** sekmeleri gösterir, gizler ve sıralar. Yapay Zeka ve Bulut orada açılana kadar kapalıdır.
 - **Dil**: sistem Türkçe ise ada Türkçe, değilse İngilizce konuşur; Ayarlar → Dil bunu anında değiştirir.
 
-## Adanın durumları
+## Sekmeler
 
-<!-- GIF: island-states.gif | Küçük hap saati, sonra göndereni ve ilk satırıyla bir bildirimi, sonra "Bitti" ile sonlanan ilerleme halkalı bir etkinliği gösteriyor. | Küçük adanın durumları -->
+Aşağıdaki her sekme aynı düzeni izler: ne işe yaradığı, bir klip, ne gördüğünüz, nasıl kullanıldığı ve (katlanmış olarak) ayarları ile sınırları.
 
-| Durum | Ne zaman | Ne görürsünüz |
-|---|---|---|
-| Boşta | Hiçbir şey olmuyor | Saatli küçük bir hap |
-| Canlı etkinlik | Bir şey sürüyor (müzik, zamanlayıcı, aktarım, kayıt, arama) | Solda simgesi ya da kapağı, sağda süresi, değeri ya da ilerleme halkası |
-| Ayrık | İki şey aynı anda sürüyor | İlki hapta, ikincisi yanındaki dairede |
-| Bildirim | Bir bildirim geldiğinde | Uygulama, başlık, ilk satır. Tıklama varsayılan eylemi çalıştırır, orta tıklama kapatır |
-| Anlık olay | Ses, parlaklık, şarj, Bluetooth, Caps Lock, Wi-Fi… | 2–4 sn boyunca geniş bir hap |
-| Öneri | Bir kuralın anı (bkz. [Öneriler](#öneriler)) | Bir cümle ve düğme olarak yanıtları |
-| Açık | Üzerine gelme ya da tıklama | Aşağıdaki sayfalar |
-| Gizlilik noktaları | Mikrofon ya da kamera kullanımda | Adanın yanında, her durumda turuncu ya da yeşil bir nokta |
-| Nokta | Nokta modunda bir tıklamadan sonra | Hapın yerinde küçük bir daire |
-
-Birden fazla şey sürerken hangisinin öne geçeceği yeniden sıralayabileceğiniz bir listedir (Ayarlar → Etkinlikler): gizlilik, arama, ekran kaydı, anlık olaylar, zamanlayıcı, aktarımlar, medya.
-
-### Nokta modu
-
-<!-- GIF: dot-mode.gif | Bir tıklama hapı noktaya küçültüyor; noktanın yanındaki bir pencereye tıklanıyor; noktaya tıklamak hapı geri getiriyor. | Nokta modu -->
-
-Küçük hapa tıklamak onu yoldan çekilsin diye bir noktaya çevirir (15 px, ayarlarda 10–28); noktaya tıklamak hapı geri getirir. Noktanın ortası ne olduğunu söyler: mikrofon, kamera ya da ekran kullanımı için turuncu, yeşil ya da kırmızı; canlı etkinlik (nabız gibi atar) ya da bekleyen bildirimler için vurgu rengi. Nokta halindeyken bildirimler ve olaylar saklanır ve hap geri gelince gösterilir (ya da hemen gösterilip noktaya dönülür: *Nokta modunda olaylar*). Gelen arama, alarm ve düşük pil, siz kapatmadıkça her durumda adayı açar.
-
-**Ayarlar → Genel → Nokta modu:** açık/kapalı, başlangıç durumu (bırakıldığı gibi, her zaman hap, her zaman nokta), nokta boyutu, üzerine gelince açılıp açılmayacağı, nokta modunda olaylar, kritik olaylarda her zaman genişleme.
-
-### Çentik modu
-
-Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğrudan üst kenarda durabilir: kenarla birleştiği yerde köşesiz, altta yuvarlak, panelin (kendini gizleyen bir panelin de) hep üstünde, aşağıya doğru açılır. Varsayılan olarak Symbiot Siyahı gradyanı; istenirse opak siyah veya başka bir özel görünüm. Altında kalan panel kısmına tıklanamaz: panelinizin ortasında saat ya da görev düğmeleri varsa genişliğini sınırlayın. **Ayarlar → Çentik** (yeni kurulumlarda varsayılan açık); ayrıntılar [REFERENCE](docs/REFERENCE.md#notch-mode) içinde.
-
-## Sayfalar
+<!-- GIF: tabs-tour.gif | İmleç çentiği açıyor ve sekmeler boyunca ilerliyor: Medya, Sistem, Hava Durumu, Takvim; her sayfa çentiğin altında kayarak beliriyor. | Sekmelerde bir tur -->
 
 ### Etkinlikler
 
-*O an süren her şey, düğmeleriyle.* Sayfa yalnızca bir şey sürerken görünür.
+*O an süren her şey, düğmeleriyle.* Sekme yalnızca bir şey sürerken görünür.
 
-<!-- GIF: activities-page.gif | Açık ada Etkinlikler sayfasında: çalışan bir zamanlayıcı ve bir indirme, her biri kendi düğmeleriyle. | Etkinlikler sayfası -->
+<!-- GIF: activities-page.gif | Açık çentik Etkinlikler sekmesinde: çalışan bir zamanlayıcı ve bir indirme, her biri kendi düğmeleriyle. | Etkinlikler sekmesi -->
 
 - **Ne görürsünüz:** süren her etkinlik için bir kart (zamanlayıcı, aktarım, kayıt, arama, medya…), eylemleriyle; mikrofonu ya da kamerayı hangi uygulamanın kullandığı.
 - **Nasıl kullanılır:** karttaki düğmeler o etkinliğe uygulanır (zamanlayıcıyı duraklatmak, biten indirmenin klasörünü açmak, kayıt yapan uygulamaya geçmek).
-- **Ayarlar:** Ayarlar → Etkinlikler: öncelik sırası, ayrık ada, anlık olayın ne kadar kalacağı ve her olay ve etkinlik türü için bir anahtar.
+
+<details><summary>Ayarlar</summary>
+
+Ayarlar → Etkinlikler: öncelik sırası, ayrık ada, anlık olayın ne kadar kalacağı ve her olay ve etkinlik türü için bir anahtar.
+
+</details>
 
 ### Medya
 
 *Ne çalıyor ve denetimleri.*
 
-<!-- GIF: media-controls.gif | Hap bir kapak, parçanın adını ve bir ekolayzer gösteriyor; sonraki parça geliyor; duraklatılıp yeniden çalınıyor. | Hapta medya: parça değişimi, duraklat ve çal -->
-<!-- GIF: media-page.gif | Açık Medya sayfası: kapak, başlık ve sanatçı, önceki, çal ve sonraki, konum sürükleniyor. | Medya: sayfa ve denetimleri -->
-<!-- GIF: media-glow.gif | Müzik çalarken hapın kenarı kapağın renginde parlamaya ve müzikle hareket etmeye başlıyor; sonra ışık yeniden kapatılıyor. | Medya: ortam ışığı -->
-<!-- GIF: media-cat.gif | Hapın yanındaki kedi müzik çalarken kulaklık takıp kafasını sallıyor. | Medya: kedi de dinliyor -->
+<!-- GIF: media-controls.gif | Çentik bir kapak, parçanın adını ve bir ekolayzer gösteriyor; sonraki parça geliyor; duraklatılıp yeniden çalınıyor. | Çentikte medya: sonraki parça, duraklat ve çal -->
+<p align="center"><img src="docs/media/media-controls.gif" alt="Çentik bir kapak, parçanın adını ve bir ekolayzer gösteriyor; sonraki parça geliyor; duraklatılıp yeniden çalınıyor." width="800"><br><sub>Çentikte medya: sonraki parça, duraklat ve çal</sub></p>
+<!-- GIF: media-page.gif | Açık Medya sekmesi: kapak, başlık ve sanatçı, önceki, çal ve sonraki, konum sürükleniyor. | Medya: sekme ve denetimleri -->
+<!-- GIF: media-glow.gif | Müzik çalarken çentiğin alt kenarı kapağın renginde parlamaya ve müzikle hareket etmeye başlıyor; sonra ışık yeniden kapatılıyor. | Medya: albüm ışığı -->
+<p align="center"><img src="docs/media/media-glow.gif" alt="Müzik çalarken çentiğin alt kenarı kapağın renginde parlamaya ve müzikle hareket etmeye başlıyor; sonra ışık yeniden kapatılıyor." width="800"><br><sub>Medya: albüm ışığı</sub></p>
 
-- **Ne görürsünüz:** hapta kapak, parçanın adı ve bir ekolayzer; sayfada kapak, başlık, sanatçı, konum, önceki / çal / sonraki.
-- **Nasıl kullanılır:** düğmeler ve konum çubuğu oynatıcıyı yönetir. Sağ üstteki dalga düğmesi **ortam ışığını** açıp kapatır: adanın kenarı kapağın rengini alır, müziğin yüksekliği ve basıyla hareket eder.
-- **Ayarlar:** Ayarlar → Genel → *Tercih edilen oynatıcı* (örneğin `spotify`: başka ne çalarsa çalsın o çalıyorsa o gösterilir). Işık varsayılan olarak kapalıdır.
-- **Gereksinim ve sınırlar:** MPRIS konuşan her oynatıcı (çoğu konuşur, tarayıcılar da). Işık müziği yalnızca yerel modülle izler (bir şey çalarken çıkışı `pw-record` ile dinler); onsuz yalnızca rengi alır.
+- **Ne görürsünüz:** çentikte kapak, parçanın adı ve bir ekolayzer; sekmede kapak, başlık, sanatçı, konum, önceki / çal / sonraki.
+- **Nasıl kullanılır:** düğmeler ve konum çubuğu oynatıcıyı yönetir. Sekmenin sağ üstündeki dalga düğmesi **albüm ışığını** açıp kapatır: adanın kenarı kapağın rengini alır, müziğin yüksekliği ve basıyla hareket eder. Kedi kulaklık takıp kafasını sallar ([Kedi](#kedi)).
+
+<details><summary>Ayarlar ve sınırlar</summary>
+
+- **Ayarlar:** Ayarlar → Genel → *Tercih edilen oynatıcı* (örneğin `spotify`: başka ne çalarsa çalsın o çalıyorsa o gösterilir). Işık geldiği gibi kapalıdır.
+- **Sınırlar:** MPRIS konuşan her oynatıcı (çoğu konuşur, tarayıcılar da). Işık müziği yalnızca yerel modülle izler (bir şey çalarken çıkışı `pw-record` ile dinler); onsuz yalnızca rengi alır.
+
+</details>
 
 ### Sistem
 
 *Bilgisayar ne kadar meşgul.* Yalnızca bilgi.
 
-<!-- GIF: system-cards.gif | Sistem sayfası: CPU, sıcaklık, GPU, bellek, ağ ve disk kartları; imlecin altındaki kart büyüyüp ayrıntı gösteriyor. | Sistem: kartlar -->
+<!-- GIF: system-cards.gif | Sistem sekmesi: CPU, sıcaklık, GPU, bellek, ağ ve disk kartları; imlecin altındaki kart büyüyüp ayrıntı gösteriyor. | Sistem: kartlar -->
 
 - **Ne görürsünüz:** CPU, CPU sıcaklığı, GPU, bellek, pil, ağ indirme/yükleme ve disk kartları. *Dinamik* görünümde en meşgul kartlar daha büyüktür; *Sabit* görünümde her kart yerinde kalır.
 - **Nasıl kullanılır:** imlecin altındaki kart büyür ve ayrıntılarını gösterir (ağ kartı etkin bağlantının adını verir). Tıklama, o ölçünün grafiğiyle `btop`'u uçbiriminizde açar.
+
+<details><summary>Ayarlar ve sınırlar</summary>
+
 - **Ayarlar:** Ayarlar → Genel → *Sistem görünümü* (Sabit / Dinamik). Ayarlar → Uyarılar: pil, aygıt pili ve sıcaklık eşikleri.
-- **Gereksinim ve sınırlar:** değerler Plasma'nın algılayıcı servisinden (ksystemstats) gelir; çalışmıyorsa ada onu başlatır. Sürücünün sunmadığı bir algılayıcının kartı gizlenir. Tıklama için yerel modül ve `btop` 1.4 ya da daha yenisi gerekir.
+- **Sınırlar:** değerler Plasma'nın algılayıcı servisinden (ksystemstats) gelir; çalışmıyorsa ada onu başlatır. Sürücünün sunmadığı bir algılayıcının kartı gizlenir. Tıklama için yerel modül ve `btop` 1.4 ya da daha yenisi gerekir.
+
+</details>
 
 ### Hava Durumu
 
 *Seçtiğiniz bir yer için şu an ve önümüzdeki yedi gün.*
 
-<!-- GIF: weather-location.gif | Hava Durumu sayfası "Konum Seç" ile boş başlıyor; bir şehir yazılıp seçiliyor; tahmin beliriyor; bir güne tıklanınca saatleri kayarak geliyor. | Hava Durumu: yer seçme, bir günün saatleri -->
+<!-- GIF: weather-location.gif | Hava Durumu sekmesi "Konum Seç" ile boş başlıyor; bir şehir yazılıp seçiliyor; tahmin beliriyor; bir güne tıklanınca saatleri kayarak geliyor. | Hava Durumu: yer seçme, bir günün saatleri -->
 
 - **Ne görürsünüz:** şu anki sıcaklık, hissedilen, nem ve rüzgar; en yüksek, en düşük ve yağış olasılığıyla yedi gün; sekmenin kendisi havanın resmini gösterir.
 - **Nasıl kullanılır:** boş başlar: *Konum Seç*, bir şehir yazın, seçin. Bir güne tıklamak saatlerini gösterir; ok geri döner. Yerin adı aramayı yeniden açar.
+
+<details><summary>Ayarlar ve sınırlar</summary>
+
 - **Ayarlar:** Ayarlar → Hava Durumu: yer (ara, unut), birimler (°C, km/sa, mm ya da °F, mph, in), yağmur, kar ve fırtına uyarısı.
-- **Gereksinim ve sınırlar:** veriler [Open-Meteo](https://open-meteo.com)'nundur. Konum asla algılanmaz ve siz bir yer seçene kadar hiçbir şey istenmez.
+- **Sınırlar:** veriler [Open-Meteo](https://open-meteo.com)'nundur. Konum asla algılanmaz ve siz bir yer seçene kadar hiçbir şey istenmez.
+
+</details>
 
 ### Bildirimler
 
-*Son bildirimler, yanıtla ve kapat ile.*
+*Son bildirimler, yanıtla ve kapat ile.* Çentiğe nasıl geldikleri: [Bir bildirim geldiğinde](#bir-bildirim-geldiğinde).
 
-<!-- GIF: notifications-page.gif | Bildirimler hapa geliyor; Bildirimler sayfası son üçünü saatleriyle listeliyor; "Tümünü temizle" bir kez sorup listeyi boşaltıyor. | Bildirimler -->
+<!-- GIF: notifications-page.gif | Bildirimler sekmesi son üçünü saatleriyle listeliyor; "Tümünü temizle" bir kez sorup listeyi boşaltıyor. | Bildirimler: liste, tümünü temizle -->
 
-- **Ne görürsünüz:** yeni bir bildirim birkaç saniye hapta (uygulama, başlık, ilk satır); sayfada son üç bildirim, geliş saatleriyle.
-- **Nasıl kullanılır:** hapta tıklama bildirimin varsayılan eylemini çalıştırır, orta tıklama kapatır. Sayfada, imlecin altında: hızlı yanıt (bildirim sunuyorsa) ve kapat; *Tümünü temizle* bir kez sorar.
+- **Ne görürsünüz:** son üç bildirim, geliş saatleriyle.
+- **Nasıl kullanılır:** imlecin altında: hızlı yanıt (bildirim sunuyorsa) ve kapat; *Tümünü temizle* bir kez sorar.
+
+<details><summary>Ayarlar ve sınırlar</summary>
+
 - **Ayarlar:** Ayarlar → Genel: gelen bildirimleri göster, ne kadar süre. Rahatsız Etmeyin açıkken bekletilir ve sayılır.
-- **Gereksinim ve sınırlar:** Plasma'nın kendi bildirim pencereleri kalır: ada bildirimleri bunlara ek olarak gösterir (Sistem Ayarları → Bildirimler içinden başka bir köşeye taşınabilirler).
+- **Sınırlar:** Plasma'nın kendi bildirim pencereleri kalır: ada bildirimleri bunlara ek olarak gösterir (Sistem Ayarları → Bildirimler içinden başka bir köşeye taşınabilirler).
+
+</details>
 
 ### Kontroller
 
 *Telefondaki gibi hızlı ayarlar.*
 
-<!-- GIF: controls-tiles.gif | Kontroller sayfası: Rahatsız Etmeyin ve karanlık mod açılıp kapatılıyor, ses kaydırıcısı oynatılıyor; bir düğmeyi basılı tutmak düzenleme için onları titretiyor. | Kontroller: düğmeler ve kaydırıcılar -->
+<!-- GIF: controls-tiles.gif | Kontroller sekmesi: Rahatsız Etmeyin ve karanlık mod açılıp kapatılıyor, ses kaydırıcısı oynatılıyor; bir düğmeyi basılı tutmak düzenleme için onları titretiyor. | Kontroller: düğmeler ve kaydırıcılar -->
 
 - **Ne görürsünüz:** seçtiğiniz en fazla altı düğme ve altında ses ile ekran parlaklığı kaydırıcıları.
 - **Nasıl kullanılır:** tıklama bir düğmeyi açıp kapatır. Birini basılı tutmak takımı düzenler (taşımak için sürükle, kaldırmak için "−", alttaki sıradan ekle, *Bitti*). **Bluetooth**, **Wi-Fi** ya da **VPN**'i basılı tutmak ise aygıtlarını ya da ağlarını açar.
+
+<details><summary>Ayarlar ve sınırlar</summary>
+
 - **Kullanılabilir düğmeler:** Rahatsız Etmeyin, Gece Işığı, güç profili, Bluetooth, Wi-Fi, güncellemeler, uçak modu, VPN, erişim noktası, ekran kaydı, ekran görüntüsü, kamera, mikrofon, ses, KDE Connect, telefonu bul, karanlık mod, uyanık tut, kilitle, hesap makinesi, Sistem Ayarları. Parçası eksik olan düğme soluk görünür.
 - **Ayarlar:** Ayarlar → Kontroller: aynı altı düğme, sırasıyla. Ayarlar → Düzen → Modüller: ses kaydırıcısı.
-- **Gereksinim ve sınırlar:** parlaklık kaydırıcısı Plasma'nın kısabildiği bir ekran ister. Program başlatan düğmeler (ekran görüntüsü, hesap makinesi, kilitle…) yerel modül ister.
+- **Sınırlar:** parlaklık kaydırıcısı Plasma'nın kısabildiği bir ekran ister. Program başlatan düğmeler (ekran görüntüsü, hesap makinesi, kilitle…) yerel modül ister.
+
+</details>
 
 ### Uygulamalar
 
 *Seçtiğiniz uygulamalara kısayollar.*
 
-<!-- GIF: apps-grid.gif | Uygulamalar sayfası: "Ekle" kurulu uygulamaları listeliyor, biri ekleniyor; tıklama onu başlatıyor; iki simge sürüklenerek yer değiştiriyor. | Uygulamalar: ekle, başlat, sırala -->
+<!-- GIF: apps-grid.gif | Uygulamalar sekmesi: "Ekle" kurulu uygulamaları listeliyor, biri ekleniyor; tıklama onu başlatıyor; iki simge sürüklenerek yer değiştiriyor. | Uygulamalar: ekle, başlat, sırala -->
 
 - **Ne görürsünüz:** en fazla 12 simgelik bir ızgara; birinin altındaki nokta açık bir penceresi olduğunu gösterir.
 - **Nasıl kullanılır:** *Ekle* kurulu uygulamaları aramayla listeler. Tıklama uygulamayı başlatır ve adayı kapatır; sağ tıklama yeniden adlandırır ya da kaldırır; sürükleme sıralar.
@@ -268,12 +319,17 @@ Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğ
 
 *Zamanlayıcı, kronometre, Pomodoro ve alarm.*
 
-<!-- GIF: tools-timer.gif | Bir dakikalık zamanlayıcı başlatılıyor; ada kapanıyor ve hap geri sayıyor; kronometre tur alıyor; Pomodoro istatistikleri gösteriliyor. | Araçlar: zamanlayıcı, kronometre, Pomodoro -->
+<!-- GIF: tools-timer.gif | Bir dakikalık zamanlayıcı başlatılıyor; ada kapanıyor ve çentik geri sayıyor; kronometre tur alıyor; Pomodoro istatistikleri gösteriliyor. | Araçlar: zamanlayıcı, kronometre, Pomodoro -->
 
-- **Ne görürsünüz:** tek sayfada dört araç; hangisi çalışıyorsa hapta canlı etkinlik olarak görünür.
+- **Ne görürsünüz:** tek sekmede dört araç; hangisi çalışıyorsa çentikte canlı etkinlik olarak görünür.
 - **Nasıl kullanılır:** ayarlayın ve başlatın. Pomodoro turlarını sayar (odak, kısa mola, uzun mola) ve istatistik tutar: bugün, bu hafta, seri, toplam.
-- **Ayarlar:** Ayarlar → Araçlar: ses (herhangi bir dosya), Pomodoro süreleri ve tur sayısı, istatistikleri sıfırlama.
+
+<details><summary>Ayarlar ve sınırlar</summary>
+
+- **Ayarlar:** Ayarlar → Araçlar: ses (herhangi bir dosya), Pomodoro süreleri (geldiği gibi 25, 5 ve 15 dakika) ve tur sayısı (4), istatistikleri sıfırlama.
 - **Sınırlar:** bitiş zamanları saklanır; plasmashell yeniden başlasa da zamanlayıcı kaldığı yerden sürer.
+
+</details>
 
 ### Alışkanlıklar
 
@@ -283,71 +339,144 @@ Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğ
 
 - **Ne görürsünüz:** bugünün listesi; her günü ne kadar yapıldığına göre boyayan bir takvim (haftalar, aylar, yıl).
 - **Nasıl kullanılır:** ilk seferde alışkanlıklarınızı ve değerlendirme saatini sorar. Gün içinde tıklama bir maddeyi işaretler. Akşam ada "Bugün nasıl geçti?" diye sorar: *Değerlendir* günün üzerinden ve yarın için eklenecekler üzerinden geçer.
+
+<details><summary>Ayarlar ve sınırlar</summary>
+
 - **Ayarlar:** Ayarlar → Alışkanlıklar: alışkanlıklar (yeniden adlandır, sil, sırala), değerlendirme saati (21:30), hatırlatması, takvimin renkleri, tüm veriyi sıfırlama.
 - **Sınırlar:** her şey bu bilgisayarda, widget'ın ayarlarında kalır.
 
+</details>
+
 ### Takvim
 
-*Takvimlerinizin etkinlikleri ve bir sonrakinin başlamadan önce adaya pinlenmesi.*
+*Takvimlerinizin etkinlikleri ve bir sonrakinin başlamadan önce çentiğe sabitlenmesi.*
 
-<!-- GIF: calendar-connect.gif | Takvim sayfasındaki dişli "Takvim Bağla"yı açıyor: Google ya da Apple seçiliyor, bir bağlantı yapıştırılıyor, ay etkinliklerle doluyor. | Takvim: bir takvim bağlama -->
-<!-- GIF: calendar-pinned.gif | Haptaki etkinlik son saniyelerini sayıyor, odası ve Katıl düğmesiyle "başladı"ya dönüyor, sonra kalan süreyi gösteriyor. | Takvim: adadaki sonraki etkinlik -->
+<!-- GIF: calendar-pinned.gif | Çentikteki etkinlik son saniyelerini sayıyor, odası ve Katıl düğmesiyle "başladı"ya dönüyor, sonra kalan süreyi gösteriyor. | Takvim: çentikteki sonraki etkinlik -->
+<p align="center"><img src="docs/media/calendar-pinned.gif" alt="Çentikteki etkinlik son saniyelerini sayıyor, odası ve Katıl düğmesiyle &quot;başladı&quot;ya dönüyor, sonra kalan süreyi gösteriyor." width="800"><br><sub>Takvim: çentikteki sonraki etkinlik</sub></p>
+<!-- GIF: calendar-connect.gif | Takvim sekmesindeki dişli "Takvim Bağla"yı açıyor: Google ya da Apple seçiliyor, bir bağlantı yapıştırılıyor, ay etkinliklerle doluyor. | Takvim: bir takvim bağlama -->
 
-- **Ne görürsünüz:** bir ay, seçilen günün etkinlikleri ve ayrıntıları (yer, notlar, toplantı bağlantısı). Bir etkinlik başlamadan 15 dakika önce geri sayımla hapa pinlenir; başlangıçta bir ses çalar ve bitişten sonra 10 dakika kalır.
+- **Ne görürsünüz:** bir ay, seçilen günün etkinlikleri ve ayrıntıları (yer, notlar, toplantı bağlantısı). Bir etkinlik başlamadan 15 dakika önce geri sayımla çentiğe sabitlenir; başlangıçta bir ses çalar ve bitişten sonra 10 dakika kalır.
 - **Nasıl kullanılır:** dişli → *Takvim Bağla* → Google ya da Apple → ya takvimin özel `.ics` bağlantısını yapıştırın (salt okunur) ya da hesabı bağlayın (o zaman adadan etkinlik eklenip silinebilir).
+
+<details><summary>Ayarlar ve sınırlar</summary>
+
 - **Ayarlar:** Ayarlar → Takvim: önceki ve sonraki dakikalar, tüm gün süren etkinlikler, bağlantıların ne sıklıkla alınacağı (5 dakika), ses, bağlı takvimler.
-- **Gereksinim ve sınırlar:** Akonadi ya da KDE PIM gerekmez. iCloud hesabı uygulamaya özel parola ister; Google hesabı, Google Cloud Console'da bir kez oluşturacağınız kendi OAuth istemcinizi ister (sayfa adım adım anlatır). Parolalar ve belirteçler KDE Cüzdan'da tutulur. Bağlantılar belirli aralıklarla yoklanır; yeni bir etkinlik en geç bir aralık sonra görünür; var olan bir etkinlik düzenlenemez.
+- **Sınırlar:** Akonadi ya da KDE PIM gerekmez. iCloud hesabı uygulamaya özel parola ister; Google hesabı, Google Cloud Console'da bir kez oluşturacağınız kendi OAuth istemcinizi ister (sekme adım adım anlatır). Parolalar ve belirteçler KDE Cüzdan'da tutulur. Bağlantılar belirli aralıklarla yoklanır; yeni bir etkinlik en geç bir aralık sonra görünür; var olan bir etkinlik düzenlenemez.
+
+</details>
 
 ### Notlar
 
 *Hızlı bir not ve kullandığınız uygulamaların notları.*
 
-<!-- GIF: notes-quick.gif | Notlar sayfasında bir kaynak seçiliyor, başlıkla bir not oluşturulup içi dolduruluyor; listede beliriyor. | Notlar: not oluşturma -->
+<!-- GIF: notes-quick.gif | Notlar sekmesinde bir kaynak seçiliyor, başlıkla bir not oluşturulup içi dolduruluyor; listede beliriyor. | Notlar: not oluşturma -->
 <!-- GIF: notes-locked.gif | Kilitli bir BetterNotes notu adada ana parolayı soruyor, sonra metnini gösteriyor. | Notlar: kilitli not -->
 
 - **Ne görürsünüz:** bağlı her uygulamanın notlarından oluşan, en yenisi üstte tek bir liste ve hızlı not için bir alan.
 - **Nasıl kullanılır:** yazıp Enter'a basın: varsayılan uygulamada hızlı not; büyüteç arar; tıklama notu düzenlemek için açar (yazmayı bırakınca, Ctrl+S ile ve geri dönünce kaydedilir). Ada, düzenlemekte olduğunuz nota geri döner.
+
+<details><summary>Kaynaklar, ayarlar ve sınırlar</summary>
+
 - **Kaynaklar:** BetterNotes (bu bilgisayarda, hesapsız), Joplin (Web Clipper servisi ve belirteci), Simplenote (hesap), Memos (sunucunuz ve bir belirteç).
 - **Ayarlar:** Ayarlar → Notlar: bağlı uygulamalar, hızlı notların nereye gideceği, ne sıklıkla alınacakları, son notta devam etme.
-- **Teşekkür:** BetterNotes'u [thebanri](https://github.com/thebanri/BetterNotes) geliştiriyor. Uygulama ve bu sayfanın konuştuğu komut satırı arayüzü için teşekkürler.
-- **Gereksinim ve sınırlar:** belirteçler KDE Cüzdan'da tutulur. Kilitli bir BetterNotes notu ana parolayı sorar (BetterNotes 0.1.15 ya da daha yenisi; daha eskisiyle ada notu uygulamada açmayı önerir); parola komutun standart girdisine gider ve hiçbir yerde saklanmaz. Zengin metinli notlar düz metin olarak gösterilir ve salt okunurdur.
+- **Sınırlar:** belirteçler KDE Cüzdan'da tutulur. Kilitli bir BetterNotes notu ana parolayı sorar (BetterNotes 0.1.15 ya da daha yenisi; daha eskisiyle ada notu uygulamada açmayı önerir); parola komutun standart girdisine gider ve hiçbir yerde saklanmaz. Zengin metinli notlar düz metin olarak gösterilir ve salt okunurdur.
+- **Teşekkür:** BetterNotes'u [thebanri](https://github.com/thebanri/BetterNotes) geliştiriyor. Uygulama ve bu sekmenin konuştuğu komut satırı arayüzü için teşekkürler.
+
+</details>
 
 ### Yapay Zeka
 
 *Hızlı sorular için bir kutu.* Siz açana kadar kapalıdır.
 
-<!-- GIF: ai-question.gif | Yapay Zeka sayfasında bir soru yazılıyor; üç nokta yanıtın yolda olduğunu gösteriyor; yanıt biçimlendirilmiş metin olarak beliriyor. Hazır yanıtlar veren bir demo sunucusu yanıtlıyor. | Yapay Zeka: bir soru ve yanıtı (demo sağlayıcı) -->
+<!-- GIF: ai-question.gif | Yapay Zeka sekmesinde bir soru yazılıyor; üç nokta yanıtın yolda olduğunu gösteriyor; yanıt biçimlendirilmiş metin olarak beliriyor. Hazır yanıtlar veren bir demo sunucusu yanıtlıyor. | Yapay Zeka: bir soru ve yanıtı (demo sağlayıcı) -->
 
-- **Ne görürsünüz:** bir alan, yazıldıkça görünen yanıt (Markdown, *Kopyala* düğmeli kutularda kod) ve hapta, yanıt yoldayken üç nokta, siz başka yerdeyken "Cevap hazır".
-- **Nasıl kullanılır:** Ayarlar → Düzen: *Yapay Zeka*'yı açın. Sayfada neyin yanıt vereceğini bağlayın, sonra yazın; Enter gönderir, Shift+Enter yeni satırdır. *Yeni sohbet* baştan başlar; Escape klavyeyi geri verir.
+- **Ne görürsünüz:** bir alan, yazıldıkça görünen yanıt (Markdown, *Kopyala* düğmeli kutularda kod) ve çentikte, yanıt yoldayken üç nokta, siz başka yerdeyken "Cevap hazır".
+- **Nasıl kullanılır:** Ayarlar → Düzen: *Yapay Zeka*'yı açın. Sekmede neyin yanıt vereceğini bağlayın, sonra yazın; Enter gönderir, Shift+Enter yeni satırdır. *Yeni sohbet* baştan başlar; Escape klavyeyi geri verir.
+
+<details><summary>Kaynaklar, ayarlar ve sınırlar</summary>
+
 - **Kim yanıt verebilir:** bu bilgisayardaki Claude Code ya da Antigravity; bu bilgisayardaki bir model sunucusu (Ollama, LM Studio, llama.cpp, Jan, KoboldCpp ya da OpenAI uyumlu herhangi bir adres); kendi anahtarınızla bir servis (Anthropic, OpenAI, OpenRouter, Groq, Google Gemini ya da OpenAI uyumlu bir başkası).
 - **Ayarlar:** Ayarlar → Yapay Zeka: kaynaklar ve varsayılanı, en uzun yanıt ve soru, sohbeti bir dosyada saklama, adada "Cevap hazır".
-- **Gereksinim ve sınırlar:** bu bir soru kutusudur, **ajan değildir**: hiçbir şeye araç ya da dosya verilmez; panonuzdan, ekranınızdan, notlarınızdan ya da takviminizden hiçbir şey eklenmez. Anahtarlar KDE Cüzdan'da tutulur. Bir servise sorulan soru o servise gönderilir ve o servisin ücretine tabi olabilir. Siz saklamayı seçmedikçe sohbet, kabuk durduğunda unutulur.
+- **Sınırlar:** bu bir soru kutusudur, **ajan değildir**: hiçbir şeye araç ya da dosya verilmez; panonuzdan, ekranınızdan, notlarınızdan ya da takviminizden hiçbir şey eklenmez. Anahtarlar KDE Cüzdan'da tutulur. Bir servise sorulan soru o servise gönderilir ve o servisin ücretine tabi olabilir. Siz saklamayı seçmedikçe sohbet, kabuk durduğunda unutulur.
+
+</details>
 
 ### Bulut
 
 *rclone üzerinden bulutlarınızın klasörleri, adlarıyla.* Siz açana kadar kapalıdır.
 
-<!-- GIF: cloud-browse.gif | Bulut sayfası bir uzağın klasörlerini listeliyor; bir klasör açılıyor; bir dosya masaüstüne sürükleniyor; bir başkası yüklemek için bırakılıyor. Uydurma bir uzakla gösterilmiştir. | Bulut: gezin, sürükleyip indir, bırakıp yükle (uydurma bir uzak) -->
+<!-- GIF: cloud-browse.gif | Bulut sekmesi bir uzağın klasörlerini listeliyor; bir klasör açılıyor; bir dosya masaüstüne sürükleniyor; bir başkası yüklemek için bırakılıyor. Uydurma bir uzakla gösterilmiştir. | Bulut: gezin, sürükleyip indir, bırakıp yükle (uydurma bir uzak) -->
 
 - **Ne görürsünüz:** her rclone uzağı ve ne kadar dolu olduğu, boyut ve tarihiyle klasörleri ve dosyaları, bir istemcinin bildirdiği yerde senkron durumu (Syncthing, Dropbox) ve bulut dolmak üzereyken bir uyarı.
-- **Nasıl kullanılır:** Ayarlar → Düzen: *Bulut*'u açın. Klasörlere tıklayarak girin; bir dosyayı masaüstüne ya da dosya yöneticisine sürükleyin; yüklemek için dosyaları sayfaya bırakın (önce sorar). *İndir*, *Klasörde göster*, *Yolu kopyala* ve *Yükle…* aynısını sürüklemeden yapar.
+- **Nasıl kullanılır:** Ayarlar → Düzen: *Bulut*'u açın. Klasörlere tıklayarak girin; bir dosyayı masaüstüne ya da dosya yöneticisine sürükleyin; yüklemek için dosyaları sekmeye bırakın (önce sorar). *İndir*, *Klasörde göster*, *Yolu kopyala* ve *Yükle…* aynısını sürüklemeden yapar.
+
+<details><summary>Ayarlar ve sınırlar</summary>
+
 - **Ayarlar:** Ayarlar → Bulut: hangi uzakların hangi adla gösterileceği, eşikler (%90 ve %98), uyarılar ve duraklatması, yüklemeden önceki soru, önbellek ve *Önbelleği temizle*.
-- **Gereksinim ve sınırlar:** en az bir uzağı olan `rclone` gerekir (`rclone config`); eksikse sayfa nasıl kurulacağını gösterir. Ada yalnızca `rclone` komutunu çalıştırır: listeleyebilir, ölçebilir, buluttan ve buluta kopyalayabilir; silemez, taşıyamaz, yeniden adlandıramaz, eşitleyemez. rclone'un kendi yapılandırması ve belirteçleri asla açılmaz.
+- **Sınırlar:** en az bir uzağı olan `rclone` gerekir (`rclone config`); eksikse sekme nasıl kurulacağını gösterir. Ada yalnızca `rclone` komutunu çalıştırır: listeleyebilir, ölçebilir, buluttan ve buluta kopyalayabilir; silemez, taşıyamaz, yeniden adlandıramaz, eşitleyemez. rclone'un kendi yapılandırması ve belirteçleri asla açılmaz.
+
+</details>
 
 ### Pano
 
 *Son kopyalananlar.*
 
-<!-- GIF: clipboard-history.gif | Pano sayfası uydurma kopyalanmış metinleri ve bir resmi listeliyor; tıklama birini yeniden kopyalıyor; arama listeyi daraltıyor. | Pano -->
+<!-- GIF: clipboard-history.gif | Pano sekmesi uydurma kopyalanmış metinleri ve bir resmi listeliyor; tıklama birini yeniden kopyalıyor; arama listeyi daraltıyor. | Pano -->
 
 - **Ne görürsünüz:** Plasma'nın kendi panosunun (Klipper) geçmişi: metinler, kod, resimler, dosyalar.
 - **Nasıl kullanılır:** tıklama bir girdiyi yeniden kopyalar; imlecin altında: yıldızla, QR kodu, düzenle, Klipper'ın eylemleri, kaldır. Bir arama alanı ve yalnızca yıldızlılar süzgeci.
 - **Sınırlar:** ne kadarının tutulacağı Klipper'ın kendi ayarıdır; ada bunun hiçbirini saklamaz.
 
-## İndirmeler ve dosya aktarımları
+## Kedi
 
-<!-- GIF: downloads-tracking.gif | Yerel bir test sunucusundan curl ile başlatılan indirme, megabaytı ve dolan bir halkayla hapta görünüyor; sonra boyutu ve süresiyle "İşlem bitti". | İndirme takibi (yerel bir test sunucusundan indirme) -->
+Çentiğin yanında, panelin üzerinde küçük bir kedi durur. Hiçbir şeyi değiştirmez, hiçbir şey saklamaz ve ağdan hiçbir şey istemez.
+
+| Kedi… | Ne zaman |
+|---|---|
+| uykuya dalar | ada 20 sn boyunca yalnızca saati gösterince |
+| uyanıp bakar | bir olayda: bildirim, arama, süresi dolan zamanlayıcı |
+| kulaklık takıp kafasını sallar | müzik çalarken (Medya'daki [klip](#medya)) |
+| düşünür | Yapay Zeka yanıt verirken: başının yanında bir baloncuk |
+| hoşlanır | okşanınca: imleç üzerinde ileri geri |
+| irkilir ya da sinirlenir | bir tıklamada, çok fazlasında ya da uyandırılınca; sonra küser (10 sn) |
+
+<!-- GIF: cat-sleep.gif | Çentiğin yanındaki kedi kıvrılıp uyuyor; bir bildirim geliyor ve başını kaldırıyor. | Kedi: uyku ve bir bildirimle uyanma -->
+<p align="center"><img src="docs/media/cat-sleep.gif" alt="Çentiğin yanındaki kedi kıvrılıp uyuyor; bir bildirim geliyor ve başını kaldırıyor." width="800"><br><sub>Kedi: uyku ve bir bildirimle uyanma</sub></p>
+<!-- GIF: media-cat.gif | Müzik başlıyor; çentiğin yanındaki kedi kulaklık takıp kafasını sallıyor. | Kedi: kulaklık ve kafa sallama -->
+<p align="center"><img src="docs/media/media-cat.gif" alt="Müzik başlıyor; çentiğin yanındaki kedi kulaklık takıp kafasını sallıyor." width="800"><br><sub>Kedi: kulaklık ve kafa sallama</sub></p>
+<!-- GIF: cat-petting.gif | İmleç kediyi sağdan sola okşuyor ve kalpler yükseliyor. | Kedi: okşama -->
+<!-- GIF: cat-annoyed.gif | Uyuyan kediye tıklanıyor; sinirleniyor ve küsüyor. | Kedi: uyandırılınca -->
+
+<details><summary>Ayarlar, kapatma, daha az hareket</summary>
+
+- **Ayarlar → Kedi:** *Kediyi adanın yanında göster* (kapatır), taraf, boyut, tüy (gri, turuncu, siyah, beyaz, siyah-beyaz ya da kendi renginiz), neye tepki verdiği (müzik, Yapay Zeka ve sorular, olaylar), okşanıp tıklanabilirliği, *Sinirlenmesin*, ne kadar küstüğü, ne zaman uyuduğu, noktanın yanında uyuyup uyumadığı ya da gizlendiği. Sayfada her tepkiyi denemek için düğmeler vardır.
+- **Çentik modunda:** Ayarlar → Çentik → *Çentik modunda kediyi gizle*.
+- **Daha az hareket:** *Hareketi azalt: sabit pozlar; kafa sallama ve süzülen işaretler yok*. Masaüstünün kendi animasyonları kapalıyken (Sistem Ayarları) burada ne seçilirse seçilsin kıpırdamaz.
+
+</details>
+
+## Anlık olaylar
+
+Olup bitenler sürdükleri boyunca ya da birkaç saniye çentikte görünür, sonra çentik önceki haline döner.
+
+### Ekran kaydı ve paylaşımı
+
+<!-- GIF: recording-indicator.gif | Bir ekran kaydı başlıyor: çentikte yanıp sönen kırmızı bir nokta, "Screen recording" ve ilerleyen süre; kayıt duruyor ve çentik saate dönüyor. Yerine geçen bir video akışı kullanıldı. | Ekran kaydı: kırmızı nokta ve süresi -->
+<p align="center"><img src="docs/media/recording-indicator.gif" alt="Bir ekran kaydı başlıyor: çentikte yanıp sönen kırmızı bir nokta, &quot;Screen recording&quot; ve ilerleyen süre; kayıt duruyor ve çentik saate dönüyor. Yerine geçen bir video akışı kullanıldı." width="800"><br><sub>Ekran kaydı: kırmızı nokta ve süresi</sub></p>
+
+Bir program ekranı PipeWire üzerinden kaydettiğinde ya da paylaştığında çentik yanıp sönen kırmızı bir nokta, "Ekran kaydı" ve ne kadar sürdüğünü gösterir. Etkinlikler sekmesi programın adını verir ve ona geçer. Yerel modül ve `pw-dump` gerekir; Ayarlar → Etkinlikler bunu kapatır.
+
+### Bir bildirim geldiğinde
+
+<!-- GIF: notifications-arrival.gif | Bir mesaj geliyor: çentik genişleyip uygulamayı, göndereni ve ilk satırı gösteriyor; birkaç saniye sonra başka bir uygulamadan ikincisi; sonra yeniden saat. | Çentikte bildirimler -->
+<p align="center"><img src="docs/media/notifications-arrival.gif" alt="Bir mesaj geliyor: çentik genişleyip uygulamayı, göndereni ve ilk satırı gösteriyor; birkaç saniye sonra başka bir uygulamadan ikincisi; sonra yeniden saat." width="800"><br><sub>Çentikte bildirimler</sub></p>
+
+Çentik genişleyip uygulamayı, başlığı ve ilk satırı 4 sn gösterir (Ayarlar → Genel). Tıklama varsayılan eylemi çalıştırır, orta tıklama kapatır. Son üçü, saatleri ve *Tümünü temizle* ile [Bildirimler](#bildirimler) sekmesindedir.
+
+### İndirmeler ve dosya aktarımları
+
+<!-- GIF: downloads-tracking.gif | Yerel bir test sunucusundan curl ile başlatılan indirme, megabaytı ve dolan bir halkayla çentikte görünüyor; sonra boyutu ve süresiyle "Finished". | İndirme takibi (yerel bir test sunucusundan indirme) -->
+<p align="center"><img src="docs/media/downloads-tracking.gif" alt="Yerel bir test sunucusundan curl ile başlatılan indirme, megabaytı ve dolan bir halkayla çentikte görünüyor; sonra boyutu ve süresiyle &quot;Finished&quot;." width="800"><br><sub>İndirme takibi (yerel bir test sunucusundan indirme)</sub></p>
 
 Dosya taşıyan her şey için tek tür etkinlik: adı, "412 MB / 1,8 GB", yüzde, hız, kalan süre ve sonunda dosyayı ya da klasörünü açan bir düğme.
 
@@ -361,35 +490,37 @@ Dosya taşıyan her şey için tek tür etkinlik: adı, "412 MB / 1,8 GB", yüzd
 
 **Ayarlar → İndirme Takibi:** ana anahtar, her kaynak, arka plan işleri, gösterilmek için bir şeyin ne kadar sürmesi ve ne kadar büyük olması gerektiği, izlenen klasörler ve komutlar. Komutlar süreç listesine üç saniyede bir bakılarak bulunur; hiçbir şey kurulmaz ya da sarmalanmaz. Gerçek programlarla neyin denenip neyin denenmediği [başvuru belgesinde](docs/REFERENCE.md#file-transfers-what-can-and-cannot-be-tracked) (İngilizce) yazılıdır.
 
-## Öneriler
+### Gelen arama
 
-<!-- GIF: suggestions-card.gif | Bir ekran kaydı başlıyor ve ada, Evet, Şimdi değil ve bir daha önerme yanıtlarıyla bildirimlerin gizlenip gizlenmeyeceğini soruyor; ayar sayfası neyin öğrenildiğini gösteriyor. | Bir öneri ve öğrendiği -->
+<!-- GIF: call-incoming.gif | Kedi çentiğin yanında uyuyor; bir arama geliyor: çentik yeşil bir telefon simgesi, arayanın adı ve numarası ve Mute düğmesiyle genişliyor, kedi uyanıyor. Uydurma bir arayan. | KDE Connect ile gelen arama (uydurma arayan) -->
+<p align="center"><img src="docs/media/call-incoming.gif" alt="Kedi çentiğin yanında uyuyor; bir arama geliyor: çentik yeşil bir telefon simgesi, arayanın adı ve numarası ve Mute düğmesiyle genişliyor, kedi uyanıyor. Uydurma bir arayan." width="800"><br><sub>KDE Connect ile gelen arama (uydurma arayan)</sub></p>
 
-Birkaç belirli anda ada tek kısa bir soru sorabilir ("Ekran kaydedilirken bildirimler gizlensin mi?") ve üç yanıt sunar: evet, şimdi değil, asla. Yanıtlardan, her kural ve her durum için, sormayı mı, kendiliğinden yapmayı mı (söyleyerek ve geri alma seçeneğiyle), yoksa sessiz kalmayı mı seçeceğini öğrenir. Yalnızca kurallar ve sayım, bu bilgisayarda: ağ yok, model yok.
+KDE Connect ve eşleşmiş bir telefonla gelen arama çentiği arayan, numara ve *Sessize al* (telefonun zil sesini susturur) ile genişletir; açılınca aramanın süresiyle canlı etkinlik olarak kalır, cevapsız arama kısa süre gösterilir. Noktadayken de açılır. KDE Connect "arama bitti" göndermez: etkinlik, bildirimi kapanınca biter.
 
-Kurallar: bir takvim etkinliğinden önce, ekran kaydı sırasında ve Pomodoro odak turunda Rahatsız Etmeyin; görüntülü toplantıdan önce, mikrofon kullanıldığında ve kulaklık çıkınca medyayı duraklatma; pil azaldığında güç tasarrufu.
+### Gizlilik noktaları
 
-**Ayarlar → Öneriler:** açık/kapalı (**varsayılan olarak kapalı**: siz açana kadar ada hiçbir şey önermez ve hiçbir şey öğrenmez), iki öneri arasındaki en az süre, her kural, anahtarı ve öğrendikleriyle, ve "unut".
+Bir program mikrofonu kullanırken çentiğin yanında turuncu, kamerayı kullanırken yeşil bir nokta, her durumda; Etkinlikler sekmesi programın adını verir. Yerel modül ve `pw-dump` gerekir.
 
-## Kedi
+### Öneriler
 
-<!-- GIF: cat-sleep.gif | Hapın yanındaki kedi kıvrılıp uyuyor; bir bildirim geliyor ve başını kaldırıyor. | Kedi: uykuda ve uyanık -->
-<!-- GIF: cat-petting.gif | İmleç kediyi sağdan sola okşuyor ve kalpler yükseliyor. | Kedi: okşama -->
-<!-- GIF: cat-annoyed.gif | Uyuyan kediye tıklanıyor; sinirleniyor ve küsüyor. | Kedi: uyandırılınca -->
+<!-- GIF: suggestions-card.gif | Öneriler açıkken bir ekran kaydı başlıyor ve çentik "The screen is being recorded. Hide notifications while it lasts?" diye soruyor; Yes, Always ve No düğmeleriyle. Yerine geçen bir video akışı kullanıldı. | Bir öneri (ayarlardan açılmış) -->
+<p align="center"><img src="docs/media/suggestions-card.gif" alt="Öneriler açıkken bir ekran kaydı başlıyor ve çentik &quot;The screen is being recorded. Hide notifications while it lasts?&quot; diye soruyor; Yes, Always ve No düğmeleriyle. Yerine geçen bir video akışı kullanıldı." width="800"><br><sub>Bir öneri (ayarlardan açılmış)</sub></p>
 
-Hapın yanında küçük bir kedi oturur. Hiçbir şey olmayınca uykuya dalar (20 sn sonra), müzik çalarken kulaklık takar, Yapay Zeka yanıt verirken düşünür ve olaylarda başını kaldırır. Okşarsanız (imleci üzerinde sağa sola gezdirin) hoşuna gider; uyurken tıklarsanız gitmez. Hiçbir şeyi değiştirmez, hiçbir şey saklamaz ve ağdan hiçbir şey istemez.
+**Geldiği gibi kapalıdır:** siz Ayarlar → Öneriler'den açana kadar ada hiçbir şey önermez ve hiçbir şey öğrenmez. Açılınca, birkaç belirli anda tek kısa bir soru sorabilir ("Ekran kaydediliyor. Bildirimleri bu süre boyunca gizleyeyim mi?"): *Evet*, *Her zaman*, *Hayır* ve "⋯" arkasında *Şimdi değil* ile *Bu kuralı kapat*. Yanıtlardan, her kural ve her durum için, sormayı mı, kendiliğinden yapmayı mı (söyleyerek ve geri alma seçeneğiyle), yoksa sessiz kalmayı mı seçeceğini öğrenir. Yalnızca kurallar ve sayım, bu bilgisayarda: ağ yok, model yok.
 
-**Ayarlar → Kedi:** gösterilip gösterilmeyeceği, taraf, boyut, tüy (gri, turuncu, siyah, beyaz, smokin ya da kendi renginiz), neye tepki verdiği, okşanıp tıklanabilirliği, asla sinirlenmeme, ne kadar küstüğü, ne zaman uyuduğu, noktanın yanında gizli mi uykuda mı olacağı ve **hareketi azaltma** (o zaman kıpırdamadan durur: kafa sallama ve kıpırtılar yok). Masaüstünün kendi animasyonları kapalıyken de hareketsizdir.
+Kurallar: bir takvim etkinliğinden önce, ekran kaydı sırasında ve Pomodoro odak turunda Rahatsız Etmeyin; görüntülü toplantıdan önce, mikrofon kullanıldığında ve kulaklık çıkınca medyayı duraklatma; pil azaldığında güç tasarrufu. **Ayarlar → Öneriler** ayrıca iki öneri arasındaki en az süreyi, her kuralı anahtarı ve öğrendikleriyle, ve "unut"u içerir.
 
 ## Görünüm, temalar ve mağaza
 
-<!-- GIF: appearance-looks.gif | Müzik çalarken aynı hap art arda dört hazır temada, sonra yeniden sistemin renklerinde. | Aynı ada, birkaç görünümde -->
-<!-- GIF: appearance-themes.gif | Ayarlarda hazır bir tema seçiliyor, bir gradyan ayarlanıyor ve ada anında değişiyor; görünüm dosya olarak dışa aktarılıp yeniden ekleniyor. | Görünüm: temalar, gradyan, dışa aktarma ve ekleme -->
+<!-- GIF: notch-colours.gif | Çentik opak siyaha dönüyor, sonra yeniden kendi gradyanına; ardından Aurora, Ocean ve Sunset görünümlerinden geçip Symbiot Siyahı'na dönüyor. | Çentiğin renkleri ve dört hazır görünüm -->
+<p align="center"><img src="docs/media/notch-colours.gif" alt="Çentik opak siyaha dönüyor, sonra yeniden kendi gradyanına; ardından Aurora, Ocean ve Sunset görünümlerinden geçip Symbiot Siyahı'na dönüyor." width="800"><br><sub>Çentiğin renkleri ve dört hazır görünüm</sub></p>
+<!-- GIF: appearance-themes.gif | Ayarlarda hazır bir görünüm seçiliyor, bir gradyan ayarlanıyor ve çentik anında değişiyor; görünüm dosya olarak dışa aktarılıp yeniden ekleniyor. | Görünüm: temalar, gradyan, dışa aktarma ve ekleme -->
 
-**Ayarlar → Görünüm** iki kip sunar.
+**Ayarlar → Görünüm** iki kip sunar ve çentik renklerini onlardan alır (Ayarlar → Çentik → Renk).
 
 - **Sistemi takip et**: arka plan, metin ve vurgu Plasma'dan gelir ve onunla birlikte anında değişir.
-- **Özel** (varsayılan: Symbiot Siyahı): hazır temalar (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast ve beş gradyan: Symbiot Siyahı, Aurora, Sunset, Ocean, Midnight Blue) ve ince ayar: opaklık, bulanıklık, üstten uzaklık, yatay konum, boyut (%80–120), köşe yuvarlaklığı, tek renk ya da gradyan, denetimlerin ve metnin renkleri, kenarlık, gölge. Pencere açıkken her değişiklik adada anında görünür. Bir görünüm bir adla kaydedilebilir.
+- **Özel** (geldiği gibi: Symbiot Siyahı): hazır görünümler (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast ve beş gradyan: Symbiot Siyahı, Aurora, Sunset, Ocean, Midnight Blue) ve ince ayar: opaklık, bulanıklık, yatay konum, boyut (%80–120), köşe yuvarlaklığı, tek renk ya da gradyan, denetimlerin ve metnin renkleri. Pencere açıkken her değişiklik adada anında görünür. Bir görünüm bir adla kaydedilebilir.
+- **Şekil:** *Çentik (varsayılan)* ya da *Yuvarlak ada*. Üstten uzaklığı ve görünümün kendi kenarlığı ile gölgesini yalnızca yuvarlak ada kullanır; çentiğin kenarlığı Ayarlar → Çentik'tedir.
 
 **Tema dosyaları.** *Temayı Dışa Aktar…* görünümü tek bir `*.islandtheme.json` dosyası olarak yazar. *Yeni Ekle…* bir dosyadan ya da mağazadan geri alır. Bir tema **yalnızca veridir**: bilinen alanlardan oluşan en fazla 64 kB JSON; kod yok, QML yok, resim yok. Başka her şey reddedilir; sağlama toplamı katalogdakiyle uyuşmayan bir indirme de reddedilir. Eklediğiniz temalar `~/.local/share/dynamicisland/themes/` altında tutulur.
 
@@ -397,17 +528,19 @@ Hapın yanında küçük bir kedi oturur. Hiçbir şey olmayınca uykuya dalar (
 
 ## Düzen ve dil
 
-<!-- GIF: layout-reorder.gif | Ayarlar → Düzen içinde bir sayfa başka bir yere sürükleniyor ve biri kapatılıyor; adanın sekmeleri buna uyuyor. | Düzen: sayfaları sıralama ve gizleme -->
-<!-- GIF: language-switch.gif | Ayarlar → Dil English'ten Türkçe'ye çevriliyor; adanın metinleri anında değişiyor. | Dil -->
+<!-- GIF: language-switch.gif | Çentikte bir ekran kaydı görünürken adanın dili İngilizceden Türkçeye çevriliyor: "Screen recording", "Ekran kaydı" oluyor; sonra yeniden İngilizce. | Dil: çentiğin metni anında değişiyor -->
+<p align="center"><img src="docs/media/language-switch.gif" alt="Çentikte bir ekran kaydı görünürken adanın dili İngilizceden Türkçeye çevriliyor: &quot;Screen recording&quot;, &quot;Ekran kaydı&quot; oluyor; sonra yeniden İngilizce." width="800"><br><sub>Dil: çentiğin metni anında değişiyor</sub></p>
+<!-- GIF: layout-reorder.gif | Ayarlar → Düzen içinde bir sekme başka bir yere sürükleniyor ve biri kapatılıyor; adanın sekmeleri buna uyuyor. | Düzen: sekmeleri sıralama ve gizleme -->
 
-- **Ayarlar → Düzen → Sekmeler:** bir sayfayı tutamacından sürükleyip sekmesini taşıyın; anahtarı onu gösterir ya da gizler. *Varsayılan sıraya döndür* hepsini eski yerine koyar. **Modüller:** bir sayfanın içindeki açılıp kapatılabilen parçalar.
+- **Ayarlar → Düzen → Sekmeler:** bir sekmeyi tutamacından sürükleyip taşıyın; anahtarı onu gösterir ya da gizler. *Varsayılan sıraya döndür* hepsini eski yerine koyar. **Modüller:** bir sekmenin içindeki açılıp kapatılabilen parçalar.
 - **Ayarlar → Dil:** Otomatik, Türkçe ya da English; yalnızca ada ve ayarları için, Plasma'yı yeniden başlatmadan.
 
 ## Geliştiriciler için: kendi etkinliğini gönder
 
 Her program D-Bus üzerinden adada bir etkinlik gösterebilir (oturum veri yolunda servis, yol ve arayüz `org.phobby.DynamicIsland`).
 
-<!-- GIF: island-push.gif | Hapta "Backup" adlı bir etkinlik, dolan bir ilerleme halkasıyla beliriyor, sonra yeşil bir "bitti". | island-push ile gönderilen bir etkinlik -->
+<!-- GIF: island-push.gif | Çentikte "Backup" adlı bir etkinlik, dolan bir ilerleme halkasıyla beliriyor, sonra yeşil bir "bitti". | island-push ile gönderilen bir etkinlik -->
+<p align="center"><img src="docs/media/island-push.gif" alt="Çentikte &quot;Backup&quot; adlı bir etkinlik, dolan bir ilerleme halkasıyla beliriyor, sonra yeşil bir &quot;bitti&quot;." width="800"><br><sub>island-push ile gönderilen bir etkinlik</sub></p>
 
 ```bash
 island-push --id build --title "Build" --progress 40 --icon run-build
@@ -509,12 +642,12 @@ Bilinmesi gereken üç şey daha:
 
 ## Bilinen sınırlar
 
-- **Yalnızca tek bir kurulum test edildi:** NVIDIA kartlı, tek monitörlü, Wayland üzerinde Plasma 6.6.6. X11, başka sürümler, birden fazla monitör ve kedinin taraf değiştirmesini gerektirecek kadar dar bir ekran denenmedi. X11'de tıklama bölgesi çizileni de kırpar; gölge ve ışık kesilebilir.
-- **Ada**, widget'ın eklendiği masaüstünün ya da panelin ekranında durur.
-- **Bildirimler iki kez görünür**: Plasma'nın penceresi ve adanınki. Ada tam ekran pencerelerin üzerinde kalabilir.
+- **Yalnızca tek bir kurulum test edildi:** NVIDIA kartlı, tek monitörlü, Wayland üzerinde Plasma 6.6.6. X11, başka sürümler, birden fazla monitör ve kedinin taraf değiştirmesini gerektirecek kadar dar bir ekran denenmedi. X11'de çentik üst kenara gider ama panelin üzerinde kalıp kalmadığı pencere yöneticisine bağlıdır; tıklama bölgesi çizileni de kırptığından ışık kesilebilir.
+- **Çentik altındaki paneli örter** ve o kısma tıklanamaz; ada, panelin öğelerinin nerede olduğunu göremez (*En geniş* ayarını kullanın).
+- **Bildirimler iki kez görünür**: Plasma'nın penceresi ve adanınki.
 - **Adaya sürükleme:** yalnızca görünen ada bir sürüklemeyi alır; ada ile başka bir program arasında dosya sürükleme Qt'nin sunduğu biçimde yazıldı ama iki program arasında denenemedi.
 - **İndirme takibi:** bir Flatpak tarayıcı, `git clone`, `wget`, `curl`, `pip download`, `apt download` ve bir PackageKit indirmesiyle denendi. `sudo apt update/install`, bir Chromium tarayıcı, Snap olarak Firefox ve tarayıcı içinde duraklatma denenmedi.
-- **Takvim:** bağlantılar aralıklarla yoklanır; var olan bir etkinlik adadan düzenlenemez; bir etkinlik 20 sn'ye kadar geç pinlenebilir. Bir takvim bağlantısı en çok 10 MB gönderebilir ve en çok 30 saniye sürebilir; daha büyük ya da daha yavaş olan okunmaz (ada bunu söyler ve son sağlam kopyayı göstermeyi sürdürür).
+- **Takvim:** bağlantılar aralıklarla yoklanır; var olan bir etkinlik adadan düzenlenemez; bir etkinlik 20 sn'ye kadar geç sabitlenebilir. Bir takvim bağlantısı en çok 10 MB gönderebilir ve en çok 30 saniye sürebilir; daha büyük ya da daha yavaş olan okunmaz (ada bunu söyler ve son sağlam kopyayı göstermeyi sürdürür).
 - **Yapay Zeka:** Claude Code'un bir soru kutusu olarak kalması, komutun kendi seçeneklerine uymasına dayanır; ada her yanıttan önce komutun kendisi hakkında söylediklerini denetler ve aksi halde durdurur. Ollama dışındaki model sunucuları burada kurulu değildi; gerçek bir anahtarla sohbet bir vekil sunucuya karşı, gerçek servislere karşı ise yalnızca reddedilen bir anahtar denendi.
 - **Bulut:** rclone üzerinden Google Drive, OneDrive ya da Nextcloud için senkron durumu yoktur; Syncthing ve Dropbox durumları vekillere karşı denendi.
 - **Güncellemeler** PackageKit'in paketlerini sayar (apt, dnf); Flatpak güncellemeleri sayılmaz.
@@ -543,5 +676,5 @@ Başkalarının emeği üzerinde durur; her lisansla birlikte tam liste [docs/CR
 - [ical.js](https://github.com/kewisch/ical.js) (MPL-2.0): takvim dosyalarını okuma.
 - [Open-Meteo](https://open-meteo.com): hava durumu verisi, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) lisansıyla.
 - [Simple Icons](https://simpleicons.org) (CC0): Apple ve Google takvim seçeneklerini ve Joplin ile Simplenote kaynaklarını etiketleyen işaretler. Bunlar sahiplerinin ticari markalarıdır.
-- [BetterNotes](https://github.com/thebanri/BetterNotes) (MIT): simgesi ve Notlar sayfasının konuştuğu komut satırı arayüzü için teşekkürler.
-- Yukarıdaki kliplerdeki müzik ve kapaklar bu proje için `tools/demo/make-media` ile üretilmiştir ve serbestçe kullanılabilir (CC0).
+- [BetterNotes](https://github.com/thebanri/BetterNotes) (MIT): simgesi ve Notlar sekmesinin konuştuğu komut satırı arayüzü için teşekkürler.
+- Kliplerdeki müzik ve kapaklar bu proje için `tools/demo/make-media` ile üretilmiştir ve serbestçe kullanılabilir (CC0); içlerindeki her ad, mesaj ve etkinlik uydurmadır ([docs/CREDITS.md](docs/CREDITS.md#the-clips-in-the-readme)).

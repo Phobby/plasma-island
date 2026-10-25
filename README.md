@@ -1,8 +1,8 @@
-<!-- docs/RELEASE-CHECKLIST.md lists what is still open in this file: the hero video, the clips that are not recorded yet, the roadmap. -->
+<!-- docs/RELEASE-CHECKLIST.md lists what is still open in this file: the main video, the clips that are not recorded yet, the roadmap. -->
 
 # Dynamic Island for KDE Plasma 6
 
-A notch joined to the top edge of your KDE Plasma desktop. Music, downloads, timers, calls and notifications live here; hover to open the pages below it.
+A notch joined to the top edge of your KDE Plasma desktop: music, downloads, timers, calls and notifications show in it, and hovering opens its pages below.
 
 [![Licence: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#licence-and-thanks)
 ![Version 0.2.2](https://img.shields.io/badge/version-0.2.2-informational.svg)
@@ -10,52 +10,98 @@ A notch joined to the top edge of your KDE Plasma desktop. Music, downloads, tim
 
 **English** · [Türkçe](README.tr.md)
 
-## Notch first, made yours
+<!-- TODO(owner): main video here (docs/RELEASE-CHECKLIST.md). -->
 
-![Symbiot Black notch preview](docs/media/notch-hero.svg)
-
-The default for fresh installs is a **notch with the Symbiot Black gradient**: charcoal `#292c30` through `#202326` to black `#0e1012`, with a muted slate accent inspired by a dark Plasma desktop. The illustration above highlights the notch shape.
-
-- **Settings → Notch:** enable the border, choose its colour, thickness (1–8 px) and opacity (0–100%). The edge follows the sides and lower corners, keeping the top joined to the screen. A live preview shows your choices.
-- **Settings → Appearance:** choose **Symbiot Black** or another preset, edit the gradient and save your look.
-- **Prefer the rounded version?** Select **Settings → Appearance → Shape → Rounded island**. Return to **Notch (default)** at any time.
-
-Existing saved preferences are preserved. The notch covers the panel beneath it; use **Settings → Notch → Widest** to leave room for panel widgets.
-
+<!-- GIF: notch-states.gif | The notch at the top of the screen over a dark top panel shows the clock with the cat beside it; a message arrives and the notch widens to show its sender and first line; then a build with a filling progress ring, which ends in "Done". | The notch: idle, a notification, an activity -->
+<p align="center"><img src="docs/media/notch-states.gif" alt="The notch at the top of the screen over a dark top panel shows the clock with the cat beside it; a message arrives and the notch widens to show its sender and first line; then a build with a filling progress ring, which ends in &quot;Done&quot;." width="800"><br><sub>The notch: idle, a notification, an activity</sub></p>
 
 ## Contents
 
-- [What it is](#what-it-is)
+- [The notch](#the-notch): [with a top panel](#with-a-top-panel) · [Notch settings](#notch-settings) · [Dot mode](#dot-mode) · [States](#states)
+- [Highlights](#highlights)
 - [Requirements](#requirements)
 - [Installing, updating, removing](#installing-updating-removing)
 - [First steps](#first-steps)
-- [The island, state by state](#the-island-state-by-state)
-- [The pages](#the-pages): [Activities](#activities) · [Media](#media) · [System](#system) · [Weather](#weather) · [Notifications](#notifications) · [Controls](#controls) · [Apps](#apps) · [Tools](#tools) · [Habits](#habits) · [Calendar](#calendar) · [Notes](#notes) · [AI](#ai) · [Cloud](#cloud) · [Clipboard](#clipboard)
-- [Downloads and file transfers](#downloads-and-file-transfers)
-- [Suggestions](#suggestions)
+- [The tabs](#the-tabs): [Activities](#activities) · [Media](#media) · [System](#system) · [Weather](#weather) · [Notifications](#notifications) · [Controls](#controls) · [Apps](#apps) · [Tools](#tools) · [Habits](#habits) · [Calendar](#calendar) · [Notes](#notes) · [AI](#ai) · [Cloud](#cloud) · [Clipboard](#clipboard)
 - [The cat](#the-cat)
+- [Passing events](#passing-events): [screen recording](#screen-recording-and-sharing) · [notifications](#a-notification-arrives) · [downloads](#downloads-and-file-transfers) · [incoming call](#an-incoming-call) · [privacy dots](#privacy-dots) · [suggestions](#suggestions)
 - [Appearance, themes and the store](#appearance-themes-and-the-store)
 - [Layout and language](#layout-and-language)
 - [For developers: push your own activity](#for-developers-push-your-own-activity)
-- [Performance](#performance)
-- [Privacy and the network](#privacy-and-the-network)
-- [Troubleshooting](#troubleshooting)
-- [Known limits](#known-limits)
-- [Contributing, security, licence](#contributing-and-security)
+- [Performance](#performance) · [Privacy and the network](#privacy-and-the-network) · [Troubleshooting](#troubleshooting) · [Known limits](#known-limits) · [Contributing and security](#contributing-and-security) · [Licence and thanks](#licence-and-thanks)
 
-## What it is
+## The notch
+
+The island is one piece joined to the screen's top edge, like the notch of a laptop's screen: square and straight where it meets the edge, rounded only at its lower corners. It hangs over a top panel (also one that hides itself) and grows downwards: for a notification, an activity, or its pages when you hover it. Pushing the pointer against the top edge above it opens it too: its topmost row of pixels takes the pointer.
+
+<!-- GIF: notch-hover.gif | The pointer moves onto the notch and it opens downwards into its pages; the pointer leaves and it shrinks back; the pointer is pushed against the top edge above the notch and it opens again. | The notch: hover, close, push against the edge -->
+
+It comes as the **Symbiot Black** gradient (charcoal `#292c30` through `#202326` to near black `#0e1012`) with a thin slate border (`#4c566a`, 70 %). The rounded island of earlier versions is still there: **Settings → Appearance → Shape → Rounded island**.
+
+**Updating from 0.2.2 or earlier:** settings you changed yourself stay as they were; a setting you never changed takes the new default. An island that was left as it came therefore becomes the Symbiot Black notch; *Rounded island* and *Follow the system* (Settings → Appearance) bring the old look back.
+
+### With a top panel
+
+- **The notch covers what is under it**, and that part of the panel cannot be clicked; beside the notch the panel takes its clicks as before. If a clock or task buttons sit in the middle of your panel, narrow the notch with **Settings → Notch → Widest** (the island cannot read where a panel's widgets are). Notifications and the open island are wider for as long as they show.
+- **Its height** follows the top panel (also while the panel is hidden), or is set by hand. Without a top panel it sits at the top edge all the same, as high as the island.
+- **The cat** stands beside the notch, on the panel.
+- **A dark panel** is where the notch looks most like part of the screen: the clips here use Breeze Dark with an opaque 32 px panel.
+
+### Notch settings
+
+| Setting | What it does |
+|---|---|
+| Notch mode | *Weld the island to the top edge of the screen* (on as it comes). Changing it needs no restart |
+| Colour | *The island's colours (Appearance)*: the look's colours or gradient, made opaque (as it comes); *Black*: opaque black with light text; *The island's look (Appearance)*: its material, opacity and blur too |
+| Notch border | *Show an edge around the notch*: thickness 1–8 px, colour, opacity 0–100 %. Drawn along the sides and lower corners, never across the screen's edge |
+| Upper corners | *Soften where it meets the edge*: two small curves outwards (off as it comes) |
+| Screen | The screen of the top panel (as it comes), or the primary screen. One notch at a time |
+| Over full screen | *Hide* (as it comes) or *Show* while a window fills that screen. Never shown on the lock screen |
+| Height | The top panel's, or set by hand (24–72 px) |
+| Widest | No limit, or a width in pixels |
+| Cat | *Hide the cat in notch mode* |
+
+A preview at the top of the page shows the notch small or as a dot. Not used in notch mode: the distance from the top, *Place below top panels*, and the look's own border and shadow. More in the [reference](docs/REFERENCE.md#notch-mode).
+
+### Dot mode
+
+A click on the notch shrinks it to a dot (a small half circle at the edge, 15 px; 10–28 in the settings), so that it is out of the way; a click on the dot brings the notch back. What is under the rest of the panel stays clickable.
+
+<!-- GIF: dot-mode.gif | A click shrinks the notch to a small half circle at the top edge; a button of a window right beside it is clicked; a click on the dot brings the notch back. | Dot mode -->
+
+The dot's centre says what is going on: orange, green or red for the microphone, the camera or the screen in use; the accent colour for a live activity (pulsing) or waiting notifications. While it is a dot, notifications and events are kept for later (or shown and then back to the dot: *Events in dot mode*). An incoming call, an alarm and low battery open it in every case unless you switch that off.
+
+**Settings → General → Dot mode:** on/off, start as (as it was left, always the notch, always the dot), dot size, whether hovering the dot opens the island, events in dot mode, always open for critical events.
+
+### States
+
+| State | When | What you see |
+|---|---|---|
+| Idle | Nothing is going on | The clock |
+| Live activity | Something lasts (music, a timer, a transfer, a recording, a call) | Its icon or cover on the left; its time, value or progress ring on the right |
+| Split | Two things last at once | The first in the notch, the second in a small notch of its own beside it |
+| Notification | One arrives | App, title, first line. A click runs its default action, a middle click dismisses it |
+| Passing event | Volume, brightness, charging, Bluetooth, Caps Lock, Wi-Fi… | A wider notch for a few seconds (3 s as it comes) |
+| Suggestion | A rule's moment (off as it comes, see [Suggestions](#suggestions)) | A sentence with its answers as buttons |
+| Open | Hover, or a click with dot mode off | The pages below |
+| Privacy dots | Microphone or camera in use | An orange or green dot beside the notch, in every state |
+| Dot | After a click, in dot mode | A small half circle at the edge |
+
+Which activity wins when several last at once is a list you can reorder (Settings → Activities): privacy, call, screen recording, passing events, timer, transfers, media.
+
+## Highlights
 
 | | |
 |---|---|
-| **Live activities** | The small notch shows the most important thing that is going on: music with its cover, a timer, a transfer with its progress, a screen recording, a call. Two at once split the island in two. |
-| **Passing events** | Volume, brightness, charging, Bluetooth, Caps Lock, a new notification: shown for a few seconds, then the island is back where it was. |
-| **Pages** | Hovering opens the island: Media, System, Weather, Notifications, Controls, Apps, Tools, Habits, Calendar, Notes, Clipboard, and (off until you switch them on) AI and Cloud. |
-| **Out of the way** | A click shrinks it to a dot; clicks beside the island go to the window underneath. |
-| **Your look** | It starts with Symbiot Black; you can follow Plasma's colours or choose your own: colours or a gradient, opacity, blur, roundness. Looks can be exported as files. |
+| **Live activities** | Music with its cover, a timer, a transfer with its progress, a screen recording, a call. Two at once split the notch in two. |
+| **Passing events** | Volume, brightness, charging, Bluetooth, Caps Lock, a new notification: a few seconds, then back to what was there. |
+| **Tabs** | Hover to open: Media, System, Weather, Notifications, Controls, Apps, Tools, Habits, Calendar, Notes, Clipboard, and (off until you switch them on) AI and Cloud. |
+| **A cat** | Beside the notch: it sleeps, wears headphones for music, likes to be stroked. It can be switched off. |
+| **Your look** | Symbiot Black as it comes; nine more ready-made looks, your own colours or gradient, or Plasma's colours. Looks are exported and shared as files. |
 | **Yours to script** | Any program can show its own activity through a small D-Bus API (`island-push`). |
-| **Private by default** | No telemetry. Nothing is asked of the network until you choose a place for the weather, connect a calendar or a notes app, or switch on AI or Cloud. See [Privacy and the network](#privacy-and-the-network). |
+| **Private by default** | No telemetry. The only request with the settings as they come is a daily look at the newest version number; see [Privacy and the network](#privacy-and-the-network). |
 
-It is a Plasma widget (a plasmoid) written in QML, with an optional small native module (C++) for the parts QML cannot reach. Every part is optional and can be switched off.
+It is a Plasma widget (a plasmoid) written in QML, with an optional small native module (C++) for what QML cannot reach. Every part can be switched off.
 
 ## Requirements
 
@@ -63,24 +109,24 @@ It is a Plasma widget (a plasmoid) written in QML, with an optional small native
 |---|---|
 | Desktop | KDE Plasma 6 (the widget declares Plasma API 6.0 as its minimum) |
 | Tested on | Kubuntu 26.04, Plasma 6.6.6, Qt 6.10.2, KWin on **Wayland**, NVIDIA driver. Nothing else was tried. |
-| X11 | **Not tested.** The click-through region is written for both, but only Wayland was tried (see [Known limits](#known-limits)). |
+| X11 | **Not tested.** The notch then goes to the top edge, but whether it stays over the panel is up to the window manager (see [Known limits](#known-limits)). |
 | To build the native module | `cmake`, `extra-cmake-modules`, Qt 6.5 or newer development files (Core, Gui, Qml, DBus, Network, Sql), `libkf6windowsystem-dev` |
 | At run time | PipeWire's `pw-dump` (package `pipewire-bin` on Ubuntu) for the microphone, camera and screen-recording indicators |
 
-Without the native module the widget still runs; what needs it hides itself: the shaped blur, clicks passing through beside the island, the recording, microphone and camera indicators, unlock, KDE Connect calls, the update count, the D-Bus API, calendar accounts and every password or key (they live in KDE Wallet), theme files, download tracking, the Cloud and AI helpers.
+Without the native module the widget still runs; what needs it hides itself: the notch on a screen other than the primary one, the shaped blur, clicks passing through beside the island, the recording, microphone and camera indicators, unlock, KDE Connect calls, the update count, the D-Bus API, calendar accounts and every password or key (they live in KDE Wallet), theme files, download tracking, the Cloud and AI helpers.
 
 **Optional programs.** None is needed; each adds one thing.
 
 | Program | What it adds |
 |---|---|
-| [rclone](https://rclone.org) | The Cloud page: your rclone remotes (Google Drive, OneDrive, Dropbox, WebDAV…) |
+| [rclone](https://rclone.org) | The Cloud tab: your rclone remotes (Google Drive, OneDrive, Dropbox, WebDAV…) |
 | [BetterNotes](https://github.com/thebanri/BetterNotes) 0.1.13+ | Notes on this computer, no account (0.1.14 to open a note in the app, 0.1.15 for locked notes) |
-| Joplin (desktop), a Simplenote account, a Memos server | Their notes on the Notes page |
+| Joplin (desktop), a Simplenote account, a Memos server | Their notes on the Notes tab |
 | KDE Connect | Phone battery, calls, notifications from the phone, "find my phone" |
-| Claude Code (`claude`), Antigravity (`agy`) | The AI page answers through them, with every tool switched off |
-| Ollama, LM Studio, llama.cpp, Jan, KoboldCpp | The AI page answers from a model on this computer |
+| Claude Code (`claude`), Antigravity (`agy`) | The AI tab answers through them, with every tool switched off |
+| Ollama, LM Studio, llama.cpp, Jan, KoboldCpp | The AI tab answers from a model on this computer |
 | `btop` 1.4+ | A click on a System card opens that metric's graph in a terminal |
-| Spectacle, Discover, a camera app | The matching buttons on the Controls page |
+| Spectacle, Discover, a camera app | The matching buttons on the Controls tab |
 | PackageKit | The number of waiting updates |
 
 ## Installing, updating, removing
@@ -145,119 +191,124 @@ Plasma's own volume popup keeps appearing beside the island's. To keep only one:
 
 ## First steps
 
-- **Hover** the pill: it opens. Move away: it closes (after 0.4 s; both delays are in Settings → General).
+- **Hover** the notch: it opens. Move away: it closes (after 0.4 s; both delays are in Settings → General).
 - **The tabs** along the top switch pages; so does the mouse wheel or a two-finger swipe over anything that is not a list.
-- **Click** the small pill: it shrinks to a dot. Click the dot: the pill is back. ([Dot mode](#dot-mode) can be switched off.)
+- **Click** the notch: it shrinks to a dot. Click the dot: the notch is back ([Dot mode](#dot-mode) can be switched off; a click then opens the island).
 - **Right click** the island for its menu; the gear at the top right of the open island opens the settings.
-- **Settings → Layout** shows, hides and orders the pages. AI and Cloud are off until switched on there.
+- **Settings → Layout** shows, hides and orders the tabs. AI and Cloud are off until switched on there.
 - **Language**: the island speaks Turkish when the system does, English otherwise; Settings → Language changes it at once.
 
-## The island, state by state
+## The tabs
 
-<!-- GIF: island-states.gif | The small pill shows the clock, then a notification with its sender and first line, then an activity with a progress ring that ends in "Done". | The states of the small island -->
+Every tab below follows the same pattern: what it is for, a clip, what you see, how to use it, and (folded) its settings and limits.
 
-| State | When | What you see |
-|---|---|---|
-| Idle | Nothing is going on | A small pill with the clock |
-| Live activity | Something lasts (music, a timer, a transfer, a recording, a call) | Its icon or cover on the left, its time, value or progress ring on the right |
-| Split | Two things last at once | The first in the pill, the second in a circle beside it |
-| Notification | One arrives | App, title, first line. A click runs its default action, a middle click dismisses it |
-| Passing event | Volume, brightness, charging, Bluetooth, Caps Lock, Wi-Fi… | A wide pill for 2–4 s |
-| Suggestion | A rule's moment (see [Suggestions](#suggestions)) | A sentence with its answers as buttons |
-| Open | Hover or click | The pages below |
-| Privacy dots | Microphone or camera in use | An orange or green dot beside the island, in every state |
-| Dot | After a click, in dot mode | A small circle in the pill's place |
-
-Which activity wins when several last at once is a list you can reorder (Settings → Activities): privacy, call, screen recording, passing events, timer, transfers, media.
-
-### Dot mode
-
-<!-- GIF: dot-mode.gif | A click shrinks the pill to a dot; a window beside the dot is clicked; a click on the dot brings the pill back. | Dot mode -->
-
-A click on the small pill turns it into a dot (15 px, 10–28 in the settings) so that it is out of the way; a click on the dot brings the pill back. The dot's centre says what is going on: orange, green or red for microphone, camera or screen in use; the accent colour for a live activity (pulsing) or waiting notifications. While it is a dot, notifications and events are kept and shown when the pill is back (or shown at once and then back to the dot: *Events in dot mode*). An incoming call, an alarm and low battery open it in every case unless you switch that off.
-
-**Settings → General → Dot mode:** on/off, start as (as it was left, always the pill, always the dot), dot size, whether hovering opens it, events in dot mode, always open for critical events.
-
-### Notch mode
-
-The default shape joins the screen's top edge like a laptop's notch: square above, rounded below, over the top panel (also one that hides itself), opening downwards. Symbiot Black is the default gradient; black and other custom colours are available. The panel under it cannot be clicked: if a clock or task buttons sit in the middle of your panel, limit its width. **Settings → Notch** (on by default for fresh installs); details in [REFERENCE](docs/REFERENCE.md#notch-mode).
-
-## The pages
+<!-- GIF: tabs-tour.gif | The pointer opens the notch and moves along the tabs: Media, System, Weather, Calendar; each page slides in below the notch. | A tour of the tabs -->
 
 ### Activities
 
-*Everything that is going on, with its buttons.* The page appears only while something is.
+*Everything that is going on, with its buttons.* The tab appears only while something is.
 
-<!-- GIF: activities-page.gif | The open island on the Activities page with a running timer and a download, each with its own buttons. | The Activities page -->
+<!-- GIF: activities-page.gif | The open notch on the Activities tab with a running timer and a download, each with its own buttons. | The Activities tab -->
 
 - **What you see:** one card per ongoing activity (timer, transfer, recording, call, media…), with its actions, and which application uses the microphone or camera.
 - **How to use:** the buttons on a card act on that activity (pause a timer, open the folder of a finished download, switch to the recording application).
-- **Settings:** Settings → Activities: the priority order, the split island, how long a passing event stays, and a switch for every kind of event and activity.
+
+<details><summary>Settings</summary>
+
+Settings → Activities: the priority order, the split island, how long a passing event stays, and a switch for every kind of event and activity.
+
+</details>
 
 ### Media
 
 *What is playing, and its controls.*
 
-<!-- GIF: media-controls.gif | The pill shows a cover, a track's name and an equalizer; the next track comes; it is paused and played again. | Media on the pill: the track changes, pause and play -->
-<!-- GIF: media-page.gif | The open Media page: cover, title and artist, previous, play and next, the position being dragged. | Media: the page and its controls -->
-<!-- GIF: media-glow.gif | With music playing the pill's edge starts to glow in the cover's colour and moves with the music; then the glow is switched off again. | Media: the ambient glow -->
-<!-- GIF: media-cat.gif | The cat beside the pill puts on headphones and nods while music plays. | Media: the cat listens too -->
+<!-- GIF: media-controls.gif | The notch shows a cover, a track's name and an equalizer; the next track comes; it is paused and played again. | Media on the notch: the next track, pause and play -->
+<p align="center"><img src="docs/media/media-controls.gif" alt="The notch shows a cover, a track's name and an equalizer; the next track comes; it is paused and played again." width="800"><br><sub>Media on the notch: the next track, pause and play</sub></p>
+<!-- GIF: media-page.gif | The open Media tab: cover, title and artist, previous, play and next, the position being dragged. | Media: the tab and its controls -->
+<!-- GIF: media-glow.gif | With music playing the notch's lower edge starts to glow in the cover's colour and moves with the music; then the glow is switched off again. | Media: the album glow -->
+<p align="center"><img src="docs/media/media-glow.gif" alt="With music playing the notch's lower edge starts to glow in the cover's colour and moves with the music; then the glow is switched off again." width="800"><br><sub>Media: the album glow</sub></p>
 
-- **What you see:** on the pill the cover, the track's name and an equalizer; on the page cover, title, artist, position, previous / play / next.
-- **How to use:** the buttons and the position bar control the player. The wave button at the top right switches the **ambient glow**: the island's edge takes the cover's colour and moves with the music's loudness and bass.
-- **Settings:** Settings → General → *Preferred player* (for example `spotify`: shown when it plays, whatever else does). The glow is off by default.
-- **Requirements and limits:** any player that speaks MPRIS (most do, browsers too). The glow follows the music only with the native module (it listens to the output through `pw-record` while something plays); without it the glow only takes the colour.
+- **What you see:** on the notch the cover, the track's name and an equalizer; on the tab cover, title, artist, position, previous / play / next.
+- **How to use:** the buttons and the position bar control the player. The wave button at the top right of the tab switches the **album glow**: the island's edge takes the cover's colour and moves with the music's loudness and bass. The cat puts on headphones and nods along ([The cat](#the-cat)).
+
+<details><summary>Settings and limits</summary>
+
+- **Settings:** Settings → General → *Preferred player* (for example `spotify`: shown when it plays, whatever else does). The glow is off as it comes.
+- **Limits:** any player that speaks MPRIS (most do, browsers too). The glow follows the music only with the native module (it listens to the output through `pw-record` while something plays); without it the glow only takes the colour.
+
+</details>
 
 ### System
 
 *How busy the computer is.* Information only.
 
-<!-- GIF: system-cards.gif | The System page: cards for CPU, temperature, GPU, memory, network and disk; the card under the pointer grows and shows details. | System: the cards -->
+<!-- GIF: system-cards.gif | The System tab: cards for CPU, temperature, GPU, memory, network and disk; the card under the pointer grows and shows details. | System: the cards -->
 
 - **What you see:** cards for CPU, CPU temperature, GPU, memory, battery, network down/up and disk. In the *Dynamic* view the busiest cards are larger; in the *Fixed* view every card keeps its place.
 - **How to use:** the card under the pointer grows and shows its details (the network card names the active connection). A click opens `btop` in your terminal with that metric's graph.
+
+<details><summary>Settings and limits</summary>
+
 - **Settings:** Settings → General → *System view* (Fixed / Dynamic). Settings → Alerts: battery, device battery and temperature thresholds.
-- **Requirements and limits:** the values come from Plasma's sensor service (ksystemstats), which the island starts if it is not running. A sensor the driver does not offer hides its card. The click needs the native module and `btop` 1.4 or newer.
+- **Limits:** the values come from Plasma's sensor service (ksystemstats), which the island starts if it is not running. A sensor the driver does not offer hides its card. The click needs the native module and `btop` 1.4 or newer.
+
+</details>
 
 ### Weather
 
 *Now and the next seven days, for a place you choose.*
 
-<!-- GIF: weather-location.gif | The Weather page starts empty with "Choose a Location"; a city is typed and picked; the forecast appears; a day is clicked and its hours slide in. | Weather: choosing a place, a day's hours -->
+<!-- GIF: weather-location.gif | The Weather tab starts empty with "Choose a Location"; a city is typed and picked; the forecast appears; a day is clicked and its hours slide in. | Weather: choosing a place, a day's hours -->
 
 - **What you see:** temperature, what it feels like, humidity and wind now; seven days with high, low and the chance of rain; the tab itself shows the weather's picture.
 - **How to use:** it starts empty: *Choose a Location*, type a city, pick it. A click on a day shows its hours; the arrow goes back. The place's name opens the search again.
+
+<details><summary>Settings and limits</summary>
+
 - **Settings:** Settings → Weather: the place (search, forget), units (°C, km/h, mm or °F, mph, in), the alert for rain, snow and storms.
-- **Requirements and limits:** the data is [Open-Meteo](https://open-meteo.com)'s. The place is never detected, and nothing is asked until you choose one.
+- **Limits:** the data is [Open-Meteo](https://open-meteo.com)'s. The place is never detected, and nothing is asked until you choose one.
+
+</details>
 
 ### Notifications
 
-*The last notifications, with reply and dismiss.*
+*The last notifications, with reply and dismiss.* How one arrives on the notch: [A notification arrives](#a-notification-arrives).
 
-<!-- GIF: notifications-page.gif | Notifications arrive on the pill; the Notifications page lists the last three with their time; "Clear all" asks once and empties the list. | Notifications -->
+<!-- GIF: notifications-page.gif | The Notifications tab lists the last three with their time; "Clear all" asks once and empties the list. | Notifications: the list, clear all -->
 
-- **What you see:** a new notification on the pill for a few seconds (app, title, first line); on the page the last three with their arrival time.
-- **How to use:** on the pill a click runs the notification's default action, a middle click dismisses it. On the page, under the pointer: quick reply (where the notification offers one) and dismiss; *Clear all* asks once.
+- **What you see:** the last three notifications with their arrival time.
+- **How to use:** under the pointer: quick reply (where the notification offers one) and dismiss; *Clear all* asks once.
+
+<details><summary>Settings and limits</summary>
+
 - **Settings:** Settings → General: show incoming notifications, for how long. While Do Not Disturb is on they are held back and counted.
-- **Requirements and limits:** Plasma's own notification popups stay: the island shows notifications in addition (they can be moved to another corner in System Settings → Notifications).
+- **Limits:** Plasma's own notification popups stay: the island shows notifications in addition (they can be moved to another corner in System Settings → Notifications).
+
+</details>
 
 ### Controls
 
 *Quick settings, like a phone's.*
 
-<!-- GIF: controls-tiles.gif | The Controls page: Do Not Disturb and dark mode are switched, the volume slider is moved; holding a button makes them wiggle for editing. | Controls: buttons and sliders -->
+<!-- GIF: controls-tiles.gif | The Controls tab: Do Not Disturb and dark mode are switched, the volume slider is moved; holding a button makes them wiggle for editing. | Controls: buttons and sliders -->
 
 - **What you see:** up to six buttons of your choice and, below, the volume and screen brightness sliders.
 - **How to use:** a click switches a button. Holding one edits the set (drag to move, "−" to remove, add from the row below, *Done*). Holding **Bluetooth**, **Wi-Fi** or **VPN** opens its devices or networks instead.
+
+<details><summary>Settings and limits</summary>
+
 - **Available buttons:** Do Not Disturb, Night Light, power profile, Bluetooth, Wi-Fi, updates, airplane mode, VPN, hotspot, record screen, screenshot, camera, microphone, sound, KDE Connect, find phone, dark mode, keep awake, lock, calculator, System Settings. A button whose part is missing is dimmed.
 - **Settings:** Settings → Controls: the same six, in order. Settings → Layout → Modules: the volume slider.
-- **Requirements and limits:** the brightness slider needs a display Plasma can dim. Buttons that start a program (screenshot, calculator, lock…) need the native module.
+- **Limits:** the brightness slider needs a display Plasma can dim. Buttons that start a program (screenshot, calculator, lock…) need the native module.
+
+</details>
 
 ### Apps
 
 *Shortcuts to the applications you choose.*
 
-<!-- GIF: apps-grid.gif | The Apps page: "Add" lists the installed applications, one is added; a click starts it; two icons are dragged into another order. | Apps: add, start, reorder -->
+<!-- GIF: apps-grid.gif | The Apps tab: "Add" lists the installed applications, one is added; a click starts it; two icons are dragged into another order. | Apps: add, start, reorder -->
 
 - **What you see:** a grid of up to 12 icons; a dot under one means it has a window open.
 - **How to use:** *Add* lists the installed applications with a search. A click starts one and closes the island; a right click renames or removes; dragging reorders.
@@ -266,12 +317,17 @@ The default shape joins the screen's top edge like a laptop's notch: square abov
 
 *Timer, stopwatch, Pomodoro and alarm.*
 
-<!-- GIF: tools-timer.gif | A one-minute timer is started; the island closes and the pill counts down; the stopwatch takes laps; the Pomodoro's statistics are shown. | Tools: timer, stopwatch, Pomodoro -->
+<!-- GIF: tools-timer.gif | A one-minute timer is started; the island closes and the notch counts down; the stopwatch takes laps; the Pomodoro's statistics are shown. | Tools: timer, stopwatch, Pomodoro -->
 
-- **What you see:** four tools on one page; whichever runs shows on the pill as a live activity.
+- **What you see:** four tools on one tab; whichever runs shows on the notch as a live activity.
 - **How to use:** set and start. The Pomodoro counts its rounds (focus, short break, long break) and keeps statistics: today, this week, the streak, the total.
-- **Settings:** Settings → Tools: the sound (any file), Pomodoro lengths and rounds, reset the statistics.
+
+<details><summary>Settings and limits</summary>
+
+- **Settings:** Settings → Tools: the sound (any file), Pomodoro lengths (25, 5 and 15 minutes as it comes) and rounds (4), reset the statistics.
 - **Limits:** end times are stored, so a timer carries on if plasmashell restarts.
+
+</details>
 
 ### Habits
 
@@ -281,71 +337,144 @@ The default shape joins the screen's top edge like a laptop's notch: square abov
 
 - **What you see:** today's list; a calendar that shades each day by how much was done (weeks, months, the year).
 - **How to use:** the first time it asks for your habits and the time of the review. During the day a click ticks an entry. In the evening the island asks "How was today?": *Review* walks through the day and what to add for tomorrow.
+
+<details><summary>Settings and limits</summary>
+
 - **Settings:** Settings → Habits: the habits (rename, delete, order), the review time (21:30), its reminder, the calendar's colours, reset all data.
 - **Limits:** everything stays in the widget's settings on this computer.
 
+</details>
+
 ### Calendar
 
-*Your calendars' events, and the next one pinned to the island before it starts.*
+*Your calendars' events, and the next one pinned to the notch before it starts.*
 
-<!-- GIF: calendar-connect.gif | The gear on the Calendar page opens "Connect a Calendar": Google or Apple is chosen, a link is pasted, the month fills with events. | Calendar: connecting one -->
-<!-- GIF: calendar-pinned.gif | An event on the pill counts down its last seconds, turns into "started" with its room and a Join button, then shows the time left. | Calendar: the next event on the island -->
+<!-- GIF: calendar-pinned.gif | An event on the notch counts down its last seconds, turns into "started" with its room and a Join button, then shows the time left. | Calendar: the next event on the notch -->
+<p align="center"><img src="docs/media/calendar-pinned.gif" alt="An event on the notch counts down its last seconds, turns into &quot;started&quot; with its room and a Join button, then shows the time left." width="800"><br><sub>Calendar: the next event on the notch</sub></p>
+<!-- GIF: calendar-connect.gif | The gear on the Calendar tab opens "Connect a Calendar": Google or Apple is chosen, a link is pasted, the month fills with events. | Calendar: connecting one -->
 
-- **What you see:** a month, the events of the chosen day and their details (place, notes, a meeting link). 15 minutes before an event starts it is pinned to the pill with a countdown; at the start a sound plays and it stays 10 minutes after the end.
+- **What you see:** a month, the events of the chosen day and their details (place, notes, a meeting link). 15 minutes before an event starts it is pinned to the notch with a countdown; at the start a sound plays, and it stays 10 minutes after the end.
 - **How to use:** the gear → *Connect a Calendar* → Google or Apple → either paste the calendar's private `.ics` link (read only), or connect the account (then events can be added and deleted from the island).
+
+<details><summary>Settings and limits</summary>
+
 - **Settings:** Settings → Calendar: minutes before and after, all-day events, how often links are fetched (5 minutes), the sound, the connected calendars.
-- **Requirements and limits:** no Akonadi or KDE PIM is needed. An iCloud account needs an app-specific password; a Google account needs an OAuth client of your own, made once in the Google Cloud Console (the page walks through it). Passwords and tokens are kept in KDE Wallet. Links are polled, so a new event shows after one interval at the latest; an existing event cannot be edited.
+- **Limits:** no Akonadi or KDE PIM is needed. An iCloud account needs an app-specific password; a Google account needs an OAuth client of your own, made once in the Google Cloud Console (the tab walks through it). Passwords and tokens are kept in KDE Wallet. Links are polled, so a new event shows after one interval at the latest; an existing event cannot be edited.
+
+</details>
 
 ### Notes
 
 *A quick note, and the notes of the apps you use.*
 
-<!-- GIF: notes-quick.gif | On the Notes page a source is chosen, a note is created with a title and filled in; it appears in the list. | Notes: creating one -->
+<!-- GIF: notes-quick.gif | On the Notes tab a source is chosen, a note is created with a title and filled in; it appears in the list. | Notes: creating one -->
 <!-- GIF: notes-locked.gif | A locked BetterNotes note asks for the master password on the island and then shows its text. | Notes: a locked note -->
 
 - **What you see:** one list of the notes of every connected app, newest first, and a field for a quick note.
 - **How to use:** type and press Enter for a quick note in the default app; the magnifier searches; a click opens a note for editing (saved when you stop typing, on Ctrl+S and when you go back). The island comes back to the note you were editing.
+
+<details><summary>Sources, settings and limits</summary>
+
 - **Sources:** BetterNotes (on this computer, no account), Joplin (its Web Clipper service and token), Simplenote (the account), Memos (your server and a token).
 - **Settings:** Settings → Notes: the connected apps, where quick notes go, how often they are fetched, carrying on in the last note.
-- **Thanks:** BetterNotes is made by [thebanri](https://github.com/thebanri/BetterNotes). Thank you for the app and for its command-line interface, which is what this page talks to.
-- **Requirements and limits:** tokens are kept in KDE Wallet. A locked BetterNotes note asks for the master password (BetterNotes 0.1.15 or newer; with an older one the island offers to open it in the app); the password goes to the command's standard input and is kept nowhere. Rich-text notes are shown as plain text and are read-only.
+- **Limits:** tokens are kept in KDE Wallet. A locked BetterNotes note asks for the master password (BetterNotes 0.1.15 or newer; with an older one the island offers to open it in the app); the password goes to the command's standard input and is kept nowhere. Rich-text notes are shown as plain text and are read-only.
+- **Thanks:** BetterNotes is made by [thebanri](https://github.com/thebanri/BetterNotes). Thank you for the app and for its command-line interface, which is what this tab talks to.
+
+</details>
 
 ### AI
 
 *A box for quick questions.* Off until you switch it on.
 
-<!-- GIF: ai-question.gif | A question is typed on the AI page; three dots show that the answer is on its way; the answer appears as formatted text. Answered by a demo server with canned answers. | AI: a question and its answer (demo provider) -->
+<!-- GIF: ai-question.gif | A question is typed on the AI tab; three dots show that the answer is on its way; the answer appears as formatted text. Answered by a demo server with canned answers. | AI: a question and its answer (demo provider) -->
 
-- **What you see:** a field, the answer as it is written (Markdown, code in boxes with *Copy*), and on the pill three dots while it is on its way and "Answer ready" when you were elsewhere.
-- **How to use:** Settings → Layout: switch *AI* on. On the page connect what should answer, then type; Enter sends, Shift+Enter is a new line. *New chat* starts over; Escape gives the keyboard back.
+- **What you see:** a field, the answer as it is written (Markdown, code in boxes with *Copy*), and on the notch three dots while it is on its way and "Answer ready" when you were elsewhere.
+- **How to use:** Settings → Layout: switch *AI* on. On the tab connect what should answer, then type; Enter sends, Shift+Enter is a new line. *New chat* starts over; Escape gives the keyboard back.
+
+<details><summary>Sources, settings and limits</summary>
+
 - **What can answer:** Claude Code or Antigravity on this computer; a model server on this computer (Ollama, LM Studio, llama.cpp, Jan, KoboldCpp or any OpenAI-compatible address); a service with your own key (Anthropic, OpenAI, OpenRouter, Groq, Google Gemini or another OpenAI-compatible one).
 - **Settings:** Settings → AI: the sources and the default one, the longest answer and question, *Keep the chat in a file*, "Answer ready" on the island.
-- **Requirements and limits:** it is a question box, **not an agent**: nothing is given a tool or a file, and nothing of your clipboard, screen, notes or calendar is added. Keys are kept in KDE Wallet. A question to a service is sent to that service and may cost what that service charges. The chat is forgotten when the shell stops unless you choose to keep it.
+- **Limits:** it is a question box, **not an agent**: nothing is given a tool or a file, and nothing of your clipboard, screen, notes or calendar is added. Keys are kept in KDE Wallet. A question to a service is sent to that service and may cost what that service charges. The chat is forgotten when the shell stops unless you choose to keep it.
+
+</details>
 
 ### Cloud
 
 *Your clouds' folders by name, through rclone.* Off until you switch it on.
 
-<!-- GIF: cloud-browse.gif | The Cloud page lists a remote's folders; a folder is opened; a file is dragged out to the desktop; another is dropped in to upload. Shown with a made-up remote. | Cloud: browse, drag out, drop in (a made-up remote) -->
+<!-- GIF: cloud-browse.gif | The Cloud tab lists a remote's folders; a folder is opened; a file is dragged out to the desktop; another is dropped in to upload. Shown with a made-up remote. | Cloud: browse, drag out, drop in (a made-up remote) -->
 
 - **What you see:** each rclone remote with how full it is, its folders and files with size and date, a sync state where a client reports one (Syncthing, Dropbox), and a warning when a cloud is nearly full.
-- **How to use:** Settings → Layout: switch *Cloud* on. Click into folders; drag a file out to the desktop or a file manager; drop files on the page to upload (it asks first). *Download*, *Show in folder*, *Copy path* and *Upload…* do the same without dragging.
+- **How to use:** Settings → Layout: switch *Cloud* on. Click into folders; drag a file out to the desktop or a file manager; drop files on the tab to upload (it asks first). *Download*, *Show in folder*, *Copy path* and *Upload…* do the same without dragging.
+
+<details><summary>Settings and limits</summary>
+
 - **Settings:** Settings → Cloud: which remotes are shown and under which name, the thresholds (90 % and 98 %), alerts and their pause, the question before an upload, the cache and *Clear cache*.
-- **Requirements and limits:** needs `rclone` with at least one remote (`rclone config`); the page shows how to set it up when it is missing. The island only runs the `rclone` command: it can list, measure, copy from and copy to; it cannot delete, move, rename or sync. rclone's own configuration and tokens are never opened.
+- **Limits:** needs `rclone` with at least one remote (`rclone config`); the tab shows how to set it up when it is missing. The island only runs the `rclone` command: it can list, measure, copy from and copy to; it cannot delete, move, rename or sync. rclone's own configuration and tokens are never opened.
+
+</details>
 
 ### Clipboard
 
 *What was copied recently.*
 
-<!-- GIF: clipboard-history.gif | The Clipboard page lists made-up copied texts and a picture; a click copies one again; the search narrows the list. | Clipboard -->
+<!-- GIF: clipboard-history.gif | The Clipboard tab lists made-up copied texts and a picture; a click copies one again; the search narrows the list. | Clipboard -->
 
 - **What you see:** the history of Plasma's own clipboard (Klipper): texts, code, pictures, files.
 - **How to use:** a click copies an entry again; under the pointer: star, QR code, edit, Klipper's actions, remove. A search field and a starred-only filter.
 - **Limits:** how much is kept is Klipper's own setting; the island stores nothing of it.
 
-## Downloads and file transfers
+## The cat
 
-<!-- GIF: downloads-tracking.gif | A download started with curl from a local test server appears on the pill with its megabytes and a ring that fills, then "Finished" with its size and time. | Download tracking (a download from a local test server) -->
+A small cat stands beside the notch, on the panel. It changes nothing, keeps nothing and asks nothing of the network.
+
+| It… | When |
+|---|---|
+| falls asleep | after 20 s of the island showing nothing but the clock |
+| wakes up and looks | at an event: a notification, a call, a timer that runs out |
+| puts on headphones and nods | while music plays (see [the clip](#media) in Media) |
+| thinks along | while the AI answers: a bubble beside its head |
+| likes it | when stroked: the pointer back and forth over it |
+| is startled, or angry | at a click, at too many, or when woken; then it sulks (10 s) |
+
+<!-- GIF: cat-sleep.gif | The cat beside the notch curls up and sleeps; a notification arrives and it looks up. | The cat: asleep, and woken by a notification -->
+<p align="center"><img src="docs/media/cat-sleep.gif" alt="The cat beside the notch curls up and sleeps; a notification arrives and it looks up." width="800"><br><sub>The cat: asleep, and woken by a notification</sub></p>
+<!-- GIF: media-cat.gif | Music starts; the cat beside the notch puts on headphones and nods along. | The cat: headphones and nodding -->
+<p align="center"><img src="docs/media/media-cat.gif" alt="Music starts; the cat beside the notch puts on headphones and nods along." width="800"><br><sub>The cat: headphones and nodding</sub></p>
+<!-- GIF: cat-petting.gif | The pointer strokes the cat from side to side and hearts rise. | The cat: stroking -->
+<!-- GIF: cat-annoyed.gif | The sleeping cat is clicked; it gets annoyed and sulks. | The cat: woken up -->
+
+<details><summary>Settings, switching it off, less motion</summary>
+
+- **Settings → Cat:** *Show the cat beside the island* (switches it off), the side, size, coat (grey, orange, black, white, black and white, or a colour of your own), what it reacts to (music, the AI and questions, events), whether it may be stroked and clicked, *Never angry*, how long it sulks, when it falls asleep, asleep or hidden beside the dot. The page has buttons to try each reaction.
+- **In notch mode:** Settings → Notch → *Hide the cat in notch mode*.
+- **Less motion:** *Reduce motion: still poses, nothing nods or floats*. With the desktop's own animations switched off (System Settings) it stands still whatever is set.
+
+</details>
+
+## Passing events
+
+Things that happen show on the notch for as long as they last, or for a few seconds, and then it is back to what was there.
+
+### Screen recording and sharing
+
+<!-- GIF: recording-indicator.gif | A screen recording starts: the notch shows a blinking red dot, "Screen recording" and the time counting up; the recording stops and the notch goes back to the clock. A stand-in video stream was used. | Screen recording: the red dot and its time -->
+<p align="center"><img src="docs/media/recording-indicator.gif" alt="A screen recording starts: the notch shows a blinking red dot, &quot;Screen recording&quot; and the time counting up; the recording stops and the notch goes back to the clock. A stand-in video stream was used." width="800"><br><sub>Screen recording: the red dot and its time</sub></p>
+
+Whenever a program records or shares the screen through PipeWire, the notch shows a blinking red dot, "Screen recording" and how long it has run. The Activities tab names the program and switches to it. Needs the native module and `pw-dump`; Settings → Activities switches it off.
+
+### A notification arrives
+
+<!-- GIF: notifications-arrival.gif | A message arrives: the notch widens to show the app, the sender and the first line; a few seconds later a second one from another app; then the clock again. | Notifications on the notch -->
+<p align="center"><img src="docs/media/notifications-arrival.gif" alt="A message arrives: the notch widens to show the app, the sender and the first line; a few seconds later a second one from another app; then the clock again." width="800"><br><sub>Notifications on the notch</sub></p>
+
+The notch widens to show the app, title and first line for 4 s (Settings → General). A click runs its default action, a middle click dismisses it. The last three, with their time and *Clear all*, are on the [Notifications](#notifications) tab.
+
+### Downloads and file transfers
+
+<!-- GIF: downloads-tracking.gif | A download started with curl from a local test server appears on the notch with its megabytes and a ring that fills, then "Finished" with its size and time. | Download tracking (a download from a local test server) -->
+<p align="center"><img src="docs/media/downloads-tracking.gif" alt="A download started with curl from a local test server appears on the notch with its megabytes and a ring that fills, then &quot;Finished&quot; with its size and time." width="800"><br><sub>Download tracking (a download from a local test server)</sub></p>
 
 One kind of activity for everything that moves files: its name, "412 MB / 1.8 GB", per cent, speed, time left, and at the end a button to open the file or its folder.
 
@@ -359,35 +488,37 @@ One kind of activity for everything that moves files: its name, "412 MB / 1.8 GB
 
 **Settings → Download tracking:** the main switch, each source, background jobs, how long and how large something must be to be shown, the watched folders and commands. Commands are found by looking at the process list every three seconds; nothing is installed or wrapped. What was and was not tried with the real programs is in the [reference](docs/REFERENCE.md#file-transfers-what-can-and-cannot-be-tracked).
 
-## Suggestions
+### An incoming call
 
-<!-- GIF: suggestions-card.gif | A screen recording starts and the island asks whether to hide notifications, with Yes, Not now and Never suggest this; the settings page shows what was learned. | A suggestion and what it learned -->
+<!-- GIF: call-incoming.gif | The cat sleeps beside the notch; a call comes in: the notch widens with a green phone icon, the caller's name and number and a Mute button, and the cat wakes. Made-up caller. | An incoming call through KDE Connect (made-up caller) -->
+<p align="center"><img src="docs/media/call-incoming.gif" alt="The cat sleeps beside the notch; a call comes in: the notch widens with a green phone icon, the caller's name and number and a Mute button, and the cat wakes. Made-up caller." width="800"><br><sub>An incoming call through KDE Connect (made-up caller)</sub></p>
 
-At a few moments the island may ask one short question ("Hide notifications while the screen is recorded?") with three answers: yes, not now, never. From the answers it learns, per rule and per situation, whether to ask, to do it by itself (saying so, with an undo), or to stay quiet. Rules and counting only, on this computer: no network, no model.
+With KDE Connect and a paired phone, an incoming call widens the notch with the caller, the number and *Mute* (which silences the phone's ringtone); answered, it stays as a live activity with the call's time, and a missed call shows briefly. It opens even from the dot. KDE Connect sends no "call ended": the activity ends when its notification closes.
 
-The rules: Do Not Disturb before a calendar event, during a screen recording and in a Pomodoro focus round; pause media before a video meeting, when the microphone is used and when the headphones go away; power saving when the battery is low.
+### Privacy dots
 
-**Settings → Suggestions:** on/off (**off by default**: the island suggests nothing, and learns nothing, until you switch them on), the pause between two suggestions, every rule with its switch and what it has learned, and "forget".
+An orange dot beside the notch while a program uses the microphone, a green one for the camera, in every state; the Activities tab names the program. Needs the native module and `pw-dump`.
 
-## The cat
+### Suggestions
 
-<!-- GIF: cat-sleep.gif | The cat beside the pill curls up and sleeps; a notification arrives and it looks up. | The cat: asleep and awake -->
-<!-- GIF: cat-petting.gif | The pointer strokes the cat from side to side and hearts rise. | The cat: stroking -->
-<!-- GIF: cat-annoyed.gif | The sleeping cat is clicked; it gets annoyed and sulks. | The cat: woken up -->
+<!-- GIF: suggestions-card.gif | With suggestions switched on, a screen recording starts and the notch asks "The screen is being recorded. Hide notifications while it lasts?" with Yes, Always and No. A stand-in video stream was used. | A suggestion (switched on in the settings) -->
+<p align="center"><img src="docs/media/suggestions-card.gif" alt="With suggestions switched on, a screen recording starts and the notch asks &quot;The screen is being recorded. Hide notifications while it lasts?&quot; with Yes, Always and No. A stand-in video stream was used." width="800"><br><sub>A suggestion (switched on in the settings)</sub></p>
 
-A small cat sits beside the pill. It falls asleep when nothing happens (after 20 s), puts on headphones while music plays, thinks along while the AI answers, and looks up at events. Stroke it (move the pointer over it from side to side) and it likes that; click it while it sleeps and it does not. It changes nothing, keeps nothing and asks nothing of the network.
+**Off as it comes:** the island suggests nothing, and learns nothing, until you switch suggestions on in Settings → Suggestions. Then, at a few moments, it may ask one short question ("The screen is being recorded. Hide notifications while it lasts?") with *Yes*, *Always* and *No*, and behind "⋯" *Not now* and *Turn this rule off*. From the answers it learns, per rule and per situation, whether to ask, to do it by itself (saying so, with an undo), or to stay quiet. Rules and counting only, on this computer: no network, no model.
 
-**Settings → Cat:** show it or not, the side, size, coat (grey, orange, black, white, tuxedo or a colour of your own), what it reacts to, whether it may be stroked and clicked, never angry, how long it sulks, when it falls asleep, hidden or asleep beside the dot, and **Reduce motion** (it then stands still: no nodding, no fidgets). With the desktop's own animations switched off it is still as well.
+The rules: Do Not Disturb before a calendar event, during a screen recording and in a Pomodoro focus round; pause media before a video meeting, when the microphone is used and when the headphones go away; power saving when the battery is low. **Settings → Suggestions** also has the pause between two suggestions, every rule with its switch and what it has learned, and "forget".
 
 ## Appearance, themes and the store
 
-<!-- GIF: appearance-looks.gif | The same pill, with music playing, in four ready-made looks one after the other and back to the system's colours. | The same island in several looks -->
-<!-- GIF: appearance-themes.gif | In the settings a ready-made look is chosen, a gradient is tuned and the island changes at once; the look is exported as a file and added again. | Appearance: looks, a gradient, export and add -->
+<!-- GIF: notch-colours.gif | The notch turns opaque black, then back to its own gradient; then it changes through the Aurora, Ocean and Sunset looks and back to Symbiot Black. | The notch's colours and four ready-made looks -->
+<p align="center"><img src="docs/media/notch-colours.gif" alt="The notch turns opaque black, then back to its own gradient; then it changes through the Aurora, Ocean and Sunset looks and back to Symbiot Black." width="800"><br><sub>The notch's colours and four ready-made looks</sub></p>
+<!-- GIF: appearance-themes.gif | In the settings a ready-made look is chosen, a gradient is tuned and the notch changes at once; the look is exported as a file and added again. | Appearance: looks, a gradient, export and add -->
 
-**Settings → Appearance** has two modes.
+**Settings → Appearance** has two modes, and the notch takes its colours from them (Settings → Notch → Colour).
 
 - **Follow the system**: background, text and accent come from Plasma and change with it at once.
-- **Custom** (default: Symbiot Black): ready-made looks (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast and five gradients: Symbiot Black, Aurora, Sunset, Ocean, Midnight Blue) and fine tuning: opacity, blur, distance from the top, horizontal position, size (80–120 %), corner roundness, one colour or a gradient, the colours of controls and text, border, shadow. Every change shows on the island while the window is open. A look can be saved under a name.
+- **Custom** (as it comes: Symbiot Black): ready-made looks (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast and five gradients: Symbiot Black, Aurora, Sunset, Ocean, Midnight Blue) and fine tuning: opacity, blur, horizontal position, size (80–120 %), corner roundness, one colour or a gradient, the colours of controls and text. Every change shows on the island while the window is open. A look can be saved under a name.
+- **Shape:** *Notch (default)* or *Rounded island*. Only the rounded island uses the distance from the top and the look's own border and shadow; the notch has its border in Settings → Notch.
 
 **Theme files.** *Export Theme…* writes the look as one `*.islandtheme.json` file. *Add New…* takes one back, from a file or from the store. A theme is **data only**: at most 64 kB of JSON with known fields, no code, no QML, no pictures; anything else is refused, and a download whose checksum is not the catalog's is refused too. Themes you add are kept in `~/.local/share/dynamicisland/themes/`.
 
@@ -395,17 +526,19 @@ A small cat sits beside the pill. It falls asleep when nothing happens (after 20
 
 ## Layout and language
 
-<!-- GIF: layout-reorder.gif | In Settings → Layout a page is dragged to another place and one is switched off; the island's tabs follow. | Layout: ordering and hiding pages -->
-<!-- GIF: language-switch.gif | Settings → Language is switched from English to Türkçe; the island's texts change at once. | Language -->
+<!-- GIF: language-switch.gif | While a screen recording shows on the notch, the island's language is switched from English to Turkish: "Screen recording" becomes "Ekran kaydı"; then back to English. | Language: the notch's text changes at once -->
+<p align="center"><img src="docs/media/language-switch.gif" alt="While a screen recording shows on the notch, the island's language is switched from English to Turkish: &quot;Screen recording&quot; becomes &quot;Ekran kaydı&quot;; then back to English." width="800"><br><sub>Language: the notch's text changes at once</sub></p>
+<!-- GIF: layout-reorder.gif | In Settings → Layout a tab is dragged to another place and one is switched off; the island's tabs follow. | Layout: ordering and hiding tabs -->
 
-- **Settings → Layout → Tabs:** drag a page by its handle to move its tab; its switch shows or hides it. *Restore default order* puts them back. **Modules:** the parts inside a page that can be switched.
+- **Settings → Layout → Tabs:** drag a tab by its handle to move it; its switch shows or hides it. *Restore default order* puts them back. **Modules:** the parts inside a tab that can be switched.
 - **Settings → Language:** Automatic, Türkçe or English, for the island and its settings only, without restarting Plasma.
 
 ## For developers: push your own activity
 
 Any program can show an activity on the island over D-Bus (service, path and interface `org.phobby.DynamicIsland`, on the session bus).
 
-<!-- GIF: island-push.gif | An activity named "Backup" appears on the pill with a progress ring that fills, then a green "done". | An activity pushed with island-push -->
+<!-- GIF: island-push.gif | An activity named "Backup" appears on the notch with a progress ring that fills, then a green "done". | An activity pushed with island-push -->
+<p align="center"><img src="docs/media/island-push.gif" alt="An activity named &quot;Backup&quot; appears on the notch with a progress ring that fills, then a green &quot;done&quot;." width="800"><br><sub>An activity pushed with island-push</sub></p>
 
 ```bash
 island-push --id build --title "Build" --progress 40 --icon run-build
@@ -507,9 +640,9 @@ Three more things worth knowing:
 
 ## Known limits
 
-- **Only one setup was tested:** Plasma 6.6.6 on Wayland with an NVIDIA card, one monitor. X11, other compositors' versions, several monitors and a screen too narrow for the cat's side were not tried. On X11 the click region also clips what is drawn, so the shadow and the glow may be cut.
-- **The island sits on the screen** of the desktop or panel the widget was added to.
-- **Notifications appear twice**, Plasma's popup and the island's. The island can stay above full-screen windows.
+- **Only one setup was tested:** Plasma 6.6.6 on Wayland with an NVIDIA card, one monitor. X11, other compositors' versions, several monitors and a screen too narrow for the cat's side were not tried. On X11 the notch goes to the top edge, but whether it stays over the panel is the window manager's matter, and the click region also clips what is drawn, so the glow may be cut.
+- **The notch covers the panel under it**, and that part cannot be clicked; the island cannot see where a panel's widgets are (use *Widest*).
+- **Notifications appear twice**, Plasma's popup and the island's.
 - **Dragging onto the island:** only the visible island takes a drag; dragging a file between the island and another program was written the way Qt offers it but could not be tried between two programs.
 - **Download tracking:** tried with a Flatpak browser, `git clone`, `wget`, `curl`, `pip download`, `apt download` and a PackageKit download. `sudo apt update/install`, a Chromium browser, Firefox as a Snap and pausing inside the browser were not tried.
 - **Calendar:** links are polled; an existing event cannot be edited from the island; an event may be pinned up to 20 s late. A calendar link may send up to 10 MB and take up to 30 seconds; one that is larger or slower is not read (the island says so and keeps showing its last good copy).
@@ -541,5 +674,5 @@ It stands on the work of others; the full list with every licence is in [docs/CR
 - [ical.js](https://github.com/kewisch/ical.js) (MPL-2.0): reading calendar files.
 - [Open-Meteo](https://open-meteo.com): weather data, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - [Simple Icons](https://simpleicons.org) (CC0): the marks that label the Apple and Google calendar options and the Joplin and Simplenote sources. They are trademarks of their owners.
-- [BetterNotes](https://github.com/thebanri/BetterNotes) (MIT): its icon, and thanks for the command-line interface the Notes page talks to.
-- The music and covers in the clips above were made for this project by `tools/demo/make-media` and are free to use (CC0).
+- [BetterNotes](https://github.com/thebanri/BetterNotes) (MIT): its icon, and thanks for the command-line interface the Notes tab talks to.
+- The music and covers in the clips were made for this project by `tools/demo/make-media` and are free to use (CC0); every name, message and event in them is made up ([docs/CREDITS.md](docs/CREDITS.md#the-clips-in-the-readme)).

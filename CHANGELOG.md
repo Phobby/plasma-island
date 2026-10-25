@@ -3,7 +3,14 @@
 ## Unreleased
 
 ### Added
-- **Notch mode** (Settings → Notch, off by default). The island welded to
+- **The notch is the island's shape as it comes**, with the **Symbiot Black**
+  gradient (charcoal to near black) and a thin slate border. The border has
+  its own settings (Settings → Notch: on/off, 1–8 px, colour, opacity) and is
+  drawn along the sides and lower corners only. Settings → Appearance →
+  Shape switches between *Notch (default)* and *Rounded island*. Settings
+  left at their old defaults take the new ones: an island updated as it came
+  becomes the Symbiot Black notch.
+- **Notch mode** (Settings → Notch). The island welded to
   the top edge of the screen like a laptop's notch: square where it meets
   the edge, only its lower corners rounded, opaque black or the island's
   own colours, as high as the top panel and always over it, also when that
