@@ -35,7 +35,7 @@ const MAX_INDEX_BYTES = 256 * 1024;
 
 const PRESETS = ["symbiot", "oxygen", "breezeDark", "breezeLight", "glass", "contrast", "aurora", "sunset", "ocean", "midnight"];
 // field: [lowest, highest], whole numbers
-const NUMBERS = { opacity: [0, 100], blurLevel: [0, 2], top: [0, 40], offsetX: [-100, 100], scale: [80, 120], radius: [0, 100],
+const NUMBERS = { opacity: [0, 100], blurLevel: [0, 2], top: [0, 40], offsetX: [-100, 100], scale: [80, 240], radius: [0, 100],
                   borderWidth: [1, 4], shadow: [0, 2], gradientAngle: [0, 360] };
 const BOOLEANS = ["blur", "border", "strong"];
 const CHOICES = { preset: PRESETS, material: ["metal", "flat", "glass"], fill: ["solid", "gradient"], gradientType: ["linear", "radial"] };

@@ -242,8 +242,11 @@ Item {
     // rendering scales cleanly. So while the size is not 100% every text item
     // is switched over, and back at 100%. Items come and go (pages, lists), hence
     // the walk repeats while the island shows more than the clock; never at 100%.
+    // Qt's rendering keeps a glyph's picture at about its own size: well past it (a large size
+    // setting) the text goes soft, and the glyphs are drawn as curves instead, sharp at any size.
     Text { textFormat: Text.PlainText; id: textProbe; visible: false }
     readonly property bool scaled: theme.scale !== 1
+    readonly property int scaledType: theme.scale > 1.3 && Text.CurveRendering !== undefined ? Text.CurveRendering : Text.QtRendering
     property bool retyped: false
     function retype(item: Item, type: int): void {
         if (item.renderType !== undefined && item.renderType !== type) item.renderType = type;
@@ -252,10 +255,11 @@ Item {
     }
     function retypeAll(): void {
         if (!scaled && !retyped) return;
-        retype(island, scaled ? Text.QtRendering : textProbe.renderType);
+        retype(island, scaled ? scaledType : textProbe.renderType);
         retyped = scaled;
     }
     onScaledChanged: retypeAll()
+    onScaledTypeChanged: retypeAll()
     onModeChanged: if (scaled) Qt.callLater(retypeAll)
     Component.onCompleted: retypeAll()
     Timer {

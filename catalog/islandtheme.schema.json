@@ -34,7 +34,7 @@
         "blurLevel": { "description": "Frosting over the blurred background: 0 low, 1 medium, 2 high.", "type": "integer", "minimum": 0, "maximum": 2 },
         "top": { "description": "Distance from the top of the screen, px.", "type": "integer", "minimum": 0, "maximum": 40 },
         "offsetX": { "description": "Horizontal position from the centre, px.", "type": "integer", "minimum": -100, "maximum": 100 },
-        "scale": { "description": "Size of the whole island, percent.", "type": "integer", "minimum": 80, "maximum": 120 },
+        "scale": { "description": "Size of the whole island, percent (kept within the screen).", "type": "integer", "minimum": 80, "maximum": 240 },
         "radius": { "description": "Corner roundness, percent of a full capsule.", "type": "integer", "minimum": 0, "maximum": 100 },
         "fill": { "description": "What the background is: one colour (`background`) or a gradient (`gradient*`).", "enum": ["solid", "gradient"] },
         "background": { "description": "The solid background: a colour, or \"accent\" for the system's accent colour.", "anyOf": [{ "$ref": "#/$defs/color" }, { "const": "accent" }] },

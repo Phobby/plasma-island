@@ -19,6 +19,9 @@ pragma Singleton
 import QtQuick
 
 QtObject {
+    // The size setting's range, percent (the whole island is scaled: main.qml; Theme.qml keeps it on the screen).
+    readonly property int scaleMin: 80
+    readonly property int scaleMax: 240
     readonly property var order: ["symbiot", "oxygen", "breezeDark", "breezeLight", "glass", "contrast", "aurora", "sunset", "ocean", "midnight"]
     readonly property var presets: ({
         symbiot: { material: "flat", strong: false, opacity: 100, blur: false, blurLevel: 0, top: 6, offsetX: 0, scale: 100, radius: 100,
@@ -65,7 +68,7 @@ QtObject {
         try { g = JSON.parse(json || ""); } catch (e) {}
         if (!g || typeof g !== "object" || Array.isArray(g)) return out;
         const num = (key, min, max) => { const v = Number(g[key]); if (g[key] !== undefined && g[key] !== null && isFinite(v)) out[key] = Math.max(min, Math.min(max, Math.round(v))); };
-        num("opacity", -1, 100); num("blurLevel", 0, 2); num("scale", 80, 120); num("radius", 0, 100); num("borderWidth", 1, 4); num("shadow", 0, 2);
+        num("opacity", -1, 100); num("blurLevel", 0, 2); num("scale", scaleMin, scaleMax); num("radius", 0, 100); num("borderWidth", 1, 4); num("shadow", 0, 2);
         for (const key of ["blur", "border"]) if (typeof g[key] === "boolean") out[key] = g[key];
         return out;
     }
@@ -94,7 +97,7 @@ QtObject {
         const out = defaults(String(g.preset || "oxygen"));
         const num = (key, min, max) => { const v = Number(g[key]); if (g[key] !== undefined && isFinite(v)) out[key] = Math.max(min, Math.min(max, Math.round(v))); };
         num("opacity", 0, 100); num("blurLevel", 0, 2); num("top", 0, 40); num("offsetX", -100, 100);
-        num("scale", 80, 120); num("radius", 0, 100); num("borderWidth", 1, 4); num("shadow", 0, 2); num("gradientAngle", 0, 360);
+        num("scale", scaleMin, scaleMax); num("radius", 0, 100); num("borderWidth", 1, 4); num("shadow", 0, 2); num("gradientAngle", 0, 360);
         for (const key of ["blur", "border", "strong"]) if (typeof g[key] === "boolean") out[key] = g[key];
         if (g.material === "metal" || g.material === "flat" || g.material === "glass") out.material = g.material;
         if (isColor(g.background) || g.background === "accent") out.background = g.background;

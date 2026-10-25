@@ -73,12 +73,29 @@ Item {
             compare(page.tuning, Styles.followDefaults());
             compare([page.look.scale, page.look.radius, page.look.shadow, page.look.border, page.look.blur], [100, 100, 1, true, true]);
             for (const name of ["opacitySlider", "sizeSlider", "radiusSlider"]) verify(find(page, name).enabled, name);
+            // the slider's range is the setting's: nothing of it is cut when stored or read back
+            const size = find(page, "sizeSlider");
+            compare([size.from, size.to, size.stepSize], [Styles.scaleMin, Styles.scaleMax, 5]);
+            for (let v = Styles.scaleMin; v <= Styles.scaleMax; v += 5) {
+                size.moved(v);
+                compare([page.look.scale, Styles.parseFollow(page.cfg_followStyle).scale], [v, v], "kept at " + v);
+            }
+            compare(Styles.normalize({ preset: "symbiot", scale: Styles.scaleMax }).scale, Styles.scaleMax);
+            compare(Styles.normalize({ preset: "symbiot", scale: 999 }).scale, Styles.scaleMax);
+            compare(Styles.normalize({ preset: "symbiot", scale: 10 }).scale, Styles.scaleMin);
+            // past what the screen has room for (the widget says how much that is) the page says so
+            const limit = find(page, "screenLimitMessage");
+            page.cfg_scaleLimitSeen = 150;
+            size.moved(160); verify(limit.visible, "said past the screen's limit");
+            size.moved(150); verify(!limit.visible, "not up to it");
+            page.cfg_scaleLimitSeen = 0;
+            size.moved(Styles.scaleMax); verify(!limit.visible, "not where the screen has room for all");
             find(page, "sizeSlider").moved(112.3);
             find(page, "radiusSlider").moved(40);
             find(page, "opacitySlider").moved(55);
             page.put("shadow", 2); page.put("border", false); page.put("blur", false);
-            compare(JSON.parse(page.cfg_followStyle), { opacity: 55, blur: false, blurLevel: 1, scale: 112, radius: 40, border: false, borderWidth: 1, shadow: 2 });
-            compare([page.look.scale, page.look.opacity], [112, 55]);
+            compare(JSON.parse(page.cfg_followStyle), { opacity: 55, blur: false, blurLevel: 1, scale: 110, radius: 40, border: false, borderWidth: 1, shadow: 2 });
+            compare([page.look.scale, page.look.opacity], [110, 55]);
             compare(page.style, Styles.defaults("oxygen"), "the custom style is left alone");
             // a colour is not set in this look
             page.put("background", "#ff0000");
@@ -87,7 +104,7 @@ Item {
             page.cfg_appearanceMode = 1;
             compare([page.look.scale, page.look.opacity], [100, 82]);
             page.put("scale", 90);
-            compare([page.style.scale, JSON.parse(page.cfg_followStyle).scale], [90, 112]);
+            compare([page.style.scale, JSON.parse(page.cfg_followStyle).scale], [90, 110]);
             page.cfg_appearanceMode = 0; page.cfg_followStyle = "";
         }
 

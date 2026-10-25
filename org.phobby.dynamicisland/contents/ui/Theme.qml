@@ -75,7 +75,20 @@ QtObject {
     readonly property bool dark: luminance(base) < 0.179     // white reads better on it than black
     readonly property bool blurWanted: notchFlat ? false : follow ? systemStyle.blur : style.blur
     readonly property int blurLevel: follow ? systemStyle.blurLevel : style.blurLevel
-    readonly property real scale: follow ? systemStyle.scale / 100 : style.scale / 100
+    // The size setting, and as much of it as the island's screen has room for: the open island at
+    // its widest and tallest (a page that asks for the room) stays on it. screenWidth/Height are
+    // that screen's, in the same logical pixels as everything here (HiDPI too); 0 = not known.
+    readonly property real requestedScale: follow ? systemStyle.scale / 100 : style.scale / 100
+    property real screenWidth: 0
+    property real screenHeight: 0
+    // (never under 100 %: what was shown before there was a limit stays as it was, on any screen)
+    readonly property real scaleLimit: screenWidth > 0 && screenHeight > 0
+        ? Math.max(1, Math.min((screenWidth - 2 * screenMargin) / (wideWidth + 2 * windowSidePad),
+                               (screenHeight - topOffset - screenMargin) / (tallHeight + windowTopPad + windowBottomPad)))
+        : Infinity
+    readonly property real screenMargin: 16
+    readonly property bool scaleLimited: requestedScale > scaleLimit + 0.001
+    readonly property real scale: Math.min(requestedScale, scaleLimit)
     readonly property real roundness: follow ? systemStyle.radius / 100 : style.radius / 100
     readonly property int topOffset: follow ? systemTop : style.top
     readonly property int offsetX: follow ? systemOffsetX : style.offsetX

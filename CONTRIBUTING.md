@@ -59,7 +59,7 @@ Schema, so an editor can check the file while you write it). In short:
 | `style.gradientStops` | two or three `"#rrggbb"` colours |
 | `style.gradientType` | `linear` or `radial`; `gradientAngle` is 0–360 (as in CSS: 0 upwards, 90 to the right) |
 | `style.text`, `style.borderColor` | `"#rrggbb"`, or `""` for automatic |
-| `style.opacity` 0–100, `radius` 0–100, `scale` 80–120, `top` 0–40, `offsetX` −100…100, `blurLevel` 0–2, `borderWidth` 1–4, `shadow` 0–2 | whole numbers |
+| `style.opacity` 0–100, `radius` 0–100, `scale` 80–240, `top` 0–40, `offsetX` −100…100, `blurLevel` 0–2, `borderWidth` 1–4, `shadow` 0–2 | whole numbers |
 | `style.blur`, `style.border`, `style.strong` | `true` or `false` |
 
 A field that is left out takes the value of the preset. A field the island

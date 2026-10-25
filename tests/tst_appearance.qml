@@ -58,7 +58,7 @@ Item {
             compare(Styles.parseFollow("nonsense"), Styles.followDefaults());
             compare(Styles.parseFollow("[1]"), Styles.followDefaults());
             const odd = Styles.parseFollow(JSON.stringify({ scale: 500, radius: -3, shadow: "x", blur: "yes", opacity: -20 }));
-            compare([odd.scale, odd.radius, odd.shadow, odd.blur, odd.opacity], [120, 0, 1, true, -1]);
+            compare([odd.scale, odd.radius, odd.shadow, odd.blur, odd.opacity], [Styles.scaleMax, 0, 1, true, -1]);
             t.destroy();
         }
 

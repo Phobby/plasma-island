@@ -40,6 +40,8 @@ KCM.SimpleKCM {
     // In notch mode the island sits at the top edge itself: the distance from it does not apply.
     property bool cfg_notchMode
     property int cfg_horizontalOffset
+    // Written by the widget: the largest size its screen has room for (0 = the whole range).
+    property int cfg_scaleLimitSeen
     // And what else is set by hand in that look: opacity, blur, size, roundness, border, shadow (Styles.parseFollow).
     property string cfg_followStyle
     readonly property var tuning: Styles.parseFollow(cfg_followStyle)
@@ -306,6 +308,8 @@ KCM.SimpleKCM {
         property alias stepSize: slider.stepSize
         property real value
         property string valueText
+        // (the value's room is as wide as its widest text: the row does not move while it changes)
+        property string widestText: ""
         signal moved(real value)
         QQC2.Slider {
             id: slider
@@ -313,7 +317,13 @@ KCM.SimpleKCM {
             onMoved: row.moved(value)
             Binding { target: slider; property: "value"; value: row.value; when: !slider.pressed }
         }
-        QQC2.Label { textFormat: Text.PlainText; text: row.valueText; font.features: { "tnum": 1 } }
+        QQC2.Label {
+            textFormat: Text.PlainText
+            text: row.valueText
+            font.features: { "tnum": 1 }
+            Layout.minimumWidth: widest.advanceWidth
+            TextMetrics { id: widest; font.features: { "tnum": 1 }; text: row.widestText }
+        }
     }
 
     Kirigami.FormLayout {
@@ -553,12 +563,28 @@ KCM.SimpleKCM {
             onMoved: value => page.put("offsetX", Math.abs(value) < 4 ? 0 : Math.round(value))
         }
         ValueSlider {
+            id: sizeSlider
             objectName: "sizeSlider"
             Kirigami.FormData.label: Lang.i18n("Size:")
-            from: 80; to: 120
+            from: Styles.scaleMin; to: Styles.scaleMax
+            stepSize: 5
             value: page.look.scale
             valueText: Lang.percent(page.look.scale)
-            onMoved: value => page.put("scale", Math.round(value))
+            widestText: Lang.percent(Styles.scaleMax)
+            // (in steps of 5; the island's own size, 100 %, is one of them)
+            onMoved: value => page.put("scale", Math.round(value / 5) * 5)
+        }
+        Hint {
+            text: Lang.i18n("%1 to %2. The island grows as a whole: the small notch or pill, the open island and its pages, the cat. This window stays as it is.",
+                            Lang.percent(Styles.scaleMin), Lang.percent(Styles.scaleMax))
+        }
+        Kirigami.InlineMessage {
+            objectName: "screenLimitMessage"
+            Layout.fillWidth: true
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+            visible: page.cfg_scaleLimitSeen > 0 && page.look.scale > page.cfg_scaleLimitSeen
+            type: Kirigami.MessageType.Information
+            text: Lang.i18n("Screen limit reached: the open island fits this screen up to %1, so it is shown at that size.", Lang.percent(page.cfg_scaleLimitSeen))
         }
         ValueSlider {
             objectName: "radiusSlider"

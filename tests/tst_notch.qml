@@ -297,7 +297,7 @@ Item {
             for (const panel of [0, 32]) {
                 islandTheme.notchPixels = panel;
                 let last = null;
-                for (let size = 80; size <= 120; size += 2) {
+                for (let size = Styles.scaleMin; size <= Styles.scaleMax; size += 5) {
                     islandTheme.style = Styles.normalize(Object.assign(Styles.defaults("symbiot"), { scale: size }));
                     compare(islandTheme.scale, size / 100, "the setting is not cut at " + size);
                     settled();
@@ -320,6 +320,37 @@ Item {
                 verify(last.height > (panel > 0 ? panel : Math.round(islandTheme.gu * 2)), "taller at the top of the range");
             }
             islandTheme.notchPixels = 0;
+            islandTheme.style = Styles.defaults("oxygen");
+        }
+
+        // On a screen it is kept within the screen: the size grows up to what the open island at its
+        // widest and tallest has room for, then stays; the settings are told (scaleLimited).
+        function test_size_is_kept_within_the_screen() {
+            const screens = [[1920, 1080], [1366, 768], [1280, 800], [3840, 2160], [2560, 1440], [683, 384]];
+            for (const [w, h] of screens) {
+                islandTheme.screenWidth = w; islandTheme.screenHeight = h;
+                let last = 0;
+                for (let size = Styles.scaleMin; size <= Styles.scaleMax; size += 5) {
+                    islandTheme.style = Styles.normalize(Object.assign(Styles.defaults("symbiot"), { scale: size }));
+                    const k = islandTheme.scale;
+                    verify(k >= last, "never smaller on " + w + "x" + h + " at " + size);
+                    verify(k <= size / 100 + 1e-9, "never larger than asked");
+                    // the widest and the tallest the window gets, at that size, on the screen (from 100 % up:
+                    // up to 100 % it is never cut, as before there was a limit)
+                    if (size <= 100) compare(k, size / 100, "not cut up to 100 % on " + w + "x" + h);
+                    else if (k > 1) {
+                        verify((islandTheme.wideWidth + 2 * islandTheme.windowSidePad) * k <= w, "fits across " + w + " at " + size);
+                        verify((islandTheme.tallHeight + islandTheme.windowTopPad + islandTheme.windowBottomPad) * k <= h, "fits down " + h + " at " + size);
+                    }
+                    compare(islandTheme.scaleLimited, k < size / 100 - 0.001, "said when cut at " + size);
+                    last = k;
+                }
+            }
+            // a large screen has room for all of it
+            islandTheme.screenWidth = 3840; islandTheme.screenHeight = 2160;
+            islandTheme.style = Styles.normalize(Object.assign(Styles.defaults("symbiot"), { scale: Styles.scaleMax }));
+            compare([islandTheme.scale, islandTheme.scaleLimited], [Styles.scaleMax / 100, false]);
+            islandTheme.screenWidth = 0; islandTheme.screenHeight = 0;
             islandTheme.style = Styles.defaults("oxygen");
         }
 

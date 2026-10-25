@@ -292,7 +292,7 @@ style's.)
 | Blur | On/off and a level. KWin blurs with one strength for the whole desktop (System Settings → Desktop Effects → Blur), so the level adds frosting over the blurred background |
 | Distance from top | 0–40 px. Also set while following the system: that look has a distance of its own (the one in General, up to 200 px) |
 | Horizontal position | −100…+100 px from the centre. Also set while following the system, which has a position of its own |
-| Size | 80–120 %: the whole island is scaled, text stays sharp |
+| Size | 80–240 %: the whole island is scaled, the open island and its pages too, text stays sharp; kept within the screen (the settings say when the screen's edge was reached) |
 | Corner roundness | From sharp corners to a full capsule |
 | Background | One colour (or the system's accent colour), or a gradient: two or three colours, linear at any angle (0–360°, as in CSS: 0° runs upwards, 90° to the right) or radial from the middle. Opacity and blur apply to it as to a solid colour |
 | Colours | Buttons and controls (or the accent colour; kept visible on the background), text (automatic by contrast, or your own). On a gradient the automatic text colour is chosen against the gradient's average brightness, and everything that is kept readable is kept readable against that average; a gradient with both very light and very dark parts (under 3:1 somewhere for the text) gets a warning |

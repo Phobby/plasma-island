@@ -81,11 +81,18 @@ PlasmoidItem {
         notchBorderColor: root.cfg.notchBorderColor
         notchBorderOpacity: root.cfg.notchBorderOpacity
         notchPixels: root.notchPixels
+        // (the size is kept within the screen the island is on)
+        screenWidth: root.notchWanted ? root.notchScreen.width : root.screenRect.width
+        screenHeight: root.notchWanted ? root.notchScreen.height : root.screenRect.height
     }
+    // For the settings page: the largest size the screen has room for, percent (0 = all of the range).
+    readonly property int scaleLimitSeen: theme.scaleLimit * 100 >= Styles.scaleMax ? 0 : Math.floor(theme.scaleLimit * 100)
+    onScaleLimitSeenChanged: if (root.cfg.scaleLimitSeen !== scaleLimitSeen) root.cfg.scaleLimitSeen = scaleLimitSeen
     // No settings window can be open when the shell starts: a preview left behind
     // (the shell was stopped while one was open) ends here.
     Component.onCompleted: {
         if (root.cfg.previewActive) root.cfg.previewActive = false;
+        if (root.cfg.scaleLimitSeen !== root.scaleLimitSeen) root.cfg.scaleLimitSeen = root.scaleLimitSeen;
         Islands.join(root);
     }
     Component.onDestruction: Islands.leave(root)

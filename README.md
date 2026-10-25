@@ -394,7 +394,7 @@ A small cat sits beside the pill. It falls asleep when nothing happens (after 20
 **Settings → Appearance** has two modes.
 
 - **Follow the system**: background, text and accent come from Plasma and change with it at once.
-- **Custom** (default: Symbiot Black): ready-made looks (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast and five gradients: Symbiot Black, Aurora, Sunset, Ocean, Midnight Blue) and fine tuning: opacity, blur, distance from the top, horizontal position, size (80–120 %), corner roundness, one colour or a gradient, the colours of controls and text, border, shadow. Every change shows on the island while the window is open. A look can be saved under a name.
+- **Custom** (default: Symbiot Black): ready-made looks (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast and five gradients: Symbiot Black, Aurora, Sunset, Ocean, Midnight Blue) and fine tuning: opacity, blur, distance from the top, horizontal position, size (80–240 %), corner roundness, one colour or a gradient, the colours of controls and text, border, shadow. Every change shows on the island while the window is open. A look can be saved under a name.
 
 **Theme files.** *Export Theme…* writes the look as one `*.islandtheme.json` file. *Add New…* takes one back, from a file or from the store. A theme is **data only**: at most 64 kB of JSON with known fields, no code, no QML, no pictures; anything else is refused, and a download whose checksum is not the catalog's is refused too. Themes you add are kept in `~/.local/share/dynamicisland/themes/`.
 

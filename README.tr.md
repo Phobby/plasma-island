@@ -396,7 +396,7 @@ Hapın yanında küçük bir kedi oturur. Hiçbir şey olmayınca uykuya dalar (
 **Ayarlar → Görünüm** iki kip sunar.
 
 - **Sistemi takip et**: arka plan, metin ve vurgu Plasma'dan gelir ve onunla birlikte anında değişir.
-- **Özel** (varsayılan: Symbiot Siyahı): hazır temalar (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast ve beş gradyan: Symbiot Siyahı, Aurora, Sunset, Ocean, Midnight Blue) ve ince ayar: opaklık, bulanıklık, üstten uzaklık, yatay konum, boyut (%80–120), köşe yuvarlaklığı, tek renk ya da gradyan, denetimlerin ve metnin renkleri, kenarlık, gölge. Pencere açıkken her değişiklik adada anında görünür. Bir görünüm bir adla kaydedilebilir.
+- **Özel** (varsayılan: Symbiot Siyahı): hazır temalar (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast ve beş gradyan: Symbiot Siyahı, Aurora, Sunset, Ocean, Midnight Blue) ve ince ayar: opaklık, bulanıklık, üstten uzaklık, yatay konum, boyut (%80–240), köşe yuvarlaklığı, tek renk ya da gradyan, denetimlerin ve metnin renkleri, kenarlık, gölge. Pencere açıkken her değişiklik adada anında görünür. Bir görünüm bir adla kaydedilebilir.
 
 **Tema dosyaları.** *Temayı Dışa Aktar…* görünümü tek bir `*.islandtheme.json` dosyası olarak yazar. *Yeni Ekle…* bir dosyadan ya da mağazadan geri alır. Bir tema **yalnızca veridir**: bilinen alanlardan oluşan en fazla 64 kB JSON; kod yok, QML yok, resim yok. Başka her şey reddedilir; sağlama toplamı katalogdakiyle uyuşmayan bir indirme de reddedilir. Eklediğiniz temalar `~/.local/share/dynamicisland/themes/` altında tutulur.
 

@@ -1288,6 +1288,8 @@ var table = {
     "Reduce motion: still poses, nothing nods or floats": "Hareketi azalt: sabit pozlar; kafa sallama ve süzülen işaretler yok",
     "The desktop's animations are switched off (System Settings): the cat stands still whatever is set here.": "Masaüstü animasyonları kapalı (Sistem Ayarları): burada ne seçilirse seçilsin kedi sabit durur.",
     "Notch": "Çentik",
+    "%1 to %2. The island grows as a whole: the small notch or pill, the open island and its pages, the cat. This window stays as it is.": "%1 ile %2 arası. Ada bir bütün olarak büyür: küçük çentik ya da hap, açık ada ve sayfaları, kedi. Bu pencere olduğu gibi kalır.",
+    "Screen limit reached: the open island fits this screen up to %1, so it is shown at that size.": "Ekran sınırına ulaşıldı: açık ada bu ekrana en çok %1 boyutunda sığıyor, o boyutta gösteriliyor.",
     "Not in notch mode: the island sits at the top edge itself (Notch).": "Çentik modunda geçerli değil: ada doğrudan üst kenarda durur (Çentik).",
     "Notch mode:": "Çentik modu:",
     "Weld the island to the top edge of the screen": "Adayı ekranın üst kenarına yapıştır",
