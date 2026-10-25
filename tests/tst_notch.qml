@@ -138,7 +138,29 @@ Item {
             island.maxWidth = 20;
             settled();
             fuzzyCompare(island.surfaceRect.width + islandTheme.splitGap + islandTheme.bubbleSize, 2 * islandTheme.pillHeight, 0.01);
-            // the limit is the notch's: the island without it is as wide as ever
+            // set wider than what it shows, it is that wide: over the whole range it never gets narrower,
+            // and its window keeps room for it (nothing of it is cut)
+            timer.active = false;
+            tryCompare(island, "mode", "live");
+            let last = 0;
+            for (let w = 80; w <= 1200; w += 40) {
+                island.maxWidth = w;
+                settled();
+                const shown = island.surfaceRect.width;
+                verify(shown >= last, "wider or as wide at " + w + ": " + shown + " < " + last);
+                compare(shown, Math.max(2 * islandTheme.pillHeight, w), "as wide as set at " + w);
+                verify(island.smallHalfWidth * 2 >= shown + 2 * islandTheme.privacyAreaWidth - 0.5, "its window has room at " + w);
+                last = shown;
+            }
+            verify(last > free, "wider than what it shows");
+            // never wider than its screen
+            islandTheme.screenWidth = 1000; islandTheme.screenHeight = 800;
+            settled();
+            verify(island.surfaceRect.width <= 1000 - 2 * islandTheme.screenMargin - 2 * islandTheme.windowSidePad, "kept on the screen");
+            islandTheme.screenWidth = 0; islandTheme.screenHeight = 0;
+            // the width is the notch's: the island without it is as wide as ever
+            timer.active = true;
+            tryCompare(island, "mode", "split");
             island.maxWidth = 150;
             timer.active = false;
             settled();

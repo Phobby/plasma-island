@@ -416,8 +416,15 @@ Item {
             compare(page.cfg_notchMaxWidth, 120);
             compare(outline.width, 120);
             slider.value = 50; slider.moved();
-            compare(page.cfg_notchMaxWidth, 0, "below 80 px: no limit");
+            compare(page.cfg_notchMaxWidth, 0, "below 80 px: as wide as what it shows");
             compare(outline.width, free);
+            // up to twice the old end of the range, and wider than what it shows
+            compare(slider.to, 1200);
+            slider.value = 900; slider.moved();
+            compare([page.cfg_notchMaxWidth, outline.width], [900, 900]);
+            slider.value = 1200; slider.moved();
+            compare(page.cfg_notchMaxWidth, 1200);
+            page.cfg_notchMaxWidth = 0;
             page.cfg_notchBorderEnabled = true;
             page.cfg_notchBorderWidth = 5;
             page.cfg_notchBorderColor = "#abcdef";

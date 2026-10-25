@@ -932,9 +932,10 @@ PlasmoidItem {
     // The island is laid out at its designed size and scaled as a whole (the size
     // setting); the window and the blur region are that much larger or smaller.
     // (with a companion beside it the window keeps room for it on both sides, so the island stays in the middle)
-    readonly property real windowWidth: (island.needsWideWindow ? theme.wideWidth
-                                         : island.needsLargeWindow ? Math.max(theme.expandedWidth, theme.notificationWidth, theme.eventWidth)
-                                         : 2 * theme.smallHalfWidth) + 2 * theme.windowSidePad + 2 * companion.reserve
+    // (a notch set wider than the open island keeps its room while it morphs to and from it)
+    readonly property real windowWidth: (island.needsWideWindow ? Math.max(theme.wideWidth, 2 * island.smallHalfWidth)
+                                         : island.needsLargeWindow ? Math.max(theme.expandedWidth, theme.notificationWidth, theme.eventWidth, 2 * island.smallHalfWidth)
+                                         : 2 * island.smallHalfWidth) + 2 * theme.windowSidePad + 2 * companion.reserve
     readonly property real windowHeight: (island.needsTallWindow ? theme.tallHeight
                                           : island.needsLargeWindow ? Math.max(theme.expandedHeight, theme.notificationHeight)
                                           : theme.pillHeight) + theme.windowTopPad + theme.windowBottomPad + root.slideRoom / theme.scale

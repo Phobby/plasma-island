@@ -134,9 +134,12 @@ of its own, the glow of the cover comes from its lower edge.
   it the panel takes its clicks as before. The notch takes the pointer on
   its own outline, the topmost row of pixels too (push the pointer against
   the edge to open it). Where a panel's widgets are cannot be read, so if a
-  clock or task buttons sit in the middle of the panel, limit the notch with
-  *Widest* (the small notch and the split island; notifications and the open
+  clock or task buttons sit in the middle of the panel, narrow the notch with
+  *Width* (the small notch and the split island; notifications and the open
   island are wider for as long as they show).
+- **Width:** *Automatic* (as wide as what it shows) or set by hand, 80–1200 px
+  at 100 % size, narrower or wider than what it shows; the size setting scales
+  it, and it is kept within its screen.
 - **The cat** stands beside the notch, on the panel, a little away from its
   side (and its curves at the edge), at the size set in Settings → Cat (as
   high as the panel or less it stands on the panel's lower edge, larger it

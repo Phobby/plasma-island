@@ -20,7 +20,7 @@ Yeni kurulumlarda varsayılan görünüm **Symbiot Siyahı gradyanlı çentik**:
 - **Ayarlar → Görünüm:** **Symbiot Siyahı** veya başka bir hazır görünüm seçin, gradyanı düzenleyin ve görünümünüzü kaydedin.
 - **Yuvarlak sürümü mü tercih ediyorsunuz?** **Ayarlar → Görünüm → Düzen → Oval düzen** seçin. İstediğiniz zaman **Çentik** seçeneğine dönebilirsiniz. Bu sürümden önce çalışmış bir ada, sahip olduğu düzeni korur (çentik açılmamışsa oval düzen) ve çentiğin geldiğini bir kez söyler.
 
-Mevcut kayıtlı tercihler korunur. Çentik altındaki paneli örter; panel öğelerine yer bırakmak için Ayarlar → Görünüm → Düzen: Çentik altındaki **En geniş** ayarını kullanın.
+Mevcut kayıtlı tercihler korunur. Çentik altındaki paneli örter; panel öğelerine yer bırakmak için Ayarlar → Görünüm → Düzen: Çentik altındaki **Genişlik** ayarını kullanın; daha geniş de olabilir (1200 px'e kadar).
 
 
 Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarlar → Dil).

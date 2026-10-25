@@ -148,14 +148,20 @@ Item {
                                  : primary ? "live"
                                  : "idle"
 
-    // The notch's widest while it is small (Appearance → Layout: Notch, so that it leaves a panel's widgets free); 0 = no limit.
+    // The notch's width while it is small, set by hand (Appearance → Layout: Notch; px at 100 % size):
+    // narrower, to leave a panel's widgets free, or wider; 0 = as wide as what it shows. Never
+    // narrower than two of its heights, never wider than its screen.
     property real maxWidth: 0
-    function limited(width: real): real { return notch && maxWidth > 0 ? Math.max(2 * theme.pillHeight, Math.min(width, maxWidth)) : width; }
+    readonly property real screenRoom: theme.screenWidth > 0 ? (theme.screenWidth - 2 * theme.screenMargin) / theme.scale - 2 * theme.windowSidePad : Infinity
+    function limited(width: real): real { return notch && maxWidth > 0 ? Math.max(2 * theme.pillHeight, Math.min(maxWidth, screenRoom)) : width; }
     readonly property real pillWidth: limited(theme.pillWidth)
     readonly property real liveWidth: limited(primary && primary.compactWidth > 0 ? primary.compactWidth : theme.liveWidth)
     // (the split island's pill and bubble together)
     readonly property real splitMainWidth: notch && maxWidth > 0 ? limited(theme.splitMainWidth + theme.splitGap + theme.bubbleSize) - theme.splitGap - theme.bubbleSize
                                                                  : theme.splitMainWidth
+    // Half of what the small island takes in its window: the theme's room, or more for a notch set wider.
+    readonly property real smallHalfWidth: Math.max(theme.smallHalfWidth,
+        Math.max(pillWidth, liveWidth, splitMainWidth + theme.splitGap + theme.bubbleSize) / 2 + theme.privacyAreaWidth)
     // A page may ask for a wider island (the Habits year).
     readonly property bool wide: expanded && expandedContent.wide
     readonly property real expandedWidth: wide ? theme.wideWidth : theme.expandedWidth
@@ -186,7 +192,7 @@ Item {
     // the small window (i.e. until the collapse animation has finished).
     readonly property bool needsLargeWindow: mode === "expanded" || mode === "notification" || mode === "event"
                                              || surface.height > theme.pillHeight + 1
-                                             || surface.width / 2 > theme.smallHalfWidth - theme.privacyAreaWidth
+                                             || surface.width / 2 > island.smallHalfWidth - theme.privacyAreaWidth
     // The window widens when a page first asks for it and stays so until the
     // island is small again, so it is never resized in the middle of a morph.
     property bool needsWideWindow: false

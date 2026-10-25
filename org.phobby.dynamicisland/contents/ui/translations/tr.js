@@ -1320,8 +1320,8 @@ var table = {
     "Set by hand": "Elle",
     "The top panel there is %1 px high.": "Oradaki üst panel %1 px yüksekliğinde.",
     "There is no panel at the top there: the notch is as high as the island.": "Orada üstte panel yok: çentik ada kadar yüksek.",
-    "Widest:": "En geniş:",
-    "No limit": "Sınırsız",
+    "Width:": "Genişlik:",
+    "Automatic: as wide as what it shows (the clock, a song, a timer). Set, it is that wide, narrower or wider, at 100 % size; the size setting scales it, and it never goes past the screen.": "Otomatik: gösterdiği şey kadar geniş (saat, şarkı, zamanlayıcı). Ayarlanınca, daha dar ya da daha geniş, 100 % boyutta tam o genişlikte olur; boyut ayarı onu ölçekler ve ekranı hiç aşmaz.",
     "The notch covers what is under it on the panel, and that part of the panel cannot be clicked. If a clock or task buttons sit in the middle of your panel, narrow it here (where a panel's widgets are cannot be read). Notifications and the open island are wider for as long as they show.": "Çentik paneldeki altında kalanı örter ve panelin o kısmına tıklanamaz. Panelinin ortasında saat ya da görev düğmeleri varsa buradan daralt (bir paneldeki öğelerin yeri okunamıyor). Bildirimler ve açık ada, göründükleri sürece daha geniştir.",
     "Beside the notch it stands on the panel, against the notch's side, and takes the clicks where it is.": "Çentiğin yanında, panelin üstünde çentiğe yaslanarak durur; bulunduğu yerdeki tıklamaları o alır.",
     "This is not a Wayland session: the notch goes to the top edge, but whether it stays over the panel is up to the window manager.": "Bu bir Wayland oturumu değil: çentik üst kenara gider, ama panelin üstünde kalıp kalmayacağı pencere yöneticisine bağlı."

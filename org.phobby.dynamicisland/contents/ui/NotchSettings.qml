@@ -98,11 +98,12 @@ Kirigami.FormLayout {
         NotchOutline {
             id: outline
             readonly property bool dot: previewCombo.currentIndex === 1
+            // (the width set, as the island has it; the preview is only so wide: past it, it is cut)
             readonly property real limit: section.page.cfg_notchMaxWidth > 0 ? Math.max(2 * section.shown.pillHeight, section.page.cfg_notchMaxWidth) : section.shown.pillWidth
             // (at its size, as the island is scaled as a whole)
             readonly property real k: section.shown.scale
             anchors.horizontalCenter: parent.horizontalCenter
-            width: Math.round(k * (dot ? 2 * section.page.cfg_dotSize : Math.min(section.shown.pillWidth, limit)))
+            width: Math.round(k * (dot ? 2 * section.page.cfg_dotSize : limit))
             height: Math.round(k * (dot ? section.page.cfg_dotSize : section.shown.pillHeight))
             radius: k * (dot ? section.page.cfg_dotSize : section.shown.notchRadius)
             ear: k * section.shown.notchEar
@@ -229,22 +230,28 @@ Kirigami.FormLayout {
             : Lang.i18n("The panel is looked at once the notch layout is on; until then the island's own height.")
     }
     RowLayout {
-        Kirigami.FormData.label: Lang.i18n("Widest:")
+        Kirigami.FormData.label: Lang.i18n("Width:")
         QQC2.Slider {
             id: widthSlider
             objectName: "notchWidthSlider"
             Layout.preferredWidth: Kirigami.Units.gridUnit * 12
             from: 0
-            to: 600
+            to: 1200
             stepSize: 10
-            onMoved: section.page.cfg_notchMaxWidth = value < 80 ? 0 : Math.round(value)
+            // (at the left end: as wide as what it shows)
+            onMoved: section.page.cfg_notchMaxWidth = value < 80 ? 0 : Math.round(value / 10) * 10
             Binding { target: widthSlider; property: "value"; value: section.page.cfg_notchMaxWidth; when: !widthSlider.pressed }
         }
         QQC2.Label {
             textFormat: Text.PlainText
             font.features: { "tnum": 1 }
-            text: section.page.cfg_notchMaxWidth > 0 ? Lang.i18n("%1 px", section.page.cfg_notchMaxWidth) : Lang.i18n("No limit")
+            Layout.minimumWidth: widestWidth.advanceWidth
+            TextMetrics { id: widestWidth; font.features: { "tnum": 1 }; text: Lang.i18n("%1 px", 1200) }
+            text: section.page.cfg_notchMaxWidth > 0 ? Lang.i18n("%1 px", section.page.cfg_notchMaxWidth) : Lang.i18n("Automatic")
         }
+    }
+    Hint {
+        text: Lang.i18n("Automatic: as wide as what it shows (the clock, a song, a timer). Set, it is that wide, narrower or wider, at 100 % size; the size setting scales it, and it never goes past the screen.")
     }
     Kirigami.InlineMessage {
         Layout.fillWidth: true

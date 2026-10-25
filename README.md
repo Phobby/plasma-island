@@ -20,7 +20,7 @@ The default for fresh installs is a **notch with the Symbiot Black gradient**: c
 - **Settings → Appearance:** choose **Symbiot Black** or another preset, edit the gradient and save your look.
 - **Prefer the rounded version?** Select **Settings → Appearance → Layout → Oval layout**. Return to **Notch** at any time. An island that ran before this version keeps the layout it had (the oval one unless the notch was switched on) and says once that the notch is there.
 
-Existing saved preferences are preserved. The notch covers the panel beneath it; use **Widest** under Settings → Appearance → Layout: Notch to leave room for panel widgets.
+Existing saved preferences are preserved. The notch covers the panel beneath it; set its **Width** under Settings → Appearance → Layout: Notch, narrower to leave room for panel widgets or wider (up to 1200 px).
 
 
 ## Contents
