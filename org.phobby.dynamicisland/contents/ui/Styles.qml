@@ -7,6 +7,7 @@
     A style is { preset, material (metal | flat | glass), strong (high
     contrast), opacity (0–100), blur, blurLevel (0–2), top (px), offsetX (px),
     scale (%), radius (0–100, % of a full capsule), background, control, text,
+    buttonFill (the fill of buttons, tiles and cards; "" = the look's own),
     border, borderWidth, borderColor, shadow (0–2), fill (solid | gradient),
     gradientType (linear | radial), gradientAngle (0–360°, as in CSS: 0 runs
     upwards, 90 to the right), gradientStops (2 or 3 colours) }. Colours are
@@ -75,7 +76,7 @@ QtObject {
     // The preset as it comes, as a style of its own.
     function defaults(preset: string): var {
         const key = presets[preset] !== undefined ? preset : "oxygen";
-        const out = Object.assign({ preset: key, fill: "solid", gradientType: "linear", gradientAngle: 135, gradientStops: [] }, presets[key]);
+        const out = Object.assign({ preset: key, fill: "solid", gradientType: "linear", gradientAngle: 135, gradientStops: [], buttonFill: "" }, presets[key]);
         if (out.gradientStops.length < 2) out.gradientStops = stopsFor(out);
         return out;
     }
@@ -104,6 +105,7 @@ QtObject {
         if (isColor(g.control) || g.control === "accent") out.control = g.control;
         if (isColor(g.text) || g.text === "") out.text = g.text;
         if (isColor(g.borderColor) || g.borderColor === "") out.borderColor = g.borderColor;
+        if (isColor(g.buttonFill) || g.buttonFill === "") out.buttonFill = g.buttonFill;
         if (g.fill === "solid" || g.fill === "gradient") out.fill = g.fill;
         if (g.gradientType === "linear" || g.gradientType === "radial") out.gradientType = g.gradientType;
         // (a list that came through a model or the configuration is not always a JavaScript array)

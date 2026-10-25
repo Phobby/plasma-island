@@ -819,6 +819,26 @@ KCM.SimpleKCM {
             }
         }
         RowLayout {
+            objectName: "buttonFillRow"
+            Kirigami.FormData.label: Lang.i18n("Button colour:")
+            enabled: page.custom
+            Swatch {
+                objectName: "buttonFillSwatch"
+                enabled: page.style.buttonFill.length > 0
+                value: shown.faint
+                onPicked: hex => page.set("buttonFill", hex)
+            }
+            Check {
+                objectName: "buttonFillAutomatic"
+                text: Lang.i18n("Automatic (a hint of the text colour)")
+                on: page.style.buttonFill.length === 0
+                onToggled: page.set("buttonFill", checked ? "" : page.hex(shown.over(shown.faint, shown.surface)))
+            }
+        }
+        Hint {
+            text: Lang.i18n("The fill of the island's buttons, tiles and cards. A colour set here is made lighter or darker as far as the text on it needs to stay readable. Buttons and controls above is the colour of what is chosen or switched on.")
+        }
+        RowLayout {
             Kirigami.FormData.label: Lang.i18n("Text colour:")
             enabled: page.custom
             Swatch {

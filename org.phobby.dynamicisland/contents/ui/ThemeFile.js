@@ -40,10 +40,10 @@ const NUMBERS = { opacity: [0, 100], blurLevel: [0, 2], top: [0, 40], offsetX: [
 const BOOLEANS = ["blur", "border", "strong"];
 const CHOICES = { preset: PRESETS, material: ["metal", "flat", "glass"], fill: ["solid", "gradient"], gradientType: ["linear", "radial"] };
 // field: what it may be besides "#rrggbb"
-const COLORS = { background: ["accent"], control: ["accent"], text: [""], borderColor: [""] };
+const COLORS = { background: ["accent"], control: ["accent"], buttonFill: [""], text: [""], borderColor: [""] };
 // The order the fields are written in.
 const FIELDS = ["preset", "material", "strong", "opacity", "blur", "blurLevel", "top", "offsetX", "scale", "radius", "fill", "background",
-                "gradientType", "gradientAngle", "gradientStops", "control", "text", "border", "borderWidth", "borderColor", "shadow"];
+                "gradientType", "gradientAngle", "gradientStops", "control", "buttonFill", "text", "border", "borderWidth", "borderColor", "shadow"];
 
 function isColor(text) { return typeof text === "string" && /^#[0-9a-fA-F]{6}$/.test(text); }
 function isText(value, longest) { return typeof value === "string" && value.length <= longest && !/[\u0000-\u001f\u007f]/.test(value); }

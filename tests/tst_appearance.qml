@@ -62,6 +62,29 @@ Item {
             t.destroy();
         }
 
+        // The button colour: the look's own unless one is set; set, it is that colour made lighter or
+        // darker until the text reads on it (4.5:1), on light and dark looks alike; not while following
+        // the system; kept in a style.
+        function test_button_colour() {
+            const t = Qt.createQmlObject('import "../org.phobby.dynamicisland/contents/ui"; Theme { follow: false }', root);
+            for (const preset of ["symbiot", "breezeLight", "contrast"]) {
+                t.style = Styles.defaults(preset);
+                verify(!t.buttonOwn, preset + ": its own");
+                const own = String(t.faint);
+                for (const hex of ["#ff3b30", "#ffd60a", "#1a1b1d", "#f4f5f7", "#3daee9"]) {
+                    t.style = Styles.normalize(Object.assign(Styles.defaults(preset), { buttonFill: hex }));
+                    verify(t.buttonOwn);
+                    verify(String(t.faint) !== own, preset + " " + hex + ": not the look's own");
+                    verify(t.contrast(t.text, t.faint) >= 4.5 - 0.01, preset + " " + hex + ": the text reads on it (" + t.contrast(t.text, t.faint).toFixed(2) + ")");
+                }
+            }
+            compare(Styles.normalize({ preset: "symbiot", buttonFill: "#123456" }).buttonFill, "#123456");
+            compare(Styles.normalize({ preset: "symbiot", buttonFill: "red" }).buttonFill, "", "not a colour: the look's own");
+            t.follow = true;
+            verify(!t.buttonOwn, "following the system: the system's look");
+            t.destroy();
+        }
+
         function test_solid_presets_are_what_they_were() {
             for (const preset of ["oxygen", "breezeDark", "breezeLight", "glass", "contrast"]) {
                 const s = Styles.defaults(preset);

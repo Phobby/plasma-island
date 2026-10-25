@@ -17,6 +17,9 @@
   default): out of sight while a window fills the screen, down when the
   pointer is pushed against the top edge, back up when left; a size and width
   of its own for that can be set. Hide and Show are as they were.
+- **Button colour** (Appearance, Fine tuning): the fill of the island's
+  buttons, tiles and cards, automatic as before or a colour of one's own, made
+  lighter or darker as far as the text on it needs; kept in themes too.
 - **Size up to 240 %** (Appearance, Fine tuning), kept within the screen: the
   settings say when the screen's edge was reached. Large sizes draw their text
   as curves, sharp at any size.

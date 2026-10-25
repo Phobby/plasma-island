@@ -45,6 +45,7 @@
         "text": { "description": "The text colour; \"\" chooses it by contrast with the background.", "anyOf": [{ "$ref": "#/$defs/color" }, { "const": "" }] },
         "border": { "type": "boolean" },
         "borderWidth": { "description": "px.", "type": "integer", "minimum": 1, "maximum": 4 },
+        "buttonFill": { "description": "The fill of buttons, tiles and cards; \"\" is the look's own (a hint of the text colour). Kept readable under the text.", "anyOf": [{ "$ref": "#/$defs/color" }, { "const": "" }] },
         "borderColor": { "description": "\"\" is the material's own border colour.", "anyOf": [{ "$ref": "#/$defs/color" }, { "const": "" }] },
         "shadow": { "description": "0 none, 1 light, 2 strong.", "type": "integer", "minimum": 0, "maximum": 2 }
       }

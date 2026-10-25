@@ -250,7 +250,11 @@ QtObject {
 
     readonly property color text: notchDark ? "#f4f5f7" : follow ? systemText : style.text.length > 0 ? style.text : dark ? "#f4f5f7" : "#16171a"
     readonly property color subText: strong ? mix(text, base, 0.12) : Qt.rgba(text.r, text.g, text.b, dark ? 0.62 : 0.74)
-    readonly property color faint: dark ? Qt.rgba(1, 1, 1, strong ? 0.20 : 0.12) : Qt.rgba(0, 0, 0, strong ? 0.16 : 0.10)
+    // The fill of buttons, tiles and cards: the look's own (a hint of the text colour), or a colour set
+    // for it (style.buttonFill), opaque and made lighter or darker until the text reads on it.
+    readonly property bool buttonOwn: !follow && Styles.isColor(style.buttonFill)
+    readonly property color faint: buttonOwn ? ensure(fromHex(style.buttonFill), text, minContrast)
+                                             : dark ? Qt.rgba(1, 1, 1, strong ? 0.20 : 0.12) : Qt.rgba(0, 0, 0, strong ? 0.16 : 0.10)
     readonly property color track: dark ? Qt.rgba(1, 1, 1, strong ? 0.42 : 0.16) : Qt.rgba(0, 0, 0, strong ? 0.45 : 0.14)
     // Buttons, fields, selections. The accent is the system's unless the style names a colour.
     // Kept visible on the surface (3:1, as WCAG asks of controls): a dull accent is lightened or darkened.
