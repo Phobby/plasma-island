@@ -37,8 +37,27 @@ KCM.SimpleKCM {
     property int cfg_themeMode
     // Where the island sits while following the system (a custom style brings its own).
     property int cfg_topMargin
-    // In notch mode the island sits at the top edge itself: the distance from it does not apply.
-    property bool cfg_notchMode
+    // The layout: 0 = the notch (it sits at the top edge itself: the distance from it does not
+    // apply), 1 = the oval layout. And the notch's own settings (NotchSettings.qml).
+    property int cfg_islandLayout
+    readonly property bool notch: cfg_islandLayout === 0
+    property int cfg_notchColor
+    property int cfg_notchFullscreen
+    property int cfg_notchScreen
+    property int cfg_notchMaxWidth
+    property bool cfg_notchHideCat
+    property int cfg_notchHeightMode
+    property int cfg_notchHeight
+    property bool cfg_notchEars
+    property bool cfg_notchBorderEnabled
+    property int cfg_notchBorderWidth
+    property string cfg_notchBorderColor
+    property int cfg_notchBorderOpacity
+    property int cfg_notchPanelSeen
+    // (for the notch's preview: the clock in it, the dot's size; and whether there is a cat to hide)
+    property bool cfg_showClock
+    property int cfg_dotSize
+    property bool cfg_catEnabled
     property int cfg_horizontalOffset
     // Written by the widget: the largest size its screen has room for (0 = the whole range).
     property int cfg_scaleLimitSeen
@@ -181,6 +200,67 @@ KCM.SimpleKCM {
         systemStyle: page.tuning
         style: page.style
         blurActive: true
+    }
+
+    // The notch with this page's settings (its preview, the layout's card).
+    Theme {
+        id: notchShown
+        follow: !page.custom
+        systemSource: page.cfg_followSource
+        systemScheme: page.systemScheme
+        systemStyle: page.tuning
+        style: page.style
+        blurActive: true
+        notch: true
+        notchBlack: page.cfg_notchColor === 0
+        notchLook: page.cfg_notchColor === 2
+        notchEars: page.cfg_notchEars
+        notchBorderEnabled: page.cfg_notchBorderEnabled
+        notchBorderWidth: page.cfg_notchBorderWidth
+        notchBorderColor: page.cfg_notchBorderColor
+        notchBorderOpacity: page.cfg_notchBorderOpacity
+        // the panel the island found there (36 px where it has not looked yet), or as set
+        notchPixels: page.cfg_notchHeightMode === 1 ? page.cfg_notchHeight : page.cfg_notchPanelSeen > 0 ? page.cfg_notchPanelSeen : 36
+    }
+
+    // A layout as a card: a small picture of it over a strip of panel, its name.
+    component LayoutCard: QQC2.AbstractButton {
+        id: layoutCard
+        property bool current: false
+        default property alias picture: frame.data
+        implicitWidth: Kirigami.Units.gridUnit * 9
+        implicitHeight: Kirigami.Units.gridUnit * 5.5
+        checkable: true
+        checked: current
+        Accessible.name: text
+        background: Rectangle {
+            radius: Kirigami.Units.cornerRadius
+            color: layoutCard.current ? Qt.alpha(Kirigami.Theme.highlightColor, 0.18) : layoutCard.hovered ? Qt.alpha(Kirigami.Theme.textColor, 0.06) : "transparent"
+            border.width: layoutCard.current ? 2 : 1
+            border.color: layoutCard.current ? Kirigami.Theme.highlightColor : Qt.alpha(Kirigami.Theme.textColor, 0.15)
+        }
+        contentItem: ColumnLayout {
+            spacing: Kirigami.Units.smallSpacing
+            Rectangle {
+                id: frame
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.margins: Kirigami.Units.smallSpacing
+                radius: Kirigami.Units.cornerRadius / 2
+                color: "#2b3a4a"
+                clip: true
+                // a strip of panel at the top
+                Rectangle { width: parent.width; height: 9; color: Qt.rgba(0.85, 0.86, 0.88, 1) }
+            }
+            QQC2.Label {
+                textFormat: Text.PlainText
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                text: layoutCard.text
+                font.weight: layoutCard.current ? Font.DemiBold : Font.Normal
+                elide: Text.ElideRight
+            }
+        }
     }
 
     // A look as a card: the island in that style, its name; an own theme can be deleted.
@@ -326,17 +406,71 @@ KCM.SimpleKCM {
         }
     }
 
+    ColumnLayout {
+    spacing: 0
+    // ---- the layout ------------------------------------------------------------------
     Kirigami.FormLayout {
-        Choice {
-            objectName: "islandShapeCombo"
-            Kirigami.FormData.label: Lang.i18n("Shape:")
-            model: [Lang.i18n("Notch (default)"), Lang.i18n("Rounded island")]
-            index: page.cfg_notchMode ? 0 : 1
-            onActivated: page.cfg_notchMode = currentIndex === 0
+        id: layoutForm
+        Layout.fillWidth: true
+        twinFormLayouts: [notchForm, lookForm]
+        RowLayout {
+            objectName: "islandLayoutChooser"
+            Kirigami.FormData.label: Lang.i18n("Layout:")
+            spacing: Kirigami.Units.smallSpacing
+            LayoutCard {
+                objectName: "layoutNotch"
+                text: Lang.i18n("Notch")
+                current: page.notch
+                onClicked: page.cfg_islandLayout = 0
+                NotchOutline {
+                    readonly property real k: 0.5
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: Math.round(notchShown.pillWidth * k)
+                    height: Math.round(Math.max(9, notchShown.pillHeight * k))
+                    radius: notchShown.notchRadius * k
+                    ear: notchShown.notchEar * k
+                    earDepth: notchShown.notchEarDepth * k
+                    fillColor: notchShown.notchBody.length === 3 ? "transparent" : notchShown.bodyMid
+                    gradientColors: notchShown.notchBody
+                    gradientKind: notchShown.notchBodyKind
+                    gradientAngle: notchShown.notchBodyAngle
+                }
+            }
+            LayoutCard {
+                objectName: "layoutOval"
+                text: Lang.i18n("Oval layout")
+                current: !page.notch
+                onClicked: page.cfg_islandLayout = 1
+                ThemePreview {
+                    anchors.fill: parent
+                    anchors.topMargin: 9
+                    style: page.style
+                    systemScheme: page.systemScheme
+                }
+            }
         }
         Hint {
-            visible: page.cfg_notchMode
-            text: Lang.i18n("Set the notch's edge thickness, colour and opacity in Settings → Notch.")
+            text: page.notch ? Lang.i18n("The island hangs from the top edge of the screen as one piece, over a top panel, and opens downwards. Its own settings are right below.")
+                             : Lang.i18n("The rounded island of earlier versions, a little below the top edge. Its distance from the top, place, size and roundness are under Fine tuning.")
+        }
+    }
+    // ---- the notch's own settings ----------------------------------------------------------
+    NotchSettings {
+        id: notchForm
+        objectName: "notchSettings"
+        Layout.fillWidth: true
+        visible: page.notch
+        twinFormLayouts: [layoutForm, lookForm]
+        page: page
+        shown: notchShown
+    }
+    Kirigami.FormLayout {
+        id: lookForm
+        Layout.fillWidth: true
+        twinFormLayouts: [layoutForm, notchForm]
+        Kirigami.Separator {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: Lang.i18n("Look")
         }
         QQC2.ButtonGroup { id: modeGroup }
         QQC2.RadioButton {
@@ -542,15 +676,15 @@ KCM.SimpleKCM {
             objectName: "topSlider"
             readonly property int shown: page.look.top
             Kirigami.FormData.label: Lang.i18n("Distance from top:")
-            enabled: !page.cfg_notchMode
+            enabled: !page.notch
             from: 0; to: page.custom ? 40 : 200
             value: shown
             valueText: Lang.i18n("%1 px", shown)
             onMoved: value => page.put("top", Math.round(value))
         }
         Hint {
-            visible: page.cfg_notchMode
-            text: Lang.i18n("Not in notch mode: the island sits at the top edge itself (Notch).")
+            visible: page.notch
+            text: Lang.i18n("Oval layout only: in the notch layout the island sits at the top edge itself.")
         }
         ValueSlider {
             id: offsetSlider
@@ -746,5 +880,6 @@ KCM.SimpleKCM {
         Hint {
             text: Lang.i18n("The days of the Habits calendar are shaded in GitHub's green otherwise.")
         }
+    }
     }
 }

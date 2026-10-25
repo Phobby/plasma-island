@@ -16,11 +16,11 @@ A notch joined to the top edge of your KDE Plasma desktop. Music, downloads, tim
 
 The default for fresh installs is a **notch with the Symbiot Black gradient**: charcoal `#292c30` through `#202326` to black `#0e1012`, with a muted slate accent inspired by a dark Plasma desktop. The illustration above highlights the notch shape.
 
-- **Settings → Notch:** enable the border, choose its colour, thickness (1–8 px) and opacity (0–100%). The edge follows the sides and lower corners, keeping the top joined to the screen. A live preview shows your choices.
+- **Settings → Appearance → Layout: Notch:** enable the border, choose its colour, thickness (1–8 px) and opacity (0–100%). The edge follows the sides and lower corners, keeping the top joined to the screen. A live preview shows your choices.
 - **Settings → Appearance:** choose **Symbiot Black** or another preset, edit the gradient and save your look.
-- **Prefer the rounded version?** Select **Settings → Appearance → Shape → Rounded island**. Return to **Notch (default)** at any time.
+- **Prefer the rounded version?** Select **Settings → Appearance → Layout → Oval layout**. Return to **Notch** at any time. An island that ran before this version keeps the layout it had (the oval one unless the notch was switched on) and says once that the notch is there.
 
-Existing saved preferences are preserved. The notch covers the panel beneath it; use **Settings → Notch → Widest** to leave room for panel widgets.
+Existing saved preferences are preserved. The notch covers the panel beneath it; use **Widest** under Settings → Appearance → Layout: Notch to leave room for panel widgets.
 
 
 ## Contents
@@ -139,7 +139,7 @@ Removing leaves your data where it is: `~/.local/share/dynamicisland/` (the copy
 
 1. Right click the desktop (or a panel in edit mode) → *Add Widgets…* → "Dynamic Island".
 2. A small handle icon appears there; the island itself sits at the top centre of that screen.
-3. The notch joins the top edge, over any top panel. Personalize its edge in Settings → Notch; choose the rounded version in Settings → Appearance → Shape.
+3. The notch joins the top edge, over any top panel. Personalize it, or choose the rounded version, in Settings → Appearance → Layout (Notch / Oval layout).
 
 Plasma's own volume popup keeps appearing beside the island's. To keep only one: Settings → Activities → switch off "Volume, brightness and audio output" in the island, or switch off the volume popups in System Settings → Sound. (Plasma has no switch for its brightness popup.)
 
@@ -179,9 +179,9 @@ A click on the small pill turns it into a dot (15 px, 10–28 in the settings) s
 
 **Settings → General → Dot mode:** on/off, start as (as it was left, always the pill, always the dot), dot size, whether hovering opens it, events in dot mode, always open for critical events.
 
-### Notch mode
+### Layout: Notch / Oval layout
 
-The default shape joins the screen's top edge like a laptop's notch: square above, rounded below, over the top panel (also one that hides itself), opening downwards. Symbiot Black is the default gradient; black and other custom colours are available. The panel under it cannot be clicked: if a clock or task buttons sit in the middle of your panel, limit its width. **Settings → Notch** (on by default for fresh installs); details in [REFERENCE](docs/REFERENCE.md#notch-mode).
+The default shape joins the screen's top edge like a laptop's notch: square above, rounded below, over the top panel (also one that hides itself), opening downwards. Symbiot Black is the default gradient; black and other custom colours are available. The panel under it cannot be clicked: if a clock or task buttons sit in the middle of your panel, limit its width. **Settings → Appearance → Layout**: *Notch* (the default for fresh installs) or *Oval layout*, the rounded island of earlier versions; details in [REFERENCE](docs/REFERENCE.md#layout-notch--oval-layout).
 
 ## The pages
 

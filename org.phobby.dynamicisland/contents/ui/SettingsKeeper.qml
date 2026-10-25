@@ -31,6 +31,8 @@ QtObject {
     function path(): string { return file.length > 0 ? file : local.dataHome() + "/dynamicisland/settings.json"; }
     property int writeAfter: 1500
     signal restored(int count)
+    // It has looked: whether this widget was new here, and how many settings came back.
+    signal settled(bool wasNew, int count)
 
     readonly property var skipped: ["settingsKept", "previewActive", "previewMode", "previewSource", "previewStyle", "previewTop", "previewOffsetX",
                                     "previewFollowStyle", "systemScheme", "calendarStatus", "updateAsked", "installedVersion",
@@ -58,11 +60,12 @@ QtObject {
     function start(): void {
         const keys = kept();
         if (ready || cfg === null || local === null || keys.length === 0) return;
-        if (cfg.settingsKept !== true) {
+        const wasNew = cfg.settingsKept !== true;
+        let count = 0;
+        if (wasNew) {
             let earlier = null;
             try { earlier = JSON.parse(local.readTextFile(path(), 8 * 1024 * 1024)); } catch (e) { earlier = null; }
             if (earlier && typeof earlier === "object" && earlier.values && typeof earlier.values === "object" && earlier.applet !== appletId) {
-                let count = 0;
                 for (const k of keys) {
                     const v = earlier.values[k];
                     // (only what this version knows, and as what it knows it)
@@ -75,6 +78,7 @@ QtObject {
             cfg.settingsKept = true;
         }
         ready = true;
+        settled(wasNew, count);
     }
     function write(): void {
         if (!ready || local === null || snapshot.length === 0 || snapshot === written) return;

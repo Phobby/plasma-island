@@ -3,7 +3,17 @@
 ## Unreleased
 
 ### Added
-- **Notch mode** (Settings → Notch, off by default). The island welded to
+- **Layout: Notch / Oval layout** (Settings → Appearance → Layout). The notch is
+  the first choice and a fresh install's default; the oval layout is the
+  rounded island of earlier versions. An island that ran before keeps the
+  layout it had (the oval one, unless the notch was switched on in a build
+  that had the switch) and says once that the notch is there; the settings
+  have a version of their own for this, brought up to date once. The notch's
+  settings moved from a page of their own to under the choice.
+- **Size up to 240 %** (Appearance, Fine tuning), kept within the screen: the
+  settings say when the screen's edge was reached. Large sizes draw their text
+  as curves, sharp at any size.
+- **The notch.** The island welded to
   the top edge of the screen like a laptop's notch: square where it meets
   the edge, only its lower corners rounded, opaque black or the island's
   own colours, as high as the top panel and always over it, also when that

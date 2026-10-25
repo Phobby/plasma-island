@@ -18,7 +18,8 @@ KCM.SimpleKCM {
     property alias cfg_clockFormat: clockFormatCombo.currentIndex
     property alias cfg_topMargin: topMarginSpin.value
     property alias cfg_avoidPanels: avoidPanelsCheck.checked
-    property bool cfg_notchMode
+    // 0 = the notch layout (it sits at the top edge itself), 1 = the oval layout
+    property int cfg_islandLayout
     property alias cfg_showNotifications: notificationsCheck.checked
     property alias cfg_notificationDuration: durationSpin.value
     property alias cfg_hoverDelay: hoverSpin.value
@@ -68,7 +69,7 @@ KCM.SimpleKCM {
             id: topMarginSpin
             Kirigami.FormData.label: Lang.i18n("Distance from top:")
             // A custom look brings its own distance (Appearance).
-            enabled: page.cfg_appearanceMode === 0 && !page.cfg_notchMode
+            enabled: page.cfg_appearanceMode === 0 && page.cfg_islandLayout === 1
             from: 0
             to: 200
             textFromValue: (v) => Lang.i18n("%1 px", v)
@@ -76,16 +77,16 @@ KCM.SimpleKCM {
         }
         QQC2.CheckBox {
             id: avoidPanelsCheck
-            enabled: !page.cfg_notchMode
+            enabled: page.cfg_islandLayout === 1
             text: Lang.i18n("Place below top panels")
         }
         QQC2.Label {
             textFormat: Text.PlainText
-            visible: page.cfg_notchMode
+            visible: page.cfg_islandLayout === 0
             Layout.maximumWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
-            text: Lang.i18n("Not in notch mode: the island sits at the top edge itself (Notch).")
+            text: Lang.i18n("Oval layout only: in the notch layout the island sits at the top edge itself (Appearance → Layout).")
         }
 
         Kirigami.Separator {

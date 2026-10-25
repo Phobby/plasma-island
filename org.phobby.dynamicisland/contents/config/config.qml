@@ -19,11 +19,6 @@ ConfigModel {
         source: "configAppearance.qml"
     }
     ConfigCategory {
-        name: Lang.i18n("Notch")
-        icon: "preferences-desktop-display"
-        source: "configNotch.qml"
-    }
-    ConfigCategory {
         name: Lang.i18n("Layout")
         icon: "view-sort"
         source: "configLayout.qml"

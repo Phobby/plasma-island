@@ -77,12 +77,31 @@ bubble, and nothing while it is hidden. To see the region, start plasmashell
 with `DYNAMICISLAND_DEBUG_REGION=1` in its environment: a red outline is
 drawn around it.
 
-### Notch mode
+### Layout: Notch / Oval layout
 
-Settings → Notch (on by default for fresh installs). The island is welded to the top edge of
+Settings → Appearance → Layout chooses between the two: **Notch** (first, and the
+default of a fresh install) and **Oval layout**, the rounded island of earlier
+versions a little below the top edge. While the notch is chosen its own settings
+are shown right under the choice; with the oval layout they are hidden, and the
+distance from the top, which only the oval layout has, can be set (in the notch
+layout it is greyed out, and says why). Switching needs no restart: the island
+slides to its new place.
+
+**From an earlier version.** The settings have a version of their own
+(`settingsSchema`), brought up to date once (`SettingsMigration.js`): an island
+that ran before (it noted its version, kept its settings, or had them brought
+back) keeps what it showed: the notch if the notch was switched on in a build
+that had the switch (`notchMode`), the oval layout otherwise, and says once,
+some seconds after the start, *A new notch design is here: Appearance ›
+Layout* (a click opens the settings). A fresh install has the notch. The old
+switch is left as it was, so the step can be taken again and comes to the
+same.
+
+The notch: the island is welded to the top edge of
 the screen like a laptop's notch: no room above it, square where it meets
 the edge and straight there (two small curves outwards can be switched on,
-*Soften where it meets the edge*), only its lower corners rounded. It opens, shows notifications and
+*Soften where it meets the edge*: deeper than wide, so the join begins a
+little down its sides), only its lower corners rounded. It opens, shows notifications and
 events and shrinks to a dot as it always does, hanging from the edge; the
 dot is a small half circle there, the split island's circle a small notch
 of its own, the glow of the cover comes from its lower edge.
@@ -109,7 +128,7 @@ of its own, the glow of the cover comes from its lower edge.
 - **Border:** independently enabled, 1–8 px thick, any colour and 0–100% opacity.
   Drawn inside the sides and lower corners in every colour mode, with no line
   across the screen edge. Defaults: 1 px, slate (#4c566a), 70% opacity.
-- **Rounded alternative:** Settings → Appearance → Shape → Rounded island.
+- **Rounded alternative:** Settings → Appearance → Layout → Oval layout.
   Switching back to the notch preserves both sets of appearance settings.
 - **What it covers:** the panel under the notch cannot be clicked; beside
   it the panel takes its clicks as before. The notch takes the pointer on
@@ -122,11 +141,11 @@ of its own, the glow of the cover comes from its lower edge.
   side (and its curves at the edge), at the size set in Settings → Cat (as
   high as the panel or less it stands on the panel's lower edge, larger it
   hangs from the screen's edge), and takes the clicks where its body is;
-  *Hide the cat in notch mode* keeps it away while the notch shows.
-- **Not used in notch mode:** the distance from the top (Appearance and
+  *Hide the cat in the notch layout* keeps it away while the notch shows.
+- **Not used in the notch layout:** the distance from the top (Appearance and
   General), *Place below top panels*, the look's border and shadow, and
   its blur and opacity unless the colour is the island's look. The horizontal position, the size, the roundness and dot mode
-  still apply. Switching the mode slides the island to its new place; no
+  still apply. Switching the layout slides the island to its new place; no
   restart.
 - **X11, or no LayerShellQt:** the island's usual window goes to the top
   edge; whether it stays over the panel is the window manager's matter.

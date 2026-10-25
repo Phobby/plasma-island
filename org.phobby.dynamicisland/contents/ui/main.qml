@@ -27,6 +27,7 @@ import org.kde.kirigami as Kirigami
 import "providers"
 import "backend"
 import "companion"
+import "SettingsMigration.js" as Migration
 
 PlasmoidItem {
     id: root
@@ -279,6 +280,40 @@ PlasmoidItem {
         local: root.core !== null ? root.core.local : null
         appletId: Plasmoid.id
         onRestored: count => console.info("org.phobby.dynamicisland: " + count + " settings of an earlier island were brought back")
+        // (what an earlier island left is in place now: the settings can be brought up to date)
+        onSettled: (wasNew, count) => root.migrateSettings(!wasNew, count > 0)
+    }
+
+    // ---- the settings' versions (SettingsMigration.js) ---------------------------------
+    // Brought up to date once, after SettingsKeeper has looked (it says whether this widget ran
+    // before); without the native module it never does, and a moment after the start will do.
+    function settingsNow(kept: bool): var {
+        return { settingsSchema: root.cfg.settingsSchema, islandLayout: root.cfg.islandLayout, notchMode: root.cfg.notchMode,
+                 installedVersion: root.cfg.installedVersion, settingsKept: kept, layoutNotice: root.cfg.layoutNotice };
+    }
+    function migrateSettings(kept: bool, restored: bool): void {
+        const changes = Migration.migrate(root.settingsNow(kept), restored);
+        for (const key in changes) root.cfg[key] = changes[key];
+        if (changes.settingsSchema !== undefined)
+            console.info("org.phobby.dynamicisland: settings brought up to version " + changes.settingsSchema
+                         + (changes.islandLayout !== undefined ? ", layout " + (changes.islandLayout === 0 ? "notch" : "oval") : ""));
+    }
+    Timer {
+        interval: 4000
+        running: root.cfg.settingsSchema < 1
+        onTriggered: root.migrateSettings(root.cfg.settingsKept === true, false)
+    }
+    // Told once, after the island's first seconds, to who was moved to the oval layout: the notch is there.
+    Timer {
+        interval: 8000
+        running: root.cfg.layoutNotice === 1 && root.leads
+        onTriggered: {
+            activities.flash({ key: "layout-notice", icon: "preferences-desktop-theme-global-symbolic", color: theme.live, feel: "done",
+                               title: Lang.i18n("A new notch design is here"), subtitle: Lang.i18n("Appearance › Layout"),
+                               width: theme.notificationWidth, duration: 8000,
+                               activate: () => Plasmoid.internalAction("configure").trigger() });
+            root.cfg.layoutNotice = 2;
+        }
     }
 
     // Timer / alarm sound (QtMultimedia; optional). Loaded on first use only,
@@ -798,7 +833,8 @@ PlasmoidItem {
     // The island welded to the top edge of a screen, over the panel there. On Wayland it moves
     // into a window of its own (NotchWindow.qml, a layer-shell overlay surface); elsewhere, or
     // without LayerShellQt, the Dialog goes to the edge. See docs/ARCHITECTURE.md, "Notch mode".
-    readonly property bool notchWanted: root.cfg.notchMode
+    // (until the settings are brought up to date: the layout they will have then, so nothing jumps)
+    readonly property bool notchWanted: Migration.layoutOf(root.settingsNow(root.cfg.settingsKept === true), false) === 0
     PanelWatch {
         id: panels
         core: root.core

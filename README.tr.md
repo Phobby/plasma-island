@@ -16,11 +16,11 @@ KDE Plasma masaüstünün üst kenarıyla birleşen bir çentik. Müzik, indirme
 
 Yeni kurulumlarda varsayılan görünüm **Symbiot Siyahı gradyanlı çentik**: koyu gri `#292c30`, `#202326` ve siyaha yakın `#0e1012`; koyu Plasma masaüstünden alınan soluk gri vurgu rengiyle. Yukarıdaki çizim çentik biçimini gösterir.
 
-- **Ayarlar → Çentik:** kenarlığı açıp kapatın; rengini, kalınlığını (1–8 px) ve opaklığını (%0–100) seçin. Kenarlık yanları ve alt köşeleri izler, üst kenar ekranla birleşik kalır. Canlı önizleme seçimlerinizi gösterir.
+- **Ayarlar → Görünüm → Düzen: Çentik:** kenarlığı açıp kapatın; rengini, kalınlığını (1–8 px) ve opaklığını (%0–100) seçin. Kenarlık yanları ve alt köşeleri izler, üst kenar ekranla birleşik kalır. Canlı önizleme seçimlerinizi gösterir.
 - **Ayarlar → Görünüm:** **Symbiot Siyahı** veya başka bir hazır görünüm seçin, gradyanı düzenleyin ve görünümünüzü kaydedin.
-- **Yuvarlak sürümü mü tercih ediyorsunuz?** **Ayarlar → Görünüm → Şekil → Yuvarlak ada** seçin. İstediğiniz zaman **Çentik (varsayılan)** seçeneğine dönebilirsiniz.
+- **Yuvarlak sürümü mü tercih ediyorsunuz?** **Ayarlar → Görünüm → Düzen → Oval düzen** seçin. İstediğiniz zaman **Çentik** seçeneğine dönebilirsiniz. Bu sürümden önce çalışmış bir ada, sahip olduğu düzeni korur (çentik açılmamışsa oval düzen) ve çentiğin geldiğini bir kez söyler.
 
-Mevcut kayıtlı tercihler korunur. Çentik altındaki paneli örter; panel öğelerine yer bırakmak için **Ayarlar → Çentik → En geniş** ayarını kullanın.
+Mevcut kayıtlı tercihler korunur. Çentik altındaki paneli örter; panel öğelerine yer bırakmak için Ayarlar → Görünüm → Düzen: Çentik altındaki **En geniş** ayarını kullanın.
 
 
 Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarlar → Dil).
@@ -141,7 +141,7 @@ Kaldırma verilerinizi yerinde bırakır: `~/.local/share/dynamicisland/` (ayarl
 
 1. Masaüstüne (ya da düzenleme kipindeki bir panele) sağ tıklayın → araç takımı (widget) ekleme penceresini açın (*Araç Takımları Ekle…*) → "Dinamik Ada".
 2. Orada küçük bir tutamaç simgesi belirir; adanın kendisi o ekranın üst ortasında durur.
-3. Çentik üst kenarla birleşir ve üst panelin üzerinde durur. Kenarlığını Ayarlar → Çentik bölümünden, yuvarlak sürümü Ayarlar → Görünüm → Şekil bölümünden seçin.
+3. Çentik üst kenarla birleşir ve üst panelin üzerinde durur. Kenarlığını ve diğer ayarlarını ya da yuvarlak sürümü Ayarlar → Görünüm → Düzen bölümünden (Çentik / Oval düzen) seçin.
 
 Plasma'nın kendi ses açılır penceresi adanınkinin yanında görünmeye devam eder. Yalnızca birini bırakmak için: adada Ayarlar → Etkinlikler → "Ses, parlaklık ve ses çıkışı" seçeneğini kapatın ya da Sistem Ayarları → Ses içinden ses açılır pencerelerini kapatın. (Plasma'da parlaklık açılır penceresini kapatan bir ayar yok.)
 
@@ -181,9 +181,9 @@ Küçük hapa tıklamak onu yoldan çekilsin diye bir noktaya çevirir (15 px, a
 
 **Ayarlar → Genel → Nokta modu:** açık/kapalı, başlangıç durumu (bırakıldığı gibi, her zaman hap, her zaman nokta), nokta boyutu, üzerine gelince açılıp açılmayacağı, nokta modunda olaylar, kritik olaylarda her zaman genişleme.
 
-### Çentik modu
+### Düzen: Çentik / Oval düzen
 
-Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğrudan üst kenarda durabilir: kenarla birleştiği yerde köşesiz, altta yuvarlak, panelin (kendini gizleyen bir panelin de) hep üstünde, aşağıya doğru açılır. Varsayılan olarak Symbiot Siyahı gradyanı; istenirse opak siyah veya başka bir özel görünüm. Altında kalan panel kısmına tıklanamaz: panelinizin ortasında saat ya da görev düğmeleri varsa genişliğini sınırlayın. **Ayarlar → Çentik** (yeni kurulumlarda varsayılan açık); ayrıntılar [REFERENCE](docs/REFERENCE.md#notch-mode) içinde.
+Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğrudan üst kenarda durabilir: kenarla birleştiği yerde köşesiz, altta yuvarlak, panelin (kendini gizleyen bir panelin de) hep üstünde, aşağıya doğru açılır. Varsayılan olarak Symbiot Siyahı gradyanı; istenirse opak siyah veya başka bir özel görünüm. Altında kalan panel kısmına tıklanamaz: panelinizin ortasında saat ya da görev düğmeleri varsa genişliğini sınırlayın. **Ayarlar → Görünüm → Düzen**: *Çentik* (yeni kurulumlarda varsayılan) ya da önceki sürümlerin yuvarlak adası *Oval düzen*; ayrıntılar [REFERENCE](docs/REFERENCE.md#layout-notch--oval-layout) içinde.
 
 ## Sayfalar
 

@@ -148,7 +148,7 @@ Item {
                                  : primary ? "live"
                                  : "idle"
 
-    // The notch's widest while it is small (Settings → Notch: so that it leaves a panel's widgets free); 0 = no limit.
+    // The notch's widest while it is small (Appearance → Layout: Notch, so that it leaves a panel's widgets free); 0 = no limit.
     property real maxWidth: 0
     function limited(width: real): real { return notch && maxWidth > 0 ? Math.max(2 * theme.pillHeight, Math.min(width, maxWidth)) : width; }
     readonly property real pillWidth: limited(theme.pillWidth)

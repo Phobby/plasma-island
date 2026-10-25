@@ -56,8 +56,16 @@
     <entry name="avoidPanels" type="Bool">
       <default>true</default>
     </entry>
-    <!-- Notch mode: the island welded to the top edge of the screen, over a panel there (Settings → Notch) -->
-    <entry name="notchMode" type="Bool"><default>true</default></entry>
+    <!-- The layout (Settings → Appearance → Layout): 0 = the notch, welded to the top edge of the screen, over a
+         panel there; 1 = the oval layout, the rounded island below the edge -->
+    <entry name="islandLayout" type="Int"><default>0</default></entry>
+    <!-- Builds before the layout had a switch for the notch; read once, when the settings are brought up to
+         settingsSchema 1 (SettingsMigration.js): who had it on keeps the notch, everyone else the oval layout -->
+    <entry name="notchMode" type="Bool"><default>false</default></entry>
+    <!-- Written by the widget: the version of these settings (SettingsMigration.js) -->
+    <entry name="settingsSchema" type="Int"><default>0</default></entry>
+    <!-- Written by the widget: 0 = nothing to say, 1 = to say once that there is a notch layout now, 2 = said -->
+    <entry name="layoutNotice" type="Int"><default>0</default></entry>
     <!-- 0 = black, 1 = the island's own colours (the theme, its gradient too), opaque; 2 = the island's own look (material, see-through, blur) -->
     <entry name="notchColor" type="Int"><default>1</default></entry>
     <!-- Independent notch edge, drawn inside the sides and lower corners. -->

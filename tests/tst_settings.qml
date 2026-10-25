@@ -23,7 +23,6 @@ Item {
     Loader { id: ai; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configAi.qml" }
     Loader { id: cloud; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configCloud.qml" }
     Loader { id: cat; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configCat.qml" }
-    Loader { id: notch; anchors.fill: parent; visible: false; source: "../org.phobby.dynamicisland/contents/ui/configNotch.qml" }
     PageCatalog { id: pages }
     QtObject { id: stored; property string suggestionsData: ""; property string suggestionsAvailable: "" }
 
@@ -39,6 +38,8 @@ Item {
             const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
             const top = find(page, "topSlider"), offset = find(page, "offsetSlider");
             verify(top !== null && offset !== null);
+            // (the distance from the top is the oval layout's)
+            page.cfg_islandLayout = 1;
             page.cfg_appearanceMode = 1;
             page.cfg_customStyle = JSON.stringify(Styles.defaults("oxygen"));
             page.cfg_topMargin = 6; page.cfg_horizontalOffset = 0;
@@ -368,16 +369,41 @@ Item {
             cat.visible = false;
         }
 
-        // Notch: its preview follows what is set; the widest is "no limit" below 80 px; in notch mode
-        // the distance from the top is not to be set in Appearance.
-        function test_notch_page_preview_and_limits() {
-            if (notch.status !== Loader.Ready) skip("KDE's settings modules are not installed");
-            const page = notch.item;
+        // Appearance → Layout: the notch is first and chosen by default; choosing the oval layout
+        // hides the notch's own settings and lets the distance from the top be set; and back.
+        function test_layout_choice() {
+            if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = appearance.item;
+            const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
+            const chooser = find(page, "islandLayoutChooser"), notchCard = find(page, "layoutNotch"), ovalCard = find(page, "layoutOval");
+            const section = find(page, "notchSettings"), top = find(page, "topSlider");
+            verify(chooser !== null && notchCard !== null && ovalCard !== null && section !== null);
+            page.cfg_islandLayout = 0;
+            verify(chooser.children.indexOf(notchCard) < chooser.children.indexOf(ovalCard), "the notch comes first");
+            verify(notchCard.current && !ovalCard.current);
+            verify(section.visible && !top.enabled, "the notch's settings, no distance from the top");
+            mouseClick(ovalCard);
+            compare(page.cfg_islandLayout, 1);
+            verify(ovalCard.current && !notchCard.current);
+            verify(!section.visible && top.enabled, "the oval layout: its distance from the top, no notch settings");
+            mouseClick(notchCard);
+            compare(page.cfg_islandLayout, 0);
+            verify(section.visible && !top.enabled);
+        }
+
+        // The notch's own settings (under the layout): the preview follows what is set; the widest
+        // is "no limit" below 80 px.
+        function test_notch_settings_preview_and_limits() {
+            if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = appearance.item;
+            page.cfg_islandLayout = 0;
             const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
             const preview = find(page, "notchPreview"), slider = find(page, "notchWidthSlider");
             verify(preview !== null && slider !== null);
             const outline = preview.children.find(c => c.ear !== undefined);
             verify(outline !== undefined);
+            page.cfg_appearanceMode = 1;
+            page.cfg_customStyle = JSON.stringify(Styles.defaults("symbiot"));
             page.cfg_notchPanelSeen = 40;
             page.cfg_notchHeightMode = 0;
             compare(outline.height, 40, "as high as the panel the island found");
@@ -403,21 +429,22 @@ Item {
             compare(outline.edgeWidth, 0);
             page.cfg_notchColor = 0;
             compare(String(outline.fillColor), "#000000");
+            page.cfg_notchEars = true;
+            verify(outline.ear > 0 && outline.earDepth > outline.ear, "its curves at the edge, deeper than wide");
             page.cfg_notchEars = false;
             compare(outline.ear, 0);
-
-            if (appearance.status !== Loader.Ready) return;
-            const top = find(appearance.item, "topSlider");
-            appearance.item.cfg_notchMode = true;
-            const shapeChoice = find(appearance.item, "islandShapeCombo");
-            compare(shapeChoice.currentIndex, 0);
-            shapeChoice.currentIndex = 1; shapeChoice.activated(1);
-            verify(!appearance.item.cfg_notchMode);
-            shapeChoice.currentIndex = 0; shapeChoice.activated(0);
-            verify(appearance.item.cfg_notchMode);
-            verify(!top.enabled);
-            appearance.item.cfg_notchMode = false;
-            verify(top.enabled);
+            // the controls show the settings and write them back
+            const color = find(page, "notchColorCombo"), border = find(page, "notchBorderCheck"), width = find(page, "notchBorderWidthSpin");
+            page.cfg_notchColor = 2; compare(color.currentIndex, 2);
+            color.currentIndex = 1; color.activated(1); compare(page.cfg_notchColor, 1);
+            page.cfg_notchBorderEnabled = true; verify(border.checked);
+            border.toggle(); border.toggled(); verify(!page.cfg_notchBorderEnabled);
+            page.cfg_notchBorderWidth = 3; compare(width.value, 3);
+            width.value = 6; width.valueModified(); compare(page.cfg_notchBorderWidth, 6);
+            // at the island's size
+            page.cfg_customStyle = JSON.stringify(Object.assign(Styles.defaults("symbiot"), { scale: 200 }));
+            compare(outline.height, 60, "twice as large at 200 %");
+            page.cfg_customStyle = JSON.stringify(Styles.defaults("symbiot"));
         }
 
         function test_theme_file_through_the_page() {
