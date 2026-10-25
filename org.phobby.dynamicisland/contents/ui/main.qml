@@ -912,11 +912,21 @@ PlasmoidItem {
         id: notchFullscreen
         active: root.notchWindow !== null && root.cfg.notchFullscreen !== 1
         source: "backend/FullscreenBackend.qml"
-        onLoaded: item.screen = Qt.binding(() => root.notchScreen)
+        onLoaded: {
+            item.screen = Qt.binding(() => root.notchScreen);
+            // (dodging windows too: where the small notch is, as a panel's "Dodge windows" looks)
+            item.area = Qt.binding(() => root.cfg.notchFullscreen === 2 && root.cfg.notchDodgeWindows ? root.notchArea : Qt.rect(0, 0, 0, 0));
+        }
+    }
+    readonly property rect notchArea: {
+        const w = Math.round(island.pillWidth * theme.scale), h = Math.round(theme.pillHeight * theme.scale);
+        return Qt.rect(root.notchScreen.x + (root.notchScreen.width - w) / 2 + theme.offsetX, root.notchScreen.y, w, h);
     }
     readonly property bool overFullscreen: notchFullscreen.item !== null && notchFullscreen.item.active
     readonly property bool notchHidden: root.overFullscreen && root.cfg.notchFullscreen === 0
-    readonly property bool dodging: root.overFullscreen && root.cfg.notchFullscreen === 2
+    // (also where a window reaches under it, maximised or moved up to the edge, if wanted)
+    readonly property bool dodging: root.cfg.notchFullscreen === 2 && notchFullscreen.item !== null
+                                    && (notchFullscreen.item.active || root.cfg.notchDodgeWindows && notchFullscreen.item.covered)
     property bool dodgeShown: false
     onDodgingChanged: dodgeShown = false
     // (out of sight: only a strip along the edge, as wide as the notch, takes the pointer)

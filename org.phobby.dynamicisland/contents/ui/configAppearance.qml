@@ -46,6 +46,7 @@ KCM.SimpleKCM {
     property int cfg_notchMaxWidth
     property bool cfg_notchOpenWidth
     property int cfg_notchDodgeSize
+    property bool cfg_notchDodgeWindows
     property int cfg_notchDodgeWidth
     property bool cfg_notchHideCat
     property int cfg_notchHeightMode

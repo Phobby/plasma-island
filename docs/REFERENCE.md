@@ -116,8 +116,10 @@ of its own, the glow of the cover comes from its lower edge.
   edge where it is brings it down; it goes back up a moment after it was left
   (open, or with the keyboard in it, it stays). While it is down there it can
   have a size (80–240 %) and a width (80–1200 px) of its own, *As usual*
-  otherwise. *Hide* keeps it away, *Show* keeps it over the window. With no
-  window filling the screen it is as it always is.
+  otherwise. Dodging, it also goes up while any window of that screen reaches
+  under it (maximised, or moved up to the edge), as a panel's *Dodge windows*
+  does; that can be switched off. *Hide* keeps it away, *Show* keeps it over
+  the window. With no such window it is as it always is.
 - **Screen:** the top panel's screen (default), or the primary one; without
   a top panel, the island's own. A panel at the bottom or a side has nothing
   to do with it. One notch at a time: not on every screen. Putting it on a

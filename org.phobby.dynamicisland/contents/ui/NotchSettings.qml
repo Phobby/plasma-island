@@ -207,6 +207,14 @@ Kirigami.FormLayout {
             ? Lang.i18n("While a window fills that screen it goes up out of sight; push the pointer against the top edge where it is and it comes down, and goes back up a moment after you leave it. With no window filling the screen it is as usual. It is never shown on the lock screen.")
             : Lang.i18n("While a window fills that screen (a film, a game, a talk). It is never shown on the lock screen.")
     }
+    QQC2.CheckBox {
+        id: dodgeWindows
+        objectName: "notchDodgeWindows"
+        visible: fullscreenCombo.currentIndex === 2
+        text: Lang.i18n("Also from a window that reaches under it (maximised, or moved up to the edge)")
+        Binding { target: dodgeWindows; property: "checked"; value: section.page.cfg_notchDodgeWindows }
+        onToggled: section.page.cfg_notchDodgeWindows = checked
+    }
     RowLayout {
         objectName: "notchDodgeSize"
         Kirigami.FormData.label: Lang.i18n("Size there:")

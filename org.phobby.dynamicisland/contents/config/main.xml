@@ -76,6 +76,8 @@
     <!-- While a window fills the screen: 0 = hide, 1 = show, 2 = dodge (out of sight, comes down at the top edge) -->
     <entry name="notchFullscreen" type="Int"><default>2</default></entry>
     <!-- Dodging: its size (percent) and width (px at 100 %) while it is down over such a window; 0 = as usual -->
+    <!-- Dodging also where a window reaches under the notch (maximised, moved up to the edge), as a panel's "Dodge windows" -->
+    <entry name="notchDodgeWindows" type="Bool"><default>true</default></entry>
     <entry name="notchDodgeSize" type="Int"><default>0</default><min>0</min><max>240</max></entry>
     <entry name="notchDodgeWidth" type="Int"><default>0</default><min>0</min><max>1200</max></entry>
     <!-- 0 = the screen of the top panel, 1 = the primary screen -->

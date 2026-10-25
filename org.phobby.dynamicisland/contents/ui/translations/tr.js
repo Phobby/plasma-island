@@ -1321,6 +1321,7 @@ var table = {
     "The top panel there is %1 px high.": "Oradaki üst panel %1 px yüksekliğinde.",
     "There is no panel at the top there: the notch is as high as the island.": "Orada üstte panel yok: çentik ada kadar yüksek.",
     "Width:": "Genişlik:",
+    "Also from a window that reaches under it (maximised, or moved up to the edge)": "Altına uzanan bir pencereden de kaçsın (büyütülmüş ya da kenara kadar taşınmış)",
     "Choose a colour": "Renk seç",
     "OK": "Tamam",
     "Colours": "Renkler",

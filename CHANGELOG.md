@@ -16,7 +16,8 @@
 - **Dodge over full screen** (the notch's *Over full screen*, now the
   default): out of sight while a window fills the screen, down when the
   pointer is pushed against the top edge, back up when left; a size and width
-  of its own for that can be set. Hide and Show are as they were.
+  of its own for that can be set. It also dodges a window that reaches under
+  it (maximised, moved up to the edge), as a panel's Dodge windows. Hide and Show are as they were.
 - **The Controls buttons' colours** (Settings → Controls): on, each its own
   or one for all; off, as the island's buttons or one for all; and a
   colour of a button's own, vivid on, muted off.
