@@ -2,7 +2,7 @@
 
 # Dynamic Island for KDE Plasma 6
 
-A pill at the top centre of the screen that shows what is going on right now (music, a timer, a download, a call, a notification) and opens into pages when the pointer rests on it.
+A notch joined to the top edge of your KDE Plasma desktop. Music, downloads, timers, calls and notifications live here; hover to open the pages below it.
 
 [![Licence: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#licence-and-thanks)
 ![Version 0.2.2](https://img.shields.io/badge/version-0.2.2-informational.svg)
@@ -10,7 +10,18 @@ A pill at the top centre of the screen that shows what is going on right now (mu
 
 **English** · [Türkçe](README.tr.md)
 
-<!-- TODO(owner): hero video / GIF here -->
+## Notch first, made yours
+
+![Symbiot Black notch preview](docs/media/notch-hero.svg)
+
+The default for fresh installs is a **notch with the Symbiot Black gradient**: charcoal `#292c30` through `#202326` to black `#0e1012`, with a muted slate accent inspired by a dark Plasma desktop. The illustration above highlights the notch shape.
+
+- **Settings → Notch:** enable the border, choose its colour, thickness (1–8 px) and opacity (0–100%). The edge follows the sides and lower corners, keeping the top joined to the screen. A live preview shows your choices.
+- **Settings → Appearance:** choose **Symbiot Black** or another preset, edit the gradient and save your look.
+- **Prefer the rounded version?** Select **Settings → Appearance → Shape → Rounded island**. Return to **Notch (default)** at any time.
+
+Existing saved preferences are preserved. The notch covers the panel beneath it; use **Settings → Notch → Widest** to leave room for panel widgets.
+
 
 ## Contents
 
@@ -36,11 +47,11 @@ A pill at the top centre of the screen that shows what is going on right now (mu
 
 | | |
 |---|---|
-| **Live activities** | The small pill shows the most important thing that is going on: music with its cover, a timer, a transfer with its progress, a screen recording, a call. Two at once split the island in two. |
+| **Live activities** | The small notch shows the most important thing that is going on: music with its cover, a timer, a transfer with its progress, a screen recording, a call. Two at once split the island in two. |
 | **Passing events** | Volume, brightness, charging, Bluetooth, Caps Lock, a new notification: shown for a few seconds, then the island is back where it was. |
 | **Pages** | Hovering opens the island: Media, System, Weather, Notifications, Controls, Apps, Tools, Habits, Calendar, Notes, Clipboard, and (off until you switch them on) AI and Cloud. |
 | **Out of the way** | A click shrinks it to a dot; clicks beside the island go to the window underneath. |
-| **Your look** | It follows Plasma's colours, or wears a look of your own: colours or a gradient, opacity, blur, roundness. Looks can be exported as files. |
+| **Your look** | It starts with Symbiot Black; you can follow Plasma's colours or choose your own: colours or a gradient, opacity, blur, roundness. Looks can be exported as files. |
 | **Yours to script** | Any program can show its own activity through a small D-Bus API (`island-push`). |
 | **Private by default** | No telemetry. Nothing is asked of the network until you choose a place for the weather, connect a calendar or a notes app, or switch on AI or Cloud. See [Privacy and the network](#privacy-and-the-network). |
 
@@ -128,7 +139,7 @@ Removing leaves your data where it is: `~/.local/share/dynamicisland/` (the copy
 
 1. Right click the desktop (or a panel in edit mode) → *Add Widgets…* → "Dynamic Island".
 2. A small handle icon appears there; the island itself sits at the top centre of that screen.
-3. With a panel at the top the island sits just below it. Settings → General → *Place below top panels* off puts it on the panel like a notch; then set *Distance from top*.
+3. The notch joins the top edge, over any top panel. Personalize its edge in Settings → Notch; choose the rounded version in Settings → Appearance → Shape.
 
 Plasma's own volume popup keeps appearing beside the island's. To keep only one: Settings → Activities → switch off "Volume, brightness and audio output" in the island, or switch off the volume popups in System Settings → Sound. (Plasma has no switch for its brightness popup.)
 
@@ -170,7 +181,7 @@ A click on the small pill turns it into a dot (15 px, 10–28 in the settings) s
 
 ### Notch mode
 
-With a panel at the top of the screen the island can sit at the top edge itself, like a laptop's notch: square where it meets the edge, rounded below, always over the panel (also one that hides itself), opening downwards. Opaque black by default, or the island's own colours. The panel under it cannot be clicked: if a clock or task buttons sit in the middle of your panel, limit its width. **Settings → Notch** (off by default); details in [REFERENCE](docs/REFERENCE.md#notch-mode).
+The default shape joins the screen's top edge like a laptop's notch: square above, rounded below, over the top panel (also one that hides itself), opening downwards. Symbiot Black is the default gradient; black and other custom colours are available. The panel under it cannot be clicked: if a clock or task buttons sit in the middle of your panel, limit its width. **Settings → Notch** (on by default for fresh installs); details in [REFERENCE](docs/REFERENCE.md#notch-mode).
 
 ## The pages
 
@@ -382,8 +393,8 @@ A small cat sits beside the pill. It falls asleep when nothing happens (after 20
 
 **Settings → Appearance** has two modes.
 
-- **Follow the system** (default): background, text and accent come from Plasma and change with it at once.
-- **Custom:** ready-made looks (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast and four gradients: Aurora, Sunset, Ocean, Midnight Blue) and fine tuning: opacity, blur, distance from the top, horizontal position, size (80–120 %), corner roundness, one colour or a gradient, the colours of controls and text, border, shadow. Every change shows on the island while the window is open. A look can be saved under a name.
+- **Follow the system**: background, text and accent come from Plasma and change with it at once.
+- **Custom** (default: Symbiot Black): ready-made looks (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast and five gradients: Symbiot Black, Aurora, Sunset, Ocean, Midnight Blue) and fine tuning: opacity, blur, distance from the top, horizontal position, size (80–120 %), corner roundness, one colour or a gradient, the colours of controls and text, border, shadow. Every change shows on the island while the window is open. A look can be saved under a name.
 
 **Theme files.** *Export Theme…* writes the look as one `*.islandtheme.json` file. *Add New…* takes one back, from a file or from the store. A theme is **data only**: at most 64 kB of JSON with known fields, no code, no QML, no pictures; anything else is refused, and a download whose checksum is not the catalog's is refused too. Themes you add are kept in `~/.local/share/dynamicisland/themes/`.
 

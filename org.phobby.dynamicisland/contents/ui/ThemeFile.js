@@ -33,7 +33,7 @@ const SUFFIX = ".islandtheme.json";
 const MAX_BYTES = 64 * 1024;
 const MAX_INDEX_BYTES = 256 * 1024;
 
-const PRESETS = ["oxygen", "breezeDark", "breezeLight", "glass", "contrast", "aurora", "sunset", "ocean", "midnight"];
+const PRESETS = ["symbiot", "oxygen", "breezeDark", "breezeLight", "glass", "contrast", "aurora", "sunset", "ocean", "midnight"];
 // field: [lowest, highest], whole numbers
 const NUMBERS = { opacity: [0, 100], blurLevel: [0, 2], top: [0, 40], offsetX: [-100, 100], scale: [80, 120], radius: [0, 100],
                   borderWidth: [1, 4], shadow: [0, 2], gradientAngle: [0, 360] };

@@ -19,8 +19,11 @@ pragma Singleton
 import QtQuick
 
 QtObject {
-    readonly property var order: ["oxygen", "breezeDark", "breezeLight", "glass", "contrast", "aurora", "sunset", "ocean", "midnight"]
+    readonly property var order: ["symbiot", "oxygen", "breezeDark", "breezeLight", "glass", "contrast", "aurora", "sunset", "ocean", "midnight"]
     readonly property var presets: ({
+        symbiot: { material: "flat", strong: false, opacity: 100, blur: false, blurLevel: 0, top: 6, offsetX: 0, scale: 100, radius: 100,
+                   background: "#0e1012", control: "#4c566a", text: "#fcfcfc", border: true, borderWidth: 1, borderColor: "#4c566a", shadow: 0,
+                   fill: "gradient", gradientType: "linear", gradientAngle: 180, gradientStops: ["#292c30", "#202326", "#0e1012"] },
         oxygen: { material: "metal", strong: false, opacity: 82, blur: true, blurLevel: 0, top: 6, offsetX: 0, scale: 100, radius: 100,
                   background: "#1a1b1d", control: "#0a84ff", text: "", border: true, borderWidth: 1, borderColor: "", shadow: 2 },
         breezeDark: { material: "flat", strong: false, opacity: 90, blur: true, blurLevel: 1, top: 6, offsetX: 0, scale: 100, radius: 100,
@@ -46,7 +49,7 @@ QtObject {
                     fill: "gradient", gradientType: "radial", gradientAngle: 0, gradientStops: ["#1e3a8a", "#0b1026"] }
     })
     function title(preset: string): string {
-        return preset === "oxygen" ? Lang.i18n("Oxygen Metallic") : preset === "breezeDark" ? Lang.i18n("Breeze Dark")
+        return preset === "symbiot" ? Lang.i18n("Symbiot Black") : preset === "oxygen" ? Lang.i18n("Oxygen Metallic") : preset === "breezeDark" ? Lang.i18n("Breeze Dark")
              : preset === "breezeLight" ? Lang.i18n("Breeze Light") : preset === "glass" ? Lang.i18n("Pure Glass (Minimal)")
              : preset === "contrast" ? Lang.i18n("High Contrast") : preset === "aurora" ? Lang.i18n("Aurora")
              : preset === "sunset" ? Lang.i18n("Sunset") : preset === "ocean" ? Lang.i18n("Ocean")

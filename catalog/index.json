@@ -170,6 +170,35 @@
         "borderWidth": 1,
         "borderColor": ""
       }
+    },
+    {
+      "id": "symbiot",
+      "name": "Symbiot Black",
+      "author": "Dynamic Island",
+      "description": "A black-to-charcoal gradient with a muted slate accent, inspired by a dark Plasma desktop.",
+      "path": "themes/symbiot.islandtheme.json",
+      "sha256": "85939e259d822832a02ce5c57a1f455de6abd45986aa4fb45e190a9c786e3e04",
+      "preview": {
+        "preset": "symbiot",
+        "material": "flat",
+        "strong": false,
+        "opacity": 100,
+        "radius": 100,
+        "fill": "gradient",
+        "background": "#0e1012",
+        "gradientType": "linear",
+        "gradientAngle": 180,
+        "gradientStops": [
+          "#292c30",
+          "#202326",
+          "#0e1012"
+        ],
+        "control": "#4c566a",
+        "text": "#fcfcfc",
+        "border": true,
+        "borderWidth": 1,
+        "borderColor": "#4c566a"
+      }
     }
   ]
 }

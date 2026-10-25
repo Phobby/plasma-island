@@ -13,6 +13,8 @@ import QtQuick.Shapes
 Shape {
     id: outline
 
+    property real edgeWidth: 0
+    property color edgeColor: "transparent"
     property real radius: 0
     property real ear: 0
     property color fillColor: "black"
@@ -45,6 +47,29 @@ Shape {
                     + " L 0 " + e
                     + arc(e, 0, -e, 0)
                     + " Z";
+            }
+        }
+    }
+    // Open, inset stroke: the screen edge stays joined, with no line across the top.
+    ShapePath {
+        strokeWidth: outline.edgeWidth > 0 ? outline.edgeWidth : -1
+        strokeColor: outline.edgeWidth > 0 ? outline.edgeColor : "transparent"
+        capStyle: ShapePath.FlatCap
+        joinStyle: ShapePath.RoundJoin
+        fillColor: "transparent"
+        PathSvg {
+            path: {
+                const d = Math.min(outline.edgeWidth / 2, outline.width / 4, outline.height / 4);
+                const w = outline.width, h = outline.height, r = Math.max(0, outline.r - d), e = outline.e;
+                const arc = (radius, sweep, x, y) => radius > 0.01 ? " A " + radius + " " + radius + " 0 0 " + sweep + " " + x + " " + y : " L " + x + " " + y;
+                return "M " + (-e) + " " + (-d)
+                    + arc(e + d, 1, d, e)
+                    + " L " + d + " " + (h - d - r)
+                    + arc(r, 0, d + r, h - d)
+                    + " L " + (w - d - r) + " " + (h - d)
+                    + arc(r, 0, w - d, h - d - r)
+                    + " L " + (w - d) + " " + e
+                    + arc(e + d, 1, w + e, -d);
             }
         }
     }

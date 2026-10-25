@@ -15,6 +15,7 @@ import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
+import org.kde.kquickcontrols as KQC
 import org.kde.plasma.plasmoid
 
 KCM.SimpleKCM {
@@ -34,6 +35,10 @@ KCM.SimpleKCM {
     property alias cfg_notchHeightMode: heightCombo.currentIndex
     property alias cfg_notchHeight: heightSpin.value
     property alias cfg_notchEars: earsCheck.checked
+    property alias cfg_notchBorderEnabled: borderCheck.checked
+    property alias cfg_notchBorderWidth: borderSpin.value
+    property string cfg_notchBorderColor
+    property alias cfg_notchBorderOpacity: borderOpacity.value
     property int cfg_notchPanelSeen
     // For the preview: the island's own look (Appearance) and the dot's size.
     property int cfg_appearanceMode
@@ -63,6 +68,10 @@ KCM.SimpleKCM {
         notchBlack: colorCombo.currentIndex === 0
         notchLook: colorCombo.currentIndex === 2
         notchEars: earsCheck.checked
+        notchBorderEnabled: borderCheck.checked
+        notchBorderWidth: borderSpin.value
+        notchBorderColor: page.cfg_notchBorderColor
+        notchBorderOpacity: borderOpacity.value
         // the panel the island found there (36 px where it has not looked yet), or as set
         notchPixels: heightCombo.currentIndex === 1 ? heightSpin.value : page.cfg_notchPanelSeen > 0 ? page.cfg_notchPanelSeen : 36
     }
@@ -130,6 +139,8 @@ KCM.SimpleKCM {
                 height: dot ? page.cfg_dotSize : shown.pillHeight
                 radius: dot ? page.cfg_dotSize : shown.notchRadius
                 ear: shown.notchEar
+                edgeWidth: shown.notchEdgeWidth
+                edgeColor: shown.notchEdgeColor
                 fillColor: shown.notchBody.length === 3 ? "transparent" : shown.bodyMid
                 gradientColors: shown.notchBody
                 gradientKind: shown.notchBodyKind
@@ -153,8 +164,44 @@ KCM.SimpleKCM {
         }
         Hint {
             text: colorCombo.currentIndex === 0 ? Lang.i18n("Opaque black, like a real notch. Text and icons are light.")
-                : colorCombo.currentIndex === 1 ? Lang.i18n("The colours of Appearance, a gradient too, but opaque: no blur, no border, no shadow. Text and icons keep a readable contrast.")
-                : Lang.i18n("The look of Appearance: its material (metal too, with its glassy gloss), how see-through it is and its blur. No border, no shadow.")
+                : colorCombo.currentIndex === 1 ? Lang.i18n("The colours of Appearance, a gradient too, but opaque: no blur, no shadow. Text and icons keep a readable contrast.")
+                : Lang.i18n("The look of Appearance: its material (metal too, with its glassy gloss), how see-through it is and its blur. No shadow.")
+        }
+        QQC2.CheckBox {
+            id: borderCheck
+            objectName: "notchBorderCheck"
+            Kirigami.FormData.label: Lang.i18n("Notch border:")
+            text: Lang.i18n("Show an edge around the notch")
+        }
+        QQC2.SpinBox {
+            id: borderSpin
+            objectName: "notchBorderWidthSpin"
+            Kirigami.FormData.label: Lang.i18n("Border thickness:")
+            enabled: borderCheck.checked
+            from: 1
+            to: 8
+            textFromValue: (v) => Lang.i18n("%1 px", v)
+            valueFromText: (t) => parseInt(t)
+        }
+        KQC.ColorButton {
+            id: borderColorButton
+            Kirigami.FormData.label: Lang.i18n("Border colour:")
+            enabled: borderCheck.checked
+            showAlphaChannel: false
+            Binding { target: borderColorButton; property: "color"; value: page.cfg_notchBorderColor || "#4c566a" }
+            onAccepted: c => page.cfg_notchBorderColor = "#" + [c.r, c.g, c.b].map(v => Math.round(v * 255).toString(16).padStart(2, "0")).join("")
+        }
+        QQC2.SpinBox {
+            id: borderOpacity
+            Kirigami.FormData.label: Lang.i18n("Border opacity:")
+            enabled: borderCheck.checked
+            from: 0
+            to: 100
+            textFromValue: (v) => Lang.i18n("%1%", v)
+            valueFromText: (t) => parseInt(t)
+        }
+        Hint {
+            text: Lang.i18n("The border follows the sides and lower corners, leaving the top joined to the screen. It applies to every notch colour mode.")
         }
         QQC2.CheckBox {
             id: earsCheck
@@ -240,7 +287,7 @@ KCM.SimpleKCM {
         }
         Hint {
             Kirigami.FormData.label: Lang.i18n("Not in notch mode:")
-            text: Lang.i18n("Distance from top (Appearance, General) and Place below top panels: it sits at the edge itself. Blur, opacity, border and shadow of the look. The horizontal position, the size, the roundness of its lower corners and dot mode still apply.")
+            text: Lang.i18n("Distance from top (Appearance, General) and Place below top panels: it sits at the edge itself. The look's border and shadow; use the notch border controls above. The horizontal position, the size, the roundness of its lower corners and dot mode still apply.")
         }
         Hint {
             visible: !Qt.platform.pluginName.startsWith("wayland")

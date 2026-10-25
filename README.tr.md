@@ -2,7 +2,7 @@
 
 # KDE Plasma 6 için Dinamik Ada
 
-Ekranın üst ortasında duran, o an ne olup bittiğini (müzik, zamanlayıcı, indirme, arama, bildirim) gösteren ve imleç üzerine gelince sayfalara açılan bir hap.
+KDE Plasma masaüstünün üst kenarıyla birleşen bir çentik. Müzik, indirmeler, zamanlayıcılar, aramalar ve bildirimler burada görünür; imleç üzerine gelince sayfalar aşağıya açılır.
 
 [![Lisans: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#lisans-ve-teşekkürler)
 ![Sürüm 0.2.2](https://img.shields.io/badge/version-0.2.2-informational.svg)
@@ -10,7 +10,18 @@ Ekranın üst ortasında duran, o an ne olup bittiğini (müzik, zamanlayıcı, 
 
 [English](README.md) · **Türkçe**
 
-<!-- TODO(owner): hero video / GIF here -->
+## Ön planda çentik, görünümü sizin elinizde
+
+![Symbiot Siyahı çentik önizlemesi](docs/media/notch-hero.svg)
+
+Yeni kurulumlarda varsayılan görünüm **Symbiot Siyahı gradyanlı çentik**: koyu gri `#292c30`, `#202326` ve siyaha yakın `#0e1012`; koyu Plasma masaüstünden alınan soluk gri vurgu rengiyle. Yukarıdaki çizim çentik biçimini gösterir.
+
+- **Ayarlar → Çentik:** kenarlığı açıp kapatın; rengini, kalınlığını (1–8 px) ve opaklığını (%0–100) seçin. Kenarlık yanları ve alt köşeleri izler, üst kenar ekranla birleşik kalır. Canlı önizleme seçimlerinizi gösterir.
+- **Ayarlar → Görünüm:** **Symbiot Siyahı** veya başka bir hazır görünüm seçin, gradyanı düzenleyin ve görünümünüzü kaydedin.
+- **Yuvarlak sürümü mü tercih ediyorsunuz?** **Ayarlar → Görünüm → Şekil → Yuvarlak ada** seçin. İstediğiniz zaman **Çentik (varsayılan)** seçeneğine dönebilirsiniz.
+
+Mevcut kayıtlı tercihler korunur. Çentik altındaki paneli örter; panel öğelerine yer bırakmak için **Ayarlar → Çentik → En geniş** ayarını kullanın.
+
 
 Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarlar → Dil).
 
@@ -38,11 +49,11 @@ Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarla
 
 | | |
 |---|---|
-| **Canlı etkinlikler** | Küçük hap, o an süren en önemli şeyi gösterir: kapağıyla müzik, zamanlayıcı, ilerlemesiyle bir aktarım, ekran kaydı, arama. İki şey aynı anda sürüyorsa ada ikiye ayrılır. |
+| **Canlı etkinlikler** | Küçük çentik, o an süren en önemli şeyi gösterir: kapağıyla müzik, zamanlayıcı, ilerlemesiyle bir aktarım, ekran kaydı, arama. İki şey aynı anda sürüyorsa ada ikiye ayrılır. |
 | **Anlık olaylar** | Ses, parlaklık, şarj, Bluetooth, Caps Lock, yeni bildirim: birkaç saniye gösterilir, sonra ada eski haline döner. |
 | **Sayfalar** | Üzerine gelince ada açılır: Medya, Sistem, Hava Durumu, Bildirimler, Kontroller, Uygulamalar, Araçlar, Alışkanlıklar, Takvim, Notlar, Pano ve (siz açana kadar kapalı) Yapay Zeka ile Bulut. |
 | **Yoldan çekilir** | Bir tıklama onu noktaya küçültür; adanın yanındaki tıklamalar alttaki pencereye gider. |
-| **Sizin görünümünüz** | Plasma'nın renklerini izler ya da sizin belirlediğiniz görünümü taşır: renkler ya da gradyan, opaklık, bulanıklık, köşe yuvarlaklığı. Görünümler dosya olarak dışa aktarılabilir. |
+| **Sizin görünümünüz** | Symbiot Siyahı ile başlar; Plasma renklerini veya özel bir görünümü seçebilirsiniz: renkler ya da gradyan, opaklık, bulanıklık, köşe yuvarlaklığı. Görünümler dosya olarak dışa aktarılabilir. |
 | **Betiklenebilir** | Her program küçük bir D-Bus API'siyle (`island-push`) kendi etkinliğini gösterebilir. |
 | **Varsayılan olarak gizli** | Telemetri yok. Hava durumu için bir konum seçene, bir takvim ya da not uygulaması bağlayana, Yapay Zeka ya da Bulut'u açana kadar ağdan hiçbir şey istenmez. Bkz. [Gizlilik ve ağ](#gizlilik-ve-ağ). |
 
@@ -130,7 +141,7 @@ Kaldırma verilerinizi yerinde bırakır: `~/.local/share/dynamicisland/` (ayarl
 
 1. Masaüstüne (ya da düzenleme kipindeki bir panele) sağ tıklayın → araç takımı (widget) ekleme penceresini açın (*Araç Takımları Ekle…*) → "Dinamik Ada".
 2. Orada küçük bir tutamaç simgesi belirir; adanın kendisi o ekranın üst ortasında durur.
-3. Üstte bir panel varsa ada hemen altına yerleşir. Ayarlar → Genel → *Üst panellerin altına yerleş* kapatılırsa ada panelin üzerine (çentik gibi) oturur; o zaman *Üstten uzaklık* değerini ayarlayın.
+3. Çentik üst kenarla birleşir ve üst panelin üzerinde durur. Kenarlığını Ayarlar → Çentik bölümünden, yuvarlak sürümü Ayarlar → Görünüm → Şekil bölümünden seçin.
 
 Plasma'nın kendi ses açılır penceresi adanınkinin yanında görünmeye devam eder. Yalnızca birini bırakmak için: adada Ayarlar → Etkinlikler → "Ses, parlaklık ve ses çıkışı" seçeneğini kapatın ya da Sistem Ayarları → Ses içinden ses açılır pencerelerini kapatın. (Plasma'da parlaklık açılır penceresini kapatan bir ayar yok.)
 
@@ -172,7 +183,7 @@ Küçük hapa tıklamak onu yoldan çekilsin diye bir noktaya çevirir (15 px, a
 
 ### Çentik modu
 
-Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğrudan üst kenarda durabilir: kenarla birleştiği yerde köşesiz, altta yuvarlak, panelin (kendini gizleyen bir panelin de) hep üstünde, aşağıya doğru açılır. Varsayılan olarak opak siyah; istenirse adanın kendi renkleri. Altında kalan panel kısmına tıklanamaz: panelinizin ortasında saat ya da görev düğmeleri varsa genişliğini sınırlayın. **Ayarlar → Çentik** (varsayılan kapalı); ayrıntılar [REFERENCE](docs/REFERENCE.md#notch-mode) içinde.
+Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğrudan üst kenarda durabilir: kenarla birleştiği yerde köşesiz, altta yuvarlak, panelin (kendini gizleyen bir panelin de) hep üstünde, aşağıya doğru açılır. Varsayılan olarak Symbiot Siyahı gradyanı; istenirse opak siyah veya başka bir özel görünüm. Altında kalan panel kısmına tıklanamaz: panelinizin ortasında saat ya da görev düğmeleri varsa genişliğini sınırlayın. **Ayarlar → Çentik** (yeni kurulumlarda varsayılan açık); ayrıntılar [REFERENCE](docs/REFERENCE.md#notch-mode) içinde.
 
 ## Sayfalar
 
@@ -384,8 +395,8 @@ Hapın yanında küçük bir kedi oturur. Hiçbir şey olmayınca uykuya dalar (
 
 **Ayarlar → Görünüm** iki kip sunar.
 
-- **Sistemi takip et** (varsayılan): arka plan, metin ve vurgu Plasma'dan gelir ve onunla birlikte anında değişir.
-- **Özel:** hazır temalar (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast ve dört gradyan: Aurora, Sunset, Ocean, Midnight Blue) ve ince ayar: opaklık, bulanıklık, üstten uzaklık, yatay konum, boyut (%80–120), köşe yuvarlaklığı, tek renk ya da gradyan, denetimlerin ve metnin renkleri, kenarlık, gölge. Pencere açıkken her değişiklik adada anında görünür. Bir görünüm bir adla kaydedilebilir.
+- **Sistemi takip et**: arka plan, metin ve vurgu Plasma'dan gelir ve onunla birlikte anında değişir.
+- **Özel** (varsayılan: Symbiot Siyahı): hazır temalar (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast ve beş gradyan: Symbiot Siyahı, Aurora, Sunset, Ocean, Midnight Blue) ve ince ayar: opaklık, bulanıklık, üstten uzaklık, yatay konum, boyut (%80–120), köşe yuvarlaklığı, tek renk ya da gradyan, denetimlerin ve metnin renkleri, kenarlık, gölge. Pencere açıkken her değişiklik adada anında görünür. Bir görünüm bir adla kaydedilebilir.
 
 **Tema dosyaları.** *Temayı Dışa Aktar…* görünümü tek bir `*.islandtheme.json` dosyası olarak yazar. *Yeni Ekle…* bir dosyadan ya da mağazadan geri alır. Bir tema **yalnızca veridir**: bilinen alanlardan oluşan en fazla 64 kB JSON; kod yok, QML yok, resim yok. Başka her şey reddedilir; sağlama toplamı katalogdakiyle uyuşmayan bir indirme de reddedilir. Eklediğiniz temalar `~/.local/share/dynamicisland/themes/` altında tutulur.
 

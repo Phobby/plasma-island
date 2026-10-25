@@ -76,6 +76,10 @@ PlasmoidItem {
         notchBlack: root.cfg.notchColor === 0
         notchLook: root.cfg.notchColor === 2
         notchEars: root.cfg.notchEars
+        notchBorderEnabled: root.cfg.notchBorderEnabled
+        notchBorderWidth: root.cfg.notchBorderWidth
+        notchBorderColor: root.cfg.notchBorderColor
+        notchBorderOpacity: root.cfg.notchBorderOpacity
         notchPixels: root.notchPixels
     }
     // No settings window can be open when the shell starts: a preview left behind

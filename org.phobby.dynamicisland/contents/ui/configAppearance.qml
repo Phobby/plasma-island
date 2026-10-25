@@ -317,6 +317,17 @@ KCM.SimpleKCM {
     }
 
     Kirigami.FormLayout {
+        Choice {
+            objectName: "islandShapeCombo"
+            Kirigami.FormData.label: Lang.i18n("Shape:")
+            model: [Lang.i18n("Notch (default)"), Lang.i18n("Rounded island")]
+            index: page.cfg_notchMode ? 0 : 1
+            onActivated: page.cfg_notchMode = currentIndex === 0
+        }
+        Hint {
+            visible: page.cfg_notchMode
+            text: Lang.i18n("Set the notch's edge thickness, colour and opacity in Settings → Notch.")
+        }
         QQC2.ButtonGroup { id: modeGroup }
         QQC2.RadioButton {
             Kirigami.FormData.label: Lang.i18n("Look:")

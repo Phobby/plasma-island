@@ -54,6 +54,7 @@ Item {
             away(); island.hoverSpent = false;
             stopwatch.active = false; timer.active = false;
             island.expanded = false; island.dot = false; island.maxWidth = 0; cat.enabled = false; cat.sizePercent = 120;
+            islandTheme.notchBorderEnabled = false; islandTheme.notchEars = false;
             islandTheme.notch = true; islandTheme.notchBlack = true; islandTheme.notchLook = false; islandTheme.notchPixels = 0;
             wait(60); settled();
         }
@@ -266,6 +267,43 @@ Item {
             verify(islandTheme.contrast(islandTheme.text, islandTheme.surface) >= 4.5);
             islandTheme.notchLook = false;
             islandTheme.style = Styles.defaults("oxygen");
+        }
+
+        function test_border_is_inset_in_every_colour_mode() {
+            islandTheme.notchBorderEnabled = true;
+            islandTheme.notchBorderWidth = 6;
+            islandTheme.notchBorderColor = "#ff0000";
+            islandTheme.notchBorderOpacity = 100;
+            for (const ears of [false, true]) {
+                islandTheme.notchEars = ears;
+                for (const mode of [0, 1, 2]) {
+                    islandTheme.notchBlack = mode === 0;
+                    islandTheme.notchLook = mode === 2;
+                    for (const state of ["idle", "dot", "expanded", "split"]) {
+                        island.dot = state === "dot";
+                        island.expanded = state === "expanded";
+                        stopwatch.active = state === "split";
+                        timer.active = state === "split";
+                        settled(); wait(100);
+                        const img = grabImage(island), s = island.surfaceRect;
+                        const edge = img.pixel(Math.round(s.x + s.width / 2), Math.round(s.height - 2));
+                        verify(edge.r > 0.9 && edge.g < 0.1 && edge.b < 0.1, "lower border: " + mode + "/" + state + "/" + ears);
+                        if (state === "expanded" || state === "idle") {
+                            const y = Math.round(islandTheme.notchEar + 8);
+                            const side = img.pixel(Math.round(s.x + 2), y);
+                            verify(side.r > 0.9 && side.g < 0.1, "side border follows the outline");
+                            compare(img.pixel(Math.round(s.x - 2), y), img.pixel(2, island.height - 2), "side border stays inside the mask");
+                        }
+                        const top = img.pixel(Math.round(s.x + s.width / 2), 0);
+                        verify(top.g > 0.1 || top.r < 0.9, "no border across the screen edge");
+                        compare(img.pixel(Math.round(s.x + s.width / 2), Math.ceil(s.height + 2)), img.pixel(2, island.height - 2), "nothing outside the mask");
+                    }
+                }
+            }
+            islandTheme.notchBorderOpacity = 25;
+            fuzzyCompare(islandTheme.notchEdgeColor.a, 0.25, 0.01);
+            islandTheme.notch = false;
+            compare(islandTheme.notchEdgeWidth, 0);
         }
 
         function test_10_off_it_is_the_island_as_ever() {

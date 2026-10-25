@@ -24,6 +24,16 @@ Item {
         function use(preset, changes) { theme.style = styled(preset, changes); }
         function gradient(stops, changes) { use("oxygen", Object.assign({ fill: "gradient", gradientStops: stops }, changes || {})); }
 
+        function test_symbiot_black() {
+            const s = Styles.defaults("symbiot");
+            compare(s.gradientStops, ["#292c30", "#202326", "#0e1012"]);
+            compare(s.opacity, 100);
+            compare(s.fill, "gradient");
+            use("symbiot");
+            verify(theme.gradientFill);
+            for (const c of s.gradientStops) verify(theme.contrast(theme.text, c) >= 4.5);
+        }
+
         function test_where_it_sits() {
             const placed = Qt.createQmlObject('import "../org.phobby.dynamicisland/contents/ui"; Theme { systemTop: 20; systemOffsetX: -30 }', root);
             placed.style = styled("oxygen", { top: 9, offsetX: 70 });

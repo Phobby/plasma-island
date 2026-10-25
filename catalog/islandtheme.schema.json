@@ -25,7 +25,7 @@
       "properties": {
         "preset": {
           "description": "The ready-made look this style starts from; \"Reset to the preset\" goes back to it.",
-          "enum": ["oxygen", "breezeDark", "breezeLight", "glass", "contrast", "aurora", "sunset", "ocean", "midnight"]
+          "enum": ["symbiot", "oxygen", "breezeDark", "breezeLight", "glass", "contrast", "aurora", "sunset", "ocean", "midnight"]
         },
         "material": { "description": "metal: gradient, silver rim and gloss; flat: one surface; glass: clear with a hairline.", "enum": ["metal", "flat", "glass"] },
         "strong": { "description": "High contrast: nothing translucent to read on or with.", "type": "boolean" },

@@ -4,6 +4,22 @@
 // whose value is [one, many] (Turkish uses the same form after a number).
 // tools/i18n-check lists strings that are missing here or no longer used.
 var table = {
+    "%1%": "%1%",
+    "Symbiot Black": "Symbiot Siyahı",
+    "Shape:": "Şekil:",
+    "Notch (default)": "Çentik (varsayılan)",
+    "Rounded island": "Yuvarlak ada",
+    "Set the notch's edge thickness, colour and opacity in Settings → Notch.": "Çentiğin kenar kalınlığını, rengini ve opaklığını Ayarlar → Çentik bölümünden ayarlayın.",
+    "Notch border:": "Çentik kenarlığı:",
+    "Show an edge around the notch": "Çentiğin kenarlığını göster",
+    "Border thickness:": "Kenar kalınlığı:",
+    "Border colour:": "Kenar rengi:",
+    "Border opacity:": "Kenar opaklığı:",
+    "The border follows the sides and lower corners, leaving the top joined to the screen. It applies to every notch colour mode.": "Kenarlık yanları ve alt köşeleri izler; üst kenar ekranla birleşik kalır. Tüm çentik renk kiplerinde uygulanır.",
+    "The colours of Appearance, a gradient too, but opaque: no blur, no shadow. Text and icons keep a readable contrast.": "Görünüm renkleri ve gradyanı opak olarak kullanılır; bulanıklık ve gölge yoktur. Metin ve simgeler okunaklı kalır.",
+    "The look of Appearance: its material (metal too, with its glassy gloss), how see-through it is and its blur. No shadow.": "Görünümün malzemesi (camsı parlaklığıyla metal de dahil), saydamlığı ve bulanıklığı kullanılır. Gölge yoktur.",
+    "Distance from top (Appearance, General) and Place below top panels: it sits at the edge itself. The look's border and shadow; use the notch border controls above. The horizontal position, the size, the roundness of its lower corners and dot mode still apply.": "Üstten uzaklık (Görünüm, Genel) ve Üst panellerin altına yerleş uygulanmaz; çentik doğrudan kenarda durur. Görünümün kenarlığı ve gölgesi kullanılmaz; yukarıdaki çentik kenarlığı ayarlarını kullanın. Yatay konum, boyut, alt köşe yuvarlaklığı ve nokta modu geçerlidir.",
+
     "Enter your Apple ID and the app-specific password.": "Apple Kimliğini ve uygulamaya özel parolayı gir.",
     "iCloud account": "iCloud hesabı",
     "Connected: %1 · %2 calendars.": "Bağlandı: %1 · %2 takvim.",
@@ -1284,9 +1300,7 @@ var table = {
     "Colour:": "Renk:",
     "The island's colours (Appearance)": "Adanın renkleri (Görünüm)",
     "Opaque black, like a real notch. Text and icons are light.": "Gerçek bir çentik gibi opak siyah. Metin ve simgeler açık renkli.",
-    "The colours of Appearance, a gradient too, but opaque: no blur, no border, no shadow. Text and icons keep a readable contrast.": "Görünüm'deki renkler, gradyan da olur, ama opak: bulanıklık, kenarlık ve gölge yok. Metin ve simgeler okunur bir karşıtlıkta kalır.",
     "The island's look (Appearance)": "Adanın görünümü (Görünüm)",
-    "The look of Appearance: its material (metal too, with its glassy gloss), how see-through it is and its blur. No border, no shadow.": "Görünüm'deki görünüm: malzemesi (metal de olur, camsı parlaklığıyla), saydamlığı ve bulanıklığı. Kenarlık ve gölge yok.",
     "Upper corners:": "Üst köşeler:",
     "Soften where it meets the edge (small curves outwards)": "Kenarla birleştiği yeri yumuşat (yana doğru küçük kıvrımlar)",
     "Screen:": "Ekran:",
@@ -1307,6 +1321,5 @@ var table = {
     "Hide the cat in notch mode": "Çentik modunda kediyi gizle",
     "Beside the notch it stands on the panel, against the notch's side, and takes the clicks where it is.": "Çentiğin yanında, panelin üstünde çentiğe yaslanarak durur; bulunduğu yerdeki tıklamaları o alır.",
     "Not in notch mode:": "Çentik modunda geçersiz:",
-    "Distance from top (Appearance, General) and Place below top panels: it sits at the edge itself. Blur, opacity, border and shadow of the look. The horizontal position, the size, the roundness of its lower corners and dot mode still apply.": "Üstten uzaklık (Görünüm, Genel) ve Üst panellerin altına yerleş: doğrudan kenarda durur. Görünümün bulanıklığı, saydamlığı, kenarlığı ve gölgesi. Yatay konum, boyut, alt köşelerin yuvarlaklığı ve nokta modu yine geçerlidir.",
     "This is not a Wayland session: the notch goes to the top edge, but whether it stays over the panel is up to the window manager.": "Bu bir Wayland oturumu değil: çentik üst kenara gider, ama panelin üstünde kalıp kalmayacağı pencere yöneticisine bağlı."
 };

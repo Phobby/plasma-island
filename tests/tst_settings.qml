@@ -375,6 +375,15 @@ Item {
             slider.value = 50; slider.moved();
             compare(page.cfg_notchMaxWidth, 0, "below 80 px: no limit");
             compare(outline.width, free);
+            page.cfg_notchBorderEnabled = true;
+            page.cfg_notchBorderWidth = 5;
+            page.cfg_notchBorderColor = "#abcdef";
+            page.cfg_notchBorderOpacity = 40;
+            compare(outline.edgeWidth, 5);
+            fuzzyCompare(outline.edgeColor.a, 0.4, 0.01);
+            compare(outline.edgeColor.r.toFixed(2), (0xab / 255).toFixed(2));
+            page.cfg_notchBorderEnabled = false;
+            compare(outline.edgeWidth, 0);
             page.cfg_notchColor = 0;
             compare(String(outline.fillColor), "#000000");
             page.cfg_notchEars = false;
@@ -383,6 +392,12 @@ Item {
             if (appearance.status !== Loader.Ready) return;
             const top = find(appearance.item, "topSlider");
             appearance.item.cfg_notchMode = true;
+            const shapeChoice = find(appearance.item, "islandShapeCombo");
+            compare(shapeChoice.currentIndex, 0);
+            shapeChoice.currentIndex = 1; shapeChoice.activated(1);
+            verify(!appearance.item.cfg_notchMode);
+            shapeChoice.currentIndex = 0; shapeChoice.activated(0);
+            verify(appearance.item.cfg_notchMode);
             verify(!top.enabled);
             appearance.item.cfg_notchMode = false;
             verify(top.enabled);

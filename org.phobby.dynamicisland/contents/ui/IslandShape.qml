@@ -15,7 +15,7 @@
     small inward curves (`ear` px wide, beside its own width). The body is
     the one shape of that outline (NotchOutline), opaque, or see-through in
     the island's own look with its frosting and, for glass and metal, its
-    top gloss in the same outline; no border or inner shadow, nothing else
+    top gloss in the same outline; an optional inset edge, no inner shadow, nothing else
     is drawn.
 
     Optional ambient glow (AmbientGlow.qml): a coloured light around the edge
@@ -233,6 +233,18 @@ Item {
         gradient: Gradient {
             GradientStop { position: 0.0; color: shape.theme.highlight }
             GradientStop { position: 1.0; color: "transparent" }
+        }
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: shape.notch && shape.theme.notchEdgeWidth > 0
+        sourceComponent: NotchOutline {
+            radius: shape.radius
+            ear: shape.ear
+            fillColor: "transparent"
+            edgeWidth: shape.theme.notchEdgeWidth
+            edgeColor: shape.theme.notchEdgeColor
         }
     }
 

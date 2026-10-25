@@ -25,7 +25,7 @@ QtObject {
     // KWin really blurs what is behind the island (native helper + Blur effect).
     property bool blurActive: false
     // Notch mode: welded to the top edge of the screen (no room above it; main.qml places it).
-    // Without border or shadow (nothing may shine where it meets the edge or a panel); black,
+    // No shadow; an independent inset edge can be enabled. Black,
     // or the island's own colours, opaque and flat, or the island's own look (notchLook: its
     // material, see-through and blur, its gloss from the edge down; no inner shadow).
     property bool notch: false
@@ -33,6 +33,12 @@ QtObject {
     property bool notchLook: false
     // Small inward curves where it meets the edge.
     property bool notchEars: false
+    property bool notchBorderEnabled: false
+    property int notchBorderWidth: 1
+    property color notchBorderColor: "#4c566a"
+    property int notchBorderOpacity: 70
+    readonly property real notchEdgeWidth: notch && notchBorderEnabled ? Math.max(1, Math.min(8, notchBorderWidth)) : 0
+    readonly property color notchEdgeColor: Qt.rgba(notchBorderColor.r, notchBorderColor.g, notchBorderColor.b, Math.max(0, Math.min(100, notchBorderOpacity)) / 100)
     // Its height in px (the top panel's, or as set); 0 = the island's own.
     property int notchPixels: 0
     readonly property bool notchDark: notch && notchBlack

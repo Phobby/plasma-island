@@ -79,7 +79,7 @@ drawn around it.
 
 ### Notch mode
 
-Settings → Notch (off by default). The island is welded to the top edge of
+Settings → Notch (on by default for fresh installs). The island is welded to the top edge of
 the screen like a laptop's notch: no room above it, square where it meets
 the edge and straight there (two small curves outwards can be switched on,
 *Soften where it meets the edge*), only its lower corners rounded. It opens, shows notifications and
@@ -102,11 +102,15 @@ of its own, the glow of the cover comes from its lower edge.
   within a few seconds (as soon as plasmashell reports the move).
 - **Height:** the top panel's (read from plasmashell, followed when the
   panel changes, also while it is hidden), or set by hand (24–72 px).
-- **Colour:** opaque black with light text (default), the island's own
-  colours (Appearance, a gradient too) made opaque, or the island's own
+- **Colour:** the island's own colours made opaque (default: Symbiot Black gradient),
+  opaque black with light text, or the island's own
   look: its material (metal from top to bottom, with its gloss from the
-  edge down), opacity and blur; no inner shadow. Never a border or shadow:
-  nothing shines where it meets the panel.
+  edge down), opacity and blur; no inner shadow or drop shadow.
+- **Border:** independently enabled, 1–8 px thick, any colour and 0–100% opacity.
+  Drawn inside the sides and lower corners in every colour mode, with no line
+  across the screen edge. Defaults: 1 px, slate (#4c566a), 70% opacity.
+- **Rounded alternative:** Settings → Appearance → Shape → Rounded island.
+  Switching back to the notch preserves both sets of appearance settings.
 - **What it covers:** the panel under the notch cannot be clicked; beside
   it the panel takes its clicks as before. The notch takes the pointer on
   its own outline, the topmost row of pixels too (push the pointer against
