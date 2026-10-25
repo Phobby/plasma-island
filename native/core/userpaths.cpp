@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "userpaths.h"
 
-#include <QCollator>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QRegularExpression>
 #include <QStandardPaths>
+#include <QVersionNumber>
 
 #include <algorithm>
 
@@ -16,10 +16,14 @@ namespace
 QStringList versions(const QString &parent, const QString &below)
 {
     QStringList names = QDir(parent).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-    QCollator order;
-    order.setNumericMode(true);
-    std::sort(names.begin(), names.end(), [&order](const QString &a, const QString &b) {
-        return order.compare(a, b) > 0;
+    // Collation's numeric mode is not supported by every locale (notably C).
+    // Version components must be compared as numbers regardless of the desktop locale.
+    std::sort(names.begin(), names.end(), [](const QString &a, const QString &b) {
+        const auto version = [](const QString &name) {
+            return QVersionNumber::fromString(name.startsWith(QLatin1Char('v')) ? name.mid(1) : name);
+        };
+        const int order = QVersionNumber::compare(version(a), version(b));
+        return order != 0 ? order > 0 : a > b;
     });
     QStringList found;
     for (const QString &name : std::as_const(names)) {

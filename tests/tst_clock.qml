@@ -30,7 +30,11 @@ Item {
                 ["HH:mm", "HH:mm", "h:mm AP"],
                 ["H:mm", "HH:mm", "h:mm AP"],
                 ["AP h:mm", "HH:mm", "AP h:mm"],
-                ["HH.mm", "HH.mm", "h.mm AP"]
+                ["HH.mm", "HH.mm", "h.mm AP"],
+                ["HH:mm:ss", "HH:mm", "h:mm AP"],
+                ["HH.mm.ss", "HH.mm", "h.mm AP"],
+                ["h:mm:ss AP", "HH:mm", "h:mm AP"],
+                ["HH:mm:ss.zzz", "HH:mm", "h:mm AP"]
             ];
             for (const [format, h24, h12] of cases) {
                 compare(Lang.shortTime(format, 0), format, "as the system: unchanged");

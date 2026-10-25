@@ -33,6 +33,10 @@ QtObject {
     // A short time format made 24- or 12-hour (as Plasma's digital clock does it): the
     // morning/afternoon marker (AP, ap, A, a) taken out or added, the hours' letter changed.
     function shortTime(format: string, mode: int): string {
+        // C and some regional short formats include seconds. Explicit 12/24-hour
+        // choices show hours and minutes; system mode keeps the original format.
+        if (mode === 1 || mode === 2)
+            format = format.replace(/[:.]s{1,2}(?:[.,]z{1,3})?/g, "");
         if (mode === 1)
             return format.replace(/[\s  ]*[aA][pP]?[\s  ]*/g, " ").replace(/[hH]+/g, "HH").trim();
         if (mode === 2)

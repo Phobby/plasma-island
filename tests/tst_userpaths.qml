@@ -35,11 +35,12 @@ Item {
         function initTestCase() {
             if (root.local === null) skip("the native module is not built: ./install.sh");
             const node = root.home + "/.nvm/versions/node";
-            sh("rm -rf '" + root.home + "' && mkdir -p '" + node + "/v9.11.0/bin' '" + node + "/v22.3.0/bin' '" + node + "/v18.20.1/bin' '"
+            sh("rm -rf '" + root.home + "' && mkdir -p '" + node + "/v9.11.0/bin' '" + node + "/v22.10.0/bin' '" + node + "/v18.20.1/bin' '" + node + "/v22.9.0/bin' '"
                + root.home + "/.bun/bin' '" + root.home + "/.tools/bin' '" + root.home + "/.local/bin'\n"
                // a script that needs the interpreter installed beside it, as npm's commands do
-               + "printf '#!/usr/bin/env islandtestnode\\n' > '" + node + "/v22.3.0/bin/claude'\n"
-               + "printf '#!/bin/sh\\necho \"node 22 ran $1\"\\n' > '" + node + "/v22.3.0/bin/islandtestnode'\n"
+               + "printf '#!/usr/bin/env islandtestnode\\n' > '" + node + "/v22.10.0/bin/claude'\n"
+               + "printf '#!/bin/sh\\necho \"node 22 ran $1\"\\n' > '" + node + "/v22.10.0/bin/islandtestnode'\n"
+               + "printf '#!/bin/sh\\necho older-minor\\n' > '" + node + "/v22.9.0/bin/claude'\n"
                + "printf '#!/bin/sh\\necho old\\n' > '" + node + "/v9.11.0/bin/claude'\n"
                + "printf '#!/bin/sh\\necho agy\\n' > '" + root.home + "/.tools/bin/agy'\n"
                + "printf 'registry=https://example.invalid/\\nprefix=~/.tools\\n' > '" + root.home + "/.npmrc'\n"
@@ -49,7 +50,7 @@ Item {
         }
 
         function test_the_newest_node_of_nvm() {
-            compare(root.local.findExecutable("claude", root.home), root.home + "/.nvm/versions/node/v22.3.0/bin/claude");
+            compare(root.local.findExecutable("claude", root.home), root.home + "/.nvm/versions/node/v22.10.0/bin/claude");
         }
         function test_the_prefix_npm_was_given() {
             compare(root.local.findExecutable("agy", root.home), root.home + "/.tools/bin/agy");
