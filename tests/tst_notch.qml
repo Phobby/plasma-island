@@ -289,6 +289,40 @@ Item {
             islandTheme.notchEars = false;
         }
 
+        // The size setting: the whole island is scaled by it (main.qml). Step by step over its range
+        // the notch as it is shown never gets smaller, in either direction, with a top panel under it
+        // or without (beyond half a pixel of rounding); it is as large as asked (within a pixel); and it
+        // always covers the panel.
+        function test_size_grows_the_notch_over_the_whole_range() {
+            for (const panel of [0, 32]) {
+                islandTheme.notchPixels = panel;
+                let last = null;
+                for (let size = 80; size <= 120; size += 2) {
+                    islandTheme.style = Styles.normalize(Object.assign(Styles.defaults("symbiot"), { scale: size }));
+                    compare(islandTheme.scale, size / 100, "the setting is not cut at " + size);
+                    settled();
+                    const k = islandTheme.scale;
+                    const shown = { width: island.surfaceRect.width * k, height: island.surfaceRect.height * k };
+                    if (panel > 0) verify(shown.height >= panel - 0.5, "covers the panel at " + size + ": " + shown.height);
+                    if (last !== null) {
+                        verify(shown.width >= last.width - 0.5, "wider or as wide at " + size + ": " + shown.width + " < " + last.width);
+                        verify(shown.height >= last.height - 0.5, "higher or as high at " + size + ": " + shown.height + " < " + last.height);
+                    }
+                    if (size > 100 || panel === 0) {
+                        // (the island's own designed size, times the setting)
+                        const designed = panel > 0 ? panel : Math.round(islandTheme.gu * 2);
+                        verify(Math.abs(shown.height - designed * k) <= 1, "as high as asked at " + size + ": " + shown.height + " vs " + designed * k);
+                    }
+                    verify(Math.abs(shown.width - Math.round(islandTheme.gu * 10) * k) <= 1, "as wide as asked at " + size);
+                    last = shown;
+                }
+                // and past 100 % it grows in height too, not only in width
+                verify(last.height > (panel > 0 ? panel : Math.round(islandTheme.gu * 2)), "taller at the top of the range");
+            }
+            islandTheme.notchPixels = 0;
+            islandTheme.style = Styles.defaults("oxygen");
+        }
+
         function test_border_is_inset_in_every_colour_mode() {
             islandTheme.notchBorderEnabled = true;
             islandTheme.notchBorderWidth = 6;

@@ -132,8 +132,10 @@ QtObject {
     // ---- metrics --------------------------------------------------------------
     readonly property real gu: Kirigami.Units.gridUnit          // ~18px @ 1x
     readonly property real pillWidth: Math.round(gu * 10)       // ~180
-    // (the notch is as high as asked, within reason: the small views are made for about this)
-    readonly property real pillHeight: notch && notchPixels > 0 ? Math.round(Math.max(20, Math.min(72, notchPixels / scale)))
+    // (the notch is as high as asked, within reason: the small views are made for about this.
+    // The island is scaled as a whole (the size setting): under 100 % the notch still covers the
+    // panel, from 100 % up it grows with the size as everything else does, taller than the panel.)
+    readonly property real pillHeight: notch && notchPixels > 0 ? Math.round(Math.max(20, Math.min(72, notchPixels / Math.min(1, scale))))
                                                                 : Math.round(gu * 2)       // ~36
     readonly property real liveWidth: Math.round(gu * 13)
     readonly property real notificationWidth: Math.round(gu * 22)

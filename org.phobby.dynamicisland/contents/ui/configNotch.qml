@@ -106,7 +106,7 @@ KCM.SimpleKCM {
             id: preview
             objectName: "notchPreview"
             implicitWidth: Kirigami.Units.gridUnit * 24
-            implicitHeight: shown.pillHeight + Kirigami.Units.gridUnit * 3
+            implicitHeight: shown.pillHeight * shown.scale + Kirigami.Units.gridUnit * 3
             color: "#2b3a4a"
             clip: true
             opacity: modeCheck.checked ? 1 : 0.55
@@ -134,12 +134,14 @@ KCM.SimpleKCM {
                 id: outline
                 readonly property bool dot: previewCombo.currentIndex === 1
                 readonly property real limit: page.cfg_notchMaxWidth > 0 ? Math.max(2 * shown.pillHeight, page.cfg_notchMaxWidth) : shown.pillWidth
+                // (at its size, as the island is scaled as a whole)
+                readonly property real k: shown.scale
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: dot ? 2 * page.cfg_dotSize : Math.min(shown.pillWidth, limit)
-                height: dot ? page.cfg_dotSize : shown.pillHeight
-                radius: dot ? page.cfg_dotSize : shown.notchRadius
-                ear: shown.notchEar
-                earDepth: shown.notchEarDepth
+                width: Math.round(k * (dot ? 2 * page.cfg_dotSize : Math.min(shown.pillWidth, limit)))
+                height: Math.round(k * (dot ? page.cfg_dotSize : shown.pillHeight))
+                radius: k * (dot ? page.cfg_dotSize : shown.notchRadius)
+                ear: k * shown.notchEar
+                earDepth: k * shown.notchEarDepth
                 edgeWidth: shown.notchEdgeWidth
                 edgeColor: shown.notchEdgeColor
                 fillColor: shown.notchBody.length === 3 ? "transparent" : shown.bodyMid
@@ -152,6 +154,7 @@ KCM.SimpleKCM {
                     visible: !outline.dot && page.cfg_showClock
                     color: shown.text
                     font.weight: Font.DemiBold
+                    scale: outline.k
                     text: Qt.formatTime(new Date(2026, 0, 1, 9, 41), Lang.timeFormat)
                 }
             }
