@@ -139,6 +139,7 @@ KCM.SimpleKCM {
                 height: dot ? page.cfg_dotSize : shown.pillHeight
                 radius: dot ? page.cfg_dotSize : shown.notchRadius
                 ear: shown.notchEar
+                earDepth: shown.notchEarDepth
                 edgeWidth: shown.notchEdgeWidth
                 edgeColor: shown.notchEdgeColor
                 fillColor: shown.notchBody.length === 3 ? "transparent" : shown.bodyMid

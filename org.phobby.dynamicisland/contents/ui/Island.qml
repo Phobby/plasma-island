@@ -393,6 +393,7 @@ Item {
         bodyScale: glow.visibleAtAll ? glow.bodyScale : 1
         notch: island.notch
         ear: island.theme.notchEar
+        earDepth: island.theme.notchEarDepth
         // (the notch's dot grows from the edge it hangs from)
         transformOrigin: island.notch ? Item.Top : Item.Center
         anchors.horizontalCenter: parent.horizontalCenter

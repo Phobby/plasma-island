@@ -3,8 +3,8 @@
 
     The notch's outline, filled: the upper edge straight along the screen's,
     the lower corners rounded by `radius`, and where the sides meet the edge
-    two inward curves `ear` px wide, outside the item's own width (as where a
-    real notch meets the frame). One colour, or the theme's gradient (the
+    two inward curves `ear` px wide and `earDepth` px deep, outside the item's
+    own width (as where a real notch meets the frame). One colour, or the theme's gradient (the
     same three stops IslandShape takes).
 */
 import QtQuick
@@ -17,6 +17,7 @@ Shape {
     property color edgeColor: "transparent"
     property real radius: 0
     property real ear: 0
+    property real earDepth: ear
     property color fillColor: "black"
     property var gradientColors: []          // three colours, or none
     property string gradientKind: "linear"
@@ -25,6 +26,7 @@ Shape {
     readonly property real r: Math.max(0, Math.min(radius, height, width / 2))
     // (a small notch, the dot, gets small curves)
     readonly property real e: Math.max(0, Math.min(ear, height / 4))
+    readonly property real ed: e > 0 ? Math.max(e, Math.min(earDepth, height * 0.4)) : 0
     readonly property real angle: gradientAngle * Math.PI / 180
     readonly property real span: Math.abs(width * Math.sin(angle)) + Math.abs(height * Math.cos(angle))
     preferredRendererType: Shape.CurveRenderer
@@ -35,17 +37,19 @@ Shape {
         fillGradient: outline.gradientColors.length !== 3 ? null : outline.gradientKind === "radial" ? radial : linear
         PathSvg {
             path: {
-                const w = outline.width, h = outline.height, r = outline.r, e = outline.e;
+                const w = outline.width, h = outline.height, r = outline.r, e = outline.e, ed = outline.ed;
                 // (an arc of no size is left out: some renderers draw nothing for it)
                 const arc = (radius, sweep, x, y) => radius > 0.01 ? " A " + radius + " " + radius + " 0 0 " + sweep + " " + x + " " + y : " L " + x + " " + y;
+                // (the curves at the edge: a quarter of an ellipse, `e` across and `ed` down)
+                const ear = (sweep, x, y) => e > 0.01 ? " A " + e + " " + ed + " 0 0 " + sweep + " " + x + " " + y : " L " + x + " " + y;
                 return "M " + (-e) + " 0 L " + (w + e) + " 0"
-                    + arc(e, 0, w, e)
+                    + ear(0, w, ed)
                     + " L " + w + " " + (h - r)
                     + arc(r, 1, w - r, h)
                     + " L " + r + " " + h
                     + arc(r, 1, 0, h - r)
-                    + " L 0 " + e
-                    + arc(e, 0, -e, 0)
+                    + " L 0 " + ed
+                    + ear(0, -e, 0)
                     + " Z";
             }
         }
@@ -60,16 +64,17 @@ Shape {
         PathSvg {
             path: {
                 const d = Math.min(outline.edgeWidth / 2, outline.width / 4, outline.height / 4);
-                const w = outline.width, h = outline.height, r = Math.max(0, outline.r - d), e = outline.e;
+                const w = outline.width, h = outline.height, r = Math.max(0, outline.r - d), e = outline.e, ed = outline.ed;
                 const arc = (radius, sweep, x, y) => radius > 0.01 ? " A " + radius + " " + radius + " 0 0 " + sweep + " " + x + " " + y : " L " + x + " " + y;
+                const ear = (sweep, x, y) => e > 0.01 ? " A " + (e + d) + " " + (ed + d) + " 0 0 " + sweep + " " + x + " " + y : " L " + x + " " + y;
                 return "M " + (-e) + " " + (-d)
-                    + arc(e + d, 1, d, e)
+                    + ear(1, d, ed)
                     + " L " + d + " " + (h - d - r)
                     + arc(r, 0, d + r, h - d)
                     + " L " + (w - d - r) + " " + (h - d)
                     + arc(r, 0, w - d, h - d - r)
-                    + " L " + (w - d) + " " + e
-                    + arc(e + d, 1, w + e, -d);
+                    + " L " + (w - d) + " " + ed
+                    + ear(1, w + e, -d);
             }
         }
     }

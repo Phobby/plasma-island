@@ -12,7 +12,7 @@
 
     As the notch (`notch`): the upper edge straight and one with the screen's,
     only the lower corners rounded, and where it meets the edge (if asked) two
-    small inward curves (`ear` px wide, beside its own width). The body is
+    small inward curves (`ear` px wide and `earDepth` deep, beside its own width). The body is
     the one shape of that outline (NotchOutline), opaque, or see-through in
     the island's own look with its frosting and, for glass and metal, its
     top gloss in the same outline; an optional inset edge, no inner shadow, nothing else
@@ -38,6 +38,7 @@ Item {
 
     property bool notch: false
     property real ear: 0
+    property real earDepth: ear
 
     property real glowShown: 0          // 0..1, fades the whole glow in and out
     property real glowStrength: 0       // 0..1, follows the music
@@ -140,6 +141,7 @@ Item {
         sourceComponent: NotchOutline {
             radius: shape.radius
             ear: shape.ear
+            earDepth: shape.earDepth
             fillColor: shape.theme.notchBody.length === 3 ? "transparent" : shape.theme.bodyMid
             gradientColors: shape.theme.notchBody
             gradientKind: shape.theme.notchBodyKind
@@ -168,7 +170,7 @@ Item {
     Loader {
         anchors.fill: parent
         active: shape.notch && shape.theme.frost.a > 0
-        sourceComponent: NotchOutline { radius: shape.radius; ear: shape.ear; fillColor: shape.theme.frost }
+        sourceComponent: NotchOutline { radius: shape.radius; ear: shape.ear; earDepth: shape.earDepth; fillColor: shape.theme.frost }
     }
     Rectangle {
         anchors.fill: parent
@@ -191,6 +193,7 @@ Item {
         sourceComponent: NotchOutline {
             radius: shape.radius
             ear: shape.ear
+            earDepth: shape.earDepth
             fillColor: shape.glowColor
             opacity: shape.glowShown * shape.glowTint
         }
@@ -214,6 +217,7 @@ Item {
         active: shape.notch && shape.theme.highlight.a > 0
         sourceComponent: NotchOutline {
             ear: shape.ear
+            earDepth: shape.earDepth
             fillColor: "transparent"
             readonly property color clear: Qt.rgba(shape.theme.highlight.r, shape.theme.highlight.g, shape.theme.highlight.b, 0)
             gradientColors: [shape.theme.highlight, Qt.rgba(clear.r, clear.g, clear.b, shape.theme.highlight.a * 0.35), clear]
@@ -242,6 +246,7 @@ Item {
         sourceComponent: NotchOutline {
             radius: shape.radius
             ear: shape.ear
+            earDepth: shape.earDepth
             fillColor: "transparent"
             edgeWidth: shape.theme.notchEdgeWidth
             edgeColor: shape.theme.notchEdgeColor

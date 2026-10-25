@@ -147,7 +147,12 @@ QtObject {
     readonly property real expandedRadius: rounded(28)
     // The notch's lower corners while it is small (it has no upper ones), and its curves at the edge.
     readonly property real notchRadius: rounded(Math.round(pillHeight * 0.36))
-    readonly property real notchEar: notch && notchEars ? Math.round(pillHeight * 0.22) : 0
+    // (how far out they reach, and how far down the side they start: deeper than wide, so that the
+    // join begins lower and the notch stands upright above it; parts of its height)
+    readonly property real notchEarSpread: 0.22
+    readonly property real notchEarDrop: 0.30
+    readonly property real notchEar: notch && notchEars ? Math.round(pillHeight * notchEarSpread) : 0
+    readonly property real notchEarDepth: notch && notchEars ? Math.round(pillHeight * notchEarDrop) : 0
     readonly property real notificationRadius: rounded(26)
     // Transient system events (charging, Bluetooth, volume…): a wide pill.
     readonly property real eventWidth: Math.round(gu * 19)

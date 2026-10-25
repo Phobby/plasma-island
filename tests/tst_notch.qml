@@ -269,6 +269,26 @@ Item {
             islandTheme.style = Styles.defaults("oxygen");
         }
 
+        // The curves where it meets the edge reach further down than out: the join starts lower,
+        // filled from the edge to there beside the sides, and nothing beside them below it.
+        function test_ears_start_lower_than_they_reach_out() {
+            islandTheme.notchEars = true;
+            settled(); wait(100);
+            const e = islandTheme.notchEar, ed = islandTheme.notchEarDepth;
+            verify(e > 0 && ed > e, "deeper (" + ed + ") than wide (" + e + ")");
+            compare(ed, Math.round(islandTheme.pillHeight * islandTheme.notchEarDrop));
+            const img = grabImage(island), s = island.surfaceRect;
+            const black = (x, y) => { const c = img.pixel(x, y); return c.a > 0.99 && c.r < 0.01 && c.g < 0.01 && c.b < 0.01; };
+            const ground = img.pixel(2, island.height - 2);
+            for (const x of [Math.floor(s.x) - 1, Math.ceil(s.x + s.width)]) {
+                verify(black(x, 0), "joined to the edge at " + x);
+                // (just beside the side the curve is still there a little above its depth)
+                verify(black(x, Math.floor(ed * 0.5)), "the curve reaches down beside " + x);
+                compare(img.pixel(x, Math.ceil(ed + 3)), ground, "below it, nothing beside " + x);
+            }
+            islandTheme.notchEars = false;
+        }
+
         function test_border_is_inset_in_every_colour_mode() {
             islandTheme.notchBorderEnabled = true;
             islandTheme.notchBorderWidth = 6;
@@ -289,7 +309,7 @@ Item {
                         const edge = img.pixel(Math.round(s.x + s.width / 2), Math.round(s.height - 2));
                         verify(edge.r > 0.9 && edge.g < 0.1 && edge.b < 0.1, "lower border: " + mode + "/" + state + "/" + ears);
                         if (state === "expanded" || state === "idle") {
-                            const y = Math.round(islandTheme.notchEar + 8);
+                            const y = Math.round(islandTheme.notchEarDepth + 8);
                             const side = img.pixel(Math.round(s.x + 2), y);
                             verify(side.r > 0.9 && side.g < 0.1, "side border follows the outline");
                             compare(img.pixel(Math.round(s.x - 2), y), img.pixel(2, island.height - 2), "side border stays inside the mask");
