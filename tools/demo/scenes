@@ -4,7 +4,7 @@
 #   tools/demo/scenes --list
 #   tools/demo/scenes [--out docs/media] NAME…      record these
 #   tools/demo/scenes [--out docs/media] --headless every scene that needs no pointer
-#   tools/demo/scenes --prepare                     only set the session up (data, server, player)
+#   tools/demo/scenes --prepare                     only set the session up (data, server, player, a fresh island)
 #
 # A scene sets the island up with made-up data (tools/demo/make-data, a local
 # server, the demo player), then records itself with tools/demo/record while
@@ -17,7 +17,14 @@
 # in this file yet; docs/media/STORYBOARDS.md says how each is shot.
 #
 # Everything shown is invented (names, messages, events, files); the weather
-# is a real forecast for a large city, not for where anyone lives.
+# is a real forecast for a large city, not for where anyone lives. A screen
+# recording is a stand-in: a video stream of a black picture inside the
+# session, which a made-up "Recorder" reads (the island sees it as any
+# screen recording); an incoming call is the signal KDE Connect sends,
+# sent in the session with a made-up caller.
+#
+# The desktop is Breeze Dark with a top panel, as the notch is meant to sit
+# over one; the clips are cut to the top middle of the screen.
 import argparse, json, os, shlex, subprocess, sys, time
 from pathlib import Path
 
@@ -25,9 +32,8 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 SESSION = str(REPO / "tools" / "nested-session")
 PORT = 8377
-# the top middle of a 1920x1080 screen: the island with room for the cat and the glow
-PILL = "560,0,800,150"
-WIDE = "460,0,1000,190"
+# the top middle of a 1920x1080 screen: the notch with room for the cat, a notification and the glow
+NOTCH = "560,0,800,110"
 
 def root():
     return Path(os.environ.get("ISLAND_SESSION_DIR") or Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "dynamicisland-session")
@@ -60,20 +66,50 @@ def start_player(paused=False):
     stop("tools/demo/player", "pw-play")
     session("spawn", "player", str(HERE / "player"), str(root() / "media"), *(["--paused"] if paused else []))
 def stop(*names):
+    # (the whole command line from /proc: `ps` cuts it, and a long checkout path hides the name)
     for line in session("ps", capture=True).splitlines():
-        if any(n in line for n in names): subprocess.run(["kill", line.split()[0]], stderr=subprocess.DEVNULL)
+        pid = line.split()[0]
+        try: command = Path(f"/proc/{pid}/cmdline").read_bytes().replace(b"\0", b" ").decode(errors="replace")
+        except OSError: continue
+        if any(n in command for n in names): subprocess.run(["kill", pid], stderr=subprocess.DEVNULL)
+def top_panel():
+    """A top panel as a desktop has one: the launcher on the left, the clock on the right, nothing in the middle."""
+    inside("qdbus6", "org.kde.plasmashell", "/PlasmaShell", "org.kde.PlasmaShell.evaluateScript",
+           "var p = new Panel('org.kde.panel'); p.location = 'top'; p.height = 32; p.floating = false;"
+           " p.addWidget('org.kde.plasma.kickoff'); p.addWidget('org.kde.plasma.panelspacer'); p.addWidget('org.kde.plasma.digitalclock');")
 def fresh(**settings):
-    """A new island with default settings, then these; the shell started with them in place."""
-    session("shell", "--no-island"); session("shell")
+    """A new island with default settings, then these; the shell started with them in place, a top panel added."""
+    session("shell", "--no-island")
+    # (what an island keeps beside Plasma's settings would come back into the new one: the copy of its
+    # settings, and what the suggestions learned, which keeps a suggestion from asking twice)
+    for kept in ("settings.json", "suggestions.json"):
+        (root() / "home" / ".local" / "share" / "dynamicisland" / kept).unlink(missing_ok=True)
+    session("shell")
     pairs = []
     for key, value in settings.items(): pairs += [key, value]
     if pairs:
         session("set", *pairs); session("shell")
-    time.sleep(4)
+    top_panel()
+    time.sleep(5)
+def call(event, number="+1 555 0100", name="Robin Example"):
+    inside("gdbus", "emit", "--session", "--object-path", "/modules/kdeconnect/devices/demo/telephony",
+           "--signal", "org.kde.kdeconnect.device.telephony.callReceived", event, number, name)
+def screen_stream():
+    """The stand-in for a screen recording: a source of black pictures and a reader, not joined yet."""
+    stop("gst-launch")
+    session("spawn", "screen", "gst-launch-1.0", "-q", "videotestsrc", "is-live=true", "pattern=black", "!",
+            "video/x-raw,width=320,height=180,framerate=10/1", "!", "pipewiresink", "mode=provide",
+            "stream-properties=props,node.name=demo-screen,media.class=Video/Source")
+    session("spawn", "recorder", "gst-launch-1.0", "-q", "pipewiresrc", "autoconnect=false",
+            "stream-properties=props,application.name=Recorder,node.name=demo-recorder", "!", "fakesink")
+    time.sleep(3)
+def recording(on):
+    inside("pw-link", *(["-d"] if not on else []), "demo-screen:capture_1", "demo-recorder:input_1")
 
 def prepare():
     if not session("pid", "kwin_wayland", capture=True):
         session("start", "--audio", check=True)
+        inside("plasma-apply-colorscheme", "BreezeDark"); inside("plasma-apply-desktoptheme", "breeze-dark")
     session("install", check=True)
     data = root() / "demo"
     if not (root() / "media" / "tracks.tsv").exists():
@@ -85,16 +121,24 @@ def prepare():
 
 # ---- the scenes ---------------------------------------------------------------
 # name → (what the clip shows, crop, set-up, play). `play` runs while the clip is recorded.
-def setup_plain(): fresh(catEnabled="false"); stop("tools/demo/player", "pw-play")
+def setup_plain(): fresh(catSleepSeconds="600"); stop("tools/demo/player", "pw-play")
 def play_states():
     wait(1.5)
-    notify("Messages", "Lena", "Are we still on for the lake on Saturday?", "mail-unread")
-    wait(4.5)
+    notify("Messages", "Morgan Example", "Are we still on for the lake on Saturday?", "mail-unread")
+    wait(4.0)
     push("--id", "build", "--title", "Build", "--subtitle", "compiling", "--icon", "run-build", "--progress", "20")
     for p in (45, 70, 90):
         wait(0.9); push("--id", "build", "--progress", str(p), "--subtitle", "linking" if p > 60 else "compiling")
     wait(0.9); push("--id", "build", "--done", "--status", "success")
-    wait(3.0)
+    wait(2.0)
+
+def setup_notifications(): fresh(catEnabled="false"); stop("tools/demo/player", "pw-play")
+def play_notifications():
+    wait(1.5)
+    notify("Messages", "Morgan Example", "Are we still on for the lake on Saturday?", "mail-unread")
+    wait(4.5)
+    notify("Mail", "Book club", "Chapter four for Thursday, and who brings the cake?", "mail-message-new")
+    wait(4.5)
 
 def setup_media(): fresh(catEnabled="false", ambientGlow="false"); start_player(); wait(3)
 def play_media():
@@ -102,17 +146,45 @@ def play_media():
 
 def setup_glow(): fresh(catEnabled="false", ambientGlow="false"); start_player(); wait(3)
 def play_glow():
-    wait(1.5); setting("ambientGlow", "true"); wait(6.0); setting("ambientGlow", "false"); wait(1.5)
+    wait(1.5); setting("ambientGlow", "true"); wait(6.5); setting("ambientGlow", "false"); wait(1.5)
 
 def setup_media_cat(): fresh(ambientGlow="false", catSleepSeconds="600"); stop("tools/demo/player", "pw-play"); wait(2)
 def play_media_cat():
     wait(1.2); start_player(); wait(8.0)
+
+def setup_colours(): fresh(catEnabled="false"); stop("tools/demo/player", "pw-play")
+def play_colours():
+    # the notch's three colours (Settings → Notch → Colour), then ready-made looks (Settings → Appearance)
+    wait(1.5)
+    for colour in ("0", "1"):
+        setting("notchColor", colour); wait(1.8)
+    for preset in ("aurora", "ocean", "sunset", "symbiot"):
+        setting("customStyle", json.dumps({"preset": preset})); wait(1.6)
 
 def setup_cat_sleep(): fresh(catSleepSeconds="5"); stop("tools/demo/player", "pw-play"); wait(1)
 def play_cat_sleep():
     wait(6.5)                                   # it curls up
     notify("Calendar", "Dentist at 16:30", "Harbour Street 12", "view-calendar")
     wait(5.0)
+
+def setup_recording(): fresh(catEnabled="false"); stop("tools/demo/player", "pw-play"); screen_stream()
+def play_recording():
+    wait(1.5); recording(True); wait(8.0); recording(False); wait(2.0)
+
+def setup_language(): fresh(catEnabled="false", language="en"); stop("tools/demo/player", "pw-play"); screen_stream(); recording(True); wait(2)
+def play_language():
+    wait(2.5); setting("language", "tr"); wait(3.5); setting("language", "en"); wait(2.5)
+def done_language(): recording(False); stop("gst-launch")
+
+def setup_call(): fresh(catSleepSeconds="5"); stop("tools/demo/player", "pw-play"); wait(6)
+def play_call():
+    wait(2.0); call("ringing"); wait(7.5)
+
+def setup_suggestion():
+    fresh(catEnabled="false", suggestionsEnabled="true"); stop("tools/demo/player", "pw-play"); screen_stream()
+def play_suggestion():
+    wait(1.5); recording(True); wait(9.0)
+def done_suggestion(): recording(False); stop("gst-launch")
 
 def setup_push(): fresh(catEnabled="false"); stop("tools/demo/player", "pw-play")
 def play_push():
@@ -133,13 +205,6 @@ def play_download():
     inside("script", "-qfc", f"curl -s -o {shlex.quote(str(target))} 'http://127.0.0.1:{PORT}/download/atlas-of-lakes.iso?mb=220'", "/dev/null")
     wait(3.5)
 
-def setup_looks(): fresh(catEnabled="false"); start_player(); wait(3)
-def play_looks():
-    wait(1.2)
-    for name in ("midnight", "aurora", "glass", "sunset"):
-        setting("appearanceMode", "1", "customStyle", theme(name)); wait(1.9)
-    setting("appearanceMode", "0"); wait(1.5)
-
 def setup_calendar():
     # The meeting starts 80 s from now: time for a fresh island to fetch the calendar, and the clip
     # begins six seconds before the start.
@@ -152,43 +217,53 @@ def setup_calendar():
 def play_calendar():
     wait(12.0)
 
+def nothing(): pass
+
+# name → (what the clip shows, set-up, play, after)
 SCENES = {
-    "island-states": ("the clock, a notification, then an activity with its progress", PILL, setup_plain, play_states),
-    "media-controls": ("a track on the pill; the next one; paused and playing again", PILL, setup_media, play_media),
-    "media-glow": ("the glow in the cover's colour, following the music, switched on and off", WIDE, setup_glow, play_glow),
-    "media-cat": ("the cat puts on headphones and nods when music starts", PILL, setup_media_cat, play_media_cat),
-    "cat-sleep": ("the cat falls asleep; a notification wakes it", PILL, setup_cat_sleep, play_cat_sleep),
-    "island-push": ("an activity pushed by a program over D-Bus, counting up and finishing", PILL, setup_push, play_push),
-    "downloads-tracking": ("a download from the local test server with its size, speed and time left", PILL, setup_download, play_download),
-    "appearance-looks": ("the same island in several looks", PILL, setup_looks, play_looks),
-    "calendar-pinned": ("an event pinned before it starts, then started", PILL, setup_calendar, play_calendar),
+    "notch-states": ("the notch with the clock, a notification, then an activity with its progress", setup_plain, play_states, nothing),
+    "notifications-arrival": ("two notifications arrive on the notch", setup_notifications, play_notifications, nothing),
+    "media-controls": ("a track on the notch; the next one; paused and playing again", setup_media, play_media, nothing),
+    "media-glow": ("the glow in the cover's colour, following the music, switched on and off", setup_glow, play_glow, nothing),
+    "media-cat": ("the cat puts on headphones and nods when music starts", setup_media_cat, play_media_cat, nothing),
+    "notch-colours": ("the notch black, then in its own colours; then three ready-made looks and back", setup_colours, play_colours, nothing),
+    "cat-sleep": ("the cat falls asleep; a notification wakes it", setup_cat_sleep, play_cat_sleep, nothing),
+    "recording-indicator": ("a screen recording starts: a blinking red dot and its time; it ends", setup_recording, play_recording, nothing),
+    "language-switch": ("the language switched from English to Turkish and back while a recording shows", setup_language, play_language, done_language),
+    "call-incoming": ("the sleeping cat; a call comes in, the cat wakes", setup_call, play_call, nothing),
+    "suggestions-card": ("suggestions on: a screen recording starts and the island asks whether to hide notifications", setup_suggestion, play_suggestion, done_suggestion),
+    "island-push": ("an activity pushed by a program over D-Bus, counting up and finishing", setup_push, play_push, nothing),
+    "downloads-tracking": ("a download from the local test server with its size, speed and time left", setup_download, play_download, nothing),
+    "calendar-pinned": ("an event pinned before it starts, then started", setup_calendar, play_calendar, nothing),
 }
 
 def main():
     ap = argparse.ArgumentParser(add_help=False)
     ap.add_argument("--list", action="store_true"); ap.add_argument("--headless", action="store_true"); ap.add_argument("--prepare", action="store_true")
-    ap.add_argument("--out", default=str(REPO / "docs" / "media")); ap.add_argument("--play", default=""); ap.add_argument("--fps", default="12")
-    ap.add_argument("--width", default="800"); ap.add_argument("-h", "--help", action="store_true"); ap.add_argument("names", nargs="*")
+    ap.add_argument("--out", default=str(REPO / "docs" / "media")); ap.add_argument("--play", default=""); ap.add_argument("--fps", default="15")
+    ap.add_argument("--width", default="800"); ap.add_argument("--colors", default="256"); ap.add_argument("-h", "--help", action="store_true"); ap.add_argument("names", nargs="*")
     a = ap.parse_args()
     if a.play:                                   # (inside the session, while tools/demo/record takes its pictures)
-        SCENES[a.play][3](); return
+        SCENES[a.play][2](); return
     if a.help or not (a.list or a.headless or a.prepare or a.names):
         print("".join(l[2:] if l.startswith("# ") else "\n" for l in Path(__file__).read_text().splitlines(True)[1:21])); return
     if a.list:
-        for name, (what, crop, _, _) in SCENES.items(): print(f"{name:20} {what}")
+        for name, (what, _, _, _) in SCENES.items(): print(f"{name:22} {what}")
         return
     prepare()
-    if a.prepare: return
+    if a.prepare:
+        fresh(); return
     names = list(SCENES) if a.headless else a.names
     unknown = [n for n in names if n not in SCENES]
     if unknown: sys.exit(f"no such scene: {', '.join(unknown)} (tools/demo/scenes --list)")
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     for name in names:
-        what, crop, setup, play = SCENES[name]
+        what, setup, play, after = SCENES[name]
         setup()
         command = f"{shlex.quote(sys.executable)} {shlex.quote(str(Path(__file__).resolve()))} --play {shlex.quote(name)}"
-        r = subprocess.run([SESSION, "run", str(HERE / "record"), "--out", str(out / f"{name}.gif"), "--crop", crop, "--width", a.width,
-                            "--fps", a.fps, "--while", command], text=True, capture_output=True)
+        r = subprocess.run([SESSION, "run", str(HERE / "record"), "--out", str(out / f"{name}.gif"), "--crop", NOTCH, "--width", a.width,
+                            "--fps", a.fps, "--colors", a.colors, "--while", command], text=True, capture_output=True)
+        after()
         print((r.stdout or r.stderr).strip().splitlines()[-1] if (r.stdout or r.stderr).strip() else f"{name}: nothing recorded", flush=True)
 
 if __name__ == "__main__":
