@@ -117,7 +117,7 @@ Item {
         t.state = outcome;
         t.endedAt = hub.clock();
         if (bytes > 0) t.processedBytes = bytes;
-        if (path.length > 0) { t.openUrl = "file://" + path; t.openIsFolder = true; }
+        if (path.length > 0) { t.openUrl = Fmt.fileUrl(path); t.openIsFolder = true; }
         // Never shown and nothing to say: a small plain download, or a command that was over at
         // once and left no word on how it went ("apt install" of what is there already).
         const brief = t.endedAt - t.startedAt < minSeconds * 1000;

@@ -35,13 +35,14 @@ Item {
             kind: "browser"
             enabled: provider.enabled
             describe: function (info, t) {
-                const dst = Fmt.field(info, "destination") || info.destUrl;
+                const dst = info.destUrl || Fmt.field(info, "destination");
                 t.kind = "download";
                 t.icon = "download";
                 t.source = info.app;
                 t.fileName = Fmt.baseName(dst) || Fmt.baseName(Fmt.field(info, "source"));
                 t.detail = Lang.i18n("Downloading");
-                t.openUrl = dst ? String(dst).replace(/\/[^\/]*$/, "") : "";
+                t.openUrl = Fmt.parentUrl(dst);
+                t.openIsFolder = true;
             }
         }
     }
@@ -116,7 +117,7 @@ Item {
                 t.processedBytes = bytes;
                 t.totalBytes = bytes;
                 if (host.length > 0) t.source = t.source + " · " + host;
-                t.openUrl = "file://" + finalPath.replace(/\/[^\/]*$/, "");
+                t.openUrl = Fmt.parentUrl(finalPath);
                 t.openIsFolder = true;
             }
             // not a word about: one the job list reports, and one that was gone again before it was shown

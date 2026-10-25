@@ -8,9 +8,16 @@ const BROWSERS = ["firefox", "zen", "chromium", "chrome", "google-chrome", "brav
 
 function lower(s) { return String(s || "").toLowerCase(); }
 
+// Decode URLs for display/classification, leaving raw filesystem paths intact.
+function pathText(pathOrUrl) {
+    const value = String(pathOrUrl || "");
+    if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(value)) return value;
+    try { return decodeURIComponent(value); } catch (e) { return value; }
+}
+
 // "/media/user/USB DISK/x", "file:///run/media/user/LABEL/x" → "USB DISK"
 function removableLabel(pathOrUrl) {
-    const s = decodeURIComponent(String(pathOrUrl || "").replace(/^file:\/\//, ""));
+    const s = pathText(pathOrUrl).replace(/^file:\/\//, "");
     const m = s.match(/^\/(?:run\/)?media\/[^\/]+\/([^\/]+)/);
     return m ? m[1] : "";
 }
@@ -33,12 +40,31 @@ function classify(info) {
 
 // Last path component of a path / URL ("…/film.mkv" → "film.mkv").
 function baseName(pathOrUrl) {
-    const s = decodeURIComponent(String(pathOrUrl || "").replace(/\/+$/, ""));
+    const s = String(pathOrUrl || "").replace(/\/+$/, "");
     const i = s.lastIndexOf("/");
-    return i >= 0 ? s.slice(i + 1) : s;
+    const name = i >= 0 ? s.slice(i + 1) : s;
+    // Filesystem paths may contain a literal percent sign, even "%20".
+    if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) return name;
+    try { return decodeURIComponent(name); } catch (e) { return name; }
+}
+
+// Raw absolute filesystem paths, never an already encoded URL.
+function fileUrl(path) {
+    return path ? "file://" + String(path).split("/").map(encodeURIComponent).join("/") : "";
+}
+
+// Parent of a file path or URL. Preserve URL escapes and keep the root slash.
+function parentUrl(pathOrUrl) {
+    const value = String(pathOrUrl || "");
+    if (!value) return "";
+    const url = /^[a-z][a-z0-9+.-]*:\/\//i.test(value) ? value.replace(/[?#].*$/, "") : fileUrl(value);
+    const root = url.indexOf("/", url.indexOf("://") + 3);
+    if (root < 0) return "";
+    const last = url.lastIndexOf("/");
+    return url.slice(0, last === root ? last + 1 : last);
 }
 function folderName(pathOrUrl) {
-    const s = decodeURIComponent(String(pathOrUrl || "").replace(/^file:\/\//, "").replace(/\/+$/, ""));
+    const s = pathText(pathOrUrl).replace(/^file:\/\//, "").replace(/\/+$/, "");
     const parts = s.split("/");
     return parts.length > 1 ? parts[parts.length - 2] || "/" : s;
 }

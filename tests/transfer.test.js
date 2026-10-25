@@ -72,5 +72,22 @@ test("whose transfer a KDE job is", () => {
     check("else KIO's", F.classify({ app: "Dolphin", value1: "/home/me/a", value2: "/home/me/b" }), "kio");
 });
 
+test("completion folder URLs preserve literal path characters", () => {
+    check("raw path", F.fileUrl("/tmp/Belgeler çğş # %20"), "file:///tmp/Belgeler%20%C3%A7%C4%9F%C5%9F%20%23%20%2520");
+    check("parent of raw file", F.parentUrl("/tmp/İndirilenler # %/name.bin"), "file:///tmp/%C4%B0ndirilenler%20%23%20%25");
+    check("encoded URL stays encoded", F.parentUrl("file:///tmp/A%20B%23%25/name.bin"), "file:///tmp/A%20B%23%25");
+    check("root", F.parentUrl("/name.bin"), "file:///");
+    check("URL root", F.parentUrl("file:///name.bin"), "file:///");
+    check("folder destination", F.parentUrl("file:///tmp/downloads/"), "file:///tmp/downloads");
+    check("URL query is not part of the parent", F.parentUrl("https://example.org/downloads/name.bin?next=/elsewhere#part"), "https://example.org/downloads");
+    check("no target", [F.fileUrl(""), F.parentUrl("")], ["", ""]);
+    check("raw percent in file name", F.baseName("/tmp/100%/report%20.bin"), "report%20.bin");
+    check("encoded file name", F.baseName("file:///tmp/report%20%23%25.bin"), "report #%.bin");
+    check("malformed escape stays text", F.baseName("file:///tmp/report%.bin"), "report%.bin");
+    check("job classification accepts raw percent", F.classify({ app: "Firefox", value2: "/tmp/100%/name.bin" }), "browser");
+    check("raw folder label", F.folderName("/tmp/100%/name.bin"), "100%");
+    check("encoded removable label", F.removableLabel("file:///media/me/USB%20DISK/name.bin"), "USB DISK");
+});
+
 console.log(failed === 0 ? `${checked} checks passed` : `${failed} of ${checked} checks FAILED`);
 process.exit(failed > 0 ? 1 : 0);

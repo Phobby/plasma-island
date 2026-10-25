@@ -37,6 +37,8 @@ Item {
 
     // The time (ms) transfers are stamped with; a test hands in its own.
     property var clock: () => Date.now()
+    // Replaceable in tests so activation never launches a real file manager.
+    property var openExternal: url => Qt.openUrlExternally(url)
     readonly property bool comma: Lang.language === "tr"
     function size(bytes: real): string { return Fmt.bytes(bytes, comma); }
 
@@ -54,14 +56,17 @@ Item {
         const facts = [t.headline, bytes > 0 ? size(bytes) : "", t.elapsedSeconds >= 1 ? Fmt.duration(t.elapsedSeconds) : ""].filter(s => s).join(" · ");
         const event = { key: "transfer-" + t.transferId, subtitle: facts };
         if (t.state === "done") {
-            const folder = t.openUrl.length > 0 && t.openIsFolder;
+            // Providers destroy the transfer after a second; its event may wait
+            // in the queue or remain visible longer. Keep the URL as event data.
+            const openUrl = t.openUrl;
+            const folder = openUrl.length > 0 && t.openIsFolder;
             Object.assign(event, {
                 icon: sent ? "document-send-symbolic" : "dialog-ok-apply-symbolic",
                 color: theme.live,
                 feel: "done",
                 title: t.doneTitle.length > 0 ? t.doneTitle : sent ? Lang.i18n("Sent") : fetched ? Lang.i18n("Downloaded") : Lang.i18n("Completed"),
-                trailing: t.openUrl ? { type: "button", text: folder ? Lang.i18n("Open folder") : Lang.i18n("Open") } : null,
-                activate: t.openUrl ? (() => Qt.openUrlExternally(t.openUrl)) : undefined
+                trailing: openUrl ? { type: "button", text: folder ? Lang.i18n("Open folder") : Lang.i18n("Open") } : null,
+                activate: openUrl ? (() => hub.openExternal(openUrl)) : undefined
             });
         } else if (t.state === "failed") {
             Object.assign(event, {
