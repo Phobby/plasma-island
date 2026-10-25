@@ -53,7 +53,7 @@ Item {
         function cleanup() {
             away(); island.hoverSpent = false;
             stopwatch.active = false; timer.active = false;
-            island.expanded = false; island.dot = false; island.maxWidth = 0; cat.enabled = false; cat.sizePercent = 120;
+            island.expanded = false; island.dot = false; island.maxWidth = 0; island.openFollowsWidth = true; cat.enabled = false; cat.sizePercent = 120;
             islandTheme.notchBorderEnabled = false; islandTheme.notchEars = false;
             islandTheme.notch = true; islandTheme.notchBlack = true; islandTheme.notchLook = false; islandTheme.notchPixels = 0;
             wait(60); settled();
@@ -167,6 +167,30 @@ Item {
             islandTheme.notch = false;
             settled();
             compare(island.surfaceRect.width, free);
+        }
+
+        // Opened, it keeps the width the notch is set to where that is wider than its own; its height
+        // stays; narrower, or with that switched off, it opens at its own width; the header keeps
+        // the tabs in the middle of a page that asks for more.
+        function test_5b_opened_as_wide_as_the_notch() {
+            island.maxWidth = 900;
+            island.expanded = true;
+            settled();
+            compare([island.surfaceRect.width, island.surfaceRect.height], [900, islandTheme.expandedHeight]);
+            island.openFollowsWidth = false;
+            settled();
+            compare(island.surfaceRect.width, islandTheme.expandedWidth);
+            island.openFollowsWidth = true;
+            island.maxWidth = 150;
+            settled();
+            compare(island.surfaceRect.width, islandTheme.expandedWidth, "narrower: its own width");
+            island.maxWidth = 900;
+            settled();
+            compare(island.openWideWidth, Math.max(islandTheme.wideWidth, 900));
+            island.expanded = false;
+            island.maxWidth = 0;
+            settled();
+            compare(island.openWidth, islandTheme.expandedWidth, "automatic: its own width");
         }
 
         function test_6_its_height_and_colours() {

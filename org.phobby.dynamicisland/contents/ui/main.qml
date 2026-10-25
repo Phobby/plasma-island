@@ -933,8 +933,8 @@ PlasmoidItem {
     // setting); the window and the blur region are that much larger or smaller.
     // (with a companion beside it the window keeps room for it on both sides, so the island stays in the middle)
     // (a notch set wider than the open island keeps its room while it morphs to and from it)
-    readonly property real windowWidth: (island.needsWideWindow ? Math.max(theme.wideWidth, 2 * island.smallHalfWidth)
-                                         : island.needsLargeWindow ? Math.max(theme.expandedWidth, theme.notificationWidth, theme.eventWidth, 2 * island.smallHalfWidth)
+    readonly property real windowWidth: (island.needsWideWindow ? Math.max(island.openWideWidth, 2 * island.smallHalfWidth)
+                                         : island.needsLargeWindow ? Math.max(island.openWidth, theme.notificationWidth, theme.eventWidth, 2 * island.smallHalfWidth)
                                          : 2 * island.smallHalfWidth) + 2 * theme.windowSidePad + 2 * companion.reserve
     readonly property real windowHeight: (island.needsTallWindow ? theme.tallHeight
                                           : island.needsLargeWindow ? Math.max(theme.expandedHeight, theme.notificationHeight)
@@ -994,6 +994,7 @@ PlasmoidItem {
             hoverDelay: root.cfg.hoverDelay
             collapseDelay: root.cfg.collapseDelay
             maxWidth: root.cfg.notchMaxWidth
+            openFollowsWidth: root.cfg.notchOpenWidth
             dotMode: root.cfg.dotMode
             dotSize: Math.max(10, Math.min(28, root.cfg.dotSize))
             dotHoverExpand: root.cfg.dotHoverExpand

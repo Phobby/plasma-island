@@ -10,6 +10,9 @@
   that had the switch) and says once that the notch is there; the settings
   have a version of their own for this, brought up to date once. The notch's
   settings moved from a page of their own to under the choice.
+- **The notch's width** is set, narrower or wider, up to 1200 px (it was
+  only a limit, and past what the notch shows the slider changed nothing);
+  the open island follows it where it is wider (can be switched off).
 - **Size up to 240 %** (Appearance, Fine tuning), kept within the screen: the
   settings say when the screen's edge was reached. Large sizes draw their text
   as curves, sharp at any size.

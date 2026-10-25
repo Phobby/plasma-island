@@ -253,6 +253,16 @@ Kirigami.FormLayout {
     Hint {
         text: Lang.i18n("Automatic: as wide as what it shows (the clock, a song, a timer). Set, it is that wide, narrower or wider, at 100 % size; the size setting scales it, and it never goes past the screen.")
     }
+    Check {
+        objectName: "notchOpenWidthCheck"
+        enabled: section.page.cfg_notchMaxWidth > 0
+        text: Lang.i18n("Open it as wide too, where that is wider than the open island")
+        on: section.page.cfg_notchOpenWidth
+        onToggled: section.page.cfg_notchOpenWidth = checked
+    }
+    Hint {
+        text: Lang.i18n("When the pointer opens it, the island keeps the notch's width and its pages spread out sideways; its height stays. Off: it opens at its own width.")
+    }
     Kirigami.InlineMessage {
         Layout.fillWidth: true
         Layout.maximumWidth: Kirigami.Units.gridUnit * 24

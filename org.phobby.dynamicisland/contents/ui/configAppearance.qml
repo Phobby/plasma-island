@@ -45,6 +45,7 @@ KCM.SimpleKCM {
     property int cfg_notchFullscreen
     property int cfg_notchScreen
     property int cfg_notchMaxWidth
+    property bool cfg_notchOpenWidth
     property bool cfg_notchHideCat
     property int cfg_notchHeightMode
     property int cfg_notchHeight

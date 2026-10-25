@@ -164,7 +164,11 @@ Item {
         Math.max(pillWidth, liveWidth, splitMainWidth + theme.splitGap + theme.bubbleSize) / 2 + theme.privacyAreaWidth)
     // A page may ask for a wider island (the Habits year).
     readonly property bool wide: expanded && expandedContent.wide
-    readonly property real expandedWidth: wide ? theme.wideWidth : theme.expandedWidth
+    // The open island as wide as the notch where that is set wider (openFollowsWidth); its height stays.
+    property bool openFollowsWidth: true
+    readonly property real openWidth: Math.max(theme.expandedWidth, notch && maxWidth > 0 && openFollowsWidth ? pillWidth : 0)
+    readonly property real openWideWidth: Math.max(theme.wideWidth, openWidth)
+    readonly property real expandedWidth: wide ? openWideWidth : openWidth
     // Or for a taller one (the AI tab's conversation).
     readonly property bool tall: expanded && expandedContent.tall
     readonly property real expandedHeight: tall ? theme.tallHeight : theme.expandedHeight
@@ -611,6 +615,8 @@ Item {
             ExpandedContent {
                 id: expandedContent
                 objectName: "expandedContent"
+                openWidth: island.openWidth
+                openWideWidth: island.openWideWidth
                 anchors.fill: parent
                 anchors.margins: island.theme.padding
                 anchors.topMargin: island.theme.padding * 0.7

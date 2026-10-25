@@ -50,7 +50,10 @@ Item {
     property bool wide: false
     // A page asks for the taller island (Theme.tallHeight): a conversation needs the room.
     property bool tall: false
-    readonly property real headerWidth: wide ? Math.max(0, width - (theme.wideWidth - theme.expandedWidth)) : width
+    // (the island's open widths: its own, or as wide as the notch set wider; see Island.qml)
+    property real openWidth: theme.expandedWidth
+    property real openWideWidth: theme.wideWidth
+    readonly property real headerWidth: wide ? Math.max(0, width - (openWideWidth - openWidth)) : width
 
     // Live activities that have no page of their own (media has one).
     readonly property var listedActivities: manager.live.concat(manager.indicators).filter(a => a.listed)

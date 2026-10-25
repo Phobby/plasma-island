@@ -139,7 +139,9 @@ of its own, the glow of the cover comes from its lower edge.
   island are wider for as long as they show).
 - **Width:** *Automatic* (as wide as what it shows) or set by hand, 80–1200 px
   at 100 % size, narrower or wider than what it shows; the size setting scales
-  it, and it is kept within its screen.
+  it, and it is kept within its screen. Set wider than the open island, the
+  island opens as wide too (its pages spread out sideways, its height stays),
+  unless *Open it as wide too* is switched off.
 - **The cat** stands beside the notch, on the panel, a little away from its
   side (and its curves at the edge), at the size set in Settings → Cat (as
   high as the panel or less it stands on the panel's lower edge, larger it
