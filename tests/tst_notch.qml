@@ -177,6 +177,13 @@ Item {
             island.expanded = true;
             settled();
             compare([island.surfaceRect.width, island.surfaceRect.height], [900, islandTheme.expandedHeight]);
+            // the tabs in the middle of the header, as where they fill it (as far as the clock lets them)
+            wait(300);
+            const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
+            const row = find(island, "tabRow");
+            verify(row !== null && row.width > 0);
+            const middle = row.mapToItem(island, row.width / 2, 0).x, centre = island.surfaceRect.x + island.surfaceRect.width / 2;
+            verify(Math.abs(middle - centre) < 60, "tabs in the middle: " + middle + " vs " + centre);
             island.openFollowsWidth = false;
             settled();
             compare(island.surfaceRect.width, islandTheme.expandedWidth);

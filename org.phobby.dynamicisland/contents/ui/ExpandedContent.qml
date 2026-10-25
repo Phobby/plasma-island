@@ -223,6 +223,11 @@ Item {
                 }
 
                 Row {
+                    id: tabRow
+                    objectName: "tabRow"
+                    // Where the island is wider than its tabs (its width set wider: Island.openWidth) they sit
+                    // in the middle of the header, as they do where they fill it; as far as the clock lets them.
+                    x: Math.max(0, Math.min(tabsArea.width - width, tabsArea.parent.width / 2 - tabsArea.x - width / 2))
                     spacing: tabsArea.gap
                     Repeater {
                         model: expanded.pages
