@@ -73,8 +73,11 @@
     <entry name="notchBorderWidth" type="Int"><default>1</default><min>1</min><max>8</max></entry>
     <entry name="notchBorderColor" type="String"><default>#4c566a</default></entry>
     <entry name="notchBorderOpacity" type="Int"><default>70</default><min>0</min><max>100</max></entry>
-    <!-- While a window fills the screen: 0 = hide, 1 = show -->
-    <entry name="notchFullscreen" type="Int"><default>0</default></entry>
+    <!-- While a window fills the screen: 0 = hide, 1 = show, 2 = dodge (out of sight, comes down at the top edge) -->
+    <entry name="notchFullscreen" type="Int"><default>2</default></entry>
+    <!-- Dodging: its size (percent) and width (px at 100 %) while it is down over such a window; 0 = as usual -->
+    <entry name="notchDodgeSize" type="Int"><default>0</default><min>0</min><max>240</max></entry>
+    <entry name="notchDodgeWidth" type="Int"><default>0</default><min>0</min><max>1200</max></entry>
     <!-- 0 = the screen of the top panel, 1 = the primary screen -->
     <entry name="notchScreen" type="Int"><default>0</default></entry>
     <!-- The small notch's width, px at 100 % size (narrower or wider than what it shows; kept on the screen); 0 = as wide as what it shows -->

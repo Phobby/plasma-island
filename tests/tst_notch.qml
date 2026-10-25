@@ -193,6 +193,22 @@ Item {
             compare(island.openWidth, islandTheme.expandedWidth, "automatic: its own width");
         }
 
+        // A size set for a while (the notch dodging over a full-screen window) takes the setting's
+        // place, kept within the screen as it is; 0 gives the setting back.
+        function test_5c_a_size_for_a_while() {
+            islandTheme.style = Styles.normalize(Object.assign(Styles.defaults("symbiot"), { scale: 110 }));
+            compare(islandTheme.scale, 1.1);
+            islandTheme.scaleOverride = 1.6;
+            compare(islandTheme.scale, 1.6);
+            islandTheme.screenWidth = 1366; islandTheme.screenHeight = 768;
+            islandTheme.scaleOverride = 2.4;
+            verify(islandTheme.scale < 2.4 && islandTheme.scaleLimited, "kept within the screen");
+            islandTheme.screenWidth = 0; islandTheme.screenHeight = 0;
+            islandTheme.scaleOverride = 0;
+            compare(islandTheme.scale, 1.1);
+            islandTheme.style = Styles.defaults("oxygen");
+        }
+
         function test_6_its_height_and_colours() {
             islandTheme.notchPixels = 44;
             compare(islandTheme.pillHeight, 44);

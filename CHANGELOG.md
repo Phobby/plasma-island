@@ -13,6 +13,10 @@
 - **The notch's width** is set, narrower or wider, up to 1200 px (it was
   only a limit, and past what the notch shows the slider changed nothing);
   the open island follows it where it is wider (can be switched off).
+- **Dodge over full screen** (the notch's *Over full screen*, now the
+  default): out of sight while a window fills the screen, down when the
+  pointer is pushed against the top edge, back up when left; a size and width
+  of its own for that can be set. Hide and Show are as they were.
 - **Size up to 240 %** (Appearance, Fine tuning), kept within the screen: the
   settings say when the screen's edge was reached. Large sizes draw their text
   as curves, sharp at any size.

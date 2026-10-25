@@ -196,13 +196,60 @@ Kirigami.FormLayout {
         text: Lang.i18n("Without a panel at the top it sits at the top edge all the same: a panel at the bottom or at a side has nothing to do with it. One notch at a time: not on every screen.")
     }
     Choice {
+        id: fullscreenCombo
+        objectName: "notchFullscreenCombo"
         Kirigami.FormData.label: Lang.i18n("Over full screen:")
-        model: [Lang.i18n("Hide"), Lang.i18n("Show")]
+        model: [Lang.i18n("Hide"), Lang.i18n("Show"), Lang.i18n("Dodge")]
         index: section.page.cfg_notchFullscreen
         onActivated: section.page.cfg_notchFullscreen = currentIndex
     }
     Hint {
-        text: Lang.i18n("While a window fills that screen (a film, a game, a talk). It is never shown on the lock screen.")
+        text: fullscreenCombo.currentIndex === 2
+            ? Lang.i18n("While a window fills that screen it goes up out of sight; push the pointer against the top edge where it is and it comes down, and goes back up a moment after you leave it. With no window filling the screen it is as usual. It is never shown on the lock screen.")
+            : Lang.i18n("While a window fills that screen (a film, a game, a talk). It is never shown on the lock screen.")
+    }
+    RowLayout {
+        objectName: "notchDodgeSize"
+        Kirigami.FormData.label: Lang.i18n("Size there:")
+        visible: fullscreenCombo.currentIndex === 2
+        QQC2.Slider {
+            id: dodgeSizeSlider
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 12
+            // (the left end, under the size range: as usual)
+            from: Styles.scaleMin - 5
+            to: Styles.scaleMax
+            stepSize: 5
+            onMoved: section.page.cfg_notchDodgeSize = value < Styles.scaleMin ? 0 : Math.round(value / 5) * 5
+            Binding { target: dodgeSizeSlider; property: "value"; value: section.page.cfg_notchDodgeSize > 0 ? section.page.cfg_notchDodgeSize : dodgeSizeSlider.from; when: !dodgeSizeSlider.pressed }
+        }
+        QQC2.Label {
+            textFormat: Text.PlainText
+            font.features: { "tnum": 1 }
+            text: section.page.cfg_notchDodgeSize > 0 ? Lang.percent(section.page.cfg_notchDodgeSize) : Lang.i18n("As usual")
+        }
+    }
+    RowLayout {
+        objectName: "notchDodgeWidth"
+        Kirigami.FormData.label: Lang.i18n("Width there:")
+        visible: fullscreenCombo.currentIndex === 2
+        QQC2.Slider {
+            id: dodgeWidthSlider
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 12
+            from: 0
+            to: 1200
+            stepSize: 10
+            onMoved: section.page.cfg_notchDodgeWidth = value < 80 ? 0 : Math.round(value / 10) * 10
+            Binding { target: dodgeWidthSlider; property: "value"; value: section.page.cfg_notchDodgeWidth; when: !dodgeWidthSlider.pressed }
+        }
+        QQC2.Label {
+            textFormat: Text.PlainText
+            font.features: { "tnum": 1 }
+            text: section.page.cfg_notchDodgeWidth > 0 ? Lang.i18n("%1 px", section.page.cfg_notchDodgeWidth) : Lang.i18n("As usual")
+        }
+    }
+    Hint {
+        visible: fullscreenCombo.currentIndex === 2
+        text: Lang.i18n("While it is down over a window that fills the screen; as usual: the size and width set for it everywhere.")
     }
 
     // ---- its size -----------------------------------------------------------------

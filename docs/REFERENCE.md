@@ -111,8 +111,13 @@ of its own, the glow of the cover comes from its lower edge.
   always shown, hides itself, floats or not, and not pushed down by it. The
   island's usual window shares the panels' layer and can lie under one (see
   ARCHITECTURE, "Notch mode"). It is never shown on the lock screen.
-- **Full screen:** *Hide* (default) while the active window fills that
-  screen; *Show* keeps it over the window.
+- **Full screen:** while the active window fills that screen: *Dodge*
+  (default) takes it up out of sight, and the pointer pushed against the top
+  edge where it is brings it down; it goes back up a moment after it was left
+  (open, or with the keyboard in it, it stays). While it is down there it can
+  have a size (80–240 %) and a width (80–1200 px) of its own, *As usual*
+  otherwise. *Hide* keeps it away, *Show* keeps it over the window. With no
+  window filling the screen it is as it always is.
 - **Screen:** the top panel's screen (default), or the primary one; without
   a top panel, the island's own. A panel at the bottom or a side has nothing
   to do with it. One notch at a time: not on every screen. Putting it on a

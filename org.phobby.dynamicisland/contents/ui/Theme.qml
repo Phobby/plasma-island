@@ -78,7 +78,9 @@ QtObject {
     // The size setting, and as much of it as the island's screen has room for: the open island at
     // its widest and tallest (a page that asks for the room) stays on it. screenWidth/Height are
     // that screen's, in the same logical pixels as everything here (HiDPI too); 0 = not known.
-    readonly property real requestedScale: follow ? systemStyle.scale / 100 : style.scale / 100
+    // (scaleOverride: a size set for a while instead, e.g. the notch dodging over a full-screen window; 0 = none)
+    property real scaleOverride: 0
+    readonly property real requestedScale: scaleOverride > 0 ? scaleOverride : follow ? systemStyle.scale / 100 : style.scale / 100
     property real screenWidth: 0
     property real screenHeight: 0
     // (never under 100 %: what was shown before there was a limit stays as it was, on any screen)
