@@ -83,7 +83,8 @@ PlasmoidItem {
         notchBorderOpacity: root.cfg.notchBorderOpacity
         notchPixels: root.notchPixels
         // (dodging over a window that fills the screen: a size of its own for that, if set)
-        scaleOverride: root.dodging && root.cfg.notchDodgeSize > 0 ? root.cfg.notchDodgeSize / 100 : 0
+        drawnIn: root.shrunk
+        scaleOverride: root.shrunk ? 0.5 : (root.dodging || root.shrinking) && root.cfg.notchDodgeSize > 0 ? root.cfg.notchDodgeSize / 100 : 0
         // (the size is kept within the screen the island is on)
         screenWidth: root.notchWanted ? root.notchScreen.width : root.screenRect.width
         screenHeight: root.notchWanted ? root.notchScreen.height : root.screenRect.height
@@ -915,7 +916,7 @@ PlasmoidItem {
         onLoaded: {
             item.screen = Qt.binding(() => root.notchScreen);
             // (dodging windows too: where the small notch is, as a panel's "Dodge windows" looks)
-            item.area = Qt.binding(() => root.cfg.notchFullscreen === 2 && root.cfg.notchDodgeWindows ? root.notchArea : Qt.rect(0, 0, 0, 0));
+            item.area = Qt.binding(() => root.cfg.notchFullscreen >= 2 && root.cfg.notchDodgeWindows ? root.notchArea : Qt.rect(0, 0, 0, 0));
         }
     }
     readonly property rect notchArea: {
@@ -925,15 +926,29 @@ PlasmoidItem {
     readonly property bool overFullscreen: notchFullscreen.item !== null && notchFullscreen.item.active
     readonly property bool notchHidden: root.overFullscreen && root.cfg.notchFullscreen === 0
     // (also where a window reaches under it, maximised or moved up to the edge, if wanted)
-    readonly property bool dodging: root.cfg.notchFullscreen === 2 && notchFullscreen.item !== null
-                                    && (notchFullscreen.item.active || root.cfg.notchDodgeWindows && notchFullscreen.item.covered)
+    readonly property bool overWindow: notchFullscreen.item !== null
+                                       && (notchFullscreen.item.active || root.cfg.notchDodgeWindows && notchFullscreen.item.covered)
+    onOverWindowChanged: console.info("org.phobby.dynamicisland: a window fills the screen: " + (notchFullscreen.item !== null && notchFullscreen.item.active)
+                                      + ", reaches under the notch: " + (notchFullscreen.item !== null && notchFullscreen.item.covered))
+    readonly property bool dodging: root.cfg.notchFullscreen === 2 && root.overWindow
+    // 3 = it shrinks: drawn in, a small nub at the edge; the pointer on it opens the island at once, and once it
+    // is left and closed it is the nub again: never the notch itself while such a window is there.
+    readonly property bool shrinking: root.cfg.notchFullscreen === 3 && root.overWindow
     property bool dodgeShown: false
     onDodgingChanged: dodgeShown = false
+    onShrinkingChanged: dodgeShown = false
     // (out of sight: only a strip along the edge, as wide as the notch, takes the pointer)
     readonly property bool dodgeAway: root.dodging && !root.dodgeShown
+    readonly property bool shrunk: root.shrinking && !root.dodgeShown
+    Connections {
+        target: island
+        function onHoveredChanged() {
+            if (root.shrunk && island.hovered) { root.dodgeShown = true; island.expanded = true; }
+        }
+    }
     Timer {
-        interval: Math.max(700, root.cfg.collapseDelay + 500)
-        running: root.dodging && root.dodgeShown && !island.hovered && !island.expanded && !island.wantsKeyboard
+        interval: root.shrinking ? 250 : Math.max(700, root.cfg.collapseDelay + 500)
+        running: (root.dodging || root.shrinking) && root.dodgeShown && !island.hovered && !island.expanded && !island.wantsKeyboard
         onTriggered: root.dodgeShown = false
     }
     // Where the window the island is in has its left edge (for the companion's room).
@@ -1026,11 +1041,12 @@ PlasmoidItem {
             backend: backend
             network: root.networkBackend
             manager: activities
-            showClock: root.cfg.showClock
+            showClock: root.cfg.showClock && !root.shrunk
             hoverDelay: root.cfg.hoverDelay
             collapseDelay: root.cfg.collapseDelay
             // (dodging over a window that fills the screen: a width of its own for that, if set)
-            maxWidth: root.dodging && root.cfg.notchDodgeWidth > 0 ? root.cfg.notchDodgeWidth : root.cfg.notchMaxWidth
+            // (shrunk: as narrow as it gets, two of its heights)
+            maxWidth: root.shrunk ? 1 : (root.dodging || root.shrinking) && root.cfg.notchDodgeWidth > 0 ? root.cfg.notchDodgeWidth : root.cfg.notchMaxWidth
             openFollowsWidth: root.cfg.notchOpenWidth
             dotMode: root.cfg.dotMode
             dotSize: Math.max(10, Math.min(28, root.cfg.dotSize))
@@ -1091,7 +1107,7 @@ PlasmoidItem {
                 island: island
                 theme: root.islandTheme
                 // (in notch mode it would stand on the panel's widgets beside it, unless the user wants it there)
-                enabled: root.cfg.catEnabled && !(root.notchWanted && root.cfg.notchHideCat)
+                enabled: root.cfg.catEnabled && !(root.notchWanted && root.cfg.notchHideCat) && !root.shrunk
                 sideSetting: root.cfg.catSide
                 sizePercent: root.cfg.catSize
                 fur: root.cfg.catFur

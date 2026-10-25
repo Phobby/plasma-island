@@ -116,7 +116,12 @@ of its own, the glow of the cover comes from its lower edge.
   edge where it is brings it down; it goes back up a moment after it was left
   (open, or with the keyboard in it, it stays). While it is down there it can
   have a size (80–240 %) and a width (80–1200 px) of its own, *As usual*
-  otherwise. Dodging, it also goes up while any window of that screen reaches
+  otherwise. *Shrink* (default) draws it in to a small nub at the edge
+  instead: the pointer on the nub opens the island at once, and once it is
+  left and closed it is the nub again, never the notch itself while such a
+  window is there (its size and width when open can be set as for Dodge).
+  A window counts as filling the screen when it says so or, active, is as
+  large as the screen. Dodging, it also goes up while any window of that screen reaches
   under it (maximised, or moved up to the edge), as a panel's *Dodge windows*
   does; that can be switched off. *Hide* keeps it away, *Show* keeps it over
   the window. With no such window it is as it always is.

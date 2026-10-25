@@ -412,12 +412,15 @@ Item {
             page.cfg_notchMaxWidth = 0;
             // over full screen: hide, show or dodge; dodging has a size and width of its own
             const fullscreen = find(page, "notchFullscreenCombo"), dodgeSize = find(page, "notchDodgeSize"), dodgeWidth = find(page, "notchDodgeWidth");
-            compare(fullscreen.count, 3);
+            compare(fullscreen.count, 4);
             page.cfg_notchFullscreen = 0;
             verify(!dodgeSize.visible && !dodgeWidth.visible);
             fullscreen.currentIndex = 2; fullscreen.activated(2);
             compare(page.cfg_notchFullscreen, 2);
             verify(dodgeSize.visible && dodgeWidth.visible);
+            fullscreen.currentIndex = 3; fullscreen.activated(3);
+            compare(page.cfg_notchFullscreen, 3, "shrink");
+            verify(dodgeSize.visible && dodgeWidth.visible, "its size and width when opened");
             const free = outline.width;
             slider.moved();
             slider.value = 120; slider.moved();

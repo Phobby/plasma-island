@@ -73,8 +73,9 @@
     <entry name="notchBorderWidth" type="Int"><default>1</default><min>1</min><max>8</max></entry>
     <entry name="notchBorderColor" type="String"><default>#4c566a</default></entry>
     <entry name="notchBorderOpacity" type="Int"><default>70</default><min>0</min><max>100</max></entry>
-    <!-- While a window fills the screen: 0 = hide, 1 = show, 2 = dodge (out of sight, comes down at the top edge) -->
-    <entry name="notchFullscreen" type="Int"><default>2</default></entry>
+    <!-- While a window fills the screen: 0 = hide, 1 = show, 2 = dodge (out of sight, comes down at the top edge),
+         3 = shrink (a small nub at the edge; the pointer on it opens the island) -->
+    <entry name="notchFullscreen" type="Int"><default>3</default></entry>
     <!-- Dodging: its size (percent) and width (px at 100 %) while it is down over such a window; 0 = as usual -->
     <!-- Dodging also where a window reaches under the notch (maximised, moved up to the edge), as a panel's "Dodge windows" -->
     <entry name="notchDodgeWindows" type="Bool"><default>true</default></entry>

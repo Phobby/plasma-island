@@ -213,6 +213,13 @@ Item {
             islandTheme.screenWidth = 0; islandTheme.screenHeight = 0;
             islandTheme.scaleOverride = 0;
             compare(islandTheme.scale, 1.1);
+            // drawn in to a nub over a full-screen window: its own height, not the panel's
+            islandTheme.notchPixels = 32;
+            islandTheme.scaleOverride = 0.5;
+            verify(islandTheme.pillHeight * islandTheme.scale >= 32 - 0.5, "otherwise it covers the panel");
+            islandTheme.drawnIn = true;
+            compare(islandTheme.pillHeight * islandTheme.scale, Math.round(islandTheme.gu * 2) * 0.5, "drawn in: half its own height");
+            islandTheme.drawnIn = false; islandTheme.notchPixels = 0; islandTheme.scaleOverride = 0;
             islandTheme.style = Styles.defaults("oxygen");
         }
 

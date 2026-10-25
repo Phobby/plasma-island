@@ -1321,6 +1321,8 @@ var table = {
     "The top panel there is %1 px high.": "Oradaki üst panel %1 px yüksekliğinde.",
     "There is no panel at the top there: the notch is as high as the island.": "Orada üstte panel yok: çentik ada kadar yüksek.",
     "Width:": "Genişlik:",
+    "Shrink": "Küçül",
+    "While a window fills that screen it draws in to a small nub at the edge; the pointer on it opens the island at once, and once you leave it and it closes it is the nub again. It is never the notch itself while such a window is there. With no window filling the screen it is as usual.": "Bir pencere o ekranı kapladığında çentik içeri çekilip kenarda küçük bir çıkıntıya dönüşür; imleci üzerine getirince ada hemen açılır, bırakıp kapandığında yeniden çıkıntı olur. Böyle bir pencere varken hiçbir zaman çentik hâlinde kalmaz. Ekranı kaplayan pencere yokken her zamanki gibidir.",
     "Also from a window that reaches under it (maximised, or moved up to the edge)": "Altına uzanan bir pencereden de kaçsın (büyütülmüş ya da kenara kadar taşınmış)",
     "Choose a colour": "Renk seç",
     "OK": "Tamam",

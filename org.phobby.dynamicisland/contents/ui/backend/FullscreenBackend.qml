@@ -22,8 +22,13 @@ Item {
     // Where the notch is (global coordinates); empty: not looked at.
     property rect area: Qt.rect(0, 0, 0, 0)
     property bool covered: false
+    // (a window that says it fills the screen, or the active one as large as the screen without saying
+    // so: a browser's page or a video made to fill it is not always told as full screen)
     function look(): void {
-        active = tasks.data(tasks.activeTask, TaskManager.AbstractTasksModel.IsFullScreen) === true;
+        const g = tasks.data(tasks.activeTask, TaskManager.AbstractTasksModel.Geometry);
+        const filling = !!g && screen.width > 0 && g.width >= screen.width && g.height >= screen.height
+                        && tasks.data(tasks.activeTask, TaskManager.AbstractTasksModel.IsMinimized) !== true;
+        active = tasks.data(tasks.activeTask, TaskManager.AbstractTasksModel.IsFullScreen) === true || filling;
         covered = area.width > 0 && reaches();
     }
     function reaches(): bool {

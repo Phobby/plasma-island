@@ -150,7 +150,9 @@ QtObject {
     // (the notch is as high as asked, within reason: the small views are made for about this.
     // The island is scaled as a whole (the size setting): under 100 % the notch still covers the
     // panel, from 100 % up it grows with the size as everything else does, taller than the panel.)
-    readonly property real pillHeight: notch && notchPixels > 0 ? Math.round(Math.max(20, Math.min(72, notchPixels / Math.min(1, scale))))
+    // (drawnIn: the notch shrunk to a nub over a full-screen window: its own height, not the panel's)
+    property bool drawnIn: false
+    readonly property real pillHeight: notch && notchPixels > 0 && !drawnIn ? Math.round(Math.max(20, Math.min(72, notchPixels / Math.min(1, scale))))
                                                                 : Math.round(gu * 2)       // ~36
     readonly property real liveWidth: Math.round(gu * 13)
     readonly property real notificationWidth: Math.round(gu * 22)

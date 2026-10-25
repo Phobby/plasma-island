@@ -13,8 +13,10 @@
 - **The notch's width** is set, narrower or wider, up to 1200 px (it was
   only a limit, and past what the notch shows the slider changed nothing);
   the open island follows it where it is wider (can be switched off).
-- **Dodge over full screen** (the notch's *Over full screen*, now the
-  default): out of sight while a window fills the screen, down when the
+- **Shrink over full screen** (the notch's *Over full screen*, the default):
+  a small nub at the edge while a window fills the screen; the pointer on it
+  opens the island, and closed it is the nub again.
+- **Dodge over full screen** (the notch's *Over full screen*): out of sight while a window fills the screen, down when the
   pointer is pushed against the top edge, back up when left; a size and width
   of its own for that can be set. It also dodges a window that reaches under
   it (maximised, moved up to the edge), as a panel's Dodge windows. Hide and Show are as they were.

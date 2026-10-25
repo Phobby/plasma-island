@@ -198,19 +198,21 @@ Kirigami.FormLayout {
         id: fullscreenCombo
         objectName: "notchFullscreenCombo"
         Kirigami.FormData.label: Lang.i18n("Over full screen:")
-        model: [Lang.i18n("Hide"), Lang.i18n("Show"), Lang.i18n("Dodge")]
+        model: [Lang.i18n("Hide"), Lang.i18n("Show"), Lang.i18n("Dodge"), Lang.i18n("Shrink")]
         index: section.page.cfg_notchFullscreen
         onActivated: section.page.cfg_notchFullscreen = currentIndex
     }
     Hint {
-        text: fullscreenCombo.currentIndex === 2
+        text: fullscreenCombo.currentIndex === 3
+            ? Lang.i18n("While a window fills that screen it draws in to a small nub at the edge; the pointer on it opens the island at once, and once you leave it and it closes it is the nub again. It is never the notch itself while such a window is there. With no window filling the screen it is as usual.")
+            : fullscreenCombo.currentIndex === 2
             ? Lang.i18n("While a window fills that screen it goes up out of sight; push the pointer against the top edge where it is and it comes down, and goes back up a moment after you leave it. With no window filling the screen it is as usual. It is never shown on the lock screen.")
             : Lang.i18n("While a window fills that screen (a film, a game, a talk). It is never shown on the lock screen.")
     }
     QQC2.CheckBox {
         id: dodgeWindows
         objectName: "notchDodgeWindows"
-        visible: fullscreenCombo.currentIndex === 2
+        visible: fullscreenCombo.currentIndex >= 2
         text: Lang.i18n("Also from a window that reaches under it (maximised, or moved up to the edge)")
         Binding { target: dodgeWindows; property: "checked"; value: section.page.cfg_notchDodgeWindows }
         onToggled: section.page.cfg_notchDodgeWindows = checked
@@ -218,7 +220,7 @@ Kirigami.FormLayout {
     RowLayout {
         objectName: "notchDodgeSize"
         Kirigami.FormData.label: Lang.i18n("Size there:")
-        visible: fullscreenCombo.currentIndex === 2
+        visible: fullscreenCombo.currentIndex >= 2
         QQC2.Slider {
             id: dodgeSizeSlider
             Layout.preferredWidth: Kirigami.Units.gridUnit * 12
@@ -238,7 +240,7 @@ Kirigami.FormLayout {
     RowLayout {
         objectName: "notchDodgeWidth"
         Kirigami.FormData.label: Lang.i18n("Width there:")
-        visible: fullscreenCombo.currentIndex === 2
+        visible: fullscreenCombo.currentIndex >= 2
         QQC2.Slider {
             id: dodgeWidthSlider
             Layout.preferredWidth: Kirigami.Units.gridUnit * 12
@@ -255,7 +257,7 @@ Kirigami.FormLayout {
         }
     }
     Hint {
-        visible: fullscreenCombo.currentIndex === 2
+        visible: fullscreenCombo.currentIndex >= 2
         text: Lang.i18n("While it is down over a window that fills the screen; as usual: the size and width set for it everywhere.")
     }
 
