@@ -3,8 +3,8 @@
 
     Settings → Appearance, Layout: Notch. What the notch layout has of its own
     (main.qml, NotchWindow.qml): its colour and border, the curves where it
-    meets the edge, which screen, what it does over a window that fills the
-    screen, its height and widest, and the cat beside it. Shown under the
+    meets the edge, which screen, its size and width open over a window that
+    fills the screen, its height and widest, and the cat beside it. Shown under the
     layout's choice while the notch is chosen.
 
     The preview is drawn here with what is set, before it is applied: the
@@ -194,33 +194,21 @@ Kirigami.FormLayout {
     Hint {
         text: Lang.i18n("Without a panel at the top it sits at the top edge all the same: a panel at the bottom or at a side has nothing to do with it. One notch at a time: not on every screen.")
     }
-    Choice {
-        id: fullscreenCombo
-        objectName: "notchFullscreenCombo"
-        Kirigami.FormData.label: Lang.i18n("Over full screen:")
-        model: [Lang.i18n("Hide"), Lang.i18n("Show"), Lang.i18n("Dodge"), Lang.i18n("Shrink")]
-        index: section.page.cfg_notchFullscreen
-        onActivated: section.page.cfg_notchFullscreen = currentIndex
-    }
-    Hint {
-        text: fullscreenCombo.currentIndex === 3
-            ? Lang.i18n("While a window fills that screen it draws in to a small nub at the edge; the pointer on it opens the island at once, and once you leave it and it closes it is the nub again. It is never the notch itself while such a window is there. With no window filling the screen it is as usual.")
-            : fullscreenCombo.currentIndex === 2
-            ? Lang.i18n("While a window fills that screen it goes up out of sight; push the pointer against the top edge where it is and it comes down, and goes back up a moment after you leave it. With no window filling the screen it is as usual. It is never shown on the lock screen.")
-            : Lang.i18n("While a window fills that screen (a film, a game, a talk). It is never shown on the lock screen.")
-    }
+    // (what it does over a window that fills the screen is the full-screen mode, for both layouts: below;
+    // peeking or shrunk, the notch has these of its own)
     QQC2.CheckBox {
         id: dodgeWindows
         objectName: "notchDodgeWindows"
-        visible: fullscreenCombo.currentIndex >= 2
-        text: Lang.i18n("Also from a window that reaches under it (maximised, or moved up to the edge)")
+        Kirigami.FormData.label: Lang.i18n("Full screen:")
+        visible: section.page.cfg_fullscreenMode >= 2
+        text: Lang.i18n("Also for a window that reaches under it (maximised, or moved up to the edge)")
         Binding { target: dodgeWindows; property: "checked"; value: section.page.cfg_notchDodgeWindows }
         onToggled: section.page.cfg_notchDodgeWindows = checked
     }
     RowLayout {
         objectName: "notchDodgeSize"
         Kirigami.FormData.label: Lang.i18n("Size there:")
-        visible: fullscreenCombo.currentIndex >= 2
+        visible: section.page.cfg_fullscreenMode >= 2
         QQC2.Slider {
             id: dodgeSizeSlider
             Layout.preferredWidth: Kirigami.Units.gridUnit * 12
@@ -240,7 +228,7 @@ Kirigami.FormLayout {
     RowLayout {
         objectName: "notchDodgeWidth"
         Kirigami.FormData.label: Lang.i18n("Width there:")
-        visible: fullscreenCombo.currentIndex >= 2
+        visible: section.page.cfg_fullscreenMode >= 2
         QQC2.Slider {
             id: dodgeWidthSlider
             Layout.preferredWidth: Kirigami.Units.gridUnit * 12
@@ -257,8 +245,8 @@ Kirigami.FormLayout {
         }
     }
     Hint {
-        visible: fullscreenCombo.currentIndex >= 2
-        text: Lang.i18n("While it is down over a window that fills the screen; as usual: the size and width set for it everywhere.")
+        visible: section.page.cfg_fullscreenMode >= 2
+        text: Lang.i18n("While it is open over a window that fills the screen (Full-screen mode: Peek at the edge or Shrink, below); as usual: the size and width set for it everywhere.")
     }
 
     // ---- its size -----------------------------------------------------------------

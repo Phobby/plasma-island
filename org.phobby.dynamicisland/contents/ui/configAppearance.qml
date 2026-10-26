@@ -41,7 +41,6 @@ KCM.SimpleKCM {
     property int cfg_islandLayout
     readonly property bool notch: cfg_islandLayout === 0
     property int cfg_notchColor
-    property int cfg_notchFullscreen
     property int cfg_notchScreen
     property int cfg_notchMaxWidth
     property bool cfg_notchOpenWidth
@@ -57,6 +56,12 @@ KCM.SimpleKCM {
     property string cfg_notchBorderColor
     property int cfg_notchBorderOpacity
     property int cfg_notchPanelSeen
+    // Over a window that fills the screen, both layouts (FullscreenSettings.qml).
+    property int cfg_fullscreenMode
+    property int cfg_peekSize
+    property int cfg_peekDelay
+    property int cfg_peekWidth
+    property bool cfg_peekEvents
     // (for the notch's preview: the clock in it, the dot's size; and whether there is a cat to hide)
     property bool cfg_showClock
     property int cfg_dotSize
@@ -415,7 +420,7 @@ KCM.SimpleKCM {
     Kirigami.FormLayout {
         id: layoutForm
         Layout.fillWidth: true
-        twinFormLayouts: [notchForm, lookForm]
+        twinFormLayouts: [notchForm, fullscreenForm, lookForm]
         RowLayout {
             objectName: "islandLayoutChooser"
             Kirigami.FormData.label: Lang.i18n("Layout:")
@@ -463,14 +468,25 @@ KCM.SimpleKCM {
         objectName: "notchSettings"
         Layout.fillWidth: true
         visible: page.notch
-        twinFormLayouts: [layoutForm, lookForm]
+        twinFormLayouts: [layoutForm, fullscreenForm, lookForm]
+        page: page
+        shown: notchShown
+    }
+    // ---- over a window that fills the screen, both layouts ------------------------------------
+    FullscreenSettings {
+        id: fullscreenForm
+        objectName: "fullscreenSettings"
+        Layout.fillWidth: true
+        twinFormLayouts: [layoutForm, notchForm, lookForm]
+        // (labels beside or above their controls as in the section above it)
+        wideMode: notchForm.visible ? notchForm.wideMode : layoutForm.wideMode
         page: page
         shown: notchShown
     }
     Kirigami.FormLayout {
         id: lookForm
         Layout.fillWidth: true
-        twinFormLayouts: [layoutForm, notchForm]
+        twinFormLayouts: [layoutForm, notchForm, fullscreenForm]
         Kirigami.Separator {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: Lang.i18n("Look")

@@ -393,6 +393,74 @@ Item {
 
         // The notch's own settings (under the layout): the preview follows what is set; the widest
         // is "no limit" below 80 px.
+        // The full-screen mode, for both layouts: Normal, Hide, Peek at the edge, Shrink, each with what it does
+        // under it; peeking has the part that shows, the delay, the trigger width and the call; the preview plays it.
+        function test_fullscreen_mode_settings() {
+            if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
+            const page = appearance.item;
+            const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
+            const combo = find(page, "fullscreenModeCombo"), hint = find(page, "fullscreenModeHint");
+            const size = find(page, "peekSize"), delay = find(page, "peekDelay"), width = find(page, "peekWidth"), call = find(page, "peekEvents");
+            verify(combo !== null && hint !== null && size !== null && delay !== null && width !== null && call !== null);
+            for (const layout of [0, 1]) {
+                page.cfg_islandLayout = layout;
+                verify(find(page, "fullscreenSettings").visible, "in both layouts");
+                compare(combo.count, 4);
+                const values = [], texts = [];
+                for (let i = 0; i < combo.count; ++i) {
+                    combo.currentIndex = i; combo.activated(i);
+                    values.push(page.cfg_fullscreenMode);
+                    texts.push(hint.text);
+                }
+                compare(values, [1, 0, 2, 3], "Normal, Hide, Peek at the edge, Shrink");
+                compare(new Set(texts).size, 4, "each says what it does");
+                page.cfg_fullscreenMode = 1;
+                verify(!size.visible && !delay.visible && !width.visible && !call.visible, "normal: nothing more");
+                page.cfg_fullscreenMode = 0;
+                verify(!size.visible && !call.visible, "hide: nothing more");
+                page.cfg_fullscreenMode = 2;
+                verify(size.visible && delay.visible && width.visible && call.visible, "peeking: all of it");
+                page.cfg_fullscreenMode = 3;
+                verify(!size.visible && !width.visible && delay.visible && call.visible, "shrunk: no strip, but the delay and the call");
+            }
+            // the combo follows the setting it was not used for
+            page.cfg_fullscreenMode = 2;
+            compare(combo.currentIndex, 2);
+            page.cfg_fullscreenMode = 0;
+            compare(combo.currentIndex, 1);
+            // the sliders write their values; the trigger width is "as wide as the island" below 40 px
+            const slider = r => r.children.find(c => c.stepSize !== undefined && c.from !== undefined);
+            page.cfg_fullscreenMode = 2;
+            const w = slider(width);
+            w.value = 30; w.moved();
+            compare(page.cfg_peekWidth, 0);
+            w.value = 304; w.moved();
+            compare(page.cfg_peekWidth, 300);
+            const d = slider(delay);
+            d.value = 420; d.moved();
+            compare(page.cfg_peekDelay, 400);
+            const sz = slider(size);
+            sz.value = 9; sz.moved();
+            compare(page.cfg_peekSize, 9);
+            page.cfg_peekEvents = true;
+            verify(call.checked);
+            call.toggle(); call.toggled();
+            compare(page.cfg_peekEvents, false);
+            call.toggle(); call.toggled();
+            compare(page.cfg_peekEvents, true);
+            // the preview: "Try it" puts a window over the screen; peeking, the island is drawn up there
+            const box = find(page, "fullscreenPreview"), tryIt = find(page, "fullscreenPreviewButton");
+            verify(box !== null && tryIt !== null);
+            verify(!box.full && !box.away);
+            tryIt.toggle();
+            verify(box.full && box.away);
+            page.cfg_fullscreenMode = 3;
+            verify(box.small && !box.away);
+            tryIt.toggle();
+            verify(!box.full && !box.small);
+            page.cfg_peekWidth = 0; page.cfg_peekDelay = 150; page.cfg_peekSize = 4; page.cfg_fullscreenMode = 0;
+        }
+
         function test_notch_settings_preview_and_limits() {
             if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
             const page = appearance.item;
@@ -410,17 +478,15 @@ Item {
             page.cfg_notchHeightMode = 1; page.cfg_notchHeight = 30;
             compare(outline.height, 30, "or as set");
             page.cfg_notchMaxWidth = 0;
-            // over full screen: hide, show or dodge; dodging has a size and width of its own
-            const fullscreen = find(page, "notchFullscreenCombo"), dodgeSize = find(page, "notchDodgeSize"), dodgeWidth = find(page, "notchDodgeWidth");
-            compare(fullscreen.count, 4);
-            page.cfg_notchFullscreen = 0;
+            // over full screen (the full-screen mode, below): peeking or shrunk the notch has a size and width of its own
+            const dodgeSize = find(page, "notchDodgeSize"), dodgeWidth = find(page, "notchDodgeWidth");
+            page.cfg_fullscreenMode = 0;
             verify(!dodgeSize.visible && !dodgeWidth.visible);
-            fullscreen.currentIndex = 2; fullscreen.activated(2);
-            compare(page.cfg_notchFullscreen, 2);
+            page.cfg_fullscreenMode = 2;
             verify(dodgeSize.visible && dodgeWidth.visible);
-            fullscreen.currentIndex = 3; fullscreen.activated(3);
-            compare(page.cfg_notchFullscreen, 3, "shrink");
+            page.cfg_fullscreenMode = 3;
             verify(dodgeSize.visible && dodgeWidth.visible, "its size and width when opened");
+            page.cfg_fullscreenMode = 0;
             const free = outline.width;
             slider.moved();
             slider.value = 120; slider.moved();

@@ -1,9 +1,9 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
-    Whether the window in use fills the screen (a film, a game, a talk): the
-    suggestions keep quiet then, and the notch steps aside. Told by the task
-    manager's model on a change; nothing is polled, and no window's title or
-    application is looked at.
+    Whether a window fills the screen (a film, a game, a talk): the suggestions
+    keep quiet then, and the island does what the full-screen mode says. Told
+    by the task manager's model on a change; nothing is polled, and no
+    window's title or application is looked at. What counts: Fullscreen.js.
 
     And, where `area` is given (the notch's place, global coordinates),
     whether a window reaches into it, as a panel's "Dodge windows" asks: any
@@ -13,6 +13,7 @@
 */
 import QtQuick
 import org.kde.taskmanager as TaskManager
+import "../Fullscreen.js" as Fullscreen
 
 Item {
     id: watch
@@ -22,24 +23,24 @@ Item {
     // Where the notch is (global coordinates); empty: not looked at.
     property rect area: Qt.rect(0, 0, 0, 0)
     property bool covered: false
-    // (a window that says it fills the screen, or the active one as large as the screen without saying
-    // so: a browser's page or a video made to fill it is not always told as full screen)
-    function look(): void {
-        const g = tasks.data(tasks.activeTask, TaskManager.AbstractTasksModel.Geometry);
-        const filling = !!g && screen.width > 0 && g.width >= screen.width && g.height >= screen.height
-                        && tasks.data(tasks.activeTask, TaskManager.AbstractTasksModel.IsMinimized) !== true;
-        active = tasks.data(tasks.activeTask, TaskManager.AbstractTasksModel.IsFullScreen) === true || filling;
-        covered = area.width > 0 && reaches();
-    }
-    function reaches(): bool {
+    function windows(): var {
+        const out = [];
+        const activeRow = tasks.activeTask.valid ? tasks.activeTask.row : -1;
         for (let i = 0; i < tasks.count; ++i) {
             const index = tasks.index(i, 0);
-            if (tasks.data(index, TaskManager.AbstractTasksModel.IsMinimized) === true) continue;
-            const g = tasks.data(index, TaskManager.AbstractTasksModel.Geometry);
-            if (!g || !(g.width > 0)) continue;
-            if (g.x < area.x + area.width && g.x + g.width > area.x && g.y < area.y + area.height && g.y + g.height > area.y) return true;
+            out.push({ fullScreen: tasks.data(index, TaskManager.AbstractTasksModel.IsFullScreen) === true,
+                       maximized: tasks.data(index, TaskManager.AbstractTasksModel.IsMaximized) === true,
+                       minimized: tasks.data(index, TaskManager.AbstractTasksModel.IsMinimized) === true,
+                       active: i === activeRow,
+                       geometry: tasks.data(index, TaskManager.AbstractTasksModel.Geometry) });
         }
-        return false;
+        return out;
+    }
+    function look(): void {
+        const all = windows();
+        // (with no screen given: the screen is the active window's own size)
+        active = Fullscreen.fills(all, screen.width > 0 ? screen : null);
+        covered = Fullscreen.reaches(all, area);
     }
     onAreaChanged: look()
     TaskManager.TasksModel {

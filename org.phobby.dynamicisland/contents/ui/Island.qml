@@ -50,10 +50,17 @@ Item {
     // Ambient glow (the colour of the cover, following the music); see AmbientGlow.qml.
     property bool ambientGlow: false
     signal ambientGlowToggled()
+    // Drawn up to the edge over a window that fills the screen (main.qml, the full-screen mode): only
+    // a small part of it shows. What it shows and what moves in it rest then (the glow, the bars of
+    // the music, the clock), it takes no pointer (the strip at the edge does) and what comes waits.
+    property bool resting: false
+    // Where the small island ends at the bottom, at rest (a pill or a dot, not a banner or the open one).
+    readonly property real restBottom: dot ? (notch ? dotSize : theme.windowTopPad + (theme.pillHeight + dotSize) / 2)
+                                           : theme.windowTopPad + theme.pillHeight
     AmbientGlow {
         id: glow
-        // not while the island is a dot: nothing of it would be seen
-        enabled: island.ambientGlow && !island.dot
+        // not while the island is a dot or drawn up: nothing of it would be seen
+        enabled: island.ambientGlow && !island.dot && !island.resting
         backend: island.backend
     }
     // For who stands beside the island (the companion): the music's beats, while the glow follows
@@ -127,8 +134,8 @@ Item {
                                     : "transparent"
     // A running live activity pulses.
     readonly property bool dotPulse: mode === "dot" && dotEvents !== 2 && (primary !== null || suggestionHint)
-    Binding { target: island.manager; property: "quiet"; value: island.dot && island.dotEvents !== 1 }
-    Binding { target: island.manager; property: "quietCritical"; value: island.dotCriticalExpand }
+    Binding { target: island.manager; property: "quiet"; value: island.dot && island.dotEvents !== 1 || island.resting }
+    Binding { target: island.manager; property: "quietCritical"; value: island.dotCriticalExpand && !island.resting }
 
     // ---- state ----------------------------------------------------------------
     property bool expanded: false
@@ -138,7 +145,9 @@ Item {
     readonly property var primary: manager.primary
     readonly property var secondary: manager.secondary
 
-    readonly property bool hovered: hover.hovered || bubbleHover.hovered || dotHover.hovered
+    // The pointer on the bridge from the top edge down to it (main.qml, peeking over a full-screen window): as on it.
+    property bool hoverAbove: false
+    readonly property bool hovered: hover.hovered || bubbleHover.hovered || dotHover.hovered || hoverAbove
     // A text field (quick reply) needs keyboard focus: see main.qml.
     readonly property bool wantsKeyboard: expanded && expandedContent.interacting
     readonly property string mode: expanded ? "expanded"
@@ -275,7 +284,7 @@ Item {
     Timer {
         interval: 350
         repeat: true
-        running: island.scaled && island.mode !== "idle"
+        running: island.scaled && island.mode !== "idle" && !island.resting
         onTriggered: island.retypeAll()
     }
 
@@ -419,6 +428,7 @@ Item {
 
         HoverHandler {
             id: hover
+            enabled: !island.resting
             onPointChanged: {
                 if (!island.grace) return;
                 const p = point.scenePosition;
@@ -461,7 +471,7 @@ Item {
             y: 0
             opacity: shown ? 1 : 0
             scale: shown ? 1 : 0.94
-            visible: opacity > 0.01
+            visible: opacity > 0.01 && !island.resting
             Behavior on opacity {
                 SequentialAnimation {
                     PauseAnimation { duration: island.revealDelay }
@@ -680,12 +690,12 @@ Item {
         x: island.split ? island.bubbleRestX : island.bubbleTuckedX
         scale: island.split ? 1 : 0.55
         opacity: island.split ? 1 : 0
-        visible: opacity > 0.01
+        visible: opacity > 0.01 && !island.resting
         Behavior on x { SpringAnimation { spring: 3.2; damping: 0.28; epsilon: 0.2 } }
         Behavior on scale { SpringAnimation { spring: 3.2; damping: 0.3; epsilon: 0.005 } }
         Behavior on opacity { NumberAnimation { duration: 160 } }
 
-        HoverHandler { id: bubbleHover }
+        HoverHandler { id: bubbleHover; enabled: !island.resting }
         TapHandler {
             onTapped: {
                 expandTimer.stop();
@@ -715,7 +725,7 @@ Item {
         visible: island.mode === "dot"
         x: island.hitRect.x; y: island.hitRect.y; width: island.hitRect.width; height: island.hitRect.height
         z: 5
-        HoverHandler { id: dotHover }
+        HoverHandler { id: dotHover; enabled: !island.resting }
         TapHandler { onTapped: island.unshrink() }
         TapHandler {
             acceptedButtons: Qt.RightButton
@@ -798,7 +808,7 @@ Item {
         spacing: 4
         x: (bubble.visible ? bubble.x + bubble.width : surface.x + surface.width) + 8
         y: island.theme.windowTopPad + island.theme.pillHeight / 2 - height / 2
-        visible: island.mode !== "expanded" && island.mode !== "dot"
+        visible: island.mode !== "expanded" && island.mode !== "dot" && !island.resting
         Repeater {
             model: island.manager.indicators
             delegate: Rectangle {

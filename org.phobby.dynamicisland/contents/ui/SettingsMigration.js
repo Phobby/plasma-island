@@ -7,13 +7,23 @@
 //    it showed: the notch if notchMode was switched on, the oval layout otherwise, and
 //    is told once that the notch is there (layoutNotice). notchMode is left as it was,
 //    so the step can be taken again and comes to the same.
+// 2: the full-screen mode. What the notch did over a window that fills the screen
+//    (notchFullscreen: 0 = hide, 1 = show, 2 = dodge, 3 = shrink) is the full-screen mode
+//    of both layouts now (fullscreenMode: 0 = hide, 1 = normal, 2 = peek at the edge,
+//    3 = shrink), the value as it was: show is normal, hide is hide, dodging is peeking.
+//    A new island has what one had before: hide (on the oval layout a window that fills
+//    the screen lies over the island anyway). notchFullscreen is left as it was.
 //
 // Pure functions of plain values: main.qml hands in the settings, writes what comes back.
 .pragma library
 
-const CURRENT = 1;
+const CURRENT = 2;
 const NOTCH = 0;
 const OVAL = 1;
+const HIDE = 0;
+const NORMAL = 1;
+const PEEK = 2;
+const SHRINK = 3;
 
 // Whether these settings were used by an island before this one ran: it noted its
 // version (from 0.2.0), or kept its settings (from 0.2.2), or they were brought back
@@ -28,20 +38,36 @@ function layoutOf(c, restored) {
     return usedBefore(c, restored) && c.notchMode !== true ? OVAL : NOTCH;
 }
 
-// What to write: { settingsSchema, islandLayout, layoutNotice } or {} when there is nothing to do.
+// A full-screen mode as one of the four (anything else: hide, as before there was a choice).
+function mode(value) {
+    const v = Number(value);
+    return v === NORMAL || v === PEEK || v === SHRINK ? v : HIDE;
+}
+
+// The full-screen mode these settings mean, before or after the step.
+function fullscreenOf(c) {
+    return mode(Number(c.settingsSchema) >= 2 ? c.fullscreenMode : c.notchFullscreen);
+}
+
+// What to write: { settingsSchema, islandLayout, layoutNotice, fullscreenMode } or {} when there is nothing to do.
 function migrate(c, restored) {
-    if (Number(c.settingsSchema) >= CURRENT) return {};
+    const from = Number(c.settingsSchema) || 0;
+    if (from >= CURRENT) return {};
     const out = { settingsSchema: CURRENT };
-    if (usedBefore(c, restored)) {
+    if (from < 1 && usedBefore(c, restored)) {
         out.islandLayout = c.notchMode === true ? NOTCH : OVAL;
         // (told only who did not have the notch, and only once)
         if (out.islandLayout === OVAL && c.layoutNotice === 0) out.layoutNotice = 1;
     }
+    if (from < 2) out.fullscreenMode = mode(c.notchFullscreen);
     return out;
 }
 
-// The step undone: as before it was taken (the layout chosen since is kept in notchMode).
+// The steps undone: as before they were taken (what was chosen since is kept in notchMode and notchFullscreen).
 function revert(c) {
-    if (Number(c.settingsSchema) < 1) return {};
-    return { settingsSchema: 0, notchMode: Number(c.islandLayout) !== OVAL };
+    const from = Number(c.settingsSchema) || 0;
+    if (from < 1) return {};
+    const out = { settingsSchema: 0, notchMode: Number(c.islandLayout) !== OVAL };
+    if (from >= 2) out.notchFullscreen = mode(c.fullscreenMode);
+    return out;
 }

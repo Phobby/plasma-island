@@ -28,6 +28,7 @@ import "providers"
 import "backend"
 import "companion"
 import "SettingsMigration.js" as Migration
+import "Fullscreen.js" as Fullscreen
 
 PlasmoidItem {
     id: root
@@ -82,9 +83,9 @@ PlasmoidItem {
         notchBorderColor: root.cfg.notchBorderColor
         notchBorderOpacity: root.cfg.notchBorderOpacity
         notchPixels: root.notchPixels
-        // (dodging over a window that fills the screen: a size of its own for that, if set)
-        drawnIn: root.shrunk
-        scaleOverride: root.shrunk ? 0.5 : (root.dodging || root.shrinking) && root.cfg.notchDodgeSize > 0 ? root.cfg.notchDodgeSize / 100 : 0
+        // (the notch over a window that fills the screen: shrunk to a nub, or, open there, a size of its own for that if set)
+        drawnIn: peek.shrunk
+        scaleOverride: peek.shrunk ? 0.5 : root.notchWanted && peek.active && root.cfg.notchDodgeSize > 0 ? root.cfg.notchDodgeSize / 100 : 0
         // (the size is kept within the screen the island is on)
         screenWidth: root.notchWanted ? root.notchScreen.width : root.screenRect.width
         screenHeight: root.notchWanted ? root.notchScreen.height : root.screenRect.height
@@ -292,18 +293,20 @@ PlasmoidItem {
     // before); without the native module it never does, and a moment after the start will do.
     function settingsNow(kept: bool): var {
         return { settingsSchema: root.cfg.settingsSchema, islandLayout: root.cfg.islandLayout, notchMode: root.cfg.notchMode,
-                 installedVersion: root.cfg.installedVersion, settingsKept: kept, layoutNotice: root.cfg.layoutNotice };
+                 installedVersion: root.cfg.installedVersion, settingsKept: kept, layoutNotice: root.cfg.layoutNotice,
+                 fullscreenMode: root.cfg.fullscreenMode, notchFullscreen: root.cfg.notchFullscreen };
     }
     function migrateSettings(kept: bool, restored: bool): void {
         const changes = Migration.migrate(root.settingsNow(kept), restored);
         for (const key in changes) root.cfg[key] = changes[key];
         if (changes.settingsSchema !== undefined)
             console.info("org.phobby.dynamicisland: settings brought up to version " + changes.settingsSchema
-                         + (changes.islandLayout !== undefined ? ", layout " + (changes.islandLayout === 0 ? "notch" : "oval") : ""));
+                         + (changes.islandLayout !== undefined ? ", layout " + (changes.islandLayout === 0 ? "notch" : "oval") : "")
+                         + (changes.fullscreenMode !== undefined ? ", full-screen mode " + changes.fullscreenMode : ""));
     }
     Timer {
         interval: 4000
-        running: root.cfg.settingsSchema < 1
+        running: root.cfg.settingsSchema < Migration.CURRENT
         onTriggered: root.migrateSettings(root.cfg.settingsKept === true, false)
     }
     // Told once, after the island's first seconds, to who was moved to the oval layout: the notch is there.
@@ -868,11 +871,12 @@ PlasmoidItem {
     onNotchPanelSeenChanged: if (root.notchWanted && root.cfg.notchPanelSeen !== notchPanelSeen) root.cfg.notchPanelSeen = notchPanelSeen
     // Its height in px: as set, or the top panel's; 0 = the island's own.
     readonly property int notchPixels: root.cfg.notchHeightMode === 1 ? root.cfg.notchHeight : root.notchPanel !== null ? root.notchPanel.height : 0
-    readonly property var notchQtScreen: {
+    function qtScreenAt(r: rect): var {
         for (const s of Qt.application.screens)
-            if (s.virtualX === root.notchScreen.x && s.virtualY === root.notchScreen.y) return s;
+            if (s.virtualX === r.x && s.virtualY === r.y) return s;
         return null;
     }
+    readonly property var notchQtScreen: root.qtScreenAt(root.notchScreen)
     Loader {
         id: screenPlacer
         active: root.notchWanted
@@ -882,7 +886,9 @@ PlasmoidItem {
     // Its window, made anew when the notch goes to another screen (a layer surface keeps the one it was made on).
     Loader {
         id: notchLoader
-        readonly property var target: root.notchWanted && root.leads && Qt.platform.pluginName.startsWith("wayland") ? root.notchQtScreen : null
+        // (the oval island too, while it peeks over a window that fills the screen: see the full-screen mode)
+        readonly property var target: !root.leads || !root.waylandShell ? null
+                                      : root.notchWanted ? root.notchQtScreen : root.ovalOverlay ? root.qtScreenAt(root.ownScreen) : null
         onTargetChanged: reload()
         Component.onCompleted: reload()
         function reload(): void {
@@ -900,59 +906,84 @@ PlasmoidItem {
             item.width = Qt.binding(() => Math.round(root.windowWidth * theme.scale) + 2 * Math.abs(theme.offsetX));
             item.height = Qt.binding(() => Math.round(root.windowHeight * theme.scale));
             item.keyboard = Qt.binding(() => island.wantsKeyboard);
-            item.visible = Qt.binding(() => !root.notchHidden);
+            item.visible = Qt.binding(() => !peek.hidden);
         }
         onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: LayerShellQt (org.kde.layershell) not found; the notch stays in the island's usual window, which may lie under a panel");
     }
     readonly property var notchWindow: notchLoader.status === Loader.Ready ? notchLoader.item : null
-    // While a window fills the notch's screen (notchFullscreen): 0 = it steps aside, 1 = it stays (a Dialog lies
-    // under such a window anyway), 2 = it dodges: out of sight above the edge, and pushed against the edge it
-    // comes down, at a size and width of its own for that if they are set, and goes back up a moment after it
-    // was left. With no window filling the screen it is as it always is.
+    // ---- over a window that fills the screen: the full-screen mode ----------------------------
+    // Appearance › Layout, both layouts (states: FullscreenPeek.qml). 0 = hide; 1 = normal: as it is (the
+    // notch stays over such a window, the oval layout's Dialog lies under it); 2 = peek: drawn up to the top
+    // edge with a small part showing, the pointer at the edge brings it down and opens it; 3 = shrink: drawn
+    // in to a small nub, the pointer on it opens it. Only for a window on the island's own screen.
+    // (until the settings are brought up to date: the mode they will have then, so nothing jumps)
+    readonly property int fullscreenMode: Migration.fullscreenOf(root.settingsNow(root.cfg.settingsKept === true))
+    readonly property bool waylandShell: Qt.platform.pluginName.startsWith("wayland")
+    readonly property rect islandScreen: root.notchWanted ? root.notchScreen : root.ownScreen
     Loader {
-        id: notchFullscreen
-        active: root.notchWindow !== null && root.cfg.notchFullscreen !== 1
+        id: fullscreenSeen
+        active: root.leads && root.fullscreenMode !== 1
         source: "backend/FullscreenBackend.qml"
         onLoaded: {
-            item.screen = Qt.binding(() => root.notchScreen);
-            // (dodging windows too: where the small notch is, as a panel's "Dodge windows" looks)
-            item.area = Qt.binding(() => root.cfg.notchFullscreen >= 2 && root.cfg.notchDodgeWindows ? root.notchArea : Qt.rect(0, 0, 0, 0));
+            item.screen = Qt.binding(() => root.islandScreen);
+            // (the notch, peeking or shrunk: a window that reaches under it too, as a panel's "Dodge windows" looks)
+            item.area = Qt.binding(() => root.notchWanted && root.fullscreenMode >= 2 && root.cfg.notchDodgeWindows ? root.notchArea : Qt.rect(0, 0, 0, 0));
         }
     }
     readonly property rect notchArea: {
         const w = Math.round(island.pillWidth * theme.scale), h = Math.round(theme.pillHeight * theme.scale);
         return Qt.rect(root.notchScreen.x + (root.notchScreen.width - w) / 2 + theme.offsetX, root.notchScreen.y, w, h);
     }
-    readonly property bool overFullscreen: notchFullscreen.item !== null && notchFullscreen.item.active
-    readonly property bool notchHidden: root.overFullscreen && root.cfg.notchFullscreen === 0
-    // (also where a window reaches under it, maximised or moved up to the edge, if wanted)
-    readonly property bool overWindow: notchFullscreen.item !== null
-                                       && (notchFullscreen.item.active || root.cfg.notchDodgeWindows && notchFullscreen.item.covered)
-    onOverWindowChanged: console.info("org.phobby.dynamicisland: a window fills the screen: " + (notchFullscreen.item !== null && notchFullscreen.item.active)
-                                      + ", reaches under the notch: " + (notchFullscreen.item !== null && notchFullscreen.item.covered))
-    readonly property bool dodging: root.cfg.notchFullscreen === 2 && root.overWindow
-    // 3 = it shrinks: drawn in, a small nub at the edge; the pointer on it opens the island at once, and once it
-    // is left and closed it is the nub again: never the notch itself while such a window is there.
-    readonly property bool shrinking: root.cfg.notchFullscreen === 3 && root.overWindow
-    property bool dodgeShown: false
-    onDodgingChanged: dodgeShown = false
-    onShrinkingChanged: dodgeShown = false
-    // (out of sight: only a strip along the edge, as wide as the notch, takes the pointer)
-    readonly property bool dodgeAway: root.dodging && !root.dodgeShown
-    readonly property bool shrunk: root.shrinking && !root.dodgeShown
+    readonly property bool overFullscreen: fullscreenSeen.item !== null && fullscreenSeen.item.active
+    readonly property bool overWindow: root.overFullscreen || fullscreenSeen.item !== null && fullscreenSeen.item.covered
+    readonly property string overSeen: root.overFullscreen + ", reaches under the notch: " + (fullscreenSeen.item !== null && fullscreenSeen.item.covered)
+    onOverSeenChanged: console.info("org.phobby.dynamicisland: a window fills the screen: " + root.overSeen)
+    // A call ringing (it opens the island there, if wanted), and what the strip says: Fullscreen.js.
+    readonly property bool ringing: activities.live.some(a => a.category === "call" && a.pulse)
+    readonly property string peekSignal: !(peek.away || peek.shrunk) ? "" : Fullscreen.signalOf({
+        ringing: root.ringing, calling: activities.live.some(a => a.category === "call"),
+        recording: activities.live.some(a => a.category === "recording"),
+        critical: activities.waitingCritical, privacy: activities.indicators.length > 0 })
+    readonly property color peekSignalColor: root.peekSignal === "call" ? "#30d158"
+                                            : root.peekSignal === "recording" ? theme.danger
+                                            : root.peekSignal === "critical" ? "#ffd60a"
+                                            : root.peekSignal === "privacy" ? activities.indicators[0].color
+                                            : "transparent"
+    FullscreenPeek {
+        id: peek
+        mode: root.fullscreenMode
+        // (hiding: only for a window that fills the screen; one reaching under the notch is only looked at for the others)
+        over: root.fullscreenMode === 0 ? root.overFullscreen : root.overWindow
+        edgeHovered: edgeHover.hovered || peek.shrunk && island.hovered
+        hovered: island.hovered
+        open: island.expanded
+        busy: island.wantsKeyboard
+        delay: root.cfg.peekDelay
+        ringing: root.ringing
+        callOpens: root.cfg.peekEvents
+        onOpenRequested: island.expanded = true
+    }
+    // Opened otherwise while it is drawn up or in (a click on the nub, the menu, a shortcut): it comes down.
     Connections {
         target: island
-        function onHoveredChanged() {
-            if (root.shrunk && island.hovered) { root.dodgeShown = true; island.expanded = true; }
-        }
+        function onExpandedChanged() { if (island.expanded && (peek.away || peek.shrunk)) peek.show(); }
     }
-    Timer {
-        interval: root.shrinking ? 250 : Math.max(700, root.cfg.collapseDelay + 500)
-        running: (root.dodging || root.shrinking) && root.dodgeShown && !island.hovered && !island.expanded && !island.wantsKeyboard
-        onTriggered: root.dodgeShown = false
+    // The oval island peeks from a window of the notch's kind (an overlay layer surface, the one kind of
+    // window over one that fills the screen), on Wayland; kept a moment after, to come down in it.
+    readonly property bool ovalOverlay: !root.notchWanted && root.fullscreenMode >= 2 && (peek.active || ovalReturn.running)
+    Connections {
+        target: peek
+        function onActiveChanged() { if (!peek.active && !root.notchWanted && root.notchWindow !== null) ovalReturn.restart(); }
     }
+    Timer { id: ovalReturn; interval: 420 }
+    // There, where its Dialog would be (px below the top of the screen).
+    readonly property real ovalDown: root.ovalOverlay && root.notchWindow !== null ? Math.max(0, dialog.y - root.ownScreen.y) : 0
+    // Drawn up: only cfg.peekSize px of the small island below the edge.
+    readonly property real peekAwayY: root.cfg.peekSize - island.restBottom * theme.scale - root.ovalDown
+    // How far the island is moved down in its window now (for where it takes the pointer and is blurred).
+    readonly property real hostShift: ovalShift.y + peekShift.y
     // Where the window the island is in has its left edge (for the companion's room).
-    readonly property real windowX: root.notchWindow !== null ? root.notchScreen.x + (root.notchScreen.width - root.notchWindow.width) / 2 : dialog.x
+    readonly property real windowX: root.notchWindow !== null ? root.islandScreen.x + (root.islandScreen.width - root.notchWindow.width) / 2 : dialog.x
 
     // Switched on or off, the island slides from where it was to where it goes instead of jumping.
     // The window keeps room below for it while it slides down.
@@ -979,10 +1010,10 @@ PlasmoidItem {
     // (a notch set wider than the open island keeps its room while it morphs to and from it)
     readonly property real windowWidth: (island.needsWideWindow ? Math.max(island.openWideWidth, 2 * island.smallHalfWidth)
                                          : island.needsLargeWindow ? Math.max(island.openWidth, theme.notificationWidth, theme.eventWidth, 2 * island.smallHalfWidth)
-                                         : 2 * island.smallHalfWidth) + 2 * theme.windowSidePad + 2 * companion.reserve
+                                         : Math.max(2 * island.smallHalfWidth, peek.away ? root.cfg.peekWidth : 0)) + 2 * theme.windowSidePad + 2 * companion.reserve
     readonly property real windowHeight: (island.needsTallWindow ? theme.tallHeight
                                           : island.needsLargeWindow ? Math.max(theme.expandedHeight, theme.notificationHeight)
-                                          : theme.pillHeight) + theme.windowTopPad + theme.windowBottomPad + root.slideRoom / theme.scale
+                                          : theme.pillHeight) + theme.windowTopPad + theme.windowBottomPad + (root.slideRoom + root.ovalDown) / theme.scale
 
     Connections {
         target: island
@@ -1000,7 +1031,7 @@ PlasmoidItem {
         backgroundHints: PlasmaCore.Dialog.NoBackground
         hideOnWindowDeactivate: false
         // (in notch mode the island is in its own window, when there is one)
-        visible: root.leads && root.notchWindow === null
+        visible: root.leads && root.notchWindow === null && !peek.hidden
 
         // In notch mode without its window: at the top edge itself.
         x: root.notchWanted ? Math.round(root.notchScreen.x + (root.notchScreen.width - width) / 2 + theme.offsetX)
@@ -1024,13 +1055,39 @@ PlasmoidItem {
         height: Math.round(root.windowHeight * theme.scale)
         transform: [
             Translate { id: slide },
-            // (dodging: up above the edge, out of sight)
+            // (the oval island peeking from the overlay window: where its Dialog would be, when down)
+            Translate { id: ovalShift; y: root.ovalDown },
+            // (peeking: up to the edge with a springy move, and down again)
             Translate {
-                y: root.dodgeAway ? -islandHost.height : 0
-                Behavior on y { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                id: peekShift
+                y: peek.away ? root.peekAwayY : 0
+                Behavior on y { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
             }
         ]
 
+        // Drawn up or in, what matters says itself on the part that shows: a bar in its colour, pulsing
+        // (in steps, 12 a second, and only while there is something to say: see Island's dot).
+        Rectangle {
+            objectName: "peekSignal"
+            visible: root.peekSignal !== ""
+            readonly property real room: peek.away ? root.cfg.peekSize : 6
+            width: Math.min(island.surfaceRect.width * theme.scale * 0.5, 120)
+            height: Math.max(2, room - 2)
+            radius: height / 2
+            x: (island.surfaceRect.x + island.surfaceRect.width / 2) * theme.scale - width / 2
+            y: island.restBottom * theme.scale - room + (room - height) / 2
+            z: 10
+            color: root.peekSignalColor
+            property int pulseAt: 0
+            opacity: pulseAt >= 1100 ? 1 : 0.55 + 0.45 * Math.cos(2 * Math.PI * pulseAt / 1100)
+            Timer {
+                interval: 83
+                repeat: true
+                running: parent.visible
+                onRunningChanged: parent.pulseAt = 0
+                onTriggered: parent.pulseAt = (parent.pulseAt + interval) % 2000
+            }
+        }
         Island {
             id: island
             width: parent.width / theme.scale
@@ -1041,12 +1098,14 @@ PlasmoidItem {
             backend: backend
             network: root.networkBackend
             manager: activities
-            showClock: root.cfg.showClock && !root.shrunk
+            showClock: root.cfg.showClock && !peek.shrunk
+            resting: peek.away || peek.hidden
+            hoverAbove: root.peekBridge && edgeHover.hovered
             hoverDelay: root.cfg.hoverDelay
             collapseDelay: root.cfg.collapseDelay
-            // (dodging over a window that fills the screen: a width of its own for that, if set)
+            // (open over a window that fills the screen: a width of its own for that, if set)
             // (shrunk: as narrow as it gets, two of its heights)
-            maxWidth: root.shrunk ? 1 : (root.dodging || root.shrinking) && root.cfg.notchDodgeWidth > 0 ? root.cfg.notchDodgeWidth : root.cfg.notchMaxWidth
+            maxWidth: peek.shrunk ? 1 : root.notchWanted && peek.active && root.cfg.notchDodgeWidth > 0 ? root.cfg.notchDodgeWidth : root.cfg.notchMaxWidth
             openFollowsWidth: root.cfg.notchOpenWidth
             dotMode: root.cfg.dotMode
             dotSize: Math.max(10, Math.min(28, root.cfg.dotSize))
@@ -1107,7 +1166,8 @@ PlasmoidItem {
                 island: island
                 theme: root.islandTheme
                 // (in notch mode it would stand on the panel's widgets beside it, unless the user wants it there)
-                enabled: root.cfg.catEnabled && !(root.notchWanted && root.cfg.notchHideCat) && !root.shrunk
+                // (and not over a window that fills the screen, while the island is drawn up or in there)
+                enabled: root.cfg.catEnabled && !(root.notchWanted && root.cfg.notchHideCat) && !peek.active
                 sideSetting: root.cfg.catSide
                 sizePercent: root.cfg.catSize
                 fur: root.cfg.catFur
@@ -1131,17 +1191,28 @@ PlasmoidItem {
         }
     }
 
-    // Dodging, out of sight: the pointer pushed against the edge where the notch is brings it down.
+    // Peeking, drawn up: the strip along the top edge where the island is (as wide as it, or as set) takes
+    // the pointer, a little deeper than what shows; the topmost row of pixels too, so the pointer pushed
+    // against the edge finds it. Everything else of the screen is the full-screen window's.
+    // Come down, the oval island is a little below the edge: the strip then reaches from the edge to it
+    // (a bridge), and the pointer there is on the island, so the pointer left at the edge keeps it open.
+    readonly property bool peekBridge: peek.shown && root.ovalOverlay && root.notchWindow !== null
     Item {
-        id: dodgeEdge
+        id: peekEdge
         parent: root.notchWindow !== null ? root.notchWindow.contentItem : dialogBody
-        visible: root.dodgeAway
-        x: islandHost.x + island.surfaceRect.x * theme.scale
-        width: island.surfaceRect.width * theme.scale
-        height: 3
-        HoverHandler { onHoveredChanged: if (hovered) root.dodgeShown = true }
+        visible: peek.away || root.peekBridge
+        readonly property real centre: islandHost.x + (island.surfaceRect.x + island.surfaceRect.width / 2) * theme.scale
+        width: Math.min(parent ? parent.width : 0, (root.cfg.peekWidth > 0 && peek.away ? root.cfg.peekWidth : island.surfaceRect.width) * theme.scale)
+        x: Math.max(0, Math.min((parent ? parent.width : 0) - width, centre - width / 2))
+        height: peek.away ? root.cfg.peekSize + 6 : Math.max(1, root.hostShift + island.surfaceRect.y * theme.scale + 2)
+        HoverHandler { id: edgeHover }
+        Rectangle {
+            anchors.fill: parent
+            visible: root.debugRegion
+            color: "transparent"; border.width: 1; border.color: "red"
+        }
     }
-    readonly property rect dodgeEdgeRect: Qt.rect(dodgeEdge.x, 0, dodgeEdge.width, dodgeEdge.height)
+    readonly property rect peekEdgeRect: Qt.rect(peekEdge.x, 0, peekEdge.width, peekEdge.height)
 
     // ---- where the island takes the pointer ------------------------------------------
     // The window is larger than what is drawn (room for the shadow, the morph, the larger
@@ -1152,13 +1223,14 @@ PlasmoidItem {
         source: "MaskBridge.qml"
         onLoaded: {
             item.window = Qt.binding(() => root.notchWindow !== null ? root.notchWindow : dialog);
-            const scaled = r => Qt.rect(islandHost.x + r.x * theme.scale, r.y * theme.scale, r.width * theme.scale, r.height * theme.scale);
-            // (dodging, out of sight: only the strip along the edge)
-            item.region = Qt.binding(() => root.dodgeAway ? root.dodgeEdgeRect : scaled(island.maskRect));
-            item.radius = Qt.binding(() => root.dodgeAway ? 0 : island.hitRadius * theme.scale);
-            item.region2 = Qt.binding(() => root.dodgeAway ? Qt.rect(0, 0, 0, 0) : scaled(island.maskBubbleRect));
+            const scaled = r => Qt.rect(islandHost.x + r.x * theme.scale, root.hostShift + r.y * theme.scale, r.width * theme.scale, r.height * theme.scale);
+            // (peeking, drawn up: only the strip along the edge)
+            item.region = Qt.binding(() => peek.away ? root.peekEdgeRect : scaled(island.maskRect));
+            item.radius = Qt.binding(() => peek.away ? 0 : island.hitRadius * theme.scale);
+            item.region2 = Qt.binding(() => peek.away ? Qt.rect(0, 0, 0, 0) : scaled(island.maskBubbleRect));
             // the companion's body (a module from before it: the cat is only looked at)
-            if (item.shapes !== undefined) item.shapes = Qt.binding(() => root.dodgeAway ? [] : companion.maskShapes.map(scaled));
+            // (and the bridge from the edge down to the oval island, come down over a full-screen window)
+            if (item.shapes !== undefined) item.shapes = Qt.binding(() => peek.away ? [] : companion.maskShapes.map(scaled).concat(root.peekBridge ? [root.peekEdgeRect] : []));
             item.enabled = true;
         }
         onStatusChanged: if (status === Loader.Error) {
@@ -1178,12 +1250,12 @@ PlasmoidItem {
         onLoaded: {
             // (the notch in the island's own look is blurred in its window too)
             item.window = Qt.binding(() => root.notchWindow !== null ? root.notchWindow : dialog);
-            const scaled = r => Qt.rect(islandHost.x + r.x * theme.scale, r.y * theme.scale, r.width * theme.scale, r.height * theme.scale);
+            const scaled = r => Qt.rect(islandHost.x + r.x * theme.scale, root.hostShift + r.y * theme.scale, r.width * theme.scale, r.height * theme.scale);
             // The notch has no upper corners: as the mask's, its rounded rectangles reach above the window by their radius.
             const above = (r, radius) => theme.notch && r.width > 0 ? Qt.rect(r.x, r.y - radius, r.width, r.height + radius) : r;
-            item.rect = Qt.binding(() => root.dodgeAway ? Qt.rect(0, 0, 0, 0) : scaled(above(island.surfaceRect, island.surfaceRadius)));
+            item.rect = Qt.binding(() => peek.away ? Qt.rect(0, 0, 0, 0) : scaled(above(island.surfaceRect, island.surfaceRadius)));
             item.radius = Qt.binding(() => island.surfaceRadius * theme.scale);
-            item.rect2 = Qt.binding(() => root.dodgeAway ? Qt.rect(0, 0, 0, 0) : scaled(above(island.bubbleRect, Math.min(island.bubbleRect.width, island.bubbleRect.height) / 2)));
+            item.rect2 = Qt.binding(() => peek.away ? Qt.rect(0, 0, 0, 0) : scaled(above(island.bubbleRect, Math.min(island.bubbleRect.width, island.bubbleRect.height) / 2)));
             item.enabled = true;
         }
         onStatusChanged: if (status === Loader.Error) {

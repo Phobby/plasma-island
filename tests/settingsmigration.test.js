@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // The settings brought up to date (contents/ui/SettingsMigration.js): a new island has
 // the notch; one that ran before keeps what it showed (the notch where it was switched
-// on, the oval layout otherwise) and is told once; the step is taken once, can be
-// undone and taken again to the same end. Run by tools/run-tests.
+// on, the oval layout otherwise) and is told once; what the notch did over a window that
+// fills the screen is the full-screen mode of both layouts, as it was; each step is taken
+// once, can be undone and taken again to the same end. Run by tools/run-tests.
 "use strict";
 const fs = require("fs");
 const path = require("path");
@@ -30,13 +31,14 @@ function test(name, body) {
 }
 // The settings as main.xml has them when nothing was written (what a new widget reads).
 function fresh(more) {
-    return Object.assign({ settingsSchema: 0, islandLayout: 0, notchMode: false, installedVersion: "", settingsKept: false, layoutNotice: 0 }, more || {});
+    return Object.assign({ settingsSchema: 0, islandLayout: 0, notchMode: false, installedVersion: "", settingsKept: false, layoutNotice: 0,
+                          notchFullscreen: 0, fullscreenMode: 0 }, more || {});
 }
 // What the settings are once the changes are written.
 function after(c, restored) { return Object.assign({}, c, M.migrate(c, restored)); }
 
 test("a new island: the notch, nothing to tell", () => {
-    check("changes", M.migrate(fresh(), false), { settingsSchema: 1 });
+    check("changes", M.migrate(fresh(), false), { settingsSchema: 2, fullscreenMode: M.HIDE });
     check("layout before", M.layoutOf(fresh(), false), M.NOTCH);
     check("layout after", M.layoutOf(after(fresh(), false), false), M.NOTCH);
 });
@@ -44,15 +46,15 @@ test("a new island: the notch, nothing to tell", () => {
 test("one that ran before, notch never switched on: the oval layout, told once", () => {
     for (const earlier of [{ installedVersion: "0.2.2" }, { installedVersion: "0.2.0" }, { settingsKept: true }]) {
         const c = fresh(earlier);
-        check("changes " + JSON.stringify(earlier), M.migrate(c, false), { settingsSchema: 1, islandLayout: M.OVAL, layoutNotice: 1 });
+        check("changes " + JSON.stringify(earlier), M.migrate(c, false), { settingsSchema: 2, islandLayout: M.OVAL, layoutNotice: 1, fullscreenMode: M.HIDE });
         check("layout before, as after", M.layoutOf(c, false), M.OVAL);
     }
-    check("brought back from an earlier island", M.migrate(fresh(), true), { settingsSchema: 1, islandLayout: M.OVAL, layoutNotice: 1 });
+    check("brought back from an earlier island", M.migrate(fresh(), true), { settingsSchema: 2, islandLayout: M.OVAL, layoutNotice: 1, fullscreenMode: M.HIDE });
 });
 
 test("one that ran before with the notch on: the notch, nothing to tell", () => {
     const c = fresh({ installedVersion: "0.2.2", notchMode: true });
-    check("changes", M.migrate(c, false), { settingsSchema: 1, islandLayout: M.NOTCH });
+    check("changes", M.migrate(c, false), { settingsSchema: 2, islandLayout: M.NOTCH, fullscreenMode: M.HIDE });
     check("layout before", M.layoutOf(c, false), M.NOTCH);
 });
 
@@ -87,8 +89,36 @@ test("undone and taken again: the same", () => {
 });
 
 test("what cannot be read is as new", () => {
-    check("no values at all", M.migrate({}, false), { settingsSchema: 1 });
+    check("no values at all", M.migrate({}, false), { settingsSchema: 2, fullscreenMode: M.HIDE });
     check("a strange layout reads as the notch", M.layoutOf({ settingsSchema: 1, islandLayout: 7 }, false), M.NOTCH);
+});
+
+test("the full-screen mode: what the notch did, as it was (show = normal, hide = hide, dodge = peek)", () => {
+    const pairs = [[0, M.HIDE], [1, M.NORMAL], [2, M.PEEK], [3, M.SHRINK], [7, M.HIDE], [undefined, M.HIDE]];
+    for (const [old, mode] of pairs) {
+        const c = fresh({ installedVersion: "0.2.2", notchMode: true, notchFullscreen: old });
+        check("from " + old, M.migrate(c, false).fullscreenMode, mode);
+        check("before the step, as after: " + old, M.fullscreenOf(c), mode);
+        check("after the step", M.fullscreenOf(after(c, false)), mode);
+    }
+    // a new island: as before there was a choice, hidden
+    check("new", M.fullscreenOf(after(fresh(), false)), M.HIDE);
+    // the oval layout's island takes it as it was too
+    check("oval", M.migrate(fresh({ installedVersion: "0.2.2", notchFullscreen: 1 }), false).fullscreenMode, M.NORMAL);
+});
+
+test("from version 1: only the full-screen mode, the layout stays", () => {
+    const c = fresh({ installedVersion: "0.2.2", settingsSchema: 1, islandLayout: M.OVAL, notchFullscreen: 2, layoutNotice: 2 });
+    check("changes", M.migrate(c, false), { settingsSchema: 2, fullscreenMode: M.PEEK });
+    // what was chosen since stays: the mode once at version 2 is fullscreenMode, whatever notchFullscreen says
+    const done = after(c, false);
+    done.fullscreenMode = M.NORMAL;
+    check("chosen since", M.fullscreenOf(done), M.NORMAL);
+    check("nothing more", M.migrate(done, false), {});
+    // undone: kept in notchFullscreen, and back to the same
+    const undone = Object.assign({}, done, M.revert(done));
+    check("kept", undone.notchFullscreen, M.NORMAL);
+    check("and back", after(undone, false).fullscreenMode, M.NORMAL);
 });
 
 console.log(failed === 0 ? `${checked} checks passed` : `${failed} of ${checked} checks FAILED`);

@@ -73,11 +73,22 @@
     <entry name="notchBorderWidth" type="Int"><default>1</default><min>1</min><max>8</max></entry>
     <entry name="notchBorderColor" type="String"><default>#4c566a</default></entry>
     <entry name="notchBorderOpacity" type="Int"><default>70</default><min>0</min><max>100</max></entry>
-    <!-- While a window fills the screen: 0 = hide, 1 = show, 2 = dodge (out of sight, comes down at the top edge),
-         3 = shrink (a small nub at the edge; the pointer on it opens the island) -->
-    <entry name="notchFullscreen" type="Int"><default>3</default></entry>
-    <!-- Dodging: its size (percent) and width (px at 100 %) while it is down over such a window; 0 = as usual -->
-    <!-- Dodging also where a window reaches under the notch (maximised, moved up to the edge), as a panel's "Dodge windows" -->
+    <!-- Before settings version 2: what the notch did over a window that fills the screen (as fullscreenMode).
+         Read once by SettingsMigration.js, and written back if that step is undone. -->
+    <entry name="notchFullscreen" type="Int"><default>0</default></entry>
+    <!-- Full-screen mode, both layouts: while a window fills the island's screen. 0 = hide, 1 = normal (as it is),
+         2 = peek (drawn up to the top edge, a small part shows; the pointer there opens it), 3 = shrink (the notch
+         draws in to a small nub at the edge; the pointer on it opens it) -->
+    <entry name="fullscreenMode" type="Int"><default>0</default><min>0</min><max>3</max></entry>
+    <!-- Peeking: how much of it shows (px), how long the pointer rests on it before it opens (ms), how wide the
+         place at the edge that opens it is (px at 100 % size; 0 = as wide as the island), and whether an incoming
+         call opens it (a recording, the microphone and a critical warning only colour the strip) -->
+    <entry name="peekSize" type="Int"><default>4</default><min>2</min><max>16</max></entry>
+    <entry name="peekDelay" type="Int"><default>150</default><min>0</min><max>1000</max></entry>
+    <entry name="peekWidth" type="Int"><default>0</default><min>0</min><max>1200</max></entry>
+    <entry name="peekEvents" type="Bool"><default>true</default></entry>
+    <!-- The notch, peeking or shrunk: also where a window reaches under it (maximised, moved up to the edge), as a panel's
+         "Dodge windows"; and its size (percent) and width (px at 100 %) once open over such a window; 0 = as usual -->
     <entry name="notchDodgeWindows" type="Bool"><default>true</default></entry>
     <entry name="notchDodgeSize" type="Int"><default>0</default><min>0</min><max>240</max></entry>
     <entry name="notchDodgeWidth" type="Int"><default>0</default><min>0</min><max>1200</max></entry>
