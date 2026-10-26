@@ -183,8 +183,10 @@ The full-screen mode's *Peek at the edge* and *Shrink* (FullscreenPeek.qml
 holds the states, Fullscreen.js what counts as a full-screen window) use the
 same window: the notch is in it anyway; the oval island moves into one only
 while it peeks or is shrunk over such a window (and for its way back down),
-placed where its Dialog is. Drawn up, the island is moved with a translate,
-and the window's input region (MaskBridge) is only the strip at the edge, so
+placed where its Dialog is. Drawn up, the island is only moved with a translate
+(never resized: what it shows is a picture of itself, `Island.frozen`, so
+nothing is laid out anew and nothing under it runs), and the window's input
+region (MaskBridge) is only the strip that shows, from the top row down, so
 everything else of the screen is the full-screen window's; come down, it is
 the island's shape again (and, for the oval island, the bridge from the edge
 down to it).

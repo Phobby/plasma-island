@@ -83,9 +83,10 @@ PlasmoidItem {
         notchBorderColor: root.cfg.notchBorderColor
         notchBorderOpacity: root.cfg.notchBorderOpacity
         notchPixels: root.notchPixels
-        // (the notch over a window that fills the screen: shrunk to a nub, or, open there, a size of its own for that if set)
+        // (the notch over a window that fills the screen: shrunk to a nub, or, come down and open there, a size of its
+        // own for that if set; drawn up to the edge it keeps the size it has)
         drawnIn: peek.shrunk
-        scaleOverride: peek.shrunk ? 0.5 : root.notchWanted && peek.active && root.cfg.notchDodgeSize > 0 ? root.cfg.notchDodgeSize / 100 : 0
+        scaleOverride: peek.shrunk ? 0.5 : root.notchWanted && peek.shown && root.cfg.notchDodgeSize > 0 ? root.cfg.notchDodgeSize / 100 : 0
         // (the size is kept within the screen the island is on)
         screenWidth: root.notchWanted ? root.notchScreen.width : root.screenRect.width
         screenHeight: root.notchWanted ? root.notchScreen.height : root.screenRect.height
@@ -979,8 +980,10 @@ PlasmoidItem {
     Timer { id: ovalReturn; interval: 420 }
     // There, where its Dialog would be (px below the top of the screen).
     readonly property real ovalDown: root.ovalOverlay && root.notchWindow !== null ? Math.max(0, dialog.y - root.ownScreen.y) : 0
-    // Drawn up: only cfg.peekSize px of the small island below the edge.
+    // Drawn up: only cfg.peekSize px of the small island below the edge (its lower edge, the notch's rounded
+    // corners or the pill's), the island as large as it is.
     readonly property real peekAwayY: root.cfg.peekSize - island.restBottom * theme.scale - root.ovalDown
+    readonly property int peekMove: 260
     // How far the island is moved down in its window now (for where it takes the pointer and is blurred).
     readonly property real hostShift: ovalShift.y + peekShift.y
     // Where the window the island is in has its left edge (for the companion's room).
@@ -1058,11 +1061,12 @@ PlasmoidItem {
             Translate { id: slide },
             // (the oval island peeking from the overlay window: where its Dialog would be, when down)
             Translate { id: ovalShift; y: root.ovalDown },
-            // (peeking: up to the edge with a springy move, and down again)
+            // (peeking: up to the edge, and down again the same way; only moved, never resized)
             Translate {
                 id: peekShift
+                objectName: "peekShift"
                 y: peek.away ? root.peekAwayY : 0
-                Behavior on y { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
+                Behavior on y { NumberAnimation { duration: root.peekMove; easing.type: Easing.OutCubic } }
             }
         ]
 
@@ -1104,9 +1108,9 @@ PlasmoidItem {
             hoverAbove: root.peekBridge && edgeHover.hovered
             hoverDelay: root.cfg.hoverDelay
             collapseDelay: root.cfg.collapseDelay
-            // (open over a window that fills the screen: a width of its own for that, if set)
+            // (come down and open over a window that fills the screen: a width of its own for that, if set)
             // (shrunk: as narrow as it gets, two of its heights)
-            maxWidth: peek.shrunk ? 1 : root.notchWanted && peek.active && root.cfg.notchDodgeWidth > 0 ? root.cfg.notchDodgeWidth : root.cfg.notchMaxWidth
+            maxWidth: peek.shrunk ? 1 : root.notchWanted && peek.shown && root.cfg.notchDodgeWidth > 0 ? root.cfg.notchDodgeWidth : root.cfg.notchMaxWidth
             openFollowsWidth: root.cfg.notchOpenWidth
             dotMode: root.cfg.dotMode
             dotSize: Math.max(10, Math.min(28, root.cfg.dotSize))
@@ -1167,8 +1171,11 @@ PlasmoidItem {
                 island: island
                 theme: root.islandTheme
                 // (in notch mode it would stand on the panel's widgets beside it, unless the user wants it there)
-                // (and not over a window that fills the screen, while the island is drawn up or in there)
-                enabled: root.cfg.catEnabled && !(root.notchWanted && root.cfg.notchHideCat) && !peek.active
+                // (not while the notch is shrunk to a nub over a window that fills the screen; drawn up to the
+                // edge it goes up with the island, its feet no lower than the island's, and keeps still)
+                enabled: root.cfg.catEnabled && !(root.notchWanted && root.cfg.notchHideCat) && !(root.fullscreenMode === 3 && peek.active)
+                tucked: peek.away
+                tuckMove: root.peekMove
                 sideSetting: root.cfg.catSide
                 sizePercent: root.cfg.catSize
                 fur: root.cfg.catFur
@@ -1193,8 +1200,8 @@ PlasmoidItem {
     }
 
     // Peeking, drawn up: the strip along the top edge where the island is (as wide as it, or as set) takes
-    // the pointer, a little deeper than what shows; the topmost row of pixels too, so the pointer pushed
-    // against the edge finds it. Everything else of the screen is the full-screen window's.
+    // the pointer, as deep as what shows; the topmost row of pixels too, so the pointer pushed against the
+    // edge finds it. Everything else of the screen, and of the island's window, is the full-screen window's.
     // Come down, the oval island is a little below the edge: the strip then reaches from the edge to it
     // (a bridge), and the pointer there is on the island, so the pointer left at the edge keeps it open.
     readonly property bool peekBridge: peek.shown && root.ovalOverlay && root.notchWindow !== null
@@ -1205,7 +1212,8 @@ PlasmoidItem {
         readonly property real centre: islandHost.x + (island.surfaceRect.x + island.surfaceRect.width / 2) * theme.scale
         width: Math.min(parent ? parent.width : 0, (root.cfg.peekWidth > 0 && peek.away ? root.cfg.peekWidth : island.surfaceRect.width) * theme.scale)
         x: Math.max(0, Math.min((parent ? parent.width : 0) - width, centre - width / 2))
-        height: peek.away ? root.cfg.peekSize + 6 : Math.max(1, root.hostShift + island.surfaceRect.y * theme.scale + 2)
+        // (drawn up: what shows of it, from the topmost row of pixels down; nothing below it takes the pointer)
+        height: peek.away ? root.cfg.peekSize : Math.max(1, root.hostShift + island.surfaceRect.y * theme.scale + 2)
         HoverHandler { id: edgeHover }
         Rectangle {
             anchors.fill: parent
@@ -1254,9 +1262,9 @@ PlasmoidItem {
             const scaled = r => Qt.rect(islandHost.x + r.x * theme.scale, root.hostShift + r.y * theme.scale, r.width * theme.scale, r.height * theme.scale);
             // The notch has no upper corners: as the mask's, its rounded rectangles reach above the window by their radius.
             const above = (r, radius) => theme.notch && r.width > 0 ? Qt.rect(r.x, r.y - radius, r.width, r.height + radius) : r;
-            item.rect = Qt.binding(() => peek.away ? Qt.rect(0, 0, 0, 0) : scaled(above(island.surfaceRect, island.surfaceRadius)));
+            item.rect = Qt.binding(() => scaled(above(island.surfaceRect, island.surfaceRadius)));
             item.radius = Qt.binding(() => island.surfaceRadius * theme.scale);
-            item.rect2 = Qt.binding(() => peek.away ? Qt.rect(0, 0, 0, 0) : scaled(above(island.bubbleRect, Math.min(island.bubbleRect.width, island.bubbleRect.height) / 2)));
+            item.rect2 = Qt.binding(() => scaled(above(island.bubbleRect, Math.min(island.bubbleRect.width, island.bubbleRect.height) / 2)));
             item.enabled = true;
         }
         onStatusChanged: if (status === Loader.Error) {

@@ -1358,7 +1358,6 @@ var table = {
     "Move the pointer to the top edge, onto the red frame.": "Fareyi üst kenara, kırmızı çerçevenin üstüne götür.",
     "Move the pointer onto the nub.": "Fareyi çıkıntının üstüne getir.",
     "Part that shows:": "Görünen parça:",
-    "The place at the edge that opens it is a little deeper than what shows, and the topmost row of pixels counts too: the pointer pushed against the edge finds it.": "Kenarda onu açan alan görünen parçadan biraz daha derindir ve en üst piksel satırı da sayılır: kenara dayanan fare onu bulur.",
     "Opens after:": "Açılma gecikmesi:",
     "How long the pointer rests there before it opens, so that passing over it does not.": "Açılmadan önce farenin orada ne kadar durması gerektiği; üzerinden geçip gitmek onu açmasın diye.",
     "Trigger width:": "Tetikleme genişliği:",
@@ -1371,5 +1370,6 @@ var table = {
     "While it is open over a window that fills the screen (Full-screen mode: Peek at the edge or Shrink, below); as usual: the size and width set for it everywhere.": "Ekranı kaplayan bir pencerenin üstünde açıkken (Tam ekran modu: Kenarda belir ya da Küçül, aşağıda); her zamanki gibi: her yer için ayarlanan boyut ve genişlik.",
     "Also for maximised windows": "Büyütülmüş pencerelerde de",
     "Off: only a window in full screen counts (any application: a video, a browser's F11, a terminal, a game), and only the one in front, on the island's screen and the desktop shown. While a top panel shows, a maximised window never meets the island anyway.": "Kapalıyken yalnızca tam ekrandaki pencere sayılır (her uygulama: video, tarayıcıda F11, terminal, oyun) ve yalnızca öndeki, adanın ekranında ve görünen masaüstünde olan. Üst panel görünürken büyütülmüş pencere zaten adaya değmez.",
-    "Also for a window that reaches under it (moved up to the edge)": "Altına uzanan bir pencerede de (kenara kadar taşınmış)"
+    "Also for a window that reaches under it (moved up to the edge)": "Altına uzanan bir pencerede de (kenara kadar taşınmış)",
+    "Only moved up, never made smaller: its lower edge shows. That strip opens it, from the topmost row of pixels down, so the pointer pushed against the edge finds it; nothing else of it takes a click.": "Yalnızca yukarı kayar, hiç küçülmez: alt kenarı görünür. Bu şerit, en üst piksel satırından aşağısıyla onu açar; böylece kenara dayanan fare onu bulur. Başka hiçbir yeri tıklama almaz."
 };

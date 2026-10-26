@@ -174,7 +174,7 @@ Kirigami.FormLayout {
                 scale: screenBox.small ? 0.5 : 1
                 transformOrigin: Item.Top
                 opacity: screenBox.full && section.mode === 0 ? 0 : 1
-                Behavior on y { NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
+                Behavior on y { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
                 Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                 Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                 Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
@@ -204,7 +204,7 @@ Kirigami.FormLayout {
                 visible: screenBox.away || screenBox.small
                 readonly property real wanted: section.page.cfg_peekWidth > 0 ? section.page.cfg_peekWidth * screenBox.k : islandShape.width
                 width: Math.min(screenBox.width, screenBox.small ? islandShape.width : wanted)
-                height: screenBox.small ? islandShape.height * 0.5 + islandShape.rest : section.page.cfg_peekSize + 6
+                height: screenBox.small ? islandShape.height * 0.5 + islandShape.rest : section.page.cfg_peekSize
                 anchors.horizontalCenter: parent.horizontalCenter
                 HoverHandler { id: edgeHover }
                 Rectangle {
@@ -258,7 +258,7 @@ Kirigami.FormLayout {
     }
     Hint {
         visible: section.peeking
-        text: Lang.i18n("The place at the edge that opens it is a little deeper than what shows, and the topmost row of pixels counts too: the pointer pushed against the edge finds it.")
+        text: Lang.i18n("Only moved up, never made smaller: its lower edge shows. That strip opens it, from the topmost row of pixels down, so the pointer pushed against the edge finds it; nothing else of it takes a click.")
     }
     ValueSlider {
         objectName: "peekDelay"

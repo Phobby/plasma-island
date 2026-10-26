@@ -29,6 +29,9 @@ Item {
     Theme { id: islandTheme; follow: false; notch: true }
     ActivityManager { id: activities; maxEventAge: 2000 }
     PlasmaBackend { id: plasma }
+    // (something live, for the size of the island with it)
+    Activity { id: build; activityId: "peek-test"; category: "transfer"; icon: "run-build"; title: "Tëstwick"; progress: 40; active: false
+               Component.onCompleted: activities.register(this) }
     Island {
         id: island
         width: 900
@@ -171,21 +174,56 @@ Item {
                 for (const c of item.children) { const f = find(c); if (f) return f; }
                 return null;
             })(island);
-            verify(layer !== null);
-            verify(layer.visible);
+            const picture = findChild(island, "frozenPicture");
+            verify(layer !== null && picture !== null);
+            verify(layer.visible && !picture.visible);
             island.resting = true;
-            verify(!layer.visible, "what it shows rests");
+            // (what it shows becomes a picture of itself: the same pixels, everything under it stopped)
+            tryVerify(() => island.frozen, 1000, "a picture of what it shows");
+            verify(!layer.visible && picture.visible && String(picture.source).length > 0, "what it shows rests as a picture");
             verify(activities.quiet && !activities.quietCritical, "what comes waits, a critical event too");
             // nothing takes the pointer
             mouseMove(island, island.width / 2, 10);
             wait(150);
             verify(!island.hovered && !island.expanded, "the pointer on it does nothing");
             island.resting = false;
-            verify(layer.visible && !activities.quiet);
+            verify(layer.visible && !picture.visible && !activities.quiet);
             mouseMove(island, island.width / 2 + 2, 12);
             tryVerify(() => island.expanded, 600, "down again: as always");
             mouseMove(root, 5, root.height - 5);
             tryVerify(() => !island.expanded, 1500);
+        }
+
+        // Drawn up, the island is only moved (main.qml): its size and its shape never change, at any size
+        // setting, in both layouts, idle or with something live in it.
+        function test_size_kept_while_resting() {
+            const rect = () => [island.surfaceRect.x, island.surfaceRect.y, island.surfaceRect.width, island.surfaceRect.height, island.surfaceRadius];
+            const measured = [];
+            for (const notch of [true, false]) {
+                islandTheme.notch = notch;
+                for (const scale of [0.8, 1, 2.4]) {
+                    islandTheme.scaleOverride = scale;
+                    for (const live of [false, true]) {
+                        build.active = live;
+                        tryVerify(() => island.mode === (live ? "live" : "idle"), 1000);
+                        wait(islandTheme.morphDuration + 150);
+                        const before = rect();
+                        island.resting = true;
+                        tryVerify(() => island.frozen, 1000);
+                        wait(islandTheme.morphDuration + 150);
+                        const during = rect();
+                        compare(during, before, "resting: " + (notch ? "notch" : "oval") + " at " + scale + (live ? ", live" : ", idle"));
+                        island.resting = false;
+                        wait(50);
+                        compare(rect(), before, "back: the same");
+                        measured.push(before[2] + "x" + before[3]);
+                        if (live) { build.active = false; tryVerify(() => island.mode === "idle", 4000); }
+                    }
+                }
+            }
+            islandTheme.scaleOverride = 0;
+            islandTheme.notch = true;
+            verify(measured.length === 12);
         }
 
         function test_where_the_small_island_ends() {

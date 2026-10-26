@@ -58,6 +58,12 @@ Item {
     property int sleepSeconds: 20
     property int dotBehaviour: 0            // 0 hidden, 1 asleep beside the dot
     property bool reduceMotion: false
+    // The island drawn up to the edge over a window that fills the screen (main.qml): the cat goes up
+    // with it, its feet no lower than the island's lower edge, and keeps still (nothing of it is drawn
+    // anew) until the island comes down again, the same way and as fast (tuckMove ms).
+    property bool tucked: false
+    property int tuckMove: 260
+    readonly property real tuck: tucked ? Math.max(0, restY + tall - island.restBottom) : 0
     // From the island's middle to the screen's edges (in the island's units).
     property real spaceLeft: 100000
     property real spaceRight: 100000
@@ -157,7 +163,9 @@ Item {
         objectName: "companionSpot"
         x: companion.restX(companion.side) + companion.cross
         // (a walk across is a small arc)
-        y: companion.restY - (companion.crossFrom !== 0 ? 5 * Math.sin(Math.PI * Math.abs(companion.cross / companion.crossFrom)) : 0)
+        y: companion.restY - (companion.crossFrom !== 0 ? 5 * Math.sin(Math.PI * Math.abs(companion.cross / companion.crossFrom)) : 0) - lift
+        property real lift: companion.tuck
+        Behavior on lift { NumberAnimation { duration: companion.tuckMove; easing.type: Easing.OutCubic } }
         width: companion.wide
         height: companion.tall
         visible: companion.presence > 0.01
@@ -175,7 +183,7 @@ Item {
             look: over.hovered ? Math.max(-1, Math.min(1, (companion.pointerX - spot.width / 2) / (spot.width / 2))) * (mirrored ? -1 : 1) : 0
             mirrored: companion.mirrored
             still: companion.calm
-            running: companion.shown && companion.presence > 0.01
+            running: companion.shown && companion.presence > 0.01 && !companion.tucked
             beats: companion.island.musicBeats
             fur: companion.fur
             furColor: companion.furColor
@@ -226,7 +234,7 @@ Item {
         objectName: "companionBubble"
         kind: companion.presence > 0.99 ? controller.bubble : ""
         still: companion.calm
-        running: companion.shown
+        running: companion.shown && !companion.tucked
         side: companion.mirrored ? 1 : -1
         size: companion.bubbleSize
         fill: companion.theme.surface

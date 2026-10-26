@@ -113,10 +113,11 @@ of its own, the glow of the cover comes from its lower edge.
   ARCHITECTURE, "Notch mode"). It is never shown on the lock screen.
 - **Full screen:** see *Full-screen mode* below (both layouts). The notch has
   two of its own there: peeking or shrunk, it also draws up for any window
-  of that screen that reaches under it (maximised, or moved up to the edge),
-  as a panel's *Dodge windows* does (can be switched off); and open over such
-  a window it can have a size (80–240 %) and a width (80–1200 px) of its
-  own, *As usual* otherwise.
+  of that screen and desktop that reaches under it (moved up to the edge; a
+  maximised one only with *Also for maximised windows*), as a panel's *Dodge
+  windows* does (can be switched off); and come down and open over such a
+  window it can have a size (80–240 %) and a width (80–1200 px) of its own,
+  *As usual* otherwise (drawn up, it keeps the size it has).
 - **Screen:** the top panel's screen (default), or the primary one; without
   a top panel, the island's own. A panel at the bottom or a side has nothing
   to do with it. One notch at a time: not on every screen. Putting it on a
@@ -182,13 +183,16 @@ while a window fills its screen (`fullscreenMode`).
 - **Normal:** it stays as it is. The notch stays over the window; the oval
   island's window lies under it, as it always did.
 - **Hide** (default, as before): it is hidden completely.
-- **Peek at the edge:** with a short springy move (300 ms) it draws up to the
-  top edge and only a few pixels of it show (*Part that shows*, 2–16 px,
-  default 4): a thin strip of the notch's lower edge, or the lower edge of
-  the oval capsule. The pointer resting on it for *Opens after* (0–1000 ms,
-  default 150) opens it as a hover would; the place that takes the pointer
-  is 6 px deeper than what shows and includes the topmost row of pixels, so
-  the pointer pushed against the edge finds it. It is only as wide as the
+- **Peek at the edge:** it is only moved up (260 ms), never made smaller:
+  its width, height, corners and what it shows stay as they are, until only
+  a few pixels of it show at the top edge (*Part that shows*, 2–16 px,
+  default 4): the notch's lower edge with its rounded corners, or the lower
+  edge of the oval capsule. It comes down the same way. The pointer resting
+  on that strip for *Opens after* (0–1000 ms, default 150) opens it as a
+  hover would; the place that takes the pointer is exactly what shows, from
+  the topmost row of pixels down, so the pointer pushed against the edge
+  finds it, and nothing else of the island's window takes a click (measured
+  in `tools/nested-session`: rows 0–3 open it at 4 px, row 4 does not). It is only as wide as the
   island, or *Trigger width* (px at 100 % size); everywhere else the pointer
   and clicks go to the full-screen window (a browser's or a player's own
   top bar can still be reached beside it; keep the width small where they
@@ -204,18 +208,25 @@ while a window fills its screen (`fullscreenMode`).
   part that shows, pulsing: green a call, red a screen recording, the
   privacy dot's colour for the microphone or camera, yellow a critical
   warning. Other events wait until it comes down.
-- While it is drawn up nothing of it moves (the clock, the glow, the
-  equalizer, the cat are stopped; measured in `tools/nested-session`:
+- While it is drawn up nothing of it moves: what it shows is a picture of
+  itself taken as it went up (the same pixels, nothing laid out anew), and
+  everything under it is stopped (the clock, the glow, the equalizer, a
+  ring, a pulse); the cat goes up with it, its feet no lower than the
+  island's lower edge, and keeps still (measured in `tools/nested-session`:
   plasmashell 0.10–0.15 % CPU there against 0.7–0.8 % with Normal over the
   same window, the same memory). With *Normal* nothing changes.
-- **What counts as filling the screen:** a window that says it is full screen
-  (a browser's F11 or a video made full screen, a player's full screen, a
-  game) while it is the active one, or while the active window is on another
-  screen; and the active window when it is as large as the screen without
-  saying so (a borderless game), unless it is only maximised. Only windows of
-  the island's own screen, desktop and activity count: on another screen a
-  full-screen window changes nothing. Told by Plasma's task manager model as
-  it changes; nothing is polled.
+- **What counts as filling the screen:** the window in front on the island's
+  screen (the active one, or the one activated last there while another
+  screen has the focus) when the window manager says it is full screen (any
+  application: a browser's F11 or a video, a terminal, a KDE application, an
+  X11 program, a player, a game), or when it is as large as the screen
+  without saying so (a borderless game). A maximised window only with *Also
+  for maximised windows* (off by default: above a top panel a maximised
+  window never meets the island). Only windows of the island's own screen,
+  of the virtual desktop and of the activity shown count; a full-screen
+  window behind another or on another desktop does not. Told by Plasma's
+  task manager model as it changes; nothing is polled. Case by case:
+  ARCHITECTURE, "What counts as full screen".
 - **Wayland only:** the island peeks from a layer-shell overlay window, the
   one kind of window over a full-screen one (the notch's window; the oval
   island moves into such a window only while it peeks or is shrunk there).

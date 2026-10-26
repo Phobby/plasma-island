@@ -34,6 +34,8 @@ Item {
     required property Theme theme
     property real radius: height / 2
     default property alias content: contentItem.data
+    // (what is shown in it, without the body: a picture of it is taken there, see Island.frozen)
+    readonly property Item contentArea: contentItem
     property real contentPadding: 0
 
     property bool notch: false

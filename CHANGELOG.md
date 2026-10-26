@@ -58,6 +58,13 @@
   full screen counts the same (the window manager's flag: a browser's F11, a
   video, a terminal, a KDE application, an X11 program); new: *Also for
   maximised windows* (off). Measured case by case: docs/ARCHITECTURE.md.
+- **Peek at the edge keeps the island's size:** it is only moved up, as wide
+  and as high as it is, with what it shows as it was (a still picture of it:
+  nothing is laid out anew, nothing in it runs), until its lower edge shows;
+  it comes down the same way. Only that strip takes the pointer, from the
+  topmost row of pixels down. The size and width set for the notch over
+  full screen apply once it has come down and opened. The cat goes up with
+  the island instead of vanishing, and keeps still.
 
 ## 0.2.2 (2026-10-08)
 

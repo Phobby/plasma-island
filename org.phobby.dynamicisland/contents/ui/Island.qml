@@ -51,9 +51,27 @@ Item {
     property bool ambientGlow: false
     signal ambientGlowToggled()
     // Drawn up to the edge over a window that fills the screen (main.qml, the full-screen mode): only
-    // a small part of it shows. What it shows and what moves in it rest then (the glow, the bars of
-    // the music, the clock), it takes no pointer (the strip at the edge does) and what comes waits.
+    // a small part of it shows. Its size, its shape and what it shows stay as they are (main.qml only
+    // moves it up); nothing in it moves (the glow, the bars of the music, a ring, a pulse), it takes
+    // no pointer (the strip at the edge does) and what comes waits.
     property bool resting: false
+    // Resting, what it shows is a picture of itself taken as it went up: the same pixels, nothing laid
+    // out anew, and everything under the picture stopped, as hidden. (No picture to be had: as it is.)
+    property bool frozen: false
+    property url frozenPicture: ""
+    onRestingChanged: {
+        if (!resting) { frozen = false; frozenPicture = ""; bubblePicture = ""; return; }
+        // (the split island's bubble too, when it is out)
+        const bubbleOut = bubble.visible;
+        const taken = surface.contentArea.grabToImage(result => {
+            if (!island.resting) return;
+            island.frozenPicture = result.url;
+            if (!bubbleOut || !bubbleView.grabToImage(more => { if (island.resting) { island.bubblePicture = more.url; island.frozen = true; } }))
+                island.frozen = true;
+        });
+        if (!taken) console.info("org.phobby.dynamicisland: no picture of the island to rest with; it rests as it is");
+    }
+    property url bubblePicture: ""
     // Where the small island ends at the bottom, at rest (a pill or a dot, not a banner or the open one).
     readonly property real restBottom: dot ? (notch ? dotSize : theme.windowTopPad + (theme.pillHeight + dotSize) / 2)
                                            : theme.windowTopPad + theme.pillHeight
@@ -471,7 +489,7 @@ Item {
             y: 0
             opacity: shown ? 1 : 0
             scale: shown ? 1 : 0.94
-            visible: opacity > 0.01 && !island.resting
+            visible: opacity > 0.01 && !island.frozen
             Behavior on opacity {
                 SequentialAnimation {
                     PauseAnimation { duration: island.revealDelay }
@@ -487,6 +505,16 @@ Item {
                     easing.type: Easing.OutCubic
                 }
             }
+        }
+
+        // resting: what it showed, as a picture (see frozen)
+        Image {
+            objectName: "frozenPicture"
+            anchors.fill: parent
+            visible: island.frozen
+            source: island.frozenPicture
+            cache: false
+            smooth: false
         }
 
         // dot: what it has to say, as a colour
@@ -690,7 +718,7 @@ Item {
         x: island.split ? island.bubbleRestX : island.bubbleTuckedX
         scale: island.split ? 1 : 0.55
         opacity: island.split ? 1 : 0
-        visible: opacity > 0.01 && !island.resting
+        visible: opacity > 0.01
         Behavior on x { SpringAnimation { spring: 3.2; damping: 0.28; epsilon: 0.2 } }
         Behavior on scale { SpringAnimation { spring: 3.2; damping: 0.3; epsilon: 0.005 } }
         Behavior on opacity { NumberAnimation { duration: 160 } }
@@ -707,6 +735,7 @@ Item {
         ActivityView {
             id: bubbleView
             anchors.fill: parent
+            visible: !island.frozen
             theme: island.theme
             property var lastActivity: null
             activity: lastActivity
@@ -715,6 +744,13 @@ Item {
                 target: island
                 function onSecondaryChanged() { if (island.secondary) bubbleView.lastActivity = island.secondary; }
             }
+        }
+        Image {
+            anchors.fill: parent
+            visible: island.frozen
+            source: island.bubblePicture
+            cache: false
+            smooth: false
         }
     }
 
@@ -808,7 +844,7 @@ Item {
         spacing: 4
         x: (bubble.visible ? bubble.x + bubble.width : surface.x + surface.width) + 8
         y: island.theme.windowTopPad + island.theme.pillHeight / 2 - height / 2
-        visible: island.mode !== "expanded" && island.mode !== "dot" && !island.resting
+        visible: island.mode !== "expanded" && island.mode !== "dot"
         Repeater {
             model: island.manager.indicators
             delegate: Rectangle {
