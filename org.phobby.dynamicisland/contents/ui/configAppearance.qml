@@ -62,6 +62,7 @@ KCM.SimpleKCM {
     property int cfg_peekDelay
     property int cfg_peekWidth
     property bool cfg_peekEvents
+    property bool cfg_peekMaximized
     // (for the notch's preview: the clock in it, the dot's size; and whether there is a cat to hide)
     property bool cfg_showClock
     property int cfg_dotSize

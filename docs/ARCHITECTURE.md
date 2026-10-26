@@ -188,6 +188,41 @@ and the window's input region (MaskBridge) is only the strip at the edge, so
 everything else of the screen is the full-screen window's; come down, it is
 the island's shape again (and, for the oval island, the bridge from the edge
 down to it).
+**What counts as full screen** (`Fullscreen.js`, `backend/FullscreenBackend.qml`).
+The window manager's own full-screen flag, as Plasma's task manager hands it
+over for the windows of the island's screen, of the desktop shown and of the
+activity shown, and only for the window in front there (the active one, or
+the one activated last when another screen has the focus). A window as large
+as the screen without the flag (a game in a borderless window) counts too; a
+maximised one only with *Also for maximised windows*. Nothing is polled: the
+model's changes are looked at once after each burst of them. Measured in
+`tools/nested-session` (KWin 6.6.6, 1920x1080, `--xwayland` for xterm; state
+read from a KWin script; the island's decision from
+`QT_LOGGING_RULES="island.fullscreen.debug=true"`):
+
+| Case | KWin: fullScreen / maximizeMode / layer / geometry | Counts |
+|---|---|---|
+| Browser (Zen, Flatpak), F11 | true / 0 / 5 / 0,0 1920x1080 | yes |
+| Browser, a video (element) in full screen | true / 0 / 5 / 0,0 1920x1080 | yes |
+| Konsole, F11 | true / 0 / 5 / 0,0 1920x1080 | yes |
+| Kate, F11 | true / 0 / 5, or false / 0 / 2 at 0,0 1920x1080 (seen both) | yes (by the flag, or as large as the screen) |
+| Dolphin, full screen | true / 0 / 5 / 0,0 1920x1080 | yes |
+| xterm (X11, Xwayland), `-fullscreen` | true / 0 / 5 / 0,0 1920x1080 | yes |
+| mpv `--fs` | true / 0 / 5 / 0,0 1920x1080 | yes |
+| mpv borderless at 1920x1080, no flag (like a game) | false / 0 / 2 / 0,0 1920x1080 | yes |
+| A framed window moved over the whole screen, no flag | false / 0 / 2 / -1,-1 1922x1082 | yes |
+| A maximised window | false / 3 / 2 / 0,0 1920x1080 | no; yes with the setting |
+| A full-screen window behind the active one | true / 0 / 2 | no |
+| A full-screen window on desktop 1, desktop 2 shown | true / 0 / 2 | no |
+| A maximised window on desktop 1, desktop 2 shown (setting on) | false / 3 / 2 | no |
+
+Earlier builds asked the task manager to filter by desktop and activity
+without saying which (it then filters by neither): a full-screen window on
+another desktop drew the island up on an empty one, a maximised window there
+made the notch dodge, and a full-screen window behind others counted while
+the focus was on another screen. A window that asks to be left off the
+taskbar is not in the task manager's model, and so not seen.
+
 The panels (where, how high, which screen) are read from plasmashell's own
 scripting interface (`evaluateScript`, read only), again whenever
 `plasmashellrc` changes. Where on a panel its widgets are cannot be read

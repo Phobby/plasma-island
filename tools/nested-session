@@ -4,12 +4,14 @@
 # empty desktop and nothing of yours in it. For measuring (tools/bench), for
 # recording (tools/demo) and for trying a first run with empty settings.
 #
-#   tools/nested-session start [--windowed] [--audio] [--host-system-bus] [--lockscreen] [--outputs N]
+#   tools/nested-session start [--windowed] [--audio] [--host-system-bus] [--lockscreen] [--outputs N] [--xwayland]
 #         headless by default (KWin draws with the GPU into a screen nobody
 #         sees: 1920x1080, scale 1); --windowed opens it as a window on your
 #         screen instead. --lockscreen lets it lock (`run qdbus6
 #         org.freedesktop.ScreenSaver /ScreenSaver Lock`); --outputs gives it
-#         N screens side by side. --audio gives it a PipeWire of its own with no sound
+#         N screens side by side; --xwayland starts an Xwayland of its own for X11
+#         programs (`run env DISPLAY="$(tools/nested-session display)" xterm`).
+#         --audio gives it a PipeWire of its own with no sound
 #         card: what plays there is heard by nobody. --host-system-bus lets it
 #         see the computer's own system services (see below).
 #   tools/nested-session install        the island of this checkout into its home (builds native/)
@@ -106,11 +108,12 @@ wait_for_shell() {
 case "${1:-}" in
 start)
     shift
-    windowed=0; audio=0; host_bus=0; lock="--no-lockscreen"; outputs=1
+    windowed=0; audio=0; host_bus=0; lock="--no-lockscreen"; outputs=1; xwayland=""
     while [ $# -gt 0 ]; do
         case "$1" in
             --windowed) windowed=1 ;; --audio) audio=1 ;; --host-system-bus) host_bus=1 ;; --lockscreen) lock="" ;;
             --outputs) outputs="$2"; shift ;;
+            --xwayland) xwayland="--xwayland" ;;
             *) echo "unknown option: $1" >&2; exit 2 ;;
         esac
         shift
@@ -118,7 +121,9 @@ start)
     [ -z "$(pids)" ] || { echo "already running (tools/nested-session stop)"; exit 1; }
     mkdir -p "$HOME_/.config" "$HOME_/.local/share/dbus-1/services" "$HOME_/.cache" "$HOME_/.local/state" "$LOGS"
     mkdir -p -m 700 "$RUN"
-    rm -f "$ROOT/host-system-bus"; [ $host_bus -eq 1 ] && : > "$ROOT/host-system-bus"
+    rm -f "$ROOT/host-system-bus" "$ROOT/xwayland-display"; [ $host_bus -eq 1 ] && : > "$ROOT/host-system-bus"
+    # (KWin's file capabilities hide which X socket it opens: the one that was not there before is its)
+    xbefore="$(ls /tmp/.X11-unix 2>/dev/null)"
     for name in org.kde.kdeconnect org.bluez.obex; do
         printf '[D-BUS Service]\nName=%s\nExec=/bin/false\n' "$name" > "$HOME_/.local/share/dbus-1/services/$name.service"
     done
@@ -159,12 +164,19 @@ CONF
     fi
     if [ $windowed -eq 1 ]; then
         inside env WAYLAND_DISPLAY="$HOST_RUNTIME/$HOST_WAYLAND" setsid kwin_wayland --width "$W" --height "$H" --socket "$SOCKET" \
-            --output-count "$outputs" $lock --no-global-shortcuts --no-kactivities >"$LOGS/kwin.log" 2>&1 &
+            --output-count "$outputs" $lock $xwayland --no-global-shortcuts --no-kactivities >"$LOGS/kwin.log" 2>&1 &
     else
         inside env -u WAYLAND_DISPLAY setsid kwin_wayland --virtual --width "$W" --height "$H" --socket "$SOCKET" \
-            --output-count "$outputs" $lock --no-global-shortcuts --no-kactivities >"$LOGS/kwin.log" 2>&1 &
+            --output-count "$outputs" $lock $xwayland --no-global-shortcuts --no-kactivities >"$LOGS/kwin.log" 2>&1 &
     fi
     for _ in $(seq 100); do [ -S "$RUN/$SOCKET" ] && break; sleep 0.1; done
+    if [ -n "$xwayland" ]; then
+        for _ in $(seq 30); do
+            x="$(ls /tmp/.X11-unix 2>/dev/null | grep -vxF -f <(printf '%s\n' "$xbefore") | grep -m1 -E '^X[0-9]+$')"
+            [ -n "$x" ] && { echo ":${x#X}" > "$ROOT/xwayland-display"; break; }
+            sleep 0.1
+        done
+    fi
     [ -S "$RUN/$SOCKET" ] && echo "started ($([ $windowed -eq 1 ] && echo windowed || echo headless), ${W}x${H}) in $ROOT" \
         || { echo "KWin did not start; see $LOGS/kwin.log" >&2; tail -5 "$LOGS/kwin.log" >&2; exit 1; }
     ;;
@@ -245,6 +257,10 @@ shot)  inside spectacle -b -n -f -o "$2" >/dev/null 2>&1; [ -s "$2" ] || { echo 
 run)   shift; inside "$@" ;;
 spawn) name="$2"; shift 2; inside setsid "$@" >"$LOGS/$name.log" 2>&1 & ;;
 pid)   pid_of "$2" ;;
+display)
+    # (the X display its KWin opened for Xwayland, noted at start: start --xwayland)
+    [ -s "$ROOT/xwayland-display" ] && [ -n "$(pids)" ] && cat "$ROOT/xwayland-display" \
+        || { echo "no Xwayland (start --xwayland)" >&2; exit 1; } ;;
 ps)    for p in $(pids); do printf '%s %s\n' "$p" "$(tr '\0' ' ' <"/proc/$p/cmdline" 2>/dev/null | cut -c1-110)"; done ;;
 stop)
     for sig in TERM KILL; do

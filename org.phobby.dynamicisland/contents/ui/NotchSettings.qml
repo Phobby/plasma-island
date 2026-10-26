@@ -201,7 +201,7 @@ Kirigami.FormLayout {
         objectName: "notchDodgeWindows"
         Kirigami.FormData.label: Lang.i18n("Full screen:")
         visible: section.page.cfg_fullscreenMode >= 2
-        text: Lang.i18n("Also for a window that reaches under it (maximised, or moved up to the edge)")
+        text: Lang.i18n("Also for a window that reaches under it (moved up to the edge)")
         Binding { target: dodgeWindows; property: "checked"; value: section.page.cfg_notchDodgeWindows }
         onToggled: section.page.cfg_notchDodgeWindows = checked
     }

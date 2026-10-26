@@ -1368,6 +1368,8 @@ var table = {
     "Open in full screen too, for an incoming call": "Gelen aramada tam ekranda da aç",
     "Everything else only colours the part that shows: green for a call, red for a screen recording, orange or green for the microphone or the camera, yellow for a critical warning.": "Diğer her şey yalnızca görünen parçayı renklendirir: arama için yeşil, ekran kaydı için kırmızı, mikrofon ya da kamera için turuncu ya da yeşil, kritik uyarı için sarı.",
     "Full screen:": "Tam ekran:",
-    "Also for a window that reaches under it (maximised, or moved up to the edge)": "Altına uzanan bir pencerede de (büyütülmüş ya da kenara kadar taşınmış)",
-    "While it is open over a window that fills the screen (Full-screen mode: Peek at the edge or Shrink, below); as usual: the size and width set for it everywhere.": "Ekranı kaplayan bir pencerenin üstünde açıkken (Tam ekran modu: Kenarda belir ya da Küçül, aşağıda); her zamanki gibi: her yer için ayarlanan boyut ve genişlik."
+    "While it is open over a window that fills the screen (Full-screen mode: Peek at the edge or Shrink, below); as usual: the size and width set for it everywhere.": "Ekranı kaplayan bir pencerenin üstünde açıkken (Tam ekran modu: Kenarda belir ya da Küçül, aşağıda); her zamanki gibi: her yer için ayarlanan boyut ve genişlik.",
+    "Also for maximised windows": "Büyütülmüş pencerelerde de",
+    "Off: only a window in full screen counts (any application: a video, a browser's F11, a terminal, a game), and only the one in front, on the island's screen and the desktop shown. While a top panel shows, a maximised window never meets the island anyway.": "Kapalıyken yalnızca tam ekrandaki pencere sayılır (her uygulama: video, tarayıcıda F11, terminal, oyun) ve yalnızca öndeki, adanın ekranında ve görünen masaüstünde olan. Üst panel görünürken büyütülmüş pencere zaten adaya değmez.",
+    "Also for a window that reaches under it (moved up to the edge)": "Altına uzanan bir pencerede de (kenara kadar taşınmış)"
 };

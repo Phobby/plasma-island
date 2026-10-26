@@ -926,6 +926,7 @@ PlasmoidItem {
         source: "backend/FullscreenBackend.qml"
         onLoaded: {
             item.screen = Qt.binding(() => root.islandScreen);
+            item.maximized = Qt.binding(() => root.cfg.peekMaximized);
             // (the notch, peeking or shrunk: a window that reaches under it too, as a panel's "Dodge windows" looks)
             item.area = Qt.binding(() => root.notchWanted && root.fullscreenMode >= 2 && root.cfg.notchDodgeWindows ? root.notchArea : Qt.rect(0, 0, 0, 0));
         }

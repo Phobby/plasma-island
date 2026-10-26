@@ -115,6 +115,19 @@ Kirigami.FormLayout {
         text: Lang.i18n("Only on Wayland: elsewhere a window that fills the screen lies over the island, which is then as with Normal.")
     }
 
+    QQC2.CheckBox {
+        id: maximizedCheck
+        objectName: "peekMaximized"
+        visible: section.mode !== 1
+        text: Lang.i18n("Also for maximised windows")
+        Binding { target: maximizedCheck; property: "checked"; value: section.page.cfg_peekMaximized }
+        onToggled: section.page.cfg_peekMaximized = checked
+    }
+    Hint {
+        visible: section.mode !== 1
+        text: Lang.i18n("Off: only a window in full screen counts (any application: a video, a browser's F11, a terminal, a game), and only the one in front, on the island's screen and the desktop shown. While a top panel shows, a maximised window never meets the island anyway.")
+    }
+
     // ---- the preview ------------------------------------------------------------------
     RowLayout {
         Kirigami.FormData.label: Lang.i18n("Preview:")

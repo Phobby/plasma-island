@@ -49,6 +49,16 @@
   system's region does (its time format, also when the island speaks
   another language), or always in 24 or 12 hours.
 
+### Fixed
+- **Full screen, what counts:** only the window in front on the island's
+  screen and on the desktop and activity shown. A full-screen window on
+  another virtual desktop no longer draws the island up (or hides it) on an
+  empty one, a maximised window there no longer makes the notch dodge, and
+  a full-screen window behind others no longer counts. Every application's
+  full screen counts the same (the window manager's flag: a browser's F11, a
+  video, a terminal, a KDE application, an X11 program); new: *Also for
+  maximised windows* (off). Measured case by case: docs/ARCHITECTURE.md.
+
 ## 0.2.2 (2026-10-08)
 
 ### Added
