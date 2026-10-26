@@ -13,6 +13,9 @@ labels: bug
 
 **Your system**
 
+The quickest way: Settings → Diagnostics → *Copy diagnostics*, pasted here (your
+user name, the computer's name and your home folder are left out of it).
+
 - Distribution and version:
 - Plasma (`plasmashell --version`), Qt, Wayland or X11:
 - Graphics card and driver:

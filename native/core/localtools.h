@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QStringList>
 #include <QVariantList>
+#include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
 /*
@@ -25,6 +26,9 @@ class LocalTools : public QObject
     QML_ELEMENT
     // Files or directories to watch; `pathChanged()` fires when one changes.
     Q_PROPERTY(QStringList watchedPaths READ watchedPaths WRITE setWatchedPaths NOTIFY watchedPathsChanged)
+    // Paths the user gave for commands ({ name: path }), looked at before anything else, for every
+    // command the shell finds or starts (the island's setting commandPaths; userpaths.h).
+    Q_PROPERTY(QVariantMap commandPaths READ commandPaths WRITE setCommandPaths NOTIFY commandPathsChanged)
 
 public:
     explicit LocalTools(QObject *parent = nullptr);
@@ -33,6 +37,14 @@ public:
     // installed to (~/.local/bin, npm's, nvm's, bun's…: userpaths.h); "" if there is none.
     // `home`: only those folders, under this folder instead of the user's home (for tests).
     Q_INVOKABLE QString findExecutable(const QString &name, const QString &home = QString()) const;
+    // Where a command is and how it was found ({ path, via, given, givenUsable }: userpaths.h); with
+    // `useGiven`, `given` is tried instead of the path set for it (a path being typed in the settings).
+    Q_INVOKABLE QVariantMap locate(const QString &name, const QString &given = QString(), bool useGiven = false) const;
+    // Every folder a command is looked for in, in order.
+    Q_INVOKABLE QStringList searchedDirectories() const;
+    // What a report about the island needs to say about this computer: { qt, os, kernel, session,
+    // host, user, home } (the last three only so that they can be left out of what is copied).
+    Q_INVOKABLE QVariantMap systemInfo() const;
     // The user's data directory ($XDG_DATA_HOME, else ~/.local/share).
     Q_INVOKABLE QString dataHome() const;
     // An environment variable of the shell's ("" when it is not set): hidden switches for looking
@@ -65,9 +77,12 @@ public:
 
     QStringList watchedPaths() const;
     void setWatchedPaths(const QStringList &paths);
+    QVariantMap commandPaths() const;
+    void setCommandPaths(const QVariantMap &paths);
 
 Q_SIGNALS:
     void watchedPathsChanged();
+    void commandPathsChanged();
     void pathChanged();
 
 private:

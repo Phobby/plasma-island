@@ -12,6 +12,7 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QStandardPaths>
+#include <QSysInfo>
 #include <QTimer>
 #include <QUuid>
 
@@ -34,6 +35,41 @@ QString LocalTools::findExecutable(const QString &name, const QString &home) con
 {
     // plasmashell's PATH is not a terminal's: see userpaths.h
     return UserPaths::findExecutable(name, home);
+}
+
+QVariantMap LocalTools::locate(const QString &name, const QString &given, bool useGiven) const
+{
+    return UserPaths::locate(name, given, useGiven);
+}
+
+QStringList LocalTools::searchedDirectories() const
+{
+    return UserPaths::searchedDirectories();
+}
+
+QVariantMap LocalTools::systemInfo() const
+{
+    return {{QStringLiteral("qt"), QString::fromLatin1(qVersion())},
+            {QStringLiteral("os"), QSysInfo::prettyProductName()},
+            {QStringLiteral("kernel"), QSysInfo::kernelVersion()},
+            {QStringLiteral("session"), qEnvironmentVariable("XDG_SESSION_TYPE")},
+            {QStringLiteral("host"), QSysInfo::machineHostName()},
+            {QStringLiteral("user"), qEnvironmentVariable("USER", QDir::home().dirName())},
+            {QStringLiteral("home"), QDir::homePath()}};
+}
+
+QVariantMap LocalTools::commandPaths() const
+{
+    return UserPaths::commandPaths();
+}
+
+void LocalTools::setCommandPaths(const QVariantMap &paths)
+{
+    if (paths == UserPaths::commandPaths()) {
+        return;
+    }
+    UserPaths::setCommandPaths(paths);
+    Q_EMIT commandPathsChanged();
 }
 
 QString LocalTools::dataHome() const
@@ -169,9 +205,12 @@ void LocalTools::start(const QString &program, const QStringList &arguments, con
         process->kill();
         answer(-1);
     });
-    process->setProgram(program);
+    // (a bare name is looked for where findExecutable looks, a path the user gave for it first)
+    const QString found = QDir::isAbsolutePath(program) ? program : UserPaths::findExecutable(program);
+    const QString resolved = found.isEmpty() ? program : found;
+    process->setProgram(resolved);
     process->setArguments(arguments);
-    process->setProcessEnvironment(UserPaths::environmentFor(program));
+    process->setProcessEnvironment(UserPaths::environmentFor(resolved));
     if (input) {
         const QByteArray bytes = *input;
         connect(process, &QProcess::started, process, [process, bytes] {

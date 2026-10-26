@@ -822,7 +822,6 @@ Item {
 
     // ---- BetterNotes is not installed: how to get it (never run from here) ----------
     // Without the island's native helper it cannot be looked for at all: that is said instead.
-    readonly property string helperCommand: "./install.sh"
     ColumnLayout {
         anchors.fill: parent
         visible: page.view === "install"
@@ -848,54 +847,14 @@ Item {
                 font.weight: Font.DemiBold
             }
         }
-        Text {
-            textFormat: Text.PlainText
+        // (what is missing, why, how to get it: the same card as everywhere)
+        RequirementCard {
+            showTitle: false
             Layout.fillWidth: true
             Layout.fillHeight: true
-            wrapMode: Text.Wrap
-            text: page.notes.canLookForApps
-                ? Lang.i18n("A notes app without an account. To install it, run this command in your own terminal, then come back and choose BetterNotes again.") + " " + page.localOnly
-                : Lang.i18n("BetterNotes may well be installed: the island looks for it and talks to it through its native helper, which is not installed or did not load. Run this in the island's folder (it needs cmake and the Qt 6 and KDE development packages), then restart the shell.")
-            color: page.theme.text
-            font.pointSize: page.theme.fontSmall * 0.9
-            elide: Text.ElideRight
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 6
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: 28
-                radius: 14
-                color: page.theme.faint
-                clip: true
-                TextEdit {
-                    id: installCommand
-                    anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
-                    verticalAlignment: TextEdit.AlignVCenter
-                    readOnly: true
-                    selectByMouse: true
-                    text: page.notes.canLookForApps ? page.notes.betterNotesInstall : page.helperCommand
-                    color: page.theme.text
-                    selectionColor: page.theme.control
-                    font.family: "monospace"
-                    font.pointSize: page.theme.fontSmall * 0.85
-                }
-            }
-            PillButton {
-                theme: page.theme
-                primary: true
-                text: copied.running ? Lang.i18n("Copied") : Lang.i18n("Copy")
-                onClicked: { installCommand.selectAll(); installCommand.copy(); installCommand.deselect(); copied.restart(); }
-                Timer { id: copied; interval: 2000 }
-            }
-            PillButton {
-                theme: page.theme
-                text: Lang.i18n("Check again")
-                onClicked: page.notes.detect(result => { page.found = result; page.detected = true; if (result.betternotes) page.showForm("betternotes"); })
-            }
+            theme: page.theme
+            requirement: page.notes.canLookForApps ? "betternotes" : "native"
+            onRecheck: page.notes.detect(result => { page.found = result; page.detected = true; if (result.betternotes) page.showForm("betternotes"); })
         }
     }
 

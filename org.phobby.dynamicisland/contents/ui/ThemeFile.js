@@ -17,15 +17,16 @@
     ThemeStore.qml do), so it runs under node as well: tests/themefile.test.js.
 */
 .pragma library
+.import "Project.js" as Project
 
 // Where the catalog is published: the address of the repository's catalog/
 // folder as raw.githubusercontent.com serves it,
 //   https://raw.githubusercontent.com/<owner>/<repository>/<branch>/catalog
-// here the catalog/ folder of the main branch. A copy of the repository that
+// here the catalog/ folder of the main branch (Project.js). A copy of the repository that
 // publishes a catalog of its own puts its address here; with the placeholder
 // OWNER/REPOSITORY/BRANCH in it the store says that it has no address yet and
 // asks nothing.
-const CATALOG_URL = "https://raw.githubusercontent.com/Phobby/plasma-island/main/catalog";
+const CATALOG_URL = Project.RAW_URL + "/catalog";
 
 const SCHEMA = 1;
 const SUFFIX = ".islandtheme.json";

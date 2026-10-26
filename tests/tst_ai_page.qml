@@ -155,6 +155,9 @@ Item {
             compare(p.view, "install");
             shown("Claude Code was not found", "curl -fsSL https://claude.ai/install.sh | bash");
             p.view = "cards";
+            // (back to the small page: clicked once it has settled)
+            tryCompare(expanded, "tall", false);
+            wait(450);
             click(named("card-ollama"));
             shown("Ollama is not running", "ollama serve");
             compare([backend.sources.length, root.asked.length], [0, 0]);

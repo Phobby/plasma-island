@@ -52,7 +52,7 @@ Item {
     // While editing the island stays open even with the pointer away; Done (or
     // another page) ends it and the island closes as usual.
     readonly property bool holdOpen: visible && (editing || detail.length > 0)
-    onVisibleChanged: if (!visible) { editing = false; detail = ""; } else if (schemes) schemes.refresh()
+    onVisibleChanged: if (!visible) { editing = false; detail = ""; nativeShown = false; } else if (schemes) schemes.refresh()
     onEditingChanged: if (!editing) { dragFrom = -1; dragTo = -1; dragDx = 0; }
     function remove(key: string): void { tilesEdited(chosen.filter(k => k !== key).join(",")); }
     // Editing: a button dragged sideways takes a new place; the others make room.
@@ -141,8 +141,9 @@ Item {
         else run("kcmshell6", ["kcm_networkmanagement"]);
     }
 
-    // Programs some buttons start; a missing one dims its button.
-    function has(program: string): bool { return !core || !core.local || core.local.findExecutable(program).length > 0; }
+    // Programs some buttons start; a missing one dims its button (and without the native module, which
+    // starts them, every such button: a click on it would do nothing).
+    function has(program: string): bool { return !!core && !!core.local && core.local.findExecutable(program).length > 0; }
     readonly property string cameraApp: ["kamoso", "snapshot", "cheese", "guvcview"].find(p => core && core.local && core.local.findExecutable(p).length > 0) ?? ""
     function run(program: string, args: var): void { if (core) core.startDetached(program, args); }
 
@@ -588,7 +589,45 @@ Item {
                     theme: page.theme
                     display: page.showBrightness ? page.display : null
                 }
+                // Without the native module the buttons that start a program are dimmed: said here, once.
+                RowLayout {
+                    objectName: "nativeMissingLine"
+                    Layout.fillWidth: true
+                    visible: page.core === null
+                    spacing: 6
+                    Text {
+                        textFormat: Text.PlainText
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        text: Lang.i18n("Dimmed buttons need the island's native module.")
+                        color: page.theme.subText
+                        font.pointSize: page.theme.fontSmall * 0.9
+                    }
+                    PillButton { theme: page.theme; text: Lang.i18n("How to install"); onClicked: page.nativeShown = true }
+                }
             }
+        }
+    }
+    property bool nativeShown: false
+    Rectangle {
+        anchors.fill: parent
+        visible: page.nativeShown
+        color: page.theme.surface
+        RequirementCard {
+            anchors.fill: parent
+            theme: page.theme
+            requirement: "native"
+            onRecheck: page.nativeShown = false
+        }
+        IconButton {
+            anchors.right: parent.right
+            anchors.top: parent.top
+            iconName: "window-close-symbolic"
+            iconSize: 12
+            implicitWidth: 22; implicitHeight: 22
+            color: page.theme.text
+            hoverColor: page.theme.faint
+            onClicked: page.nativeShown = false
         }
     }
 }

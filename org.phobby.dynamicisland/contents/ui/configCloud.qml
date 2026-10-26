@@ -184,16 +184,20 @@ KCM.SimpleKCM {
         }
 
         Kirigami.Heading { textFormat: Text.PlainText; level: 4; text: Lang.i18n("Clouds") }
+        // (missing: the native module, or rclone; the same notice as everywhere)
+        RequirementNotice {
+            visible: page.looked && (page.local === null || page.command.length === 0)
+            requirement: page.local === null ? "native" : "rclone"
+            onRecheck: page.look()
+        }
         QQC2.Label {
             textFormat: Text.PlainText
             objectName: "cloudsNote"
             Layout.fillWidth: true
-            visible: page.looked && page.remotes.length === 0
+            visible: page.looked && page.remotes.length === 0 && page.local !== null && page.command.length > 0
             wrapMode: Text.Wrap
             opacity: 0.7
-            text: page.local === null ? Lang.i18n("The island's native helper is not installed: the clouds cannot be asked for.")
-                : page.command.length === 0 ? Lang.i18n("rclone was not found on this computer. See below for how to install it.")
-                : Lang.i18n("rclone is installed but knows no cloud yet. See below for how to add one.")
+            text: Lang.i18n("rclone is installed but knows no cloud yet. See below for how to add one.")
         }
         Repeater {
             model: page.remotes

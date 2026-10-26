@@ -90,6 +90,12 @@
     <!-- Also for a maximised window, as for one that fills the screen (hide, peek, shrink); a maximised window
          reaching under the notch too. Off: above a top panel a maximised window never meets the island. -->
     <entry name="peekMaximized" type="Bool"><default>false</default></entry>
+    <!-- Paths given by hand for commands ({ "claude": "/opt/claude/bin/claude" }, "~/" = home), looked at first
+         (Settings › Diagnostics); empty = only where the island looks by itself -->
+    <entry name="commandPaths" type="String"><default></default></entry>
+    <!-- Written by the island: the settings page (and row) to open with the settings window ("configDiagnostics:claude");
+         read and emptied by the settings window -->
+    <entry name="settingsJump" type="String"><default></default></entry>
     <!-- The notch, peeking or shrunk: also where a window reaches under it (moved up to the edge; maximised only with peekMaximized), as a panel's
          "Dodge windows"; and its size (percent) and width (px at 100 %) once open over such a window; 0 = as usual -->
     <entry name="notchDodgeWindows" type="Bool"><default>true</default></entry>

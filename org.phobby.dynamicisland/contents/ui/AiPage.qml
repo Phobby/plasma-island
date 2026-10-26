@@ -330,40 +330,6 @@ Item {
         }
     }
     // A command to be copied and run by the user, never by the island.
-    component CommandLine: RowLayout {
-        id: line
-        property string command
-        spacing: 6
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: 28
-            radius: 14
-            color: page.theme.faint
-            clip: true
-            TextEdit {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                verticalAlignment: TextEdit.AlignVCenter
-                readOnly: true
-                selectByMouse: true
-                textFormat: TextEdit.PlainText
-                text: line.command
-                color: page.theme.text
-                selectionColor: page.theme.control
-                font.family: "monospace"
-                font.pointSize: page.theme.fontSmall * 0.85
-            }
-        }
-        PillButton {
-            theme: page.theme
-            primary: true
-            text: copiedTimer.running ? Lang.i18n("Copied") : Lang.i18n("Copy")
-            onClicked: { page.copy(line.command); copiedTimer.restart(); }
-            Timer { id: copiedTimer; interval: 2000 }
-        }
-    }
-
     // An answer: text as Markdown, code blocks in boxes of their own.
     component Answer: Column {
         id: answer
@@ -870,6 +836,8 @@ Item {
                                                                       : page.detected ? Lang.i18n("Not found · Install") : Lang.i18n("Already signed in, no key"))
                                 : card.here ? Lang.i18n("On this device, no account")
                                 : card.state.installed === true ? Lang.i18n("Not running · Start it")
+                                // (its command cannot be looked for without the native module)
+                                : !!page.info(card.modelData).command && !Requirements.nativeAvailable ? Lang.i18n("Needs the island's helper")
                                 : page.detected ? Lang.i18n("Not found · Install") : Lang.i18n("On this device")
                             color: card.here ? page.theme.readable(page.theme.live, page.theme.surface) : page.theme.subText
                             font.pointSize: page.theme.fontSmall * 0.85
@@ -1074,7 +1042,10 @@ Item {
         readonly property var kind: page.helpKind.length > 0 ? page.info(page.helpKind) : null
         readonly property var state: page.found[page.helpKind] || ({})
         // "helper" (the native module is missing) | "start" (installed, not running) | "install"
-        readonly property string need: page.helpKind === "claude-cli" ? (state.helper === false ? "helper" : "install") : state.installed === true ? "start" : "install"
+        // (a command looked for without the native module: that is what is missing, whichever it is)
+        readonly property string need: state.helper === false ? "helper" : page.helpKind === "claude-cli" ? "install"
+                                     : kind !== null && !!kind.command && !Requirements.nativeAvailable ? "helper"
+                                     : state.installed === true ? "start" : "install"
         Heading {
             Layout.fillWidth: true
             icon: parent.kind !== null ? page.whereIcon(parent.kind.where) : ""
@@ -1082,37 +1053,27 @@ Item {
                  : parent.need === "helper" ? Lang.i18n("The island's helper is missing") : Lang.i18n("%1 was not found", parent.kind.name)
             onBack: page.view = page.ai.available ? "sources" : "cards"
         }
-        Text {
-            textFormat: Text.PlainText
+        // (what is missing, why, how to get it: the same card as everywhere; "start": installed, not running)
+        RequirementCard {
+            showTitle: false
             objectName: "installText"
             Layout.fillWidth: true
             Layout.fillHeight: true
-            wrapMode: Text.Wrap
-            elide: Text.ElideRight
+            theme: page.theme
+            requirement: parent.need === "helper" ? "native" : page.helpKind === "claude-cli" ? "claude"
+                       : page.helpKind === "antigravity-cli" ? "agy" : page.helpKind === "ollama" ? "ollama" : ""
+            title: parent.kind === null || parent.need !== "start" ? "" : Lang.i18n("%1 is not running", parent.kind.name)
             text: parent.kind === null ? ""
-                : parent.need === "helper" ? Lang.i18n("Claude Code is asked through the island's native helper, which is not installed. Run the widget's install.sh again, then restart the shell.")
                 : parent.need === "start" ? Lang.i18n("It is installed but does not answer. Start it yourself, in your own terminal, then come back.")
-                : page.helpKind === "claude-cli" ? Lang.i18n("Claude Code is not on this computer. To install it, run this command in your own terminal and sign in there; then come back.")
+                : requirement.length > 0 ? ""
                 : Lang.i18n("It runs models on this computer: no account, and nothing leaves the device. To install it, run this command in your own terminal and get a model; then come back.")
-            color: page.theme.text
-            font.pointSize: page.theme.fontSmall * 0.9
-        }
-        CommandLine {
-            Layout.fillWidth: true
-            command: parent.kind === null ? "" : parent.need === "helper" ? "./install.sh" : parent.need === "start" ? String(parent.kind.start || "") : String(parent.kind.install || "")
-        }
-        RowLayout {
-            Layout.fillWidth: true
-            Item { Layout.fillWidth: true }
-            PillButton {
-                theme: page.theme
-                text: Lang.i18n("Check again")
-                onClicked: page.ai.detect(result => {
-                    page.found = result; page.detected = true;
-                    const state = result[page.helpKind] || {};
-                    if (page.here(page.helpKind, state)) page.pickCard(page.helpKind);
-                })
-            }
+            command: parent.kind === null || parent.need === "helper" ? "" : parent.need === "start" ? String(parent.kind.start || "")
+                   : requirement.length > 0 ? "" : String(parent.kind.install || "")
+            onRecheck: page.ai.detect(result => {
+                page.found = result; page.detected = true;
+                const state = result[page.helpKind] || {};
+                if (page.here(page.helpKind, state)) page.pickCard(page.helpKind);
+            })
         }
     }
 

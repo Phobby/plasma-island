@@ -8,6 +8,8 @@ import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
 
 KCM.SimpleKCM {
+    // (the island asked for another page of the settings: go there)
+    SettingsJump {}
     id: page
 
     property string cfg_language

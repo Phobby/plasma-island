@@ -86,10 +86,117 @@ QStringList UserPaths::binDirectories(const QString &givenHome)
     return existing;
 }
 
+namespace
+{
+QVariantMap s_given;
+
+QString expandHome(const QString &path)
+{
+    return path.startsWith(QLatin1String("~/")) ? QDir::homePath() + path.mid(1) : path;
+}
+
+bool usable(const QString &path)
+{
+    const QFileInfo info(path);
+    return info.isFile() && info.isExecutable();
+}
+
+// An AppImage of that name: "Name-1.2-x86_64.AppImage", "name.AppImage" (case is not looked at).
+QString appImage(const QString &name, const QString &home)
+{
+    const QString lower = name.toLower();
+    for (const QString &directory : UserPaths::appImageDirectories(home)) {
+        const QFileInfoList files = QDir(directory).entryInfoList(QDir::Files | QDir::Executable, QDir::Name | QDir::Reversed);
+        for (const QFileInfo &file : files) {
+            const QString base = file.fileName().toLower();
+            if (base.endsWith(QLatin1String(".appimage")) && base.startsWith(lower)
+                && (base.length() == lower.length() + 9 || !base.at(lower.length()).isLetterOrNumber())) {
+                return file.absoluteFilePath();
+            }
+        }
+    }
+    return QString();
+}
+}
+
+void UserPaths::setCommandPaths(const QVariantMap &paths)
+{
+    s_given = paths;
+}
+
+QVariantMap UserPaths::commandPaths()
+{
+    return s_given;
+}
+
+QStringList UserPaths::appImageDirectories(const QString &givenHome)
+{
+    const QString home = givenHome.isEmpty() ? QDir::homePath() : givenHome;
+    QStringList existing;
+    for (const char *below : {"/Applications", "/AppImages", "/.local/share/AppImages", "/.local/bin"}) {
+        const QString directory = home + QLatin1String(below);
+        if (QFileInfo(directory).isDir()) {
+            existing << directory;
+        }
+    }
+    return existing;
+}
+
+QStringList UserPaths::searchedDirectories()
+{
+    QStringList all = qEnvironmentVariable("PATH").split(QLatin1Char(':'), Qt::SkipEmptyParts);
+    for (const QString &directory : binDirectories() + appImageDirectories()) {
+        if (!all.contains(directory)) {
+            all << directory;
+        }
+    }
+    return all;
+}
+
+QVariantMap UserPaths::locate(const QString &name, const QString &given, bool useGiven)
+{
+    const QString wanted = useGiven ? given : s_given.value(name).toString();
+    QVariantMap out{{QStringLiteral("given"), wanted}, {QStringLiteral("givenUsable"), false}};
+    if (!wanted.isEmpty()) {
+        const QString path = expandHome(wanted);
+        if (usable(path)) {
+            out[QStringLiteral("givenUsable")] = true;
+            out[QStringLiteral("path")] = QFileInfo(path).absoluteFilePath();
+            out[QStringLiteral("via")] = QStringLiteral("setting");
+            return out;
+        }
+    }
+    QString found = name.isEmpty() || name.contains(QLatin1Char('/')) ? QString() : QStandardPaths::findExecutable(name);
+    QString via = QStringLiteral("path");
+    if (found.isEmpty() && !name.isEmpty() && !name.contains(QLatin1Char('/'))) {
+        for (const QString &directory : binDirectories()) {
+            if (usable(directory + QLatin1Char('/') + name)) {
+                found = directory + QLatin1Char('/') + name;
+                via = QStringLiteral("folder");
+                break;
+            }
+        }
+    }
+    if (found.isEmpty() && !name.isEmpty() && !name.contains(QLatin1Char('/'))) {
+        found = appImage(name, QString());
+        via = QStringLiteral("appimage");
+    }
+    out[QStringLiteral("path")] = found;
+    out[QStringLiteral("via")] = found.isEmpty() ? QString() : via;
+    return out;
+}
+
 QString UserPaths::findExecutable(const QString &name, const QString &home)
 {
     if (name.isEmpty()) {
         return QString();
+    }
+    // (a path the user gave for it comes first; not for tests, which give a home of their own)
+    if (home.isEmpty() && !name.contains(QLatin1Char('/'))) {
+        const QString given = expandHome(s_given.value(name).toString());
+        if (!given.isEmpty() && usable(given)) {
+            return QFileInfo(given).absoluteFilePath();
+        }
     }
     if (home.isEmpty() || name.contains(QLatin1Char('/'))) {
         const QString found = QStandardPaths::findExecutable(name);
@@ -104,7 +211,7 @@ QString UserPaths::findExecutable(const QString &name, const QString &home)
             return candidate.absoluteFilePath();
         }
     }
-    return QString();
+    return name.contains(QLatin1Char('/')) ? QString() : appImage(name, home);
 }
 
 QProcessEnvironment UserPaths::environmentFor(const QString &program)

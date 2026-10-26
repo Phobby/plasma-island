@@ -98,8 +98,18 @@ QtObject {
     // How BetterNotes is started here: { program, args (before its own), flatpak }; null = not installed.
     // On the PATH or in ~/.local/bin, else what its menu entry starts: an AppImage that was
     // only added to the menu, or the Flatpak (`flatpak run org.betternotes.BetterNotes`).
+    // (looked for once a minute at most, and again after "Check again": not at every command)
+    readonly property var launchKept: ({ at: 0, generation: -1, launch: null, key: "" })
     function betterNotesLaunch(): var {
         if (!local) return null;
+        // (what it was looked for under: the command's name and the menu folders)
+        const kept = launchKept, now = Date.now(), key = betterNotesName + "\n" + desktopDirs.join("\n");
+        if (kept.generation === Requirements.generation && kept.key === key && now - kept.at < 60000) return kept.launch;
+        const launch = lookForBetterNotes();
+        kept.at = now; kept.generation = Requirements.generation; kept.launch = launch; kept.key = key;
+        return launch;
+    }
+    function lookForBetterNotes(): var {
         const found = local.findExecutable(betterNotesName);
         if (found.length > 0) return { program: found, args: [], flatpak: false };
         for (const dir of desktopDirs) {
@@ -457,6 +467,8 @@ QtObject {
                 if (backend.betterNotesCommand().length === 0) done(Lang.i18n("BetterNotes was not found on this computer.")); else done("", "local", { server: "", user: "" });
             },
             list: function (source, token, done) {
+                // (without the native module it cannot be looked for: that is no reason to forget the source)
+                if (!backend.local) { done(Lang.i18n("BetterNotes is read through the island's native module, which is not installed."), []); return; }
                 if (backend.betterNotesLaunch() === null) { done("missing", []); return; }
                 if (!backend.betterNotesUnlocks) backend.checkBetterNotes();
                 backend.runBetterNotes(["list"], null, (code, out, err) => {

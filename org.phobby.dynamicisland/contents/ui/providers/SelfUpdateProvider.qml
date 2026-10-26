@@ -19,6 +19,7 @@
 */
 import QtQuick
 import ".."
+import "../Project.js" as Project
 
 Item {
     id: provider
@@ -35,7 +36,7 @@ Item {
     property string asked: ""
     signal askedAbout(string mark)
 
-    property string source: "https://raw.githubusercontent.com/Phobby/plasma-island/main/org.phobby.dynamicisland/metadata.json"
+    property string source: Project.RAW_URL + "/org.phobby.dynamicisland/metadata.json"
     property string script: decodeURIComponent(String(Qt.resolvedUrl("../../scripts/island-update.sh")).replace(/^file:\/\//, ""))
     property int firstCheckAfter: 60 * 1000
     property int checkEvery: 24 * 3600 * 1000

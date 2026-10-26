@@ -45,6 +45,18 @@
   buttons in the middle of the panel. Switched on and off without a restart.
   The cat stands beside it, against its side. Its colour can also be the
   island's own look, see-through and blurred, metal too, with its gloss.
+- **Requirements say themselves** where a feature is: what is missing, why,
+  how to get it (its page and a command to copy, per distribution; never run),
+  *Set the path by hand* and *Check again*, one card for all (AI, Notes, Cloud,
+  Controls, a System card's btop, the settings pages). Without the native
+  module every feature that needs it says that it needs the full installation
+  (install.sh, the build packages for Kubuntu, Fedora and Arch) and nothing
+  breaks. Commands are also found as AppImages and at a path given by hand
+  (`commandPaths`), and what was found is kept for a while.
+- **Settings → Diagnostics:** what each feature needs and whether it is there,
+  where it was looked for, path and version, the native modules, the session,
+  Plasma and Qt; *Copy diagnostics* for a bug report, without the user's name,
+  the computer's name or the home folder.
 - **Time format** (Settings → General): the island writes the time as the
   system's region does (its time format, also when the island speaks
   another language), or always in 24 or 12 hours.
@@ -58,6 +70,10 @@
   full screen counts the same (the window manager's flag: a browser's F11, a
   video, a terminal, a KDE application, an X11 program); new: *Also for
   maximised windows* (off). Measured case by case: docs/ARCHITECTURE.md.
+- **Without the native module** a connected BetterNotes was disconnected, the
+  Cloud tab said "rclone was not found", and Controls buttons that start a
+  program looked usable and did nothing; a command found in a user folder
+  could be shown as there and then not start (Controls, btop).
 - **Peek at the edge keeps the island's size:** it is only moved up, as wide
   and as high as it is, with what it shows as it was (a still picture of it:
   nothing is laid out anew, nothing in it runs), until its lower edge shows;

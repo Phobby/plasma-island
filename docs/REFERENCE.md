@@ -1386,6 +1386,50 @@ OSD keeps appearing too. Pick one of them:
   Plasma 6 has no setting to turn off the brightness OSD; nothing that could
   break the system was changed.
 
+## Requirements and Diagnostics
+
+What each feature needs beyond Plasma (`RequirementCatalog.qml`): the
+island's native module (built by `install.sh`), and commands or modules of
+their own: Claude Code (`claude`), Antigravity (`agy`), Ollama, BetterNotes,
+rclone, Syncthing, Dropbox, PipeWire's `pw-dump` and `pw-record`, btop, KDE
+Connect, Qt Multimedia, LayerShellQt and KDE Wallet.
+
+- **Where it is said.** Only where the feature is, when it is opened: the
+  AI, Notes and Cloud tabs show one card for whatever is missing (what is
+  missing, why the feature needs it in one sentence, its page, a command to
+  copy, one per distribution where that differs, *Set the path by hand*,
+  *Check again*, and that the rest works without it); the Controls tab says
+  why buttons are dimmed; a click on a System card says that btop is
+  missing; the settings pages (Activities, Appearance's theme files, Cloud)
+  show the same notice. A feature that is off says nothing. Nothing is
+  installed or run from these cards.
+- **Without the native module** nothing crashes or breaks: every feature that
+  needs it says so ("This feature needs the full installation…", with the
+  GitHub page, the build packages for Kubuntu, Fedora and Arch, and the
+  clone-and-install line); the rest works. The KDE Store's `.plasmoid` and a
+  full installation run the same code. A connected BetterNotes is no longer
+  disconnected when the module is missing.
+- **Where commands are looked for.** The desktop shell's `PATH`, the folders
+  installers put commands into (`~/.local/bin`, `~/bin`, `~/.cargo/bin`,
+  npm's, nvm's, fnm's, bun's, Volta's, `~/go/bin`, `/usr/local/bin`,
+  `/snap/bin`, Flatpak's export folders, Nix's, Homebrew's), and AppImages
+  named after the command in `~/Applications`, `~/AppImages`,
+  `~/.local/share/AppImages` and `~/.local/bin`. A path given by hand comes
+  first (`commandPaths`), for finding and for starting the command. What was
+  found or not is kept for five minutes (a status poll or a page opening
+  does not look again) and looked for anew with *Check again*.
+- **Settings → Diagnostics:** for each requirement whether it was found,
+  where, how (on the `PATH`, in a user folder, an AppImage, set by hand),
+  its version (asked with `--version` only on this page), the *Command path*
+  field, and how to get it; whether the native and the effects module
+  loaded; the island's version, the session (Wayland or X11), Plasma, Qt and
+  the system; the folders looked into. *Copy diagnostics* copies all of it
+  as text, with the user name, the computer's name and the home folder
+  written as `<user>`, `<host>` and `~` (`Diagnostics.js`). The island's
+  GitHub page and its issues are linked there.
+- The island's own addresses (repository, theme catalog, version check,
+  install line) come from one file, `Project.js`.
+
 ## Known limitations
 
 - **Cat:** drawn and tested off screen and with the GPU renderer in a

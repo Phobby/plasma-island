@@ -96,4 +96,9 @@ ConfigModel {
         icon: "preferences-desktop-locale"
         source: "configLanguage.qml"
     }
+    ConfigCategory {
+        name: Lang.i18n("Diagnostics")
+        icon: "tools-report-bug"
+        source: "configDiagnostics.qml"
+    }
 }

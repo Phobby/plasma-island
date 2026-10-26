@@ -5,6 +5,7 @@
     its indicator wants it. Needs the native module.
 */
 import QtQuick
+import ".."
 import "Rclone.js" as Rclone
 
 QtObject {
@@ -16,13 +17,15 @@ QtObject {
     readonly property bool needsKey: false
     readonly property var local: core !== null ? core.local : null
 
+    // (the usual command is looked for once in a while, not at every poll: Requirements keeps what was found)
+    function path(): string { return commandName === "dropbox" ? Requirements.find(local, "dropbox").path : local.findExecutable(commandName); }
     function detect(done: var): void {
-        const found = local !== null && local.findExecutable(commandName).length > 0;
+        const found = local !== null && path().length > 0;
         done({ found: found, installed: found, running: found });
     }
     function status(done: var): void {
         if (local === null) { done({ state: "unknown", progress: -1, problem: "" }); return; }
-        const command = local.findExecutable(commandName);
+        const command = path();
         if (command.length === 0) { done({ state: "unknown", progress: -1, problem: "" }); return; }
         local.run(command, ["status"], (code, out) => done(Object.assign(Rclone.dropboxState(code, out), { problem: "" })));
     }

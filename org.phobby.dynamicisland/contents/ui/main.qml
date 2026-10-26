@@ -100,6 +100,7 @@ PlasmoidItem {
         if (root.cfg.previewActive) root.cfg.previewActive = false;
         if (root.cfg.scaleLimitSeen !== root.scaleLimitSeen) root.cfg.scaleLimitSeen = root.scaleLimitSeen;
         Islands.join(root);
+        Requirements.openSettings = root.openSettingsAt;
     }
     Component.onDestruction: Islands.leave(root)
     // The custom style as stored; before one was ever stored, the look of the
@@ -278,6 +279,24 @@ PlasmoidItem {
         }
     }
     readonly property var core: coreLoader.status === Loader.Ready ? coreLoader.item : null
+    Binding { target: Requirements; property: "nativeAvailable"; value: root.core !== null && !!root.core.local }
+    // Paths given by hand for commands (Settings › Diagnostics), for everything the shell finds or starts.
+    Binding {
+        target: root.core !== null ? root.core.local : null
+        property: "commandPaths"
+        value: { try { const v = JSON.parse(root.cfg.commandPaths || "{}"); return v && typeof v === "object" ? v : {}; } catch (e) { return {}; } }
+        when: root.core !== null && !!root.core.local && root.core.local.commandPaths !== undefined
+    }
+    // A card's "Set the path by hand" or a message's click: the settings window, at that page and row.
+    function openSettingsAt(target: string): void {
+        island.expanded = false;
+        root.cfg.settingsJump = target;
+        Plasmoid.internalAction("configure").trigger();
+    }
+    Connections {
+        target: root.cfg
+        function onCommandPathsChanged() { Requirements.recheck(); }
+    }
     Binding { target: root.core; property: "updatesEnabled"; value: root.cfg.showUpdates; when: root.core !== null }
     // The settings outlive the widget: taken off the desktop and put back, it comes as it was.
     SettingsKeeper {
@@ -329,6 +348,7 @@ PlasmoidItem {
         id: soundLoader
         active: false
         source: "SoundPlayer.qml"
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: QtMultimedia (qml6-module-qtmultimedia) not found; the timer, alarm and calendar sounds are not played")
     }
     QtObject {
         id: soundProxy
@@ -882,7 +902,7 @@ PlasmoidItem {
         id: screenPlacer
         active: root.notchWanted
         source: "ScreenBridge.qml"
-        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: native module too old to put the notch on another screen; run install.sh again");
+        onStatusChanged: if (status === Loader.Error) console.info("org.phobby.dynamicisland: the native module is missing (or too old) to put the notch on another screen; install.sh builds it");
     }
     // Its window, made anew when the notch goes to another screen (a layer surface keeps the one it was made on).
     Loader {
@@ -1136,9 +1156,17 @@ PlasmoidItem {
                 island.expanded = false;
                 Plasmoid.internalAction("configure").trigger();
             }
-            // A System card was clicked: btop with only that metric's graph.
+            // A System card was clicked: btop with only that metric's graph (what is missing for it is said).
             onSystemMetricClicked: key => {
-                if (root.core) root.core.startDetached("sh", [String(Qt.resolvedUrl("../scripts/btop-view.sh")).replace(/^file:\/\//, ""), key]);
+                const missing = root.core === null || !root.core.local ? "native" : !Requirements.find(root.core.local, "btop").found ? "btop" : "";
+                if (missing.length > 0) {
+                    const item = RequirementCatalog.item(missing);
+                    activities.flash({ key: "requirement-" + missing, icon: "dialog-warning-symbolic", color: theme.warning, title: item.what,
+                                       subtitle: Lang.i18n("Settings › Diagnostics says how to install it"), width: theme.notificationWidth,
+                                       duration: 6000, activate: () => Requirements.openSettings("configDiagnostics:" + missing) });
+                    return;
+                }
+                root.core.startDetached("sh", [String(Qt.resolvedUrl("../scripts/btop-view.sh")).replace(/^file:\/\//, ""), key]);
             }
             extraPages: [
                 // The weather tab shows the weather itself: its icon and, where there is room, the temperature.
@@ -1243,7 +1271,7 @@ PlasmoidItem {
             item.enabled = true;
         }
         onStatusChanged: if (status === Loader.Error) {
-            console.info("org.phobby.dynamicisland: native module too old to shape where the island takes the pointer; run install.sh again");
+            console.info("org.phobby.dynamicisland: the native effects module is missing (or too old): the whole window takes the pointer; install.sh builds it");
         }
     }
     // (to look at it: DYNAMICISLAND_DEBUG_REGION=1 when the shell starts draws its outline)

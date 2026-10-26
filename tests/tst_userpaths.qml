@@ -46,7 +46,45 @@ Item {
                + "printf 'registry=https://example.invalid/\\nprefix=~/.tools\\n' > '" + root.home + "/.npmrc'\n"
                + "chmod +x '" + node + "'/*/bin/* '" + root.home + "/.tools/bin/agy'\n"
                // not a command: a file that cannot be run, and a folder of that name
-               + "printf 'x' > '" + root.home + "/.bun/bin/claude'; mkdir '" + root.home + "/.local/bin/claude'");
+               + "printf 'x' > '" + root.home + "/.bun/bin/claude'; mkdir '" + root.home + "/.local/bin/claude'\n"
+               // AppImages kept where they usually are: the newest name first, case not looked at, not a longer name
+               + "mkdir -p '" + root.home + "/Applications' '" + root.home + "/Elsewhere'\n"
+               + "printf '#!/bin/sh\\necho image\\n' > '" + root.home + "/Applications/Islandtestimage-1.2-x86_64.AppImage'\n"
+               + "printf '#!/bin/sh\\n' > '" + root.home + "/Applications/islandtestimagery.AppImage'\n"
+               + "printf '#!/bin/sh\\necho given\\n' > '" + root.home + "/Elsewhere/given-tool'\n"
+               + "chmod +x '" + root.home + "'/Applications/* '" + root.home + "/Elsewhere/given-tool'");
+        }
+        function cleanup() { if (root.local !== null && root.local.commandPaths !== undefined) root.local.commandPaths = ({}); }
+
+        function test_an_appimage() {
+            compare(root.local.findExecutable("islandtestimage", root.home), root.home + "/Applications/Islandtestimage-1.2-x86_64.AppImage");
+            compare(root.local.findExecutable("islandtest", root.home), "", "not a part of a longer name");
+        }
+        // A path given by hand (Settings › Diagnostics) comes first, for finding and for running.
+        function test_a_path_given_by_hand() {
+            if (root.local.commandPaths === undefined) skip("a native module from before commandPaths");
+            const given = root.home + "/Elsewhere/given-tool";
+            compare(root.local.findExecutable("islandtestgiven"), "");
+            root.local.commandPaths = { islandtestgiven: given };
+            compare(root.local.findExecutable("islandtestgiven"), given);
+            const where = root.local.locate("islandtestgiven", "", false);
+            compare([where.path, where.via, where.givenUsable], [given, "setting", true]);
+            let result = null;
+            root.local.run("islandtestgiven", [], (code, out) => result = [code, out.trim()]);
+            tryVerify(() => result !== null, 10000);
+            compare(result, [0, "given"], "run by its name: the path given is what runs");
+            // a path that is not a program: looked for as usual, and said so
+            const wrong = root.local.locate("sh", root.home + "/Elsewhere/nothing", true);
+            compare([wrong.givenUsable, wrong.via, wrong.path.length > 0], [false, "path", true]);
+            root.local.commandPaths = ({});
+            compare(root.local.findExecutable("islandtestgiven"), "");
+        }
+        function test_where_it_looks() {
+            if (typeof root.local.searchedDirectories !== "function") skip("a native module from before searchedDirectories");
+            const dirs = root.local.searchedDirectories();
+            verify(dirs.indexOf("/usr/bin") >= 0, "the PATH");
+            const info = root.local.systemInfo();
+            verify(String(info.qt).length > 0 && String(info.home).length > 0);
         }
 
         function test_the_newest_node_of_nvm() {

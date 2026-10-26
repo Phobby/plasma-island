@@ -8,7 +8,12 @@ const crypto = require("crypto");
 
 const ROOT = path.join(__dirname, "..");
 function load(file) {
-    const source = fs.readFileSync(file, "utf8").replace(/^\.pragma library\s*$/m, "");
+    // (".import" of Project.js: its constants handed in as an object)
+    const project = path.join(path.dirname(file), "Project.js");
+    const Project = fs.existsSync(project) ? new Function(fs.readFileSync(project, "utf8").replace(/^\.pragma library\s*$/m, "")
+        + "\nreturn { REPO_URL, RAW_URL, INSTALL_URL, ISSUES_URL };")() : {};
+    const source = "const Project = " + JSON.stringify(Project) + ";\n"
+        + fs.readFileSync(file, "utf8").replace(/^\.pragma library\s*$/m, "").replace(/^\.import .*$/mg, "");
     const names = Array.from(source.matchAll(/^(?:function|const) (\w+)[ (=]/gm), m => m[1]);
     return new Function(source + "\nreturn { " + names.join(", ") + " };")();
 }

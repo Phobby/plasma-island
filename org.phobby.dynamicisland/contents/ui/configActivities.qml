@@ -10,6 +10,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
 
 KCM.SimpleKCM {
+    Loader { id: nativeCheck; source: "LocalBridge.qml" }
     id: page
 
     property string cfg_language
@@ -155,13 +156,12 @@ KCM.SimpleKCM {
             text: Lang.i18n("Which pages are shown, and in what order, is set in Layout.")
         }
 
-        QQC2.Label {
-            textFormat: Text.PlainText
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
-            wrapMode: Text.Wrap
-            font: Kirigami.Theme.smallFont
-            opacity: 0.7
-            text: Lang.i18n("Screen recording, privacy indicators, unlock, calls, updates and the D-Bus API need the native module (install.sh builds it).")
+        // Screen recording, privacy indicators, unlock, calls, updates and the D-Bus API need the native module:
+        // said only where it is missing.
+        RequirementNotice {
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 26
+            visible: nativeCheck.status === Loader.Error
+            requirement: "native"
         }
     }
 }

@@ -534,14 +534,11 @@ KCM.SimpleKCM {
         RowLayout {
             Layout.fillWidth: true
             Layout.maximumWidth: Kirigami.Units.gridUnit * 30
-            QQC2.Label {
-                textFormat: Text.PlainText
-                Layout.fillWidth: true
+            // (without the native module theme files cannot be read or written: said once, briefly; how to get it in Diagnostics)
+            RequirementNotice {
                 visible: !library.available
-                wrapMode: Text.Wrap
-                font: Kirigami.Theme.smallFont
-                opacity: 0.7
-                text: Lang.i18n("Theme files need the native helper (install.sh builds it).")
+                requirement: "native"
+                brief: true
             }
             Item { Layout.fillWidth: true; visible: library.available }
             QQC2.Button {

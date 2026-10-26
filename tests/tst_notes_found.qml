@@ -43,24 +43,26 @@ Item {
         name: "NotesFound"
         readonly property string entry: "/org.betternotes.BetterNotes.desktop"
 
-        function init() { root.onPath = {}; root.files = {}; root.ran = []; backend.betterNotesSandboxed = false; }
+        // (where BetterNotes is, is kept for a minute: each step here is a computer of its own, as after "Check again")
+        function init() { root.onPath = {}; root.files = {}; root.ran = []; backend.betterNotesSandboxed = false; Requirements.recheck(); }
+        function launch() { Requirements.recheck(); return backend.betterNotesLaunch(); }
 
         function test_not_installed() {
-            compare(backend.betterNotesLaunch(), null);
+            compare(launch(), null);
             compare(backend.betterNotesCommand(), "");
             verify(backend.canLookForApps);
         }
         function test_its_command() {
             root.onPath = { betternotes: "/usr/bin/betternotes" };
-            compare(backend.betterNotesLaunch(), { program: "/usr/bin/betternotes", args: [], flatpak: false });
+            compare(launch(), { program: "/usr/bin/betternotes", args: [], flatpak: false });
         }
         function test_an_appimage_that_only_has_a_menu_entry() {
             const image = "/home/someone/Apps/Better Notes.AppImage";
             root.files = { [image]: "", ["~/.local/share/applications" + entry]: "[Desktop Entry]\nName=BetterNotes\nExec=\"" + image + "\" --open %F\n" };
-            compare(backend.betterNotesLaunch(), { program: image, args: [], flatpak: false });
+            compare(launch(), { program: image, args: [], flatpak: false });
             // an entry left behind by an AppImage that was deleted is not BetterNotes
             root.files = { ["~/.local/share/applications" + entry]: "Exec=\"" + image + "\" --open %F\n" };
-            compare(backend.betterNotesLaunch(), null);
+            compare(launch(), null);
         }
         function test_the_flatpak() {
             root.onPath = { flatpak: "/usr/bin/flatpak" };
@@ -68,7 +70,7 @@ Item {
                 for (const exec of ["/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=betternotes org.betternotes.BetterNotes --open @@ %F @@",
                                     "flatpak run org.betternotes.BetterNotes"]) {
                     root.files = { "/usr/bin/flatpak": "", [dir + entry]: "[Desktop Entry]\nExec=" + exec + "\n" };
-                    compare(backend.betterNotesLaunch(), { program: "/usr/bin/flatpak", args: ["run", "org.betternotes.BetterNotes"], flatpak: true }, dir + ": " + exec);
+                    compare(launch(), { program: "/usr/bin/flatpak", args: ["run", "org.betternotes.BetterNotes"], flatpak: true }, dir + ": " + exec);
                 }
             }
             // started with `flatpak run`, and its notes are the sandbox's

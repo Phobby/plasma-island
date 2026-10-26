@@ -118,8 +118,9 @@ Item {
         function test_1_without_rclone_the_command_to_get_it() {
             const p = open();
             tryCompare(p, "view", "missing");
-            compare([p.tall, backend.clouds.length], [false, 0]);
-            shown("rclone was not found", "sudo -v ; curl https://rclone.org/install.sh | sudo bash");
+            compare([p.tall, backend.clouds.length], [true, 0], "room for how to get it");
+            // (the card every missing requirement has: why, and a command per distribution, never run)
+            shown("rclone was not found", "through rclone", "sudo apt install rclone");
             // it is installed meanwhile, but knows no cloud yet
             backend.commandName = rclone;
             backend.extra = ["--config", root.run + "/none.conf"];

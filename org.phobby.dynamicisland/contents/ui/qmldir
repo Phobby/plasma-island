@@ -2,3 +2,6 @@ singleton Lang 1.0 Lang.qml
 singleton Styles 1.0 Styles.qml
 singleton ScrollGesture 1.0 ScrollGesture.qml
 singleton Islands 1.0 Islands.qml
+singleton RequirementCatalog 1.0 RequirementCatalog.qml
+singleton Requirements 1.0 Requirements.qml
+singleton SettingsNav 1.0 SettingsNav.qml

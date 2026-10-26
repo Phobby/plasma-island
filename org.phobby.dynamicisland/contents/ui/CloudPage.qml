@@ -40,7 +40,8 @@ Item {
     readonly property bool holdOpen: visible && (dropping || view === "upload" || picking || dragging)
     // A question waits for an answer ("Upload here?").
     readonly property bool asking: visible && view === "upload"
-    readonly property bool tall: visible && view !== "missing" && view !== "empty"
+    // (what is missing is said with how to get it: room for that too)
+    readonly property bool tall: visible && view !== "empty"
 
     Binding { target: page.cloud; property: "viewing"; value: page.visible; restoreMode: Binding.RestoreNone }
     Component.onDestruction: cloud.viewing = false
@@ -275,15 +276,23 @@ Item {
         }
     }
 
-    // ---- rclone is not there, or has no cloud yet ------------------------------------------------
+    // ---- rclone is not there (or the native module, which looks for it): the same card as everywhere
+    RequirementCard {
+        anchors.fill: parent
+        visible: page.view === "missing"
+        theme: page.theme
+        requirement: page.cloud !== null && page.cloud.local === null ? "native" : "rclone"
+        onRecheck: page.cloud.detect(page.settle)
+    }
+    // ---- rclone has no cloud yet ---------------------------------------------------------------
     ColumnLayout {
         anchors.fill: parent
-        visible: page.view === "missing" || page.view === "empty"
+        visible: page.view === "empty"
         spacing: 5
         Text {
             textFormat: Text.PlainText
             Layout.fillWidth: true
-            text: page.view === "missing" ? Lang.i18n("rclone was not found") : Lang.i18n("No cloud is set up yet")
+            text: Lang.i18n("No cloud is set up yet")
             color: page.theme.text
             font.pointSize: page.theme.fontSmall
             font.weight: Font.DemiBold
@@ -295,15 +304,13 @@ Item {
             Layout.fillHeight: true
             wrapMode: Text.Wrap
             elide: Text.ElideRight
-            text: page.view === "missing"
-                ? Lang.i18n("The clouds are reached through rclone, a free program for Google Drive, OneDrive, Dropbox, Nextcloud and many more. To install it, run this command in your own terminal, then come back.")
-                : Lang.i18n("rclone is here but knows no cloud. Add one in your own terminal: the command asks which cloud it is and lets you sign in in the browser. Then come back.")
+            text: Lang.i18n("rclone is here but knows no cloud. Add one in your own terminal: the command asks which cloud it is and lets you sign in in the browser. Then come back.")
             color: page.theme.text
             font.pointSize: page.theme.fontSmall * 0.9
         }
         CommandLine {
             Layout.fillWidth: true
-            command: page.view === "missing" ? "sudo -v ; curl https://rclone.org/install.sh | sudo bash" : "rclone config"
+            command: "rclone config"
         }
         RowLayout {
             Layout.fillWidth: true

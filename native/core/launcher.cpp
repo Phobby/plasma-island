@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "launcher.h"
+#include "userpaths.h"
 
 #include <QDBusConnection>
 #include <QDBusMessage>
@@ -17,7 +18,9 @@ Launcher::Launcher(QObject *parent)
 
 bool Launcher::startDetached(const QString &program, const QStringList &arguments)
 {
-    return QProcess::startDetached(program, arguments);
+    // (where the island looks for commands, not only the shell's PATH: what was found can be started)
+    const QString found = QDir::isAbsolutePath(program) ? program : UserPaths::findExecutable(program);
+    return QProcess::startDetached(found.isEmpty() ? program : found, arguments, QString(), nullptr);
 }
 
 QStringList Launcher::existingPaths(const QStringList &paths) const
