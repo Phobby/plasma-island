@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+# settings-shots — pictures of every settings page, off screen, as a new island has them.
+#
+#   tools/settings-shots --out DIR [--lang en|tr] [--width 820] [--pages configGeneral,configCat]
+#                        [--set key=value …] [--open]
+#
+# Each page of contents/config/config.qml is loaded as the settings window loads it: every
+# setting of contents/config/main.xml handed in as cfg_<key> with its default (--set
+# changes one), the window as tall as the page, and grabbed whole into DIR/<page>.png.
+# --open opens every folding part ("Details") first, so that what is in them shows too.
+# Prints the page's height and how many settings (controls that take a value) it shows.
+# Run with a home of its own (empty, made for the run): nothing of the user's own files
+# (what the suggestions learned, themes, notes) can be in the pictures; --real-home uses yours.
+# Off screen (QT_QPA_PLATFORM=offscreen): Qt's software renderer draws it, so blur and
+# some shadows are missing; what is laid out where is as on the screen. Needs
+# qmltestrunner and KDE's settings modules (kcmutils, kquickcontrols).
+import argparse, json, os, re, subprocess, sys, tempfile
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent.parent
+UI = HERE / "org.phobby.dynamicisland" / "contents" / "ui"
+XML = HERE / "org.phobby.dynamicisland" / "contents" / "config" / "main.xml"
+CONFIG = HERE / "org.phobby.dynamicisland" / "contents" / "config" / "config.qml"
+
+
+def defaults():
+    out = {}
+    text = XML.read_text(encoding="utf-8")
+    for m in re.finditer(r'<entry name="(\w+)" type="(\w+)"[^>]*?(?:/>|>(.*?)</entry>)', text, re.S):
+        name, kind, body = m.group(1), m.group(2), m.group(3) or ""
+        d = re.search(r"<default>(.*?)</default>", body, re.S)
+        raw = d.group(1) if d else ""
+        raw = raw.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"').replace("&amp;", "&")
+        if kind == "Bool": out[name] = raw.strip() == "true"
+        elif kind in ("Int", "UInt"): out[name] = int(raw or 0)
+        elif kind == "Double": out[name] = float(raw or 0)
+        elif kind == "StringList": out[name] = [s for s in raw.split(",") if s] if raw else []
+        else: out[name] = raw
+    return out
+
+
+def pages():
+    return re.findall(r'source:\s*"(\w+)\.qml"', CONFIG.read_text(encoding="utf-8"))
+
+
+TEST = r"""
+import QtQuick
+import QtTest
+import "file:%(ui)s"
+
+Item {
+    id: root
+    width: %(width)d
+    height: 400
+    Loader { id: loader; width: root.width; height: root.height }
+    TestCase {
+        name: "Shots"
+        when: windowShown
+        function controls(item) {
+            let n = 0;
+            (function walk(i) {
+                if (!i.visible) return;
+                const kind = String(i);
+                if (/^(CheckBox|Switch|ComboBox|SpinBox|Slider|TextField|RadioButton|ColorButton)(_QMLTYPE|\(|_)/.test(kind) || i.objectName === "settingControl") ++n;
+                for (const c of i.children) walk(c);
+            })(item);
+            return n;
+        }
+        function openAll(item) {
+            (function walk(i) {
+                if (i.objectName === "foldingSection" && i.expanded === false) i.expanded = true;
+                for (const c of i.children) walk(c);
+            })(item);
+        }
+        function test_shots() {
+            Lang.setting = "%(lang)s";
+            const values = %(values)s;
+            for (const name of %(pages)s) {
+                const props = {};
+                for (const key in values) props["cfg_" + key] = values[key];
+                loader.setSource("file:%(ui)s/" + name + ".qml", props);
+                tryVerify(() => loader.status !== Loader.Loading, 5000);
+                if (loader.status !== Loader.Ready) { console.log("SHOT " + name + " could not be loaded"); continue; }
+                const page = loader.item;
+                wait(300);
+                if (%(open)s) { openAll(page); wait(400); }
+                // as tall as what it has to show
+                const f = page.flickable;
+                let h = 400;
+                for (let round = 0; round < 4; ++round) {
+                    h = Math.max(400, Math.ceil((f ? f.contentHeight + (f.topMargin || 0) + (f.bottomMargin || 0) : page.implicitHeight) + (page.header ? page.header.height : 0) + 40));
+                    root.height = h; loader.height = h;
+                    wait(150);
+                }
+                grabImage(loader).save("%(out)s/" + name + ".png");
+                console.log("SHOT " + name + " height " + h + " controls " + controls(page));
+                loader.source = "";
+                wait(50);
+            }
+        }
+    }
+}
+"""
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--lang", default="en")
+    ap.add_argument("--width", type=int, default=820)
+    ap.add_argument("--pages", default="")
+    ap.add_argument("--set", action="append", default=[])
+    ap.add_argument("--open", action="store_true")
+    ap.add_argument("--real-home", action="store_true")
+    a = ap.parse_args()
+    out = Path(a.out).resolve()
+    out.mkdir(parents=True, exist_ok=True)
+    values = defaults()
+    # (each page hands its own language setting to the island's translations)
+    values["language"] = a.lang
+    for item in a.set:
+        key, _, value = item.partition("=")
+        old = values.get(key)
+        values[key] = (value == "true") if isinstance(old, bool) else int(value) if isinstance(old, int) else value
+    names = a.pages.split(",") if a.pages else pages()
+    runner = next((p for p in ("/usr/lib/qt6/bin/qmltestrunner", "/usr/lib64/qt6/bin/qmltestrunner") if os.path.exists(p)), "qmltestrunner")
+    env = dict(os.environ, QT_QPA_PLATFORM="offscreen", QT_QPA_PLATFORMTHEME="kde", XDG_CURRENT_DESKTOP="KDE")
+    home = None
+    if not a.real_home:
+        home = tempfile.TemporaryDirectory(prefix="settings-shots-")
+        for key in ("XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"):
+            env.pop(key, None)
+        # (and the system's PATH only: the user's own command folders hold their name)
+        env.update(HOME=home.name, USER="demo", LOGNAME="demo", PATH="/usr/local/bin:/usr/bin:/bin")
+    native = HERE / "native" / "build" / "qml"
+    if native.is_dir():
+        env["QML_IMPORT_PATH"] = str(native) + (":" + env["QML_IMPORT_PATH"] if env.get("QML_IMPORT_PATH") else "")
+    failed = 0
+    # (one engine per page: a page that brings the engine down takes only itself with it)
+    for name in names:
+        with tempfile.TemporaryDirectory() as tmp:
+            test = Path(tmp) / "tst_shots.qml"
+            test.write_text(TEST % {"ui": UI, "width": a.width, "lang": a.lang, "values": json.dumps(values),
+                                    "pages": json.dumps([name]), "out": out, "open": "true" if a.open else "false"}, encoding="utf-8")
+            r = subprocess.run([runner, "-input", str(test)], env=env, capture_output=True, text=True, timeout=300)
+            shots = [l.split("SHOT ", 1)[1] for l in (r.stdout + r.stderr).splitlines() if "SHOT " in l]
+            for s_ in shots: print(s_)
+            if not shots or "FAIL" in r.stdout:
+                failed += 1
+                print(name + ": no picture (qmltestrunner ended with " + str(r.returncode) + ")", file=sys.stderr)
+                print("\n".join([l for l in r.stdout.splitlines() if "FAIL" in l or "Loc:" in l] + (r.stdout + r.stderr).splitlines()[-4:]), file=sys.stderr)
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
