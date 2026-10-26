@@ -13,13 +13,19 @@
 - **The notch's width** is set, narrower or wider, up to 1200 px (it was
   only a limit, and past what the notch shows the slider changed nothing);
   the open island follows it where it is wider (can be switched off).
-- **Shrink over full screen** (the notch's *Over full screen*, the default):
-  a small nub at the edge while a window fills the screen; the pointer on it
-  opens the island, and closed it is the nub again.
-- **Dodge over full screen** (the notch's *Over full screen*): out of sight while a window fills the screen, down when the
-  pointer is pushed against the top edge, back up when left; a size and width
-  of its own for that can be set. It also dodges a window that reaches under
-  it (maximised, moved up to the edge), as a panel's Dodge windows. Hide and Show are as they were.
+- **Full-screen mode** (Settings → Appearance, *Full screen*; both layouts),
+  in place of the notch's *Over full screen*: *Normal* (as it is), *Hide*
+  (as before, still the default), *Peek at the edge* (drawn up to the top
+  edge with a few pixels showing; the pointer resting at the edge, the
+  topmost row too, opens it after a short delay, and it goes back up once
+  left and closed; clicks beside the strip go to the full-screen window)
+  and *Shrink* (a small nub at the edge). Peeking has the part that shows,
+  the delay, the trigger width and whether an incoming call opens it; a
+  recording, the microphone or camera, a critical warning and a call colour
+  the strip. A live preview with *Try it*. The oval island peeks from an
+  overlay window of its own on Wayland. Only a window on the island's own
+  screen counts; a maximised window does not. The notch's earlier choice is
+  taken over as it was (settings version 2).
 - **The Controls buttons' colours** (Settings → Controls): on, each its own
   or one for all; off, as the island's buttons or one for all; and a
   colour of a button's own, vivid on, muted off.

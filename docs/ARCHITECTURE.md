@@ -178,6 +178,16 @@ the active window on that screen fills it), "show" simply keeps it. The
 island's item moves between the Dialog and this window when the setting
 changes, so nothing restarts. On X11, or without LayerShellQt, the Dialog
 itself goes to the top edge (no guarantee over the panel there).
+
+The full-screen mode's *Peek at the edge* and *Shrink* (FullscreenPeek.qml
+holds the states, Fullscreen.js what counts as a full-screen window) use the
+same window: the notch is in it anyway; the oval island moves into one only
+while it peeks or is shrunk over such a window (and for its way back down),
+placed where its Dialog is. Drawn up, the island is moved with a translate,
+and the window's input region (MaskBridge) is only the strip at the edge, so
+everything else of the screen is the full-screen window's; come down, it is
+the island's shape again (and, for the oval island, the bridge from the edge
+down to it).
 The panels (where, how high, which screen) are read from plasmashell's own
 scripting interface (`evaluateScript`, read only), again whenever
 `plasmashellrc` changes. Where on a panel its widgets are cannot be read

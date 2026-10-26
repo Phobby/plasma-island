@@ -111,20 +111,12 @@ of its own, the glow of the cover comes from its lower edge.
   always shown, hides itself, floats or not, and not pushed down by it. The
   island's usual window shares the panels' layer and can lie under one (see
   ARCHITECTURE, "Notch mode"). It is never shown on the lock screen.
-- **Full screen:** while the active window fills that screen: *Dodge*
-  (default) takes it up out of sight, and the pointer pushed against the top
-  edge where it is brings it down; it goes back up a moment after it was left
-  (open, or with the keyboard in it, it stays). While it is down there it can
-  have a size (80–240 %) and a width (80–1200 px) of its own, *As usual*
-  otherwise. *Shrink* (default) draws it in to a small nub at the edge
-  instead: the pointer on the nub opens the island at once, and once it is
-  left and closed it is the nub again, never the notch itself while such a
-  window is there (its size and width when open can be set as for Dodge).
-  A window counts as filling the screen when it says so or, active, is as
-  large as the screen. Dodging, it also goes up while any window of that screen reaches
-  under it (maximised, or moved up to the edge), as a panel's *Dodge windows*
-  does; that can be switched off. *Hide* keeps it away, *Show* keeps it over
-  the window. With no such window it is as it always is.
+- **Full screen:** see *Full-screen mode* below (both layouts). The notch has
+  two of its own there: peeking or shrunk, it also draws up for any window
+  of that screen that reaches under it (maximised, or moved up to the edge),
+  as a panel's *Dodge windows* does (can be switched off); and open over such
+  a window it can have a size (80–240 %) and a width (80–1200 px) of its
+  own, *As usual* otherwise.
 - **Screen:** the top panel's screen (default), or the primary one; without
   a top panel, the island's own. A panel at the bottom or a side has nothing
   to do with it. One notch at a time: not on every screen. Putting it on a
@@ -182,6 +174,56 @@ events of the selected day and their details; calendars are connected right
 on this page), **Notes** (quick notes and the notes of Joplin, Simplenote and
 Memos), **Clipboard** (what was copied recently: texts, code, images, files).
 
+### Full-screen mode
+
+Settings → Appearance, *Full screen*, for both layouts: what the island does
+while a window fills its screen (`fullscreenMode`).
+
+- **Normal:** it stays as it is. The notch stays over the window; the oval
+  island's window lies under it, as it always did.
+- **Hide** (default, as before): it is hidden completely.
+- **Peek at the edge:** with a short springy move (300 ms) it draws up to the
+  top edge and only a few pixels of it show (*Part that shows*, 2–16 px,
+  default 4): a thin strip of the notch's lower edge, or the lower edge of
+  the oval capsule. The pointer resting on it for *Opens after* (0–1000 ms,
+  default 150) opens it as a hover would; the place that takes the pointer
+  is 6 px deeper than what shows and includes the topmost row of pixels, so
+  the pointer pushed against the edge finds it. It is only as wide as the
+  island, or *Trigger width* (px at 100 % size); everywhere else the pointer
+  and clicks go to the full-screen window (a browser's or a player's own
+  top bar can still be reached beside it; keep the width small where they
+  meet). Left and closed (the island's usual delay) it goes back up; not
+  while it is typed in or used. Pulled back up under a pointer kept at the
+  edge it does not open again until the pointer has left the strip (no
+  flicker). The oval island comes down to its usual place; between the edge
+  and it the pointer still counts as on it.
+- **Shrink:** it draws in to a small nub at the edge; the pointer on it opens
+  it in the same way.
+- **Important events:** an incoming call opens it (*Open in full screen too,
+  for an incoming call*, on by default). Everything else only colours the
+  part that shows, pulsing: green a call, red a screen recording, the
+  privacy dot's colour for the microphone or camera, yellow a critical
+  warning. Other events wait until it comes down.
+- While it is drawn up nothing of it moves (the clock, the glow, the
+  equalizer, the cat are stopped; measured in `tools/nested-session`:
+  plasmashell 0.10–0.15 % CPU there against 0.7–0.8 % with Normal over the
+  same window, the same memory). With *Normal* nothing changes.
+- **What counts as filling the screen:** a window that says it is full screen
+  (a browser's F11 or a video made full screen, a player's full screen, a
+  game) while it is the active one, or while the active window is on another
+  screen; and the active window when it is as large as the screen without
+  saying so (a borderless game), unless it is only maximised. Only windows of
+  the island's own screen, desktop and activity count: on another screen a
+  full-screen window changes nothing. Told by Plasma's task manager model as
+  it changes; nothing is polled.
+- **Wayland only:** the island peeks from a layer-shell overlay window, the
+  one kind of window over a full-screen one (the notch's window; the oval
+  island moves into such a window only while it peeks or is shrunk there).
+  On X11 a window that fills the screen lies over the island, which is then
+  as with *Normal*.
+- From earlier settings: the notch's *Over full screen* is taken over as it
+  was (Hide → Hide, Show → Normal, Dodge → Peek at the edge, Shrink →
+  Shrink), once (settings version 2).
 
 ## Settings
 
