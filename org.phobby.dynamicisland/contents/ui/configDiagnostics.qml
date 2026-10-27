@@ -19,18 +19,17 @@ import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
-import org.kde.plasma.plasmoid
 import "Diagnostics.js" as Diagnostics
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configDiagnostics"; revealHere: false }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
     property string cfg_commandPaths
     property string cfg_installedVersion
 
-    function widget(): var { try { return Plasmoid.configuration; } catch (e) { return null; } }
 
     // The native module's LocalTools, of this window's own (the island's is in the shell's other engine).
     Loader { id: localLoader; source: "LocalBridge.qml" }
@@ -111,7 +110,11 @@ KCM.SimpleKCM {
     function reveal(id: string): void {
         let row = null;
         for (let i = 0; i < rowsColumn.children.length; ++i) if (rowsColumn.children[i].requirement === id) row = rowsColumn.children[i];
-        if (row === null) return;
+        if (row === null) {
+            // (the list as a whole: where a command's path is given by hand)
+            if (id === "commandPaths") page.flickable.contentY = Math.max(0, needsHeading.mapToItem(page.flickable.contentItem, 0, 0).y - Kirigami.Units.gridUnit);
+            return;
+        }
         page.flickable.contentY = Math.max(0, row.mapToItem(page.flickable.contentItem, 0, 0).y - Kirigami.Units.gridUnit);
         row.flash();
         if (row.pathField) row.pathField.forceActiveFocus();
@@ -124,8 +127,6 @@ KCM.SimpleKCM {
         Qt.callLater(look);
         Qt.callLater(() => { const k = SettingsNav.take("configDiagnostics"); if (k.trim().length > 0) Qt.callLater(() => page.reveal(k)); });
     }
-    SettingsJump {}
-
     component Hint: QQC2.Label {
         textFormat: Text.PlainText
         Layout.fillWidth: true
@@ -177,6 +178,8 @@ KCM.SimpleKCM {
         }
 
         Kirigami.Heading {
+            id: needsHeading
+            objectName: "setting-commandPaths"
             Layout.fillWidth: true
             level: 3
             text: Lang.i18n("What the features need")

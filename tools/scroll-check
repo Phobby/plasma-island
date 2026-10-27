@@ -12,8 +12,8 @@
 # ScrollGesture whose scroll it is. See CONTRIBUTING.md, "What scrolls".
 #
 # Not held to this: a list that does not move (interactive: false), and the
-# settings window (config*.qml, Theme*Dialog.qml), which has no pages to turn
-# and scrolls with the desktop's own controls.
+# settings window (config*.qml, its pieces Settings*.qml, Theme*Dialog.qml),
+# which has no pages to turn and scrolls with the desktop's own controls.
 import re, sys
 from pathlib import Path
 
@@ -23,7 +23,7 @@ OURS = {"IslandFlickable.qml", "IslandListView.qml", "IslandGridView.qml"}
 LISTENS = {"IslandScroll.qml", "ExpandedContent.qml", "GlassSlider.qml"}
 
 def settings(path):
-    return path.name.startswith("config") or re.fullmatch(r"Theme\w*Dialog\.qml", path.name) is not None
+    return path.name.startswith("config") or path.name.startswith("Settings") or re.fullmatch(r"Theme\w*Dialog\.qml", path.name) is not None
 
 def block(lines, start):
     """The lines of the object that opens on line `start`, with the depth of each."""

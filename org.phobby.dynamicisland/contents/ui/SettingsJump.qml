@@ -16,8 +16,9 @@ Item {
     // (the window's pages, for SettingsNav: seen from a page, not from a singleton)
     Component.onCompleted: {
         if (typeof configDialog !== "undefined" && configDialog && configDialog.configModel) SettingsNav.model = configDialog.configModel;
-        Qt.callLater(take);
     }
+    // (a moment after the page is made; a page closed at once takes nothing: the timer goes with it)
+    Timer { interval: 0; running: true; onTriggered: jump.take() }
     function take(): void {
         const c = widget();
         const target = c ? String(c.settingsJump || "") : "";

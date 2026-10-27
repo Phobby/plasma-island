@@ -5,7 +5,8 @@
     the handle) and whether each is shown; a hidden one is not in the tab bar
     at all. At least one stays on. The switches are the pages' own settings
     (showMediaModule, showTools, showWeather…), the order is pageOrder.
-    Modules: the parts inside a page that can be switched.
+    Modules: the parts inside a page that can be switched, and how the System
+    page shows its cards.
     The tab order is only where a page sits among the tabs; which live activity
     the island shows first is the priority list in Activities.
 */
@@ -17,6 +18,7 @@ import org.kde.kcmutils as KCM
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configLayout" }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
@@ -35,7 +37,8 @@ KCM.SimpleKCM {
     property bool cfg_showHabits
     property bool cfg_showAi
     property bool cfg_showCloud
-    property alias cfg_showVolumeModule: volumeSwitch.checked
+    property bool cfg_showVolumeModule
+    property int cfg_systemView
 
     // Tabs that are switched on (Activities comes and goes by itself and does not count).
     readonly property int shownTabs: catalog.pages.filter(p => p.config.length > 0 && page["cfg_" + p.config] === true).length
@@ -94,6 +97,8 @@ KCM.SimpleKCM {
 
         ListView {
             id: list
+            objectName: "setting-pageOrder"
+            Accessible.name: Lang.i18n("Tabs")
             Layout.fillWidth: true
             Layout.preferredHeight: contentHeight
             interactive: false
@@ -189,6 +194,7 @@ KCM.SimpleKCM {
                                 page.lastTabWarning = false;
                                 page["cfg_" + wrapper.configKey] = checked;
                             }
+                            Accessible.name: (wrapper.page_ ? wrapper.page_.title : model.key) + ": " + (checked ? Lang.i18n("Shown") : Lang.i18n("Hidden"))
                             QQC2.ToolTip.visible: hovered
                             QQC2.ToolTip.text: checked ? Lang.i18n("Shown") : Lang.i18n("Hidden")
                         }
@@ -252,7 +258,26 @@ KCM.SimpleKCM {
                         elide: Text.ElideRight
                     }
                 }
-                QQC2.Switch { id: volumeSwitch }
+                QQC2.Switch {
+                    id: volumeSwitch
+                    objectName: "setting-showVolumeModule"
+                    text: Lang.i18n("Volume")
+                    display: QQC2.AbstractButton.IconOnly
+                    Binding { target: volumeSwitch; property: "checked"; value: page.cfg_showVolumeModule }
+                    onToggled: page.cfg_showVolumeModule = checked
+                }
+            }
+        }
+        Kirigami.FormLayout {
+            Layout.fillWidth: true
+            QQC2.ComboBox {
+                id: systemViewCombo
+                objectName: "setting-systemView"
+                Kirigami.FormData.label: Lang.i18n("System view:")
+                model: [Lang.i18n("Fixed (5 cards)"), Lang.i18n("Dynamic (active metrics grow)")]
+                Binding { target: systemViewCombo; property: "currentIndex"; value: page.cfg_systemView }
+                onActivated: index => page.cfg_systemView = index
+                Accessible.name: Lang.i18n("System view:") + " " + currentText
             }
         }
         QQC2.Label {
@@ -261,7 +286,7 @@ KCM.SimpleKCM {
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
             opacity: 0.7
-            text: Lang.i18n("The buttons of the Controls page and their order are set in Controls; the weather's place in Weather.")
+            text: Lang.i18n("A tab's own settings have a page of their own in the sidebar while the tab is on; the search finds them also while it is off.")
         }
     }
 }

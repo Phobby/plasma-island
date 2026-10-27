@@ -14,6 +14,10 @@ Item {
     property real iconSize: Kirigami.Units.iconSizes.small
     property string toolTip
     signal clicked()
+    // (named for a screen reader by its tooltip; the island takes no keyboard focus by itself, by design)
+    Accessible.role: Accessible.Button
+    Accessible.name: toolTip.length > 0 ? toolTip : iconName
+    Accessible.onPressAction: if (enabled) clicked()
 
     implicitWidth: iconSize + 14
     implicitHeight: iconSize + 14

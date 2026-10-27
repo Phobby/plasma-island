@@ -21,27 +21,29 @@ import "companion/CatPoses.js" as Poses
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configCat" }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
     property int cfg_clockFormat
     Binding { target: Lang; property: "clockSetting"; value: page.cfg_clockFormat; restoreMode: Binding.RestoreNone }
 
-    property alias cfg_catEnabled: enabledCheck.checked
+    // (the defaults of main.xml, as the window hands them in: what the preview starts from before that)
+    property bool cfg_catEnabled: true
     property alias cfg_catSide: sideCombo.currentIndex
     property alias cfg_catSize: sizeSlider.value
     property string cfg_catFur
     property string cfg_catFurColor
-    property alias cfg_catMusic: musicCheck.checked
-    property alias cfg_catThoughts: thoughtsCheck.checked
-    property alias cfg_catEvents: eventsCheck.checked
-    property alias cfg_catPetting: pettingCheck.checked
-    property alias cfg_catClicks: clicksCheck.checked
-    property alias cfg_catNoAnger: noAngerCheck.checked
-    property alias cfg_catSulkSeconds: sulkSpin.value
-    property alias cfg_catSleepSeconds: sleepSpin.value
-    property alias cfg_catDot: dotCombo.currentIndex
-    property alias cfg_catReduceMotion: stillCheck.checked
+    property bool cfg_catMusic: true
+    property bool cfg_catThoughts: true
+    property bool cfg_catEvents: true
+    property bool cfg_catPetting: true
+    property bool cfg_catClicks: true
+    property bool cfg_catNoAnger: false
+    property int cfg_catSulkSeconds: 10
+    property int cfg_catSleepSeconds: 20
+    property int cfg_catDot
+    property bool cfg_catReduceMotion: false
 
     // The desktop's own "no animations" (System Settings): the cat stands still whatever is set here.
     readonly property bool desktopStill: Kirigami.Units.longDuration <= 1
@@ -54,11 +56,17 @@ KCM.SimpleKCM {
     ColumnLayout {
         spacing: Kirigami.Units.largeSpacing
 
-        QQC2.Label {
-            textFormat: Text.PlainText
+        RowLayout {
             Layout.fillWidth: true
-            wrapMode: Text.Wrap
-            text: Lang.i18n("A cat lives beside the island: it sleeps while nothing happens, puts on headphones for music, thinks along with the AI and likes to be stroked. It is only there to be looked at: it never covers anything of the island, keeps nothing and sends nothing anywhere.")
+            QQC2.Label {
+                textFormat: Text.PlainText
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: Lang.i18n("A cat lives beside the island, only to be looked at.")
+            }
+            Kirigami.ContextualHelpButton {
+                toolTipText: Lang.i18n("A cat lives beside the island: it sleeps while nothing happens, puts on headphones for music, thinks along with the AI and likes to be stroked. It is only there to be looked at: it never covers anything of the island, keeps nothing and sends nothing anywhere.")
+            }
         }
 
         // ---- the preview ----------------------------------------------------------------
@@ -109,20 +117,20 @@ KCM.SimpleKCM {
                 CompanionController {
                     id: mind
                     objectName: "catPreviewMind"
-                    active: enabledCheck.checked && !page.gallery
+                    active: page.cfg_catEnabled && !page.gallery
                     idle: !stage.busy && !stage.playing
                     playing: stage.playing
                     thinking: stage.thinking
                     asking: stage.asking
-                    music: musicCheck.checked
-                    thoughts: thoughtsCheck.checked
-                    events: eventsCheck.checked
-                    petting: pettingCheck.checked
-                    clicks: clicksCheck.checked
-                    noAnger: noAngerCheck.checked
-                    still: stillCheck.checked || page.desktopStill
-                    sleepAfter: sleepSpin.value * 1000
-                    sulkFor: sulkSpin.value * 1000
+                    music: page.cfg_catMusic
+                    thoughts: page.cfg_catThoughts
+                    events: page.cfg_catEvents
+                    petting: page.cfg_catPetting
+                    clicks: page.cfg_catClicks
+                    noAnger: page.cfg_catNoAnger
+                    still: page.cfg_catReduceMotion || page.desktopStill
+                    sleepAfter: page.cfg_catSleepSeconds * 1000
+                    sulkFor: page.cfg_catSulkSeconds * 1000
                     onGesture: name => figure.gesture(name)
                 }
                 CatCharacter {
@@ -132,7 +140,7 @@ KCM.SimpleKCM {
                     width: Math.round(height * Poses.W / Poses.H)
                     x: stage.onRight ? pill.x + pill.width - 1 : pill.x - width + 1
                     y: pill.y + stage.pillHeight / 2 + (height - stage.pillHeight) * 0.25 - height / 2
-                    visible: enabledCheck.checked
+                    visible: page.cfg_catEnabled
                     body: mind.body
                     accessory: mind.accessory
                     tilt: mind.tilt
@@ -188,11 +196,12 @@ KCM.SimpleKCM {
                 }
             }
         }
-        RowLayout {
+        // (a Flow: in a narrow window the buttons go on to the next line instead of past the edge)
+        Flow {
             Layout.fillWidth: true
             spacing: Kirigami.Units.smallSpacing
             visible: !page.gallery
-            QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("Try:") }
+            QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("Try:"); height: implicitHeight; topPadding: Kirigami.Units.smallSpacing }
             QQC2.Button {
                 text: Lang.i18n("Music")
                 checkable: true
@@ -217,7 +226,6 @@ KCM.SimpleKCM {
                 onClicked: { stage.busy = true; mind.notice("cheer"); eventOver.restart(); }
             }
             Timer { id: eventOver; interval: 3000; onTriggered: stage.busy = false }
-            Item { Layout.fillWidth: true }
         }
         QQC2.Button {
             objectName: "catGalleryButton"
@@ -227,30 +235,33 @@ KCM.SimpleKCM {
         }
 
         Kirigami.FormLayout {
+            id: form
             Layout.fillWidth: true
 
-            QQC2.CheckBox {
-                id: enabledCheck
+            SettingCheck {
+                settings: page; key: "catEnabled"
                 Kirigami.FormData.label: Lang.i18n("Cat:")
                 text: Lang.i18n("Show the cat beside the island")
             }
-            QQC2.ComboBox {
-                id: sideCombo
+            RowLayout {
                 Kirigami.FormData.label: Lang.i18n("Side:")
-                enabled: enabledCheck.checked
-                model: [Lang.i18n("By itself (the free side)"), Lang.i18n("Left"), Lang.i18n("Right")]
-            }
-            QQC2.Label {
-                textFormat: Text.PlainText
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-                wrapMode: Text.Wrap
-                font: Kirigami.Theme.smallFont
-                opacity: 0.75
-                text: Lang.i18n("By itself it sits on the left: the split island's bubble and the privacy dots are on the right. On the right it keeps clear of them. Where a side has no room on the screen it takes the other.")
+                visible: page.cfg_catEnabled
+                // (search needs: "catEnabled")
+                QQC2.ComboBox {
+                    id: sideCombo
+                    objectName: "setting-catSide"
+                    model: [Lang.i18n("By itself (the free side)"), Lang.i18n("Left"), Lang.i18n("Right")]
+                    Accessible.name: Lang.i18n("Side:") + " " + currentText
+                }
+                Kirigami.ContextualHelpButton {
+                    toolTipText: Lang.i18n("By itself it sits on the left: the split island's bubble and the privacy dots are on the right. On the right it keeps clear of them. Where a side has no room on the screen it takes the other.")
+                }
             }
             RowLayout {
+                objectName: "setting-catSize"
                 Kirigami.FormData.label: Lang.i18n("Size:")
-                enabled: enabledCheck.checked
+                visible: page.cfg_catEnabled
+                // (search needs: "catEnabled")
                 QQC2.Slider {
                     id: sizeSlider
                     from: 100
@@ -261,8 +272,10 @@ KCM.SimpleKCM {
                 QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("%1 of the pill's height", Lang.percent(sizeSlider.value)) }
             }
             RowLayout {
+                objectName: "setting-catFur"
                 Kirigami.FormData.label: Lang.i18n("Coat:")
-                enabled: enabledCheck.checked
+                visible: page.cfg_catEnabled
+                // (search needs: "catEnabled")
                 spacing: Kirigami.Units.smallSpacing
                 Repeater {
                     model: ["grey", "orange", "black", "white", "tuxedo"]
@@ -314,99 +327,72 @@ KCM.SimpleKCM {
                 }
             }
 
-            Kirigami.Separator {
-                Kirigami.FormData.isSection: true
-                Kirigami.FormData.label: Lang.i18n("What it reacts to")
-            }
-            QQC2.CheckBox {
-                id: musicCheck
-                Kirigami.FormData.label: Lang.i18n("Reactions:")
-                enabled: enabledCheck.checked
-                text: Lang.i18n("Music: headphones, and it nods along")
-            }
-            QQC2.CheckBox {
-                id: thoughtsCheck
-                enabled: enabledCheck.checked
-                text: Lang.i18n("The AI and questions: a bubble beside its head")
-            }
-            QQC2.CheckBox {
-                id: eventsCheck
-                enabled: enabledCheck.checked
-                text: Lang.i18n("Events: it wakes up, looks, is glad when a timer runs out")
-            }
-
-            Kirigami.Separator {
-                Kirigami.FormData.isSection: true
-                Kirigami.FormData.label: Lang.i18n("What may be done to it")
-            }
-            QQC2.CheckBox {
-                id: pettingCheck
-                Kirigami.FormData.label: Lang.i18n("With the pointer:")
-                enabled: enabledCheck.checked
-                text: Lang.i18n("Stroking: the pointer back and forth over it")
-            }
-            QQC2.CheckBox {
-                id: clicksCheck
-                enabled: enabledCheck.checked
-                text: Lang.i18n("Clicks: startled by one, angry at too many, or when woken")
-            }
-            QQC2.CheckBox {
-                id: noAngerCheck
-                enabled: enabledCheck.checked && clicksCheck.checked
-                text: Lang.i18n("Never angry: every click is met with curiosity")
-            }
-            QQC2.SpinBox {
-                id: sulkSpin
-                Kirigami.FormData.label: Lang.i18n("It sulks for:")
-                enabled: enabledCheck.checked && clicksCheck.checked && !noAngerCheck.checked
-                from: 3
-                to: 120
-                textFromValue: v => Lang.i18n("%1 s", v)
-                valueFromText: t => parseInt(t) || 10
-            }
-
-            Kirigami.Separator {
-                Kirigami.FormData.isSection: true
-                Kirigami.FormData.label: Lang.i18n("Sleep and motion")
-            }
-            QQC2.SpinBox {
-                id: sleepSpin
-                Kirigami.FormData.label: Lang.i18n("It falls asleep after:")
-                enabled: enabledCheck.checked
-                from: 5
-                to: 3600
-                stepSize: 5
-                textFromValue: v => Lang.i18n("%1 s", v)
-                valueFromText: t => parseInt(t) || 20
-            }
-            QQC2.Label {
-                textFormat: Text.PlainText
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-                wrapMode: Text.Wrap
-                font: Kirigami.Theme.smallFont
-                opacity: 0.75
-                text: Lang.i18n("…of the island showing nothing but the clock. Asleep it costs next to nothing: nothing of it runs but a slow breath.")
-            }
-            QQC2.ComboBox {
-                id: dotCombo
-                Kirigami.FormData.label: Lang.i18n("While the island is a dot:")
-                enabled: enabledCheck.checked
-                model: [Lang.i18n("Hidden"), Lang.i18n("Asleep beside the dot")]
-            }
-            QQC2.CheckBox {
-                id: stillCheck
-                Kirigami.FormData.label: Lang.i18n("Motion:")
-                enabled: enabledCheck.checked && !page.desktopStill
-                text: Lang.i18n("Reduce motion: still poses, nothing nods or floats")
-            }
-            QQC2.Label {
-                textFormat: Text.PlainText
-                visible: page.desktopStill
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-                wrapMode: Text.Wrap
-                font: Kirigami.Theme.smallFont
-                opacity: 0.75
-                text: Lang.i18n("The desktop's animations are switched off (System Settings): the cat stands still whatever is set here.")
+            SettingsFold {
+                title: Lang.i18n("Behaviour")
+                foldId: "cat.behaviour"
+                twin: form
+                visible: page.cfg_catEnabled
+                needs: "catEnabled"
+                keys: ["catMusic", "catThoughts", "catEvents", "catPetting", "catClicks", "catNoAnger", "catSulkSeconds",
+                       "catSleepSeconds", "catDot", "catReduceMotion"]
+                content: Kirigami.FormLayout {
+                    SettingCheck {
+                        settings: page; key: "catMusic"
+                        Kirigami.FormData.label: Lang.i18n("Reactions:")
+                        text: Lang.i18n("Music: headphones, and it nods along")
+                    }
+                    SettingCheck { settings: page; key: "catThoughts"; text: Lang.i18n("The AI and questions: a bubble beside its head") }
+                    SettingCheck { settings: page; key: "catEvents"; text: Lang.i18n("Events: it wakes up, looks, is glad when a timer runs out") }
+                    SettingCheck {
+                        settings: page; key: "catPetting"
+                        Kirigami.FormData.label: Lang.i18n("With the pointer:")
+                        text: Lang.i18n("Stroking: the pointer back and forth over it")
+                    }
+                    SettingCheck { settings: page; key: "catClicks"; text: Lang.i18n("Clicks: startled by one, angry at too many, or when woken") }
+                    SettingCheck {
+                        settings: page; key: "catNoAnger"
+                        enabled: page.cfg_catClicks
+                        text: Lang.i18n("Never angry: every click is met with curiosity")
+                    }
+                    SettingSpin {
+                        settings: page; key: "catSulkSeconds"
+                        Kirigami.FormData.label: Lang.i18n("It sulks for:")
+                        enabled: page.cfg_catClicks && !page.cfg_catNoAnger
+                        from: 3; to: 120
+                        unit: Lang.i18n("%1 s")
+                    }
+                    RowLayout {
+                        Kirigami.FormData.label: Lang.i18n("It falls asleep after:")
+                        SettingSpin {
+                            settings: page; key: "catSleepSeconds"
+                            from: 5; to: 3600; stepSize: 5
+                            unit: Lang.i18n("%1 s")
+                        }
+                        Kirigami.ContextualHelpButton {
+                            toolTipText: Lang.i18n("…of the island showing nothing but the clock. Asleep it costs next to nothing: nothing of it runs but a slow breath.")
+                        }
+                    }
+                    SettingCombo {
+                        settings: page; key: "catDot"
+                        Kirigami.FormData.label: Lang.i18n("While the island is a dot:")
+                        model: [Lang.i18n("Hidden"), Lang.i18n("Asleep beside the dot")]
+                    }
+                    SettingCheck {
+                        settings: page; key: "catReduceMotion"
+                        Kirigami.FormData.label: Lang.i18n("Motion:")
+                        enabled: !page.desktopStill
+                        text: Lang.i18n("Reduce motion: still poses, nothing nods or floats")
+                    }
+                    QQC2.Label {
+                        textFormat: Text.PlainText
+                        visible: page.desktopStill
+                        Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+                        wrapMode: Text.Wrap
+                        font: Kirigami.Theme.smallFont
+                        opacity: 0.75
+                        text: Lang.i18n("The desktop's animations are switched off (System Settings): the cat stands still whatever is set here.")
+                    }
+                }
             }
         }
     }

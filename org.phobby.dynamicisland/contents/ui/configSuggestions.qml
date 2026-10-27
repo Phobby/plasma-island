@@ -18,16 +18,17 @@ import "Suggestions.js" as Suggestions
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configSuggestions" }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
 
     property alias cfg_suggestionsEnabled: enabledCheck.checked
-    property alias cfg_suggestionGapMinutes: gapSpin.value
+    property int cfg_suggestionGapMinutes
     property string cfg_suggestionLevel: "balanced"
-    property alias cfg_suggestionDailyCards: cardsSpin.value
-    property alias cfg_suggestionCooldownMinutes: cooldownSpin.value
-    property alias cfg_suggestionHalfLifeDays: halfLifeSpin.value
+    property int cfg_suggestionDailyCards
+    property int cfg_suggestionCooldownMinutes
+    property int cfg_suggestionHalfLifeDays
 
     function widget(): var { try { return Plasmoid.configuration; } catch (e) { return null; } }
     Loader { id: localTools; source: "LocalBridge.qml" }
@@ -106,57 +107,65 @@ KCM.SimpleKCM {
         spacing: Kirigami.Units.largeSpacing
 
         Kirigami.FormLayout {
+            id: form
             Layout.fillWidth: true
-            QQC2.CheckBox {
-                id: enabledCheck
+            RowLayout {
                 Kirigami.FormData.label: Lang.i18n("Suggestions:")
-                text: Lang.i18n("Suggest things at the right moment, and learn when that is welcome")
-            }
-            QQC2.Label {
-                textFormat: Text.PlainText
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-                wrapMode: Text.Wrap
-                font: Kirigami.Theme.smallFont
-                text: Lang.i18n("Rules and counting only, on this computer: no network, no AI. It keeps the rule, coarse circumstances (kind of day, part of the day, the calendar's name…), your answer and when; never a window, an application, an event's title or anything typed.")
+                QQC2.CheckBox {
+                    id: enabledCheck
+                    objectName: "setting-suggestionsEnabled"
+                    text: Lang.i18n("Suggest things at the right moment, and learn when that is welcome")
+                }
+                Kirigami.ContextualHelpButton {
+                    toolTipText: Lang.i18n("Rules and counting only, on this computer: no network, no AI. It keeps the rule, coarse circumstances (kind of day, part of the day, the calendar's name…), your answer and when; never a window, an application, an event's title or anything typed.")
+                }
             }
             QQC2.ComboBox {
+                objectName: "setting-suggestionLevel"
+                // (search needs: "suggestionsEnabled")
                 Kirigami.FormData.label: Lang.i18n("How much it may interrupt:")
-                enabled: enabledCheck.checked
+                visible: enabledCheck.checked
                 model: page.levels.map(l => l.name)
                 currentIndex: Math.max(0, page.levels.findIndex(l => l.id === page.cfg_suggestionLevel))
                 onActivated: index => page.cfg_suggestionLevel = page.levels[index].id
+                Accessible.name: Lang.i18n("How much it may interrupt:") + " " + currentText
             }
-            QQC2.SpinBox {
-                id: cardsSpin
-                Kirigami.FormData.label: Lang.i18n("Cards a day, at most:")
-                enabled: enabledCheck.checked
-                from: 0; to: 30
-                textFromValue: v => v === 0 ? Lang.i18n("as the level says (%1)", page.tuning.dailyCards) : String(v)
-                valueFromText: t => parseInt(t) || 0
-            }
-            QQC2.SpinBox {
-                id: cooldownSpin
-                Kirigami.FormData.label: Lang.i18n("A rule waits after a card:")
-                enabled: enabledCheck.checked
-                from: 0; to: 240; stepSize: 5
-                textFromValue: v => v === 0 ? Lang.i18n("as the level says (%1 min)", Math.round(page.tuning.cooldown / 60000)) : Lang.i18n("%1 min", v)
-                valueFromText: t => parseInt(t) || 0
-            }
-            QQC2.SpinBox {
-                id: gapSpin
-                Kirigami.FormData.label: Lang.i18n("Between two cards:")
-                enabled: enabledCheck.checked
-                from: 1; to: 240
-                textFromValue: v => Lang.i18n("%1 min", v)
-                valueFromText: t => parseInt(t)
-            }
-            QQC2.SpinBox {
-                id: halfLifeSpin
-                Kirigami.FormData.label: Lang.i18n("An answer counts half after:")
-                enabled: enabledCheck.checked
-                from: 0; to: 365
-                textFromValue: v => v === 0 ? Lang.i18n("%1 days", Suggestions.TUNING.halfLifeDays) : Lang.i18n("%1 days", v)
-                valueFromText: t => parseInt(t) || 0
+            SettingsFold {
+                title: Lang.i18n("Customize")
+                foldId: "suggestions.tuning"
+                twin: form
+                visible: enabledCheck.checked
+                needs: "suggestionsEnabled"
+                keys: ["suggestionDailyCards", "suggestionCooldownMinutes", "suggestionGapMinutes", "suggestionHalfLifeDays"]
+                content: Kirigami.FormLayout {
+                    SettingSpin {
+                        settings: page; key: "suggestionDailyCards"
+                        Kirigami.FormData.label: Lang.i18n("Cards a day, at most:")
+                        from: 0; to: 30
+                        textFromValue: v => v === 0 ? Lang.i18n("as the level says (%1)", page.tuning.dailyCards) : String(v)
+                        valueFromText: t => parseInt(t) || 0
+                    }
+                    SettingSpin {
+                        settings: page; key: "suggestionCooldownMinutes"
+                        Kirigami.FormData.label: Lang.i18n("A rule waits after a card:")
+                        from: 0; to: 240; stepSize: 5
+                        textFromValue: v => v === 0 ? Lang.i18n("as the level says (%1 min)", Math.round(page.tuning.cooldown / 60000)) : Lang.i18n("%1 min", v)
+                        valueFromText: t => parseInt(t) || 0
+                    }
+                    SettingSpin {
+                        settings: page; key: "suggestionGapMinutes"
+                        Kirigami.FormData.label: Lang.i18n("Between two cards:")
+                        from: 1; to: 240
+                        unit: Lang.i18n("%1 min")
+                    }
+                    SettingSpin {
+                        settings: page; key: "suggestionHalfLifeDays"
+                        Kirigami.FormData.label: Lang.i18n("An answer counts half after:")
+                        from: 0; to: 365
+                        textFromValue: v => v === 0 ? Lang.i18n("%1 days", Suggestions.TUNING.halfLifeDays) : Lang.i18n("%1 days", v)
+                        valueFromText: t => parseInt(t) || 0
+                    }
+                }
             }
         }
 

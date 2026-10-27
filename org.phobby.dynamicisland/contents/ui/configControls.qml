@@ -14,6 +14,7 @@ import org.kde.kcmutils as KCM
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configControls" }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
@@ -139,6 +140,8 @@ KCM.SimpleKCM {
         }
         ListView {
             id: list
+            objectName: "setting-controlTiles"
+            Accessible.name: Lang.i18n("Buttons")
             Layout.fillWidth: true
             Layout.preferredHeight: contentHeight
             interactive: false

@@ -1,5 +1,13 @@
 /*
     SPDX-License-Identifier: GPL-2.0-or-later
+    Settings → General: the language, the clock, notifications, how quickly
+    the island answers (Response: one choice for four delays, Customize for
+    the values), dot mode and new versions. What is set less often is in the
+    folding parts (SettingsFold); every setting is found by the search at the
+    top (SettingsSearch, SettingsIndex).
+
+    Where the oval island sits (distance from the top, below top panels) is on
+    Appearance, with the layout it belongs to.
 */
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -8,57 +16,71 @@ import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
 
 KCM.SimpleKCM {
-    // (the island asked for another page of the settings: go there)
-    SettingsJump {}
     id: page
+    header: SettingsSearch { page: page; pageName: "configGeneral" }
 
+    // The language: these settings follow the saved choice; it takes effect with Apply / OK.
     property string cfg_language
-    Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
+    property string applied: ""
+    Component.onCompleted: applied = cfg_language
+    function saveConfig(): void { applied = cfg_language; }
+    Binding { target: Lang; property: "setting"; value: page.applied; when: page.applied.length > 0; restoreMode: Binding.RestoreNone }
 
-    property int cfg_appearanceMode
-    property alias cfg_showClock: clockCheck.checked
-    property alias cfg_clockFormat: clockFormatCombo.currentIndex
-    property alias cfg_topMargin: topMarginSpin.value
-    property alias cfg_avoidPanels: avoidPanelsCheck.checked
-    // 0 = the notch layout (it sits at the top edge itself), 1 = the oval layout
-    property int cfg_islandLayout
-    property alias cfg_showNotifications: notificationsCheck.checked
-    property alias cfg_notificationDuration: durationSpin.value
-    property alias cfg_hoverDelay: hoverSpin.value
-    property alias cfg_collapseDelay: collapseSpin.value
-    property alias cfg_preferredPlayer: playerField.text
-    property alias cfg_dotMode: dotModeCheck.checked
-    property alias cfg_dotStart: dotStartCombo.currentIndex
-    property alias cfg_dotSize: dotSizeSpin.value
-    property alias cfg_dotHoverExpand: dotHoverCheck.checked
-    property alias cfg_dotEvents: dotEventsCombo.currentIndex
-    property alias cfg_dotCriticalExpand: dotCriticalCheck.checked
-    property alias cfg_systemView: systemViewCombo.currentIndex
-    property alias cfg_updateMode: updateModeCombo.currentIndex
+    property bool cfg_showClock
+    property int cfg_clockFormat
+    property bool cfg_showNotifications
+    property int cfg_notificationDuration
+    property int cfg_hoverDelay
+    property int cfg_collapseDelay
+    property int cfg_eventDuration
+    property string cfg_preferredPlayer
+    property bool cfg_dotMode
+    property int cfg_dotStart
+    property int cfg_dotSize
+    property bool cfg_dotHoverExpand
+    property int cfg_dotEvents
+    property bool cfg_dotCriticalExpand
+    property int cfg_updateMode
+
+    // Response: the four delays as one choice. No setting of its own: read from the values,
+    // "Custom" when they match none of the three (Balanced is a new island's).
+    readonly property var responses: [
+        { name: Lang.i18n("Calm"), hoverDelay: 300, collapseDelay: 800, eventDuration: 5000, notificationDuration: 6000 },
+        { name: Lang.i18n("Balanced"), hoverDelay: 120, collapseDelay: 400, eventDuration: 3000, notificationDuration: 4000 },
+        { name: Lang.i18n("Lively"), hoverDelay: 50, collapseDelay: 200, eventDuration: 2000, notificationDuration: 3000 }
+    ]
+    readonly property int response: responses.findIndex(r => r.hoverDelay === cfg_hoverDelay && r.collapseDelay === cfg_collapseDelay
+                                                          && r.eventDuration === cfg_eventDuration && r.notificationDuration === cfg_notificationDuration)
+    function useResponse(index: int): void {
+        const r = responses[index];
+        cfg_hoverDelay = r.hoverDelay; cfg_collapseDelay = r.collapseDelay;
+        cfg_eventDuration = r.eventDuration; cfg_notificationDuration = r.notificationDuration;
+    }
 
     Kirigami.FormLayout {
-        Kirigami.Separator {
-            Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: Lang.i18n("Appearance")
+        id: form
+
+        QQC2.ComboBox {
+            id: languageCombo
+            objectName: "setting-language"
+            Kirigami.FormData.label: Lang.i18n("Language:")
+            // (the names in their own language, to be found whatever the current one is)
+            readonly property var values: ["auto", "tr", "en"]
+            model: [Lang.i18n("Like the system: %1", Lang.systemLanguage === "tr" ? "Türkçe" : "English"), "Türkçe", "English"]
+            Binding { target: languageCombo; property: "currentIndex"; value: Math.max(0, languageCombo.values.indexOf(page.cfg_language || "auto")) }
+            onActivated: index => page.cfg_language = values[index]
+            Accessible.name: Lang.i18n("Language:") + " " + currentText
         }
 
-        QQC2.Label {
-            textFormat: Text.PlainText
-            Kirigami.FormData.label: Lang.i18n("Look:")
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
-            wrapMode: Text.Wrap
-            text: Lang.i18n("Colours, opacity, blur, size and shape are set in Appearance.")
-        }
-
-        QQC2.CheckBox {
-            id: clockCheck
+        SettingCheck {
+            settings: page; key: "showClock"
             Kirigami.FormData.label: Lang.i18n("Idle:")
             text: Lang.i18n("Show clock")
         }
-
-        QQC2.ComboBox {
-            id: clockFormatCombo
+        SettingCombo {
+            settings: page; key: "clockFormat"
             Kirigami.FormData.label: Lang.i18n("Time format:")
+            enabled: page.cfg_showClock
             // (the system's: its region's time format, System Settings → Region & Language → Time)
             model: [
                 Lang.i18n("As the system (%1)", Qt.formatTime(new Date(2026, 0, 1, 19, 41), Lang.shortTime(Qt.locale().timeFormat(Locale.ShortFormat), 0))),
@@ -66,160 +88,149 @@ KCM.SimpleKCM {
                 Lang.i18n("12-hour (%1)", Qt.formatTime(new Date(2026, 0, 1, 19, 41), Lang.shortTime(Qt.locale().timeFormat(Locale.ShortFormat), 2)))
             ]
         }
-
-        QQC2.SpinBox {
-            id: topMarginSpin
-            Kirigami.FormData.label: Lang.i18n("Distance from top:")
-            // A custom look brings its own distance (Appearance).
-            enabled: page.cfg_appearanceMode === 0 && page.cfg_islandLayout === 1
-            from: 0
-            to: 200
-            textFromValue: (v) => Lang.i18n("%1 px", v)
-            valueFromText: (t) => parseInt(t)
-        }
-        QQC2.CheckBox {
-            id: avoidPanelsCheck
-            enabled: page.cfg_islandLayout === 1
-            text: Lang.i18n("Place below top panels")
-        }
-        QQC2.Label {
-            textFormat: Text.PlainText
-            visible: page.cfg_islandLayout === 0
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
-            wrapMode: Text.Wrap
-            font: Kirigami.Theme.smallFont
-            text: Lang.i18n("Oval layout only: in the notch layout the island sits at the top edge itself (Appearance → Layout).")
-        }
-
-        Kirigami.Separator {
-            Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: Lang.i18n("Behavior")
-        }
-
-        QQC2.CheckBox {
-            id: notificationsCheck
+        SettingCheck {
+            settings: page; key: "showNotifications"
             Kirigami.FormData.label: Lang.i18n("Notifications:")
             text: Lang.i18n("Show incoming notifications in the island")
         }
-        QQC2.SpinBox {
-            id: durationSpin
-            Kirigami.FormData.label: Lang.i18n("Show for:")
-            enabled: notificationsCheck.checked
-            from: 1000
-            to: 20000
-            stepSize: 500
-            textFromValue: (v) => Lang.i18n("%1 s", (v / 1000).toLocaleString(Lang.locale, 'f', 1))
-            valueFromText: (t) => Math.round(Number.fromLocaleString(Lang.locale, t.replace(/[^\d.,]/g, "")) * 1000)
+
+        RowLayout {
+            Kirigami.FormData.label: Lang.i18n("Response:")
+            QQC2.ComboBox {
+                id: responseCombo
+                objectName: "setting-response"
+                model: page.responses.map(r => r.name).concat(page.response < 0 ? [Lang.i18n("Custom")] : [])
+                readonly property int shown: page.response < 0 ? 3 : page.response
+                Binding { target: responseCombo; property: "currentIndex"; value: responseCombo.shown }
+                // ("Custom" comes and goes: a model that changes starts again at its first entry)
+                onModelChanged: Qt.callLater(() => { if (currentIndex !== shown) currentIndex = shown; })
+                onActivated: index => { if (index < 3) page.useResponse(index); }
+                Accessible.name: Lang.i18n("Response:") + " " + currentText
+            }
+            Kirigami.ContextualHelpButton {
+                toolTipText: Lang.i18n("How soon the island opens under the pointer and closes after it, and how long events and notifications stay.")
+            }
         }
-        QQC2.SpinBox {
-            id: hoverSpin
-            Kirigami.FormData.label: Lang.i18n("Expand after hovering:")
-            from: 0
-            to: 2000
-            stepSize: 50
-            textFromValue: (v) => Lang.i18n("%1 ms", v)
-            valueFromText: (t) => parseInt(t)
-        }
-        QQC2.SpinBox {
-            id: collapseSpin
-            Kirigami.FormData.label: Lang.i18n("Collapse after leaving:")
-            from: 0
-            to: 3000
-            stepSize: 50
-            textFromValue: (v) => Lang.i18n("%1 ms", v)
-            valueFromText: (t) => parseInt(t)
-        }
-        QQC2.TextField {
-            id: playerField
-            Kirigami.FormData.label: Lang.i18n("Preferred player:")
-            placeholderText: Lang.i18n("e.g. spotify, elisa, firefox (empty = automatic)")
+        SettingsFold {
+            title: Lang.i18n("Customize")
+            foldId: "general.response"
+            twin: form
+            keys: ["hoverDelay", "collapseDelay", "eventDuration", "notificationDuration"]
+            content: Kirigami.FormLayout {
+                SettingSpin {
+                    settings: page; key: "hoverDelay"
+                    Kirigami.FormData.label: Lang.i18n("Expand after hovering:")
+                    from: 0; to: 2000; stepSize: 50
+                    unit: Lang.i18n("%1 ms")
+                }
+                SettingSpin {
+                    settings: page; key: "collapseDelay"
+                    Kirigami.FormData.label: Lang.i18n("Collapse after leaving:")
+                    from: 0; to: 3000; stepSize: 50
+                    unit: Lang.i18n("%1 ms")
+                }
+                SettingSpin {
+                    settings: page; key: "eventDuration"
+                    Kirigami.FormData.label: Lang.i18n("Transient events stay:")
+                    from: 1000; to: 10000; stepSize: 500
+                    unit: Lang.i18n("%1 s"); scale: 1000; decimals: 1
+                }
+                SettingSpin {
+                    settings: page; key: "notificationDuration"
+                    Kirigami.FormData.label: Lang.i18n("Notifications stay:")
+                    enabled: page.cfg_showNotifications
+                    from: 1000; to: 20000; stepSize: 500
+                    unit: Lang.i18n("%1 s"); scale: 1000; decimals: 1
+                }
+            }
         }
 
+        // ---- dot mode ----------------------------------------------------------------
         Kirigami.Separator {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: Lang.i18n("Dot mode")
         }
-        QQC2.CheckBox {
-            id: dotModeCheck
+        RowLayout {
             Kirigami.FormData.label: Lang.i18n("Click:")
-            text: Lang.i18n("A click shrinks the island to a dot")
+            SettingCheck {
+                settings: page; key: "dotMode"
+                text: Lang.i18n("A click shrinks the island to a dot")
+            }
+            Kirigami.ContextualHelpButton {
+                toolTipText: Lang.i18n("Click the small island, use the button at the top of the open island, or right-click it. A click on the dot brings the pill back. Off: a click opens the island.")
+            }
         }
-        QQC2.Label {
-            textFormat: Text.PlainText
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
-            wrapMode: Text.Wrap
-            font: Kirigami.Theme.smallFont
-            text: Lang.i18n("Click the small island, use the button at the top of the open island, or right-click it. A click on the dot brings the pill back. Off: a click opens the island.")
-        }
-        QQC2.ComboBox {
-            id: dotStartCombo
-            Kirigami.FormData.label: Lang.i18n("Start as:")
-            enabled: dotModeCheck.checked
-            model: [Lang.i18n("As it was left"), Lang.i18n("Always the pill"), Lang.i18n("Always the dot")]
-        }
-        QQC2.SpinBox {
-            id: dotSizeSpin
-            Kirigami.FormData.label: Lang.i18n("Dot size:")
-            enabled: dotModeCheck.checked
-            from: 10
-            to: 28
-            textFromValue: (v) => Lang.i18n("%1 px", v)
-            valueFromText: (t) => parseInt(t)
-        }
-        QQC2.CheckBox {
-            id: dotHoverCheck
-            Kirigami.FormData.label: Lang.i18n("Hovering the dot:")
-            enabled: dotModeCheck.checked
-            text: Lang.i18n("Opens the island")
-        }
-        QQC2.ComboBox {
-            id: dotEventsCombo
-            Kirigami.FormData.label: Lang.i18n("Events in dot mode:")
-            enabled: dotModeCheck.checked
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
-            model: [Lang.i18n("Only the dot shows them"), Lang.i18n("Open for them, then back to the dot"), Lang.i18n("Show nothing")]
-        }
-        QQC2.CheckBox {
-            id: dotCriticalCheck
-            enabled: dotModeCheck.checked
-            text: Lang.i18n("Always open for critical events (incoming call, alarm, low battery)")
-        }
-
-        Kirigami.Separator {
-            Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: Lang.i18n("Modules")
+        // (only while dot mode is on: hidden otherwise, not greyed)
+        SettingsFold {
+            title: Lang.i18n("Dot mode details")
+            foldId: "general.dot"
+            twin: form
+            visible: page.cfg_dotMode
+            needs: "dotMode"
+            keys: ["dotStart", "dotSize", "dotHoverExpand", "dotEvents", "dotCriticalExpand"]
+            content: Kirigami.FormLayout {
+                SettingCombo {
+                    settings: page; key: "dotStart"
+                    Kirigami.FormData.label: Lang.i18n("Start as:")
+                    model: [Lang.i18n("As it was left"), Lang.i18n("Always the pill"), Lang.i18n("Always the dot")]
+                }
+                SettingSpin {
+                    settings: page; key: "dotSize"
+                    Kirigami.FormData.label: Lang.i18n("Dot size:")
+                    from: 10; to: 28
+                    unit: Lang.i18n("%1 px")
+                }
+                SettingCheck {
+                    settings: page; key: "dotHoverExpand"
+                    Kirigami.FormData.label: Lang.i18n("Hovering the dot:")
+                    text: Lang.i18n("Opens the island")
+                }
+                SettingCombo {
+                    settings: page; key: "dotEvents"
+                    Kirigami.FormData.label: Lang.i18n("Events in dot mode:")
+                    Layout.maximumWidth: Kirigami.Units.gridUnit * 22
+                    model: [Lang.i18n("Only the dot shows them"), Lang.i18n("Open for them, then back to the dot"), Lang.i18n("Show nothing")]
+                }
+                SettingCheck {
+                    settings: page; key: "dotCriticalExpand"
+                    text: Lang.i18n("Always open for critical events (incoming call, alarm, low battery)")
+                }
+            }
         }
 
-        QQC2.Label {
-            textFormat: Text.PlainText
-            Kirigami.FormData.label: Lang.i18n("Pages:")
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
-            wrapMode: Text.Wrap
-            text: Lang.i18n("Which pages are shown, in what order, and the parts inside them, is set in Layout.")
-        }
-        QQC2.ComboBox {
-            id: systemViewCombo
-            Kirigami.FormData.label: Lang.i18n("System view:")
-            model: [Lang.i18n("Fixed (5 cards)"), Lang.i18n("Dynamic (active metrics grow)")]
-        }
-
+        // ---- the rest ------------------------------------------------------------------
         Kirigami.Separator {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: Lang.i18n("New versions of the island")
         }
-        QQC2.ComboBox {
-            id: updateModeCombo
+        RowLayout {
             Kirigami.FormData.label: Lang.i18n("When there is one:")
-            model: [Lang.i18n("Never look"), Lang.i18n("Ask me"), Lang.i18n("Install by itself")]
+            SettingCombo {
+                settings: page; key: "updateMode"
+                model: [Lang.i18n("Never look"), Lang.i18n("Ask me"), Lang.i18n("Install by itself")]
+            }
+            Kirigami.ContextualHelpButton {
+                toolTipText: page.cfg_updateMode === 0 ? Lang.i18n("The island asks nobody about new versions. To update by hand: git pull in its folder, then ./install.sh.")
+                    : Lang.i18n("Once a day the island reads the newest version number from its repository on GitHub; nothing about you is sent. An update is fetched from there, built and installed for your user only, and keeps your settings. Installing needs the native module.")
+                      + (page.cfg_updateMode === 2 ? " " + Lang.i18n("By itself it installs without asking, and asks only before the desktop shell restarts.") : "")
+            }
         }
-        QQC2.Label {
-            textFormat: Text.PlainText
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
-            wrapMode: Text.Wrap
-            opacity: 0.7
-            text: updateModeCombo.currentIndex === 0 ? Lang.i18n("The island asks nobody about new versions. To update by hand: git pull in its folder, then ./install.sh.")
-                : Lang.i18n("Once a day the island reads the newest version number from its repository on GitHub; nothing about you is sent. An update is fetched from there, built and installed for your user only, and keeps your settings. Installing needs the native module.")
-                  + (updateModeCombo.currentIndex === 2 ? " " + Lang.i18n("By itself it installs without asking, and asks only before the desktop shell restarts.") : "")
+
+        SettingsFold {
+            foldId: "general.details"
+            twin: form
+            keys: ["preferredPlayer"]
+            content: Kirigami.FormLayout {
+                QQC2.TextField {
+                    objectName: "setting-preferredPlayer"
+                    Kirigami.FormData.label: Lang.i18n("Preferred player:")
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 16
+                    placeholderText: Lang.i18n("e.g. spotify, elisa, firefox (empty = automatic)")
+                    text: page.cfg_preferredPlayer
+                    onTextEdited: page.cfg_preferredPlayer = text
+                    Accessible.name: Lang.i18n("Preferred player:")
+                }
+            }
         }
     }
 }

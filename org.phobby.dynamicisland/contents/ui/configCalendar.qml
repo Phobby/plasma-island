@@ -18,16 +18,16 @@ import org.kde.kcmutils as KCM
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configCalendar" }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: cfg_language; restoreMode: Binding.RestoreNone }
 
-    property alias cfg_showCalendar: enableCheck.checked
     property alias cfg_calendarLeadMinutes: leadSpin.value
-    property alias cfg_calendarLingerMinutes: lingerSpin.value
+    property int cfg_calendarLingerMinutes
     property alias cfg_calendarShowAllDay: allDayCheck.checked
     property alias cfg_calendarSound: soundCheck.checked
-    property alias cfg_calendarRefreshMinutes: refreshSpin.value
+    property int cfg_calendarRefreshMinutes
     property string cfg_calendarSources: "[]"
     // Written by the widget after every download: { id: { t: ms, error } }
     property string cfg_calendarStatus: "{}"
@@ -108,52 +108,53 @@ KCM.SimpleKCM {
         spacing: Kirigami.Units.largeSpacing
 
         Kirigami.FormLayout {
+            id: form
             Layout.fillWidth: true
 
-            QQC2.CheckBox {
-                id: enableCheck
-                Kirigami.FormData.label: Lang.i18n("Calendar:")
-                text: Lang.i18n("Show upcoming events in the island")
-            }
             QQC2.SpinBox {
                 id: leadSpin
+                objectName: "setting-calendarLeadMinutes"
                 Kirigami.FormData.label: Lang.i18n("Pin before the event:")
-                enabled: enableCheck.checked
                 from: 1; to: 120
                 textFromValue: (v) => Lang.i18n("%1 min before", v)
                 valueFromText: (t) => parseInt(t)
-            }
-            QQC2.SpinBox {
-                id: lingerSpin
-                Kirigami.FormData.label: Lang.i18n("Keep after it ends:")
-                enabled: enableCheck.checked
-                from: 0; to: 120
-                textFromValue: (v) => Lang.i18n("%1 min", v)
-                valueFromText: (t) => parseInt(t)
+                Accessible.name: Lang.i18n("Pin before the event:")
             }
             QQC2.CheckBox {
                 id: soundCheck
+                objectName: "setting-calendarSound"
                 Kirigami.FormData.label: Lang.i18n("When an event starts:")
-                enabled: enableCheck.checked
                 text: Lang.i18n("Play the alarm sound (chosen in the Tools tab)")
             }
             QQC2.CheckBox {
                 id: allDayCheck
+                objectName: "setting-calendarShowAllDay"
                 Kirigami.FormData.label: Lang.i18n("Calendar page:")
-                enabled: enableCheck.checked
                 text: Lang.i18n("Show all-day events in the list")
             }
-            QQC2.SpinBox {
-                id: refreshSpin
-                Kirigami.FormData.label: Lang.i18n("Update calendars:")
-                enabled: enableCheck.checked
-                from: 1; to: 60
-                textFromValue: (v) => Lang.i18n("every %1 min", v)
-                valueFromText: (t) => parseInt(t)
+            SettingsFold {
+                foldId: "calendar.details"
+                twin: form
+                keys: ["calendarLingerMinutes", "calendarRefreshMinutes"]
+                content: Kirigami.FormLayout {
+                    SettingSpin {
+                        settings: page; key: "calendarLingerMinutes"
+                        Kirigami.FormData.label: Lang.i18n("Keep after it ends:")
+                        from: 0; to: 120
+                        unit: Lang.i18n("%1 min")
+                    }
+                    SettingSpin {
+                        settings: page; key: "calendarRefreshMinutes"
+                        Kirigami.FormData.label: Lang.i18n("Update calendars:")
+                        from: 1; to: 60
+                        unit: Lang.i18n("every %1 min")
+                    }
+                }
             }
         }
 
         Kirigami.Heading {
+            objectName: "setting-calendarSources"
             textFormat: Text.PlainText
             level: 4
             text: Lang.i18n("Connected calendars")

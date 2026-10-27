@@ -19,6 +19,7 @@ import "Habits.js" as Habits
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configHabits" }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
@@ -206,9 +207,11 @@ KCM.SimpleKCM {
                 Kirigami.FormData.label: Lang.i18n("Evening review")
             }
             RowLayout {
+                objectName: "setting-habitsReviewTime"
                 Kirigami.FormData.label: Lang.i18n("Time:")
                 QQC2.SpinBox {
                     id: hourSpin
+                    Accessible.name: Lang.i18n("Time:")
                     from: 0; to: 23
                     wrap: true
                     Binding { target: hourSpin; property: "value"; value: Math.floor(page.minutes / 60) }
@@ -228,19 +231,16 @@ KCM.SimpleKCM {
                     onValueModified: page.setTime(hourSpin.value, value)
                 }
             }
-            QQC2.CheckBox {
-                id: reminderCheck
+            RowLayout {
                 Kirigami.FormData.label: Lang.i18n("Reminder:")
-                text: Lang.i18n("Ask on the island how the day went")
-            }
-            QQC2.Label {
-                textFormat: Text.PlainText
-                Layout.fillWidth: true
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 22
-                wrapMode: Text.Wrap
-                font: Kirigami.Theme.smallFont
-                opacity: 0.7
-                text: Lang.i18n("If the computer is off, asleep or locked at that time, the question comes at the next start, wake-up or unlock and is still recorded for its own day. Only the latest missed day is asked; earlier ones can be filled in from the calendar. Without the reminder a dot on the Habits tab still shows that a day is not reviewed.")
+                QQC2.CheckBox {
+                    id: reminderCheck
+                    objectName: "setting-habitsReminder"
+                    text: Lang.i18n("Ask on the island how the day went")
+                }
+                Kirigami.ContextualHelpButton {
+                    toolTipText: Lang.i18n("If the computer is off, asleep or locked at that time, the question comes at the next start, wake-up or unlock and is still recorded for its own day. Only the latest missed day is asked; earlier ones can be filled in from the calendar. Without the reminder a dot on the Habits tab still shows that a day is not reviewed.")
+                }
             }
 
             Kirigami.Separator {
@@ -249,7 +249,9 @@ KCM.SimpleKCM {
             }
             QQC2.ComboBox {
                 id: colorCombo
+                objectName: "setting-habitsColorSource"
                 Kirigami.FormData.label: Lang.i18n("Colours:")
+                Accessible.name: Lang.i18n("Colours:") + " " + currentText
                 model: [Lang.i18n("GitHub green"), Lang.i18n("The system's accent colour")]
             }
 

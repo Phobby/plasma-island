@@ -1,0 +1,336 @@
+#!/usr/bin/env python3
+# settings-index — the search's list of every setting, made from the settings pages.
+#
+#   tools/settings-index           write contents/ui/SettingsIndex.qml anew
+#   tools/settings-index --check   fail (exit 1) when it is not as the pages say, or when a
+#                                  setting of main.xml can be reached neither by the search
+#                                  nor by a page (the "every setting can be reached" check)
+#   tools/settings-index --list    every entry: page, part, setting, name
+#
+# A setting on a page is a control named for it: `SettingCheck/Combo/Spin { key: "x" }`
+# or anything with `objectName: "setting-x"`. Its name is the first of its own
+# `Kirigami.FormData.label`, `text`, `title` or `Accessible.name` given as Lang.i18n("…"), else
+# its row's label; the part it is in is the SettingsFold around it (its `title`, its `needs`:
+# the switch that shows it). Parts of a page in a file of their own (NotchSettings.qml…) count
+# for the page that uses them. Everything in main.xml that no control is named for is either the
+# island's own state (STATE below) or edited through others (COVERED below); anything else fails.
+import re, sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent.parent
+UI = HERE / "org.phobby.dynamicisland" / "contents" / "ui"
+CONFIG = HERE / "org.phobby.dynamicisland" / "contents" / "config"
+OUT = UI / "SettingsIndex.qml"
+
+# What the island keeps for itself: never shown as a setting.
+STATE = {
+    "previewActive", "previewMode", "previewSource", "previewStyle", "previewTop", "previewOffsetX",
+    "previewFollowStyle", "systemScheme", "notchMode", "settingsSchema", "layoutNotice",
+    "notchFullscreen", "settingsJump", "notchPanelSeen", "scaleLimitSeen", "settingsKept",
+    "updateAsked", "installedVersion", "dotState", "updatesAnnounced", "timerEndsAt", "timerTotal",
+    "timerPausedRemaining", "stopwatchStartedAt", "stopwatchElapsed", "stopwatchLaps",
+    "pomodoroPhase", "pomodoroEndsAt", "pomodoroRound", "pomodoroStats", "alarmAt",
+    "calendarDismissed", "calendarStatus", "weatherAnnounced", "habitsData", "notesLastOpen",
+    "suggestionsAvailable", "suggestionsData", "aiAcknowledged", "cloudAlerted", "cloudLastTarget",
+    "darkColorScheme", "lightColorScheme", "alarmTime", "alarmLabel",
+    # earlier settings a custom look starts from (Styles.parse), or the first search starts from
+    "surfaceOpacity", "blurEnabled", "themeMode", "weatherPlaceName",
+}
+# Set on the island's own pages, where they are used, not in the window: the apps of the Apps
+# page (added there), the media page's glow switch.
+ISLAND = {"appShortcuts", "ambientGlow"}
+# Edited through other controls (the entries named here), not by a control of their own.
+COVERED = {
+    "customStyle": "look.", "followStyle": "look.", "styleProfiles": "look.profile",
+    "activeProfile": "look.profile", "horizontalOffset": "look.offsetX",
+    "catFurColor": "catFur",
+    "calendarSources": "calendarSources", "calendarAccount": "calendarSources",
+    "googleClientId": "calendarSources", "googleClientSecret": "calendarSources", "googleAccount": "calendarSources",
+    "notesDefault": "notesSources", "aiDefault": "aiSources", "cloudHidden": "cloudAliases",
+    "trackCommandsRemoved": "trackCommandsAdded", "controlOnColor": "controlTiles",
+    "controlOffColor": "controlTiles", "controlTileColors": "controlTiles", "appShortcuts": "appShortcuts",
+    "commandPaths": "commandPaths",
+    # the tabs' switches: the list of tabs (Tabs)
+    "showMediaModule": "pageOrder", "showSystemModule": "pageOrder", "showNotificationModule": "pageOrder",
+    "showQuickSettings": "pageOrder", "showTools": "pageOrder", "showCalendar": "pageOrder", "showNotes": "pageOrder",
+    "showClipboard": "pageOrder", "showWeather": "pageOrder", "showApps": "pageOrder", "showHabits": "pageOrder",
+    "showAi": "pageOrder", "showCloud": "pageOrder",
+}
+CONTROL = re.compile(r"^(Setting(?:Check|Combo|Spin))$")
+
+
+def strip(text):
+    """The text with strings and comments blanked (same length), so braces can be counted."""
+    out, i, n = [], 0, len(text)
+    while i < n:
+        c = text[i]
+        if c in "\"'":
+            j = i + 1
+            while j < n and text[j] != c:
+                j += 2 if text[j] == "\\" else 1
+            out.append(c + " " * (j - i - 1) + c)
+            i = j + 1
+        elif text.startswith("//", i):
+            j = text.find("\n", i)
+            j = n if j < 0 else j
+            out.append(" " * (j - i))
+            i = j
+        elif text.startswith("/*", i):
+            j = text.find("*/", i)
+            j = n if j < 0 else j + 2
+            out.append("".join(ch if ch == "\n" else " " for ch in text[i:j]))
+            i = j
+        else:
+            out.append(c)
+            i += 1
+    return "".join(out)
+
+
+class Block:
+    def __init__(self, kind, start, end, parent):
+        self.kind, self.start, self.end, self.parent, self.children = kind, start, end, parent, []
+
+
+def blocks(text):
+    """Every `Name {` … `}` of a QML file as a tree (kind: the type's name)."""
+    code = strip(text)
+    root = Block("", 0, len(text), None)
+    stack = [root]
+    for i, c in enumerate(code):
+        if c == "{":
+            head = code[max(0, code.rfind("\n", 0, i)):i]
+            m = re.search(r"([A-Za-z_][\w.]*)\s*$", head)
+            b = Block(m.group(1) if m else "", i, None, stack[-1])
+            stack[-1].children.append(b)
+            stack.append(b)
+        elif c == "}" and len(stack) > 1:
+            stack.pop().end = i
+    return root
+
+
+def own(text, b):
+    """The text of a block without its inner blocks (its own properties)."""
+    parts, at = [], b.start + 1
+    for c in b.children:
+        parts.append(text[at:c.start])
+        at = (c.end or c.start) + 1
+    parts.append(text[at:b.end])
+    return "".join(parts)
+
+
+def walk(b):
+    yield b
+    for c in b.children:
+        yield from walk(c)
+
+
+STRING = r'"((?:[^"\\]|\\.)*)"'
+
+
+def i18n(prop, body):
+    m = re.search(r"(?:^|[\s;{])" + re.escape(prop) + r"\s*:\s*Lang\.i18n\(\s*" + STRING, body)
+    return m.group(1) if m else None
+
+
+def name_of(text, b):
+    """(name, context): a control's own text (a check box's), with its row's label as the context;
+    else its label, its title, its accessible name; else its row's label."""
+    body = own(text, b)
+    row = i18n("Kirigami.FormData.label", body) or (i18n("Kirigami.FormData.label", own(text, b.parent)) if b.parent else None)
+    for prop in ("text", "title"):
+        found = i18n(prop, body)
+        if found:
+            return found, row if row != found else None
+    found = i18n("Kirigami.FormData.label", body) or i18n("Accessible.name", body) or row
+    return found, None
+
+
+def page_titles():
+    text = (CONFIG / "config.qml").read_text(encoding="utf-8")
+    out = []
+    for m in re.finditer(r"ConfigCategory\s*\{(.*?)\n    \}", text, re.S):
+        body = m.group(1)
+        title = re.search(r"name:\s*Lang\.i18n\(" + STRING, body)
+        source = re.search(r'source:\s*"(\w+)\.qml"', body)
+        if title and source:
+            out.append((source.group(1), title.group(1)))
+    return out
+
+
+def files_of(page):
+    """The page's file and the files of its parts (a type of contents/ui used in it that holds settings)."""
+    seen, todo = [], [page]
+    while todo:
+        name = todo.pop(0)
+        if name in seen:
+            continue
+        seen.append(name)
+        text = (UI / (name + ".qml")).read_text(encoding="utf-8")
+        for m in re.finditer(r"^\s*([A-Z]\w+)\s*\{", text, re.M):
+            part = m.group(1)
+            path = UI / (part + ".qml")
+            if part not in seen and not CONTROL.match(part) and path.exists() and re.search(r'setting-|key:\s*"', path.read_text(encoding="utf-8")):
+                todo.append(part)
+    return seen
+
+
+def entries():
+    out = []
+    for page, _title in page_titles():
+        for name in files_of(page):
+            text = (UI / (name + ".qml")).read_text(encoding="utf-8")
+            tree = blocks(text)
+            for b in walk(tree):
+                if b.end is None or b is tree:
+                    continue
+                body = own(text, b)
+                key = None
+                if CONTROL.match(b.kind):
+                    m = re.search(r'(?:^|[\s;{])key:\s*"(\w+)"', body)
+                    key = m.group(1) if m else None
+                m = re.search(r'objectName:\s*"setting-([\w.]+)"', body)
+                if m:
+                    key = m.group(1)
+                if not key:
+                    continue
+                label, context = name_of(text, b)
+                fold, needs = "", ""
+                for up in iter(lambda u=[b]: (u.__setitem__(0, u[0].parent) or u[0]), None):
+                    if up.kind == "SettingsFold":
+                        fbody = own(text, up)
+                        fold = i18n("title", fbody) or "Details"
+                        n = re.search(r'needs:\s*"(\w+)"', fbody)
+                        needs = n.group(1) if n else ""
+                        break
+                if needs == "":
+                    # (a control or a part shown only while a switch is on says which one: a SettingsFold's
+                    # `needs`, or a comment `(search needs: "key")` in it)
+                    n = re.search(r'needs:\s*"(\w+)"', body)
+                    needs = n.group(1) if n else ""
+                for up in iter(lambda u=[b]: (u.__setitem__(0, u[0].parent) or u[0]), None) if needs == "" else ():
+                    n = re.search(r'needs:\s*"(\w+)"', own(text, up))
+                    if n:
+                        needs = n.group(1)
+                        break
+                out.append({"key": key, "page": page, "label": label, "context": context, "fold": fold, "needs": needs, "file": name})
+    return out
+
+
+def qml_string(s):
+    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def render(found):
+    lines = []
+    for e in found:
+        label = "Lang.i18n(%s)" % qml_string(e["label"].replace('\\"', '"')) if e["label"] else qml_string(e["key"])
+        context = "Lang.i18n(%s)" % qml_string(e["context"].replace('\\"', '"')) if e["context"] else '""'
+        fold = "Lang.i18n(%s)" % qml_string(e["fold"]) if e["fold"] else '""'
+        lines.append('        { key: "%s", page: "%s", label: %s, context: %s, fold: %s, needs: "%s" }'
+                     % (e["key"], e["page"], label, context, fold, e["needs"]))
+    titles = ",\n".join('        %s: Lang.i18n(%s)' % (p, qml_string(t)) for p, t in page_titles())
+    return TEMPLATE % {"titles": titles, "entries": ",\n".join(lines)}
+
+
+TEMPLATE = """/*
+    SPDX-License-Identifier: GPL-2.0-or-later
+
+    Every setting of the settings window, for its search (SettingsSearch):
+    where it is (page, folding part), its name, and the switch that shows it
+    when it is only there while that is on (needs).
+
+    Made by tools/settings-index from the pages: do not change it by hand
+    (tools/run-tests fails while it differs from what the pages say).
+*/
+pragma Singleton
+import QtQuick
+
+QtObject {
+    id: index
+
+    // The pages, by file, with the names of the sidebar.
+    readonly property var pages: ({
+%(titles)s
+    })
+    readonly property var entries: [
+%(entries)s
+    ]
+
+    // Lower case, without accents and the Turkish dotted/dotless i told apart: "Görünüm" is found by "gorunum".
+    function fold(text: string): string {
+        return String(text).replace(/İ/g, "i").replace(/I/g, "i").replace(/ı/g, "i").toLowerCase()
+            .normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[:…]/g, "");
+    }
+    function where(entry: var): string {
+        const page = index.pages[entry.page] || entry.page;
+        return entry.fold.length > 0 ? page + " › " + entry.fold : page;
+    }
+    function name(entry: var): string {
+        const label = String(entry.label).replace(/:\\s*$/, "");
+        return entry.context.length > 0 ? String(entry.context).replace(/:\\s*$/, "") + ": " + label : label;
+    }
+    // The entries that have every word of `text` in their name or place, the best first:
+    // [{ key, page, label, where }].
+    function find(text: string, limit: int): var {
+        const words = fold(text).split(/\\s+/).filter(w => w.length > 0);
+        if (words.length === 0) return [];
+        const found = [];
+        for (const entry of index.entries) {
+            const label = fold(index.name(entry)), place = fold(index.where(entry)), all = label + " " + place + " " + fold(entry.key);
+            if (!words.every(w => all.indexOf(w) >= 0)) continue;
+            const rank = label.startsWith(words[0]) ? 0 : words.every(w => label.indexOf(w) >= 0) ? 1 : 2;
+            found.push({ rank: rank, key: entry.key, page: entry.page, needs: entry.needs, label: index.name(entry), where: index.where(entry) });
+        }
+        found.sort((a, b) => a.rank - b.rank);
+        return found.slice(0, limit > 0 ? limit : found.length);
+    }
+}
+"""
+
+
+def config_keys():
+    text = (CONFIG / "main.xml").read_text(encoding="utf-8")
+    return re.findall(r'<entry name="(\w+)"', text)
+
+
+def main():
+    found = entries()
+    text = render(found)
+    problems = []
+    named = {e["key"] for e in found}
+    for e in found:
+        if not e["label"]:
+            problems.append("%s: setting %s has no name (FormData.label, text, title or Accessible.name)" % (e["file"], e["key"]))
+    keys = config_keys()
+    unreachable = []
+    for k in keys:
+        if k in named or k in STATE or k in ISLAND:
+            continue
+        cover = COVERED.get(k)
+        if cover is not None and any(n == cover or (cover.endswith(".") and n.startswith(cover)) for n in named):
+            continue
+        unreachable.append(k)
+    if unreachable:
+        problems.append("settings no page shows: " + ", ".join(unreachable))
+    stale = [k for k in STATE if k not in keys]
+    if stale:
+        problems.append("tools/settings-index STATE names keys main.xml does not have: " + ", ".join(sorted(stale)))
+    settable = [k for k in keys if k not in STATE and k not in ISLAND]
+    if "--list" in sys.argv:
+        for e in found:
+            print("%-22s %-20s %-24s %s" % (e["page"], e["fold"] or "-", e["key"], e["label"]))
+    print("settings: %d keys in main.xml, %d the island's own state, %d set on the island's pages, %d set in the window: %d reachable; %d search entries on %d pages"
+          % (len(keys), len([k for k in keys if k in STATE]), len([k for k in keys if k in ISLAND]), len(settable), len(settable) - len(unreachable), len(found), len({e["page"] for e in found})))
+    if "--check" in sys.argv:
+        current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
+        if current != text:
+            problems.append("contents/ui/SettingsIndex.qml is not as the pages say: run tools/settings-index")
+    else:
+        OUT.write_text(text, encoding="utf-8")
+    for p in problems:
+        print("  " + p)
+    return 1 if problems else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -13,11 +13,11 @@ import org.kde.kcmutils as KCM
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configNotes" }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: cfg_language; restoreMode: Binding.RestoreNone }
 
-    property alias cfg_showNotes: enableCheck.checked
     property alias cfg_notesRefreshMinutes: refreshSpin.value
     property alias cfg_notesResume: resumeCheck.checked
     property string cfg_notesSources: "[]"
@@ -39,15 +39,12 @@ KCM.SimpleKCM {
 
         Kirigami.FormLayout {
             Layout.fillWidth: true
-            QQC2.CheckBox {
-                id: enableCheck
-                Kirigami.FormData.label: Lang.i18n("Notes:")
-                text: Lang.i18n("Show the Notes page in the island")
-            }
             QQC2.ComboBox {
                 id: defaultCombo
+                objectName: "setting-notesDefault"
                 Kirigami.FormData.label: Lang.i18n("Quick notes go to:")
-                enabled: enableCheck.checked && page.sources.length > 0
+                enabled: page.sources.length > 0
+                Accessible.name: Lang.i18n("Quick notes go to:") + " " + currentText
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 16
                 model: page.sources.map(s => page.label(s))
                 currentIndex: Math.max(0, page.sources.findIndex(s => s.id === page.cfg_notesDefault))
@@ -55,31 +52,29 @@ KCM.SimpleKCM {
             }
             QQC2.SpinBox {
                 id: refreshSpin
+                objectName: "setting-notesRefreshMinutes"
                 Kirigami.FormData.label: Lang.i18n("Fetch notes:")
-                enabled: enableCheck.checked
+                Accessible.name: Lang.i18n("Fetch notes:")
                 from: 1
                 to: 60
                 textFromValue: value => Lang.i18np("every minute", "every %1 minutes", value)
                 valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 1
             }
-            QQC2.CheckBox {
-                id: resumeCheck
+            RowLayout {
                 Kirigami.FormData.label: Lang.i18n("When the page opens:")
-                enabled: enableCheck.checked
-                text: Lang.i18n("Carry on in the note that was being edited")
-            }
-            QQC2.Label {
-                textFormat: Text.PlainText
-                Layout.fillWidth: true
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 22
-                wrapMode: Text.Wrap
-                font: Kirigami.Theme.smallFont
-                opacity: 0.7
-                text: Lang.i18n("Also after the island closed or the shell restarted, with the unsaved draft. Only which note it was is remembered, never its text. A locked note asks for its password each time; the password is never kept.")
+                QQC2.CheckBox {
+                    id: resumeCheck
+                    objectName: "setting-notesResume"
+                    text: Lang.i18n("Carry on in the note that was being edited")
+                }
+                Kirigami.ContextualHelpButton {
+                    toolTipText: Lang.i18n("Also after the island closed or the shell restarted, with the unsaved draft. Only which note it was is remembered, never its text. A locked note asks for its password each time; the password is never kept.")
+                }
             }
         }
 
         Kirigami.Heading {
+            objectName: "setting-notesSources"
             textFormat: Text.PlainText
             level: 4
             text: Lang.i18n("Connected notes apps")

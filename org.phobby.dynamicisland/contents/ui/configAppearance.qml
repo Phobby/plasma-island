@@ -21,12 +21,13 @@ import org.kde.plasma.plasmoid
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configAppearance" }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
 
     property int cfg_appearanceMode
-    property alias cfg_followSource: sourceCombo.currentIndex
+    property int cfg_followSource
     property string cfg_customStyle
     property string cfg_styleProfiles
     property string cfg_activeProfile
@@ -36,6 +37,7 @@ KCM.SimpleKCM {
     property int cfg_themeMode
     // Where the island sits while following the system (a custom style brings its own).
     property int cfg_topMargin
+    property bool cfg_avoidPanels
     // The layout: 0 = the notch (it sits at the top edge itself: the distance from it does not
     // apply), 1 = the oval layout. And the notch's own settings (NotchSettings.qml).
     property int cfg_islandLayout
@@ -85,8 +87,6 @@ KCM.SimpleKCM {
         next[key] = value;
         cfg_followStyle = JSON.stringify(next);
     }
-    // The Habits calendar: 0 = GitHub's greens, 1 = the system's accent colour (also in Habits).
-    property int cfg_habitsColorSource
 
     readonly property bool custom: cfg_appearanceMode === 1
     readonly property bool gradient: style.fill === "gradient"
@@ -374,6 +374,7 @@ KCM.SimpleKCM {
         id: check
         property bool on
         Binding { target: check; property: "checked"; value: check.on }
+        Accessible.name: text
     }
     component Choice: QQC2.ComboBox {
         id: choice
@@ -405,6 +406,7 @@ KCM.SimpleKCM {
             Layout.preferredWidth: Kirigami.Units.gridUnit * 12
             onMoved: row.moved(value)
             Binding { target: slider; property: "value"; value: row.value; when: !slider.pressed }
+            Accessible.name: row.Kirigami.FormData.label + " " + row.valueText
         }
         QQC2.Label {
             textFormat: Text.PlainText
@@ -421,9 +423,9 @@ KCM.SimpleKCM {
     Kirigami.FormLayout {
         id: layoutForm
         Layout.fillWidth: true
-        twinFormLayouts: [notchForm, fullscreenForm, lookForm]
+        twinFormLayouts: [notchForm, ovalForm, fullscreenForm, lookForm]
         RowLayout {
-            objectName: "islandLayoutChooser"
+            objectName: "setting-islandLayout"
             Kirigami.FormData.label: Lang.i18n("Layout:")
             spacing: Kirigami.Units.smallSpacing
             LayoutCard {
@@ -459,8 +461,8 @@ KCM.SimpleKCM {
             }
         }
         Hint {
-            text: page.notch ? Lang.i18n("The island hangs from the top edge of the screen as one piece, over a top panel, and opens downwards. Its own settings are right below.")
-                             : Lang.i18n("The rounded island of earlier versions, a little below the top edge. Its distance from the top, place, size and roundness are under Fine tuning.")
+            text: page.notch ? Lang.i18n("Hangs from the top edge as one piece, over a top panel, and opens downwards.")
+                             : Lang.i18n("The rounded island of earlier versions, a little below the top edge.")
         }
     }
     // ---- the notch's own settings ----------------------------------------------------------
@@ -469,16 +471,49 @@ KCM.SimpleKCM {
         objectName: "notchSettings"
         Layout.fillWidth: true
         visible: page.notch
-        twinFormLayouts: [layoutForm, fullscreenForm, lookForm]
+        twinFormLayouts: [layoutForm, ovalForm, fullscreenForm, lookForm]
         page: page
         shown: notchShown
+    }
+    // ---- where the oval island sits (the notch sits at the edge itself) --------------------------
+    Kirigami.FormLayout {
+        id: ovalForm
+        objectName: "ovalSettings"
+        Layout.fillWidth: true
+        visible: !page.notch
+        twinFormLayouts: [layoutForm, notchForm, fullscreenForm, lookForm]
+        Kirigami.Separator {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: Lang.i18n("Oval layout")
+        }
+        // (set in both looks: a custom style keeps its own, up to 40 px; following the system up to 200 px)
+        ValueSlider {
+            id: topSlider
+            objectName: "setting-topMargin"
+            // (search needs: "islandLayout": the oval one, 1)
+            readonly property int shown: page.look.top
+            Kirigami.FormData.label: Lang.i18n("Distance from top:")
+            from: 0; to: page.custom ? 40 : 200
+            value: shown
+            valueText: Lang.i18n("%1 px", shown)
+            onMoved: value => page.put("top", Math.round(value))
+        }
+        QQC2.CheckBox {
+            id: avoidPanelsCheck
+            objectName: "setting-avoidPanels"
+            // (search needs: "islandLayout": the oval one, 1)
+            text: Lang.i18n("Place below top panels")
+            Binding { target: avoidPanelsCheck; property: "checked"; value: page.cfg_avoidPanels }
+            onToggled: page.cfg_avoidPanels = checked
+            Accessible.name: text
+        }
     }
     // ---- over a window that fills the screen, both layouts ------------------------------------
     FullscreenSettings {
         id: fullscreenForm
         objectName: "fullscreenSettings"
         Layout.fillWidth: true
-        twinFormLayouts: [layoutForm, notchForm, lookForm]
+        twinFormLayouts: [layoutForm, notchForm, ovalForm, lookForm]
         // (labels beside or above their controls as in the section above it)
         wideMode: notchForm.visible ? notchForm.wideMode : layoutForm.wideMode
         page: page
@@ -487,53 +522,88 @@ KCM.SimpleKCM {
     Kirigami.FormLayout {
         id: lookForm
         Layout.fillWidth: true
-        twinFormLayouts: [layoutForm, notchForm, fullscreenForm]
+        twinFormLayouts: [layoutForm, notchForm, ovalForm, fullscreenForm]
         Kirigami.Separator {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: Lang.i18n("Look")
         }
         QQC2.ButtonGroup { id: modeGroup }
-        QQC2.RadioButton {
+        RowLayout {
+            objectName: "setting-appearanceMode"
             Kirigami.FormData.label: Lang.i18n("Look:")
-            QQC2.ButtonGroup.group: modeGroup
-            id: followRadio
-            text: Lang.i18n("Follow the system")
-            Binding { target: followRadio; property: "checked"; value: !page.custom }
-            onToggled: if (checked) page.cfg_appearanceMode = 0
-        }
-        Hint {
-            text: Lang.i18n("Background, text, border and accent colour come from Plasma and change with it at once: the colour scheme, dark and light, the accent colour. The colours below do not apply; opacity, blur, place, size, roundness, border and shadow under Fine tuning can still be set.")
+            QQC2.RadioButton {
+                QQC2.ButtonGroup.group: modeGroup
+                id: followRadio
+                text: Lang.i18n("Follow the system")
+                Binding { target: followRadio; property: "checked"; value: !page.custom }
+                onToggled: if (checked) page.cfg_appearanceMode = 0
+            }
+            QQC2.RadioButton {
+                QQC2.ButtonGroup.group: modeGroup
+                id: customRadio
+                text: Lang.i18n("Custom")
+                Binding { target: customRadio; property: "checked"; value: page.custom }
+                onToggled: if (checked) page.cfg_appearanceMode = 1
+            }
+            Kirigami.ContextualHelpButton {
+                toolTipText: page.custom ? Lang.i18n("The island keeps the look set below, whatever the system's theme is.")
+                    : Lang.i18n("Background, text, border and accent colour come from Plasma and change with it at once: the colour scheme, dark and light, the accent colour. The colours below do not apply; opacity, blur, place, size, roundness, border and shadow under Fine tuning can still be set.")
+            }
         }
         QQC2.ComboBox {
             id: sourceCombo
+            objectName: "setting-followSource"
             Kirigami.FormData.label: Lang.i18n("Colours from:")
-            enabled: !page.custom
+            visible: !page.custom
             model: [Lang.i18n("The colour scheme (like applications)"), Lang.i18n("The Plasma style (like the panel)")]
+            Binding { target: sourceCombo; property: "currentIndex"; value: page.cfg_followSource }
+            onActivated: index => page.cfg_followSource = index
+            Accessible.name: Lang.i18n("Colours from:") + " " + currentText
         }
         Hint {
             visible: !page.custom && sourceCombo.currentIndex === 0 && page.systemScheme === null
             text: Lang.i18n("The colour scheme can only be read with the native helper; the Plasma style's colours are used instead.")
         }
-        QQC2.RadioButton {
-            QQC2.ButtonGroup.group: modeGroup
-            id: customRadio
-            text: Lang.i18n("Custom")
-            Binding { target: customRadio; property: "checked"; value: page.custom }
-            onToggled: if (checked) page.cfg_appearanceMode = 1
+        ValueSlider {
+            id: sizeSlider
+            objectName: "setting-look.scale"
+            Kirigami.FormData.label: Lang.i18n("Size:")
+            from: Styles.scaleMin; to: Styles.scaleMax
+            stepSize: 5
+            value: page.look.scale
+            valueText: Lang.percent(page.look.scale)
+            widestText: Lang.percent(Styles.scaleMax)
+            // (in steps of 5; the island's own size, 100 %, is one of them)
+            onMoved: value => page.put("scale", Math.round(value / 5) * 5)
         }
-        Hint {
-            text: Lang.i18n("The island keeps the look set below, whatever the system's theme is.")
+        Kirigami.InlineMessage {
+            objectName: "screenLimitMessage"
+            Layout.fillWidth: true
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+            visible: page.cfg_scaleLimitSeen > 0 && page.look.scale > page.cfg_scaleLimitSeen
+            type: Kirigami.MessageType.Information
+            text: Lang.i18n("Screen limit reached: the open island fits this screen up to %1, so it is shown at that size.", Lang.percent(page.cfg_scaleLimitSeen))
+        }
+        ValueSlider {
+            objectName: "setting-look.opacity"
+            Kirigami.FormData.label: Lang.i18n("Opacity:")
+            from: 0; to: 100
+            value: page.look.opacity
+            valueText: Lang.percent(page.look.opacity)
+            onMoved: value => page.put("opacity", Math.round(value))
         }
 
-        // ---- presets ---------------------------------------------------------------
+        // ---- presets (a custom look only: hidden while following the system) ------------------
         Kirigami.Separator {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: Lang.i18n("Ready-made looks")
+            visible: page.custom
         }
         // Themes from files and from the store join the list below.
         RowLayout {
             Layout.fillWidth: true
             Layout.maximumWidth: Kirigami.Units.gridUnit * 30
+            visible: page.custom
             // (without the native module theme files cannot be read or written: said once, briefly; how to get it in Diagnostics)
             RequirementNotice {
                 visible: !library.available
@@ -542,18 +612,19 @@ KCM.SimpleKCM {
             }
             Item { Layout.fillWidth: true; visible: library.available }
             QQC2.Button {
-                enabled: page.custom && library.available
+                enabled: library.available
                 icon.name: "list-add"
                 text: Lang.i18n("Add New…")
                 onClicked: addDialog.open()
             }
         }
         Flow {
+            objectName: "setting-look.preset"
             Layout.fillWidth: true
             Layout.maximumWidth: Kirigami.Units.gridUnit * 30
             spacing: Kirigami.Units.smallSpacing
-            enabled: page.custom
-            opacity: enabled ? 1 : 0.45
+            visible: page.custom
+            Accessible.name: Lang.i18n("Ready-made looks")
             Repeater {
                 model: Styles.order
                 delegate: LookCard {
@@ -593,329 +664,292 @@ KCM.SimpleKCM {
             }
         }
         RowLayout {
+            visible: page.custom
             QQC2.Button {
-                enabled: page.custom && !Styles.same(page.style, Styles.defaults(page.style.preset))
+                enabled: !Styles.same(page.style, Styles.defaults(page.style.preset))
                 icon.name: "edit-undo"
                 text: Lang.i18n("Reset to the preset")
                 onClicked: page.use(Styles.defaults(page.style.preset))
             }
             QQC2.Button {
-                enabled: page.custom && library.available
+                enabled: library.available
                 icon.name: "document-export"
                 text: Lang.i18n("Export Theme…")
                 onClicked: exportDialog.open()
             }
         }
 
-        // ---- profiles ---------------------------------------------------------------
-        Kirigami.Separator {
-            Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: Lang.i18n("Saved looks")
-        }
-        RowLayout {
-            Kirigami.FormData.label: Lang.i18n("Profile:")
-            enabled: page.custom
-            Choice {
-                id: profileCombo
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 10
-                enabled: page.profiles.length > 0
-                model: page.profiles.map(p => p.name)
-                index: page.profiles.findIndex(p => p.name === page.cfg_activeProfile)
-                displayText: currentIndex < 0 ? (page.profiles.length > 0 ? Lang.i18n("Choose…") : Lang.i18n("None saved yet"))
-                           : page.profileChanged ? Lang.i18n("%1 (changed)", currentText) : currentText
-                onActivated: page.loadProfile(currentText)
-            }
-            QQC2.Button {
-                visible: page.profileChanged
-                icon.name: "document-save"
-                text: Lang.i18n("Update")
-                onClicked: page.saveProfile(page.cfg_activeProfile)
-            }
-            QQC2.Button {
-                enabled: page.activeProfile !== null
-                icon.name: "edit-delete"
-                text: Lang.i18n("Delete")
-                onClicked: page.deleteProfile(page.cfg_activeProfile)
-            }
-        }
-        RowLayout {
-            Kirigami.FormData.label: Lang.i18n("Save as:")
-            enabled: page.custom
-            QQC2.TextField {
-                id: profileName
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 10
-                placeholderText: Lang.i18n("e.g. Work, Night")
-                onAccepted: saveButton.clicked()
-            }
-            QQC2.Button {
-                id: saveButton
-                enabled: profileName.text.trim().length > 0
-                icon.name: "document-save-as"
-                text: Lang.i18n("Save")
-                onClicked: { page.saveProfile(profileName.text); profileName.text = ""; }
+        // ---- profiles (a custom look only) ---------------------------------------------------
+        SettingsFold {
+            title: Lang.i18n("Saved looks")
+            foldId: "appearance.profiles"
+            twin: lookForm
+            visible: page.custom
+            needs: "appearanceMode"
+            keys: ["look.profile"]
+            content: Kirigami.FormLayout {
+                RowLayout {
+                    Kirigami.FormData.label: Lang.i18n("Profile:")
+                    Choice {
+                        id: profileCombo
+                        objectName: "setting-look.profile"
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 10
+                        enabled: page.profiles.length > 0
+                        model: page.profiles.map(p => p.name)
+                        index: page.profiles.findIndex(p => p.name === page.cfg_activeProfile)
+                        displayText: currentIndex < 0 ? (page.profiles.length > 0 ? Lang.i18n("Choose…") : Lang.i18n("None saved yet"))
+                                   : page.profileChanged ? Lang.i18n("%1 (changed)", currentText) : currentText
+                        onActivated: page.loadProfile(currentText)
+                        Accessible.name: Lang.i18n("Profile:") + " " + displayText
+                    }
+                    QQC2.Button {
+                        visible: page.profileChanged
+                        icon.name: "document-save"
+                        text: Lang.i18n("Update")
+                        onClicked: page.saveProfile(page.cfg_activeProfile)
+                    }
+                    QQC2.Button {
+                        enabled: page.activeProfile !== null
+                        icon.name: "edit-delete"
+                        text: Lang.i18n("Delete")
+                        onClicked: page.deleteProfile(page.cfg_activeProfile)
+                    }
+                }
+                RowLayout {
+                    Kirigami.FormData.label: Lang.i18n("Save as:")
+                    QQC2.TextField {
+                        id: profileName
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 10
+                        placeholderText: Lang.i18n("e.g. Work, Night")
+                        onAccepted: saveButton.clicked()
+                        Accessible.name: Lang.i18n("Save as:")
+                    }
+                    QQC2.Button {
+                        id: saveButton
+                        enabled: profileName.text.trim().length > 0
+                        icon.name: "document-save-as"
+                        text: Lang.i18n("Save")
+                        onClicked: { page.saveProfile(profileName.text); profileName.text = ""; }
+                    }
+                }
             }
         }
 
         // ---- fine tuning ---------------------------------------------------------------
-        Kirigami.Separator {
-            Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: Lang.i18n("Fine tuning")
-        }
-        ValueSlider {
-            objectName: "opacitySlider"
-            Kirigami.FormData.label: Lang.i18n("Opacity:")
-            from: 0; to: 100
-            value: page.look.opacity
-            valueText: Lang.percent(page.look.opacity)
-            onMoved: value => page.put("opacity", Math.round(value))
-        }
-        RowLayout {
-            Kirigami.FormData.label: Lang.i18n("Blur:")
-            Check {
-                text: Lang.i18n("Blur what is behind the island")
-                on: page.look.blur
-                onToggled: page.put("blur", checked)
+        SettingsFold {
+            title: Lang.i18n("Fine tuning")
+            foldId: "appearance.tuning"
+            twin: lookForm
+            keys: ["look.blur", "look.offsetX", "look.radius", "look.background", "look.gradient", "look.control",
+                   "look.buttonFill", "look.text", "look.border", "look.shadow"]
+            content: Kirigami.FormLayout {
+                RowLayout {
+                    objectName: "setting-look.blur"
+                    Kirigami.FormData.label: Lang.i18n("Blur:")
+                    Check {
+                        text: Lang.i18n("Blur what is behind the island")
+                        on: page.look.blur
+                        onToggled: page.put("blur", checked)
+                    }
+                    Choice {
+                        enabled: page.look.blur
+                        model: [Lang.i18n("Low"), Lang.i18n("Medium"), Lang.i18n("High")]
+                        index: page.look.blurLevel
+                        onActivated: page.put("blurLevel", currentIndex)
+                        Accessible.name: Lang.i18n("Blur:") + " " + currentText
+                    }
+                    Kirigami.ContextualHelpButton {
+                        toolTipText: Lang.i18n("Needs the optional native helper and the KWin Blur effect. How strongly KWin blurs is one setting for the whole desktop (System Settings → Desktop Effects → Blur); the level here adds frosting over it.")
+                    }
+                }
+                ValueSlider {
+                    id: offsetSlider
+                    objectName: "setting-look.offsetX"
+                    readonly property int shown: page.look.offsetX
+                    Kirigami.FormData.label: Lang.i18n("Horizontal position:")
+                    from: -100; to: 100
+                    value: shown
+                    valueText: shown === 0 ? Lang.i18n("Centred") : Lang.i18n("%1 px", (shown > 0 ? "+" : "") + shown)
+                    onMoved: value => page.put("offsetX", Math.abs(value) < 4 ? 0 : Math.round(value))
+                }
+                ValueSlider {
+                    objectName: "setting-look.radius"
+                    Kirigami.FormData.label: Lang.i18n("Corner roundness:")
+                    from: 0; to: 100
+                    value: page.look.radius
+                    valueText: page.look.radius === 100 ? Lang.i18n("Capsule") : page.look.radius === 0 ? Lang.i18n("Sharp") : Lang.percent(page.look.radius)
+                    onMoved: value => page.put("radius", Math.round(value))
+                }
+                // (the colours: a custom look only, hidden while following the system)
+                RowLayout {
+                    objectName: "setting-look.background"
+                    Kirigami.FormData.label: Lang.i18n("Background:")
+                    visible: page.custom
+                    Choice {
+                        model: [Lang.i18n("Solid colour"), Lang.i18n("Gradient")]
+                        index: page.gradient ? 1 : 0
+                        onActivated: page.set("fill", currentIndex === 1 ? "gradient" : "solid")
+                        Accessible.name: Lang.i18n("Background:") + " " + currentText
+                    }
+                    Swatch {
+                        visible: !page.gradient
+                        enabled: page.style.background !== "accent"
+                        value: page.style.background === "accent" ? shown.systemAccent : page.style.background
+                        onPicked: hex => page.set("background", hex)
+                    }
+                    Check {
+                        visible: !page.gradient
+                        text: Lang.i18n("Use the system's accent colour")
+                        on: page.style.background === "accent"
+                        onToggled: page.set("background", checked ? "accent" : page.hex(shown.systemAccent))
+                    }
+                }
+                RowLayout {
+                    objectName: "setting-look.gradient"
+                    Kirigami.FormData.label: Lang.i18n("Gradient colours:")
+                    visible: page.custom && page.gradient
+                    // Three buttons that stay, not a Repeater: delegates that go away while
+                    // this row is hidden (a solid look is chosen) crash the layout.
+                    Swatch {
+                        value: page.style.gradientStops[0]
+                        onPicked: hex => page.setStop(0, hex)
+                    }
+                    Swatch {
+                        visible: page.style.gradientStops.length === 3
+                        value: page.style.gradientStops[1]
+                        onPicked: hex => page.setStop(1, hex)
+                    }
+                    Swatch {
+                        value: page.style.gradientStops[page.style.gradientStops.length - 1]
+                        onPicked: hex => page.setStop(page.style.gradientStops.length - 1, hex)
+                    }
+                    Check {
+                        text: Lang.i18n("Three colours")
+                        on: page.style.gradientStops.length === 3
+                        onToggled: page.setThirdStop(checked)
+                    }
+                }
+                RowLayout {
+                    Kirigami.FormData.label: Lang.i18n("Gradient type:")
+                    visible: page.custom && page.gradient
+                    Choice {
+                        model: [Lang.i18n("Linear"), Lang.i18n("Radial (from the middle)")]
+                        index: page.style.gradientType === "radial" ? 1 : 0
+                        onActivated: page.set("gradientType", currentIndex === 1 ? "radial" : "linear")
+                        Accessible.name: Lang.i18n("Gradient type:") + " " + currentText
+                    }
+                }
+                ValueSlider {
+                    Kirigami.FormData.label: Lang.i18n("Gradient angle:")
+                    visible: page.custom && page.gradient
+                    enabled: page.style.gradientType === "linear"
+                    from: 0; to: 360
+                    stepSize: 5
+                    value: page.style.gradientAngle
+                    valueText: Lang.i18n("%1°", page.style.gradientAngle)
+                    onMoved: value => page.set("gradientAngle", Math.round(value))
+                }
+                Kirigami.InlineMessage {
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+                    visible: page.custom && shown.gradientUneven
+                    type: Kirigami.MessageType.Warning
+                    text: Lang.i18n("This gradient has both very light and very dark parts: one text colour cannot be read well on all of it (the weakest contrast is %1:1). Bring the colours closer in brightness, or set the text colour yourself.", shown.gradientContrast.toFixed(1))
+                }
+                RowLayout {
+                    objectName: "setting-look.control"
+                    Kirigami.FormData.label: Lang.i18n("Buttons and controls:")
+                    visible: page.custom
+                    Swatch {
+                        enabled: page.style.control !== "accent"
+                        value: shown.controlGiven
+                        onPicked: hex => page.set("control", hex)
+                    }
+                    Check {
+                        text: Lang.i18n("Use the system's accent colour")
+                        on: page.style.control === "accent"
+                        onToggled: page.set("control", checked ? "accent" : page.hex(shown.controlGiven))
+                    }
+                }
+                RowLayout {
+                    objectName: "setting-look.buttonFill"
+                    Kirigami.FormData.label: Lang.i18n("Button colour:")
+                    visible: page.custom
+                    Swatch {
+                        objectName: "buttonFillSwatch"
+                        enabled: page.style.buttonFill.length > 0
+                        value: shown.faint
+                        onPicked: hex => page.set("buttonFill", hex)
+                    }
+                    Check {
+                        objectName: "buttonFillAutomatic"
+                        text: Lang.i18n("Automatic (a hint of the text colour)")
+                        on: page.style.buttonFill.length === 0
+                        onToggled: page.set("buttonFill", checked ? "" : page.hex(shown.over(shown.faint, shown.surface)))
+                    }
+                    Kirigami.ContextualHelpButton {
+                        toolTipText: Lang.i18n("The fill of the island's buttons, tiles and cards. A colour set here is made lighter or darker as far as the text on it needs to stay readable. Buttons and controls above is the colour of what is chosen or switched on.")
+                    }
+                }
+                RowLayout {
+                    objectName: "setting-look.text"
+                    Kirigami.FormData.label: Lang.i18n("Text colour:")
+                    visible: page.custom
+                    Swatch {
+                        enabled: page.style.text.length > 0
+                        value: shown.text
+                        onPicked: hex => page.set("text", hex)
+                    }
+                    Check {
+                        text: Lang.i18n("Automatic (readable on the background)")
+                        on: page.style.text.length === 0
+                        onToggled: page.set("text", checked ? "" : page.hex(shown.text))
+                    }
+                }
+                // (the look's border and shadow: not the notch's, which has a border of its own)
+                RowLayout {
+                    objectName: "setting-look.border"
+                    Kirigami.FormData.label: Lang.i18n("Border:")
+                    visible: !page.notch
+                    Check {
+                        text: Lang.i18n("Show")
+                        on: page.look.border
+                        onToggled: page.put("border", checked)
+                    }
+                    QQC2.SpinBox {
+                        enabled: page.look.border
+                        id: widthSpin
+                        from: 1; to: 4
+                        Binding { target: widthSpin; property: "value"; value: page.look.borderWidth }
+                        textFromValue: v => Lang.i18n("%1 px", v)
+                        valueFromText: t => parseInt(t)
+                        onValueModified: page.put("borderWidth", value)
+                        Accessible.name: Lang.i18n("Border:")
+                    }
+                }
+                RowLayout {
+                    visible: !page.notch && page.custom && page.style.border
+                    Swatch {
+                        enabled: page.style.borderColor.length > 0
+                        value: Qt.rgba(shown.rimTop.r, shown.rimTop.g, shown.rimTop.b, 1)
+                        onPicked: hex => page.set("borderColor", hex)
+                    }
+                    Check {
+                        text: Lang.i18n("The look's own border colour")
+                        on: page.style.borderColor.length === 0
+                        onToggled: page.set("borderColor", checked ? "" : page.hex(shown.rimTop))
+                    }
+                }
+                Choice {
+                    objectName: "setting-look.shadow"
+                    Kirigami.FormData.label: Lang.i18n("Shadow:")
+                    visible: !page.notch
+                    model: [Lang.i18n("None"), Lang.i18n("Light"), Lang.i18n("Strong")]
+                    index: page.look.shadow
+                    onActivated: page.put("shadow", currentIndex)
+                    Accessible.name: Lang.i18n("Shadow:") + " " + currentText
+                }
             }
-            Choice {
-                enabled: page.look.blur
-                model: [Lang.i18n("Low"), Lang.i18n("Medium"), Lang.i18n("High")]
-                index: page.look.blurLevel
-                onActivated: page.put("blurLevel", currentIndex)
-            }
-        }
-        Hint {
-            text: Lang.i18n("Needs the optional native helper and the KWin Blur effect. How strongly KWin blurs is one setting for the whole desktop (System Settings → Desktop Effects → Blur); the level here adds frosting over it.")
-        }
-        // What follows is set in both looks (page.look, page.put): a custom style keeps its own,
-        // following the system has settings of its own (the distance is General's, up to 200 px there).
-        ValueSlider {
-            id: topSlider
-            objectName: "topSlider"
-            readonly property int shown: page.look.top
-            Kirigami.FormData.label: Lang.i18n("Distance from top:")
-            enabled: !page.notch
-            from: 0; to: page.custom ? 40 : 200
-            value: shown
-            valueText: Lang.i18n("%1 px", shown)
-            onMoved: value => page.put("top", Math.round(value))
-        }
-        Hint {
-            visible: page.notch
-            text: Lang.i18n("Oval layout only: in the notch layout the island sits at the top edge itself.")
-        }
-        ValueSlider {
-            id: offsetSlider
-            objectName: "offsetSlider"
-            readonly property int shown: page.look.offsetX
-            Kirigami.FormData.label: Lang.i18n("Horizontal position:")
-            from: -100; to: 100
-            value: shown
-            valueText: shown === 0 ? Lang.i18n("Centred") : Lang.i18n("%1 px", (shown > 0 ? "+" : "") + shown)
-            onMoved: value => page.put("offsetX", Math.abs(value) < 4 ? 0 : Math.round(value))
-        }
-        ValueSlider {
-            id: sizeSlider
-            objectName: "sizeSlider"
-            Kirigami.FormData.label: Lang.i18n("Size:")
-            from: Styles.scaleMin; to: Styles.scaleMax
-            stepSize: 5
-            value: page.look.scale
-            valueText: Lang.percent(page.look.scale)
-            widestText: Lang.percent(Styles.scaleMax)
-            // (in steps of 5; the island's own size, 100 %, is one of them)
-            onMoved: value => page.put("scale", Math.round(value / 5) * 5)
-        }
-        Hint {
-            text: Lang.i18n("%1 to %2. The island grows as a whole: the small notch or pill, the open island and its pages, the cat. This window stays as it is.",
-                            Lang.percent(Styles.scaleMin), Lang.percent(Styles.scaleMax))
-        }
-        Kirigami.InlineMessage {
-            objectName: "screenLimitMessage"
-            Layout.fillWidth: true
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-            visible: page.cfg_scaleLimitSeen > 0 && page.look.scale > page.cfg_scaleLimitSeen
-            type: Kirigami.MessageType.Information
-            text: Lang.i18n("Screen limit reached: the open island fits this screen up to %1, so it is shown at that size.", Lang.percent(page.cfg_scaleLimitSeen))
-        }
-        ValueSlider {
-            objectName: "radiusSlider"
-            Kirigami.FormData.label: Lang.i18n("Corner roundness:")
-            from: 0; to: 100
-            value: page.look.radius
-            valueText: page.look.radius === 100 ? Lang.i18n("Capsule") : page.look.radius === 0 ? Lang.i18n("Sharp") : Lang.percent(page.look.radius)
-            onMoved: value => page.put("radius", Math.round(value))
-        }
-        RowLayout {
-            Kirigami.FormData.label: Lang.i18n("Background:")
-            enabled: page.custom
-            Choice {
-                model: [Lang.i18n("Solid colour"), Lang.i18n("Gradient")]
-                index: page.gradient ? 1 : 0
-                onActivated: page.set("fill", currentIndex === 1 ? "gradient" : "solid")
-            }
-            Swatch {
-                visible: !page.gradient
-                enabled: page.style.background !== "accent"
-                value: page.style.background === "accent" ? shown.systemAccent : page.style.background
-                onPicked: hex => page.set("background", hex)
-            }
-            Check {
-                visible: !page.gradient
-                text: Lang.i18n("Use the system's accent colour")
-                on: page.style.background === "accent"
-                onToggled: page.set("background", checked ? "accent" : page.hex(shown.systemAccent))
-            }
-        }
-        RowLayout {
-            Kirigami.FormData.label: Lang.i18n("Gradient colours:")
-            visible: page.gradient
-            enabled: page.custom
-            // Three buttons that stay, not a Repeater: delegates that go away while
-            // this row is hidden (a solid look is chosen) crash the layout.
-            Swatch {
-                value: page.style.gradientStops[0]
-                onPicked: hex => page.setStop(0, hex)
-            }
-            Swatch {
-                visible: page.style.gradientStops.length === 3
-                value: page.style.gradientStops[1]
-                onPicked: hex => page.setStop(1, hex)
-            }
-            Swatch {
-                value: page.style.gradientStops[page.style.gradientStops.length - 1]
-                onPicked: hex => page.setStop(page.style.gradientStops.length - 1, hex)
-            }
-            Check {
-                text: Lang.i18n("Three colours")
-                on: page.style.gradientStops.length === 3
-                onToggled: page.setThirdStop(checked)
-            }
-        }
-        RowLayout {
-            Kirigami.FormData.label: Lang.i18n("Gradient type:")
-            visible: page.gradient
-            enabled: page.custom
-            Choice {
-                model: [Lang.i18n("Linear"), Lang.i18n("Radial (from the middle)")]
-                index: page.style.gradientType === "radial" ? 1 : 0
-                onActivated: page.set("gradientType", currentIndex === 1 ? "radial" : "linear")
-            }
-        }
-        ValueSlider {
-            Kirigami.FormData.label: Lang.i18n("Gradient angle:")
-            visible: page.gradient
-            enabled: page.custom && page.style.gradientType === "linear"
-            from: 0; to: 360
-            stepSize: 5
-            value: page.style.gradientAngle
-            valueText: Lang.i18n("%1°", page.style.gradientAngle)
-            onMoved: value => page.set("gradientAngle", Math.round(value))
-        }
-        Kirigami.InlineMessage {
-            Layout.fillWidth: true
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-            visible: page.custom && shown.gradientUneven
-            type: Kirigami.MessageType.Warning
-            text: Lang.i18n("This gradient has both very light and very dark parts: one text colour cannot be read well on all of it (the weakest contrast is %1:1). Bring the colours closer in brightness, or set the text colour yourself.", shown.gradientContrast.toFixed(1))
-        }
-        RowLayout {
-            Kirigami.FormData.label: Lang.i18n("Buttons and controls:")
-            enabled: page.custom
-            Swatch {
-                enabled: page.style.control !== "accent"
-                value: shown.controlGiven
-                onPicked: hex => page.set("control", hex)
-            }
-            Check {
-                text: Lang.i18n("Use the system's accent colour")
-                on: page.style.control === "accent"
-                onToggled: page.set("control", checked ? "accent" : page.hex(shown.controlGiven))
-            }
-        }
-        RowLayout {
-            objectName: "buttonFillRow"
-            Kirigami.FormData.label: Lang.i18n("Button colour:")
-            enabled: page.custom
-            Swatch {
-                objectName: "buttonFillSwatch"
-                enabled: page.style.buttonFill.length > 0
-                value: shown.faint
-                onPicked: hex => page.set("buttonFill", hex)
-            }
-            Check {
-                objectName: "buttonFillAutomatic"
-                text: Lang.i18n("Automatic (a hint of the text colour)")
-                on: page.style.buttonFill.length === 0
-                onToggled: page.set("buttonFill", checked ? "" : page.hex(shown.over(shown.faint, shown.surface)))
-            }
-        }
-        Hint {
-            text: Lang.i18n("The fill of the island's buttons, tiles and cards. A colour set here is made lighter or darker as far as the text on it needs to stay readable. Buttons and controls above is the colour of what is chosen or switched on.")
-        }
-        RowLayout {
-            Kirigami.FormData.label: Lang.i18n("Text colour:")
-            enabled: page.custom
-            Swatch {
-                enabled: page.style.text.length > 0
-                value: shown.text
-                onPicked: hex => page.set("text", hex)
-            }
-            Check {
-                text: Lang.i18n("Automatic (readable on the background)")
-                on: page.style.text.length === 0
-                onToggled: page.set("text", checked ? "" : page.hex(shown.text))
-            }
-        }
-        RowLayout {
-            Kirigami.FormData.label: Lang.i18n("Border:")
-            Check {
-                text: Lang.i18n("Show")
-                on: page.look.border
-                onToggled: page.put("border", checked)
-            }
-            QQC2.SpinBox {
-                enabled: page.look.border
-                id: widthSpin
-                from: 1; to: 4
-                Binding { target: widthSpin; property: "value"; value: page.look.borderWidth }
-                textFromValue: v => Lang.i18n("%1 px", v)
-                valueFromText: t => parseInt(t)
-                onValueModified: page.put("borderWidth", value)
-            }
-        }
-        RowLayout {
-            enabled: page.custom && page.style.border
-            Swatch {
-                enabled: page.style.borderColor.length > 0
-                value: Qt.rgba(shown.rimTop.r, shown.rimTop.g, shown.rimTop.b, 1)
-                onPicked: hex => page.set("borderColor", hex)
-            }
-            Check {
-                text: Lang.i18n("The look's own border colour")
-                on: page.style.borderColor.length === 0
-                onToggled: page.set("borderColor", checked ? "" : page.hex(shown.rimTop))
-            }
-        }
-        Choice {
-            Kirigami.FormData.label: Lang.i18n("Shadow:")
-            model: [Lang.i18n("None"), Lang.i18n("Light"), Lang.i18n("Strong")]
-            index: page.look.shadow
-            onActivated: page.put("shadow", currentIndex)
-        }
-
-        // ---- the Habits calendar (whatever the look above is) -------------------------
-        Kirigami.Separator {
-            Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: Lang.i18n("Habits")
-        }
-        Check {
-            Kirigami.FormData.label: Lang.i18n("Calendar:")
-            text: Lang.i18n("Use the system's accent colour")
-            on: page.cfg_habitsColorSource === 1
-            onToggled: page.cfg_habitsColorSource = checked ? 1 : 0
-        }
-        Hint {
-            text: Lang.i18n("The days of the Habits calendar are shaded in GitHub's green otherwise.")
         }
     }
     }

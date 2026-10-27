@@ -20,19 +20,19 @@ import "cloud/Rclone.js" as Rclone
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configCloud" }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
 
-    property alias cfg_showCloud: enableCheck.checked
     property alias cfg_cloudIndicator: indicatorCheck.checked
     property alias cfg_cloudAlerts: alertsCheck.checked
-    property alias cfg_cloudWarnPercent: warnSpin.value
-    property alias cfg_cloudCriticalPercent: criticalSpin.value
-    property alias cfg_cloudAlertPauseHours: pauseSpin.value
+    property int cfg_cloudWarnPercent
+    property int cfg_cloudCriticalPercent
+    property int cfg_cloudAlertPauseHours
     property alias cfg_cloudConfirmUpload: confirmCheck.checked
-    property alias cfg_cloudAutoFetchMB: fetchSpin.value
-    property alias cfg_cloudCacheMB: cacheSpin.value
+    property int cfg_cloudAutoFetchMB
+    property int cfg_cloudCacheMB
     property string cfg_cloudHidden: "[]"
     property string cfg_cloudAliases: "{}"
 
@@ -98,92 +98,94 @@ KCM.SimpleKCM {
         spacing: Kirigami.Units.largeSpacing
 
         Kirigami.FormLayout {
+            id: form
             Layout.fillWidth: true
             QQC2.CheckBox {
-                id: enableCheck
-                Kirigami.FormData.label: Lang.i18n("Cloud:")
-                text: Lang.i18n("Show the Cloud page in the island")
-            }
-            QQC2.CheckBox {
                 id: indicatorCheck
+                objectName: "setting-cloudIndicator"
                 Kirigami.FormData.label: Lang.i18n("On the island:")
-                enabled: enableCheck.checked
                 text: Lang.i18n("Show a cloud while something is syncing, and “Synced” when it is done")
             }
             QQC2.CheckBox {
                 id: alertsCheck
+                objectName: "setting-cloudAlerts"
                 Kirigami.FormData.label: Lang.i18n("Alerts:")
-                enabled: enableCheck.checked
                 text: Lang.i18n("Storage nearly full, sign-in run out, cloud unreachable, sync error")
             }
             RowLayout {
-                Kirigami.FormData.label: Lang.i18n("Storage:")
-                enabled: enableCheck.checked && alertsCheck.checked
-                QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("nearly full from") }
-                QQC2.SpinBox { id: warnSpin; from: 50; to: 100; textFromValue: value => Lang.percent(value); valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 90 }
-                QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("full from") }
-                QQC2.SpinBox { id: criticalSpin; from: 50; to: 100; textFromValue: value => Lang.percent(value); valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 98 }
-            }
-            QQC2.SpinBox {
-                id: pauseSpin
-                Kirigami.FormData.label: Lang.i18n("The same alert again:")
-                enabled: enableCheck.checked && alertsCheck.checked
-                from: 1
-                to: 168
-                textFromValue: value => Lang.i18np("after %1 hour", "after %1 hours", value)
-                valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 6
-            }
-            QQC2.CheckBox {
-                id: confirmCheck
                 Kirigami.FormData.label: Lang.i18n("Uploading:")
-                enabled: enableCheck.checked
-                text: Lang.i18n("Ask before every upload")
-            }
-            QQC2.Label {
-                textFormat: Text.PlainText
-                Layout.fillWidth: true
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-                wrapMode: Text.Wrap
-                font: Kirigami.Theme.smallFont
-                opacity: 0.7
-                text: Lang.i18n("Off: dropped files are copied at once. A file that is there already and a very large upload are always asked about. Nothing is ever deleted, moved or renamed from the island.")
-            }
-            QQC2.SpinBox {
-                id: fetchSpin
-                Kirigami.FormData.label: Lang.i18n("Fetch for dragging:")
-                enabled: enableCheck.checked
-                from: 0
-                to: 1000
-                stepSize: 5
-                textFromValue: value => value === 0 ? Lang.i18n("only when asked") : Lang.i18n("files up to %1 MB by themselves", value)
-                valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 0
-            }
-            RowLayout {
-                Kirigami.FormData.label: Lang.i18n("Cache:")
-                enabled: enableCheck.checked
-                QQC2.SpinBox {
-                    id: cacheSpin
-                    from: 50
-                    to: 20000
-                    stepSize: 50
-                    textFromValue: value => Lang.i18n("at most %1 MB", value)
-                    valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 500
+                QQC2.CheckBox {
+                    id: confirmCheck
+                    objectName: "setting-cloudConfirmUpload"
+                    text: Lang.i18n("Ask before every upload")
                 }
-                QQC2.Label { textFormat: Text.PlainText; objectName: "cacheSize"; text: page.cacheBytes >= 0 ? Lang.i18n("now %1", page.size(page.cacheBytes)) : ""; opacity: 0.7 }
-                QQC2.Button { objectName: "clearCache"; icon.name: "edit-clear"; text: Lang.i18n("Clear cache"); enabled: page.cacheBytes > 0; onClicked: page.clearCache() }
+                Kirigami.ContextualHelpButton {
+                    toolTipText: Lang.i18n("Off: dropped files are copied at once. A file that is there already and a very large upload are always asked about. Nothing is ever deleted, moved or renamed from the island.")
+                }
             }
-            QQC2.Label {
-                textFormat: Text.PlainText
-                Layout.fillWidth: true
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-                wrapMode: Text.Wrap
-                font: Kirigami.Theme.smallFont
-                opacity: 0.7
-                text: Lang.i18n("A file has to be on this computer before it can be dragged out. It is fetched to ~/.cache/dynamicisland/cloud; the oldest files go when the limit is reached.")
+            SettingsFold {
+                foldId: "cloud.details"
+                twin: form
+                keys: ["cloudWarnPercent", "cloudCriticalPercent", "cloudAlertPauseHours", "cloudAutoFetchMB", "cloudCacheMB"]
+                content: Kirigami.FormLayout {
+                    RowLayout {
+                        Kirigami.FormData.label: Lang.i18n("Storage:")
+                        enabled: page.cfg_cloudAlerts
+                        QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("nearly full from") }
+                        SettingSpin {
+                            settings: page; key: "cloudWarnPercent"
+                            from: 50; to: 100
+                            textFromValue: value => Lang.percent(value)
+                            valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 90
+                            Accessible.name: Lang.i18n("nearly full from") + " " + Lang.percent(value)
+                        }
+                        QQC2.Label { textFormat: Text.PlainText; text: Lang.i18n("full from") }
+                        SettingSpin {
+                            settings: page; key: "cloudCriticalPercent"
+                            from: 50; to: 100
+                            textFromValue: value => Lang.percent(value)
+                            valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 98
+                            Accessible.name: Lang.i18n("full from") + " " + Lang.percent(value)
+                        }
+                    }
+                    SettingSpin {
+                        settings: page; key: "cloudAlertPauseHours"
+                        Kirigami.FormData.label: Lang.i18n("The same alert again:")
+                        enabled: page.cfg_cloudAlerts
+                        from: 1; to: 168
+                        textFromValue: value => Lang.i18np("after %1 hour", "after %1 hours", value)
+                        valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 6
+                    }
+                    RowLayout {
+                        Kirigami.FormData.label: Lang.i18n("Fetch for dragging:")
+                        SettingSpin {
+                            settings: page; key: "cloudAutoFetchMB"
+                            from: 0; to: 1000; stepSize: 5
+                            textFromValue: value => value === 0 ? Lang.i18n("only when asked") : Lang.i18n("files up to %1 MB by themselves", value)
+                            valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 0
+                            Accessible.name: Lang.i18n("Fetch for dragging:") + " " + textFromValue(value)
+                        }
+                        Kirigami.ContextualHelpButton {
+                            toolTipText: Lang.i18n("A file has to be on this computer before it can be dragged out. It is fetched to ~/.cache/dynamicisland/cloud; the oldest files go when the limit is reached.")
+                        }
+                    }
+                    RowLayout {
+                        Kirigami.FormData.label: Lang.i18n("Cache:")
+                        SettingSpin {
+                            settings: page; key: "cloudCacheMB"
+                            from: 50; to: 20000; stepSize: 50
+                            textFromValue: value => Lang.i18n("at most %1 MB", value)
+                            valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 500
+                            Accessible.name: Lang.i18n("Cache:") + " " + textFromValue(value)
+                        }
+                        QQC2.Label { textFormat: Text.PlainText; objectName: "cacheSize"; text: page.cacheBytes >= 0 ? Lang.i18n("now %1", page.size(page.cacheBytes)) : ""; opacity: 0.7 }
+                        QQC2.Button { objectName: "clearCache"; icon.name: "edit-clear"; text: Lang.i18n("Clear cache"); enabled: page.cacheBytes > 0; onClicked: page.clearCache() }
+                    }
+                }
             }
         }
 
-        Kirigami.Heading { textFormat: Text.PlainText; level: 4; text: Lang.i18n("Clouds") }
+        Kirigami.Heading { objectName: "setting-cloudAliases"; textFormat: Text.PlainText; level: 4; text: Lang.i18n("Clouds") }
         // (missing: the native module, or rclone; the same notice as everywhere)
         RequirementNotice {
             visible: page.looked && (page.local === null || page.command.length === 0)

@@ -12,6 +12,10 @@ Rectangle {
     property bool primary: false
     property color tint: theme.control          // fill of a primary button
     signal clicked()
+    // (named for a screen reader; the island takes no keyboard focus by itself, by design)
+    Accessible.role: Accessible.Button
+    Accessible.name: text
+    Accessible.onPressAction: if (enabled) clicked()
 
     implicitWidth: label.implicitWidth + 22
     implicitHeight: 26

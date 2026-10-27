@@ -5,3 +5,5 @@ singleton Islands 1.0 Islands.qml
 singleton RequirementCatalog 1.0 RequirementCatalog.qml
 singleton Requirements 1.0 Requirements.qml
 singleton SettingsNav 1.0 SettingsNav.qml
+singleton SettingsMemory 1.0 SettingsMemory.qml
+singleton SettingsIndex 1.0 SettingsIndex.qml

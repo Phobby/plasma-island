@@ -13,6 +13,7 @@ import "PomodoroStats.js" as Stats
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configTools" }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: cfg_language; restoreMode: Binding.RestoreNone }
@@ -33,15 +34,18 @@ KCM.SimpleKCM {
     Kirigami.FormLayout {
         QQC2.CheckBox {
             id: soundCheck
+            objectName: "setting-timerSoundEnabled"
             Kirigami.FormData.label: Lang.i18n("Timer & alarm:")
             text: Lang.i18n("Play a sound when they go off")
         }
         RowLayout {
+            objectName: "setting-timerSound"
             Kirigami.FormData.label: Lang.i18n("Sound file:")
             enabled: soundCheck.checked
             QQC2.TextField {
                 id: soundField
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 16
+                Accessible.name: Lang.i18n("Sound file:")
             }
             QQC2.Button {
                 icon.name: "document-open"
@@ -62,6 +66,8 @@ KCM.SimpleKCM {
         }
         QQC2.SpinBox {
             id: workSpin
+            objectName: "setting-pomodoroWork"
+            Accessible.name: Lang.i18n("Focus:")
             Kirigami.FormData.label: Lang.i18n("Focus:")
             from: 5; to: 120
             textFromValue: (v) => Lang.i18n("%1 min", v)
@@ -69,6 +75,8 @@ KCM.SimpleKCM {
         }
         QQC2.SpinBox {
             id: shortSpin
+            objectName: "setting-pomodoroShortBreak"
+            Accessible.name: Lang.i18n("Short break:")
             Kirigami.FormData.label: Lang.i18n("Short break:")
             from: 1; to: 60
             textFromValue: (v) => Lang.i18n("%1 min", v)
@@ -76,6 +84,8 @@ KCM.SimpleKCM {
         }
         QQC2.SpinBox {
             id: longSpin
+            objectName: "setting-pomodoroLongBreak"
+            Accessible.name: Lang.i18n("Long break:")
             Kirigami.FormData.label: Lang.i18n("Long break:")
             from: 5; to: 90
             textFromValue: (v) => Lang.i18n("%1 min", v)
@@ -83,6 +93,8 @@ KCM.SimpleKCM {
         }
         QQC2.SpinBox {
             id: roundsSpin
+            objectName: "setting-pomodoroRounds"
+            Accessible.name: Lang.i18n("Long break after:")
             Kirigami.FormData.label: Lang.i18n("Long break after:")
             from: 2; to: 10
             textFromValue: (v) => Lang.i18np("%1 round", "%1 rounds", v)

@@ -2,7 +2,7 @@
     SPDX-License-Identifier: GPL-2.0-or-later
     Weather: the place (searched by name, as on the island's Weather page),
     the units and the alert for rain, snow and storms. Whether the Weather tab
-    is shown is set in Layout.
+    is shown is set in Tabs (this page is there only while it is).
 
     The search asks Open-Meteo's geocoding service when "Search" is pressed,
     not before and not while typing here.
@@ -16,6 +16,7 @@ import "WeatherData.js" as WeatherData
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configWeather" }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
@@ -52,6 +53,7 @@ KCM.SimpleKCM {
 
     Kirigami.FormLayout {
         RowLayout {
+            objectName: "setting-weatherLocation"
             Kirigami.FormData.label: Lang.i18n("Place:")
             QQC2.Label {
                 textFormat: Text.PlainText
@@ -66,6 +68,9 @@ KCM.SimpleKCM {
                 onClicked: page.cfg_weatherLocation = ""
                 QQC2.ToolTip.visible: hovered
                 QQC2.ToolTip.text: text
+            }
+            Kirigami.ContextualHelpButton {
+                toolTipText: Lang.i18n("The place is never detected: the Weather page starts empty and it is chosen by name, here or on the page. Weather and search come from Open-Meteo.com, without an account or a key. What is sent: the text that is searched for, and the coordinates of the chosen place (for its weather, every 30 minutes while the page is switched on). Nothing else.")
             }
         }
         RowLayout {
@@ -119,7 +124,7 @@ KCM.SimpleKCM {
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
             opacity: 0.7
-            text: Lang.i18n("The place is never detected: the Weather page starts empty and it is chosen by name, here or on the page. Weather and search come from Open-Meteo.com, without an account or a key. What is sent: the text that is searched for, and the coordinates of the chosen place (for its weather, every 30 minutes while the page is switched on). Nothing else.")
+            text: Lang.i18n("Chosen by name, never detected; from Open-Meteo.com.")
         }
 
         Kirigami.Separator {
@@ -128,6 +133,8 @@ KCM.SimpleKCM {
         }
         QQC2.ComboBox {
             id: unitsCombo
+            objectName: "setting-weatherUnits"
+            Accessible.name: Lang.i18n("Show in:") + " " + currentText
             Kirigami.FormData.label: Lang.i18n("Show in:")
             model: [Lang.i18n("°C, km/h, mm"), Lang.i18n("°F, mph, inches")]
             // The texts change with the language: the choice stays.
@@ -137,15 +144,6 @@ KCM.SimpleKCM {
             Component.onCompleted: chosen = currentIndex
             onCurrentIndexChanged: if (currentIndex >= 0) chosen = currentIndex
         }
-        QQC2.Label {
-            textFormat: Text.PlainText
-            Layout.fillWidth: true
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
-            wrapMode: Text.Wrap
-            font: Kirigami.Theme.smallFont
-            opacity: 0.7
-            text: Lang.i18n("The names of days, conditions and wind directions follow the widget's language (Language).")
-        }
 
         Kirigami.Separator {
             Kirigami.FormData.isSection: true
@@ -153,6 +151,7 @@ KCM.SimpleKCM {
         }
         QQC2.CheckBox {
             id: alertsCheck
+            objectName: "setting-showWeatherAlerts"
             Kirigami.FormData.label: Lang.i18n("On the island:")
             text: Lang.i18n("Announce rain, snow and storms")
         }

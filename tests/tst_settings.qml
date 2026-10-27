@@ -30,13 +30,24 @@ Item {
         name: "Settings"
         when: windowShown
 
+        // A page's folding part (SettingsFold) by its foldId, opened, once what it holds is made.
+        function openFold(page, id) {
+            const walk = item => { if (item.objectName === "foldingSection" && item.foldId === id) return item; for (const c of item.children) { const f = walk(c); if (f) return f; } return null; };
+            const fold = walk(page);
+            verify(fold !== null, "the part " + id);
+            fold.open();
+            tryVerify(() => fold.item !== null, 2000, "made when opened: " + id);
+            return fold;
+        }
+
         // Where the island sits can be set in both looks: following the system has a
         // place of its own (it could not be moved at all), a custom style keeps its.
         function test_appearance_the_place_is_set_in_both_looks() {
             if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
             const page = appearance.item;
             const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
-            const top = find(page, "topSlider"), offset = find(page, "offsetSlider");
+            openFold(page, "appearance.tuning");
+            const top = find(page, "setting-topMargin"), offset = find(page, "setting-look.offsetX");
             verify(top !== null && offset !== null);
             // (the distance from the top is the oval layout's)
             page.cfg_islandLayout = 1;
@@ -73,9 +84,10 @@ Item {
             page.cfg_followStyle = "";
             compare(page.tuning, Styles.followDefaults());
             compare([page.look.scale, page.look.radius, page.look.shadow, page.look.border, page.look.blur], [100, 100, 1, true, true]);
-            for (const name of ["opacitySlider", "sizeSlider", "radiusSlider"]) verify(find(page, name).enabled, name);
+            openFold(page, "appearance.tuning");
+            for (const name of ["setting-look.opacity", "setting-look.scale", "setting-look.radius"]) verify(find(page, name).enabled, name);
             // the slider's range is the setting's: nothing of it is cut when stored or read back
-            const size = find(page, "sizeSlider");
+            const size = find(page, "setting-look.scale");
             compare([size.from, size.to, size.stepSize], [Styles.scaleMin, Styles.scaleMax, 5]);
             for (let v = Styles.scaleMin; v <= Styles.scaleMax; v += 5) {
                 size.moved(v);
@@ -91,9 +103,9 @@ Item {
             size.moved(150); verify(!limit.visible, "not up to it");
             page.cfg_scaleLimitSeen = 0;
             size.moved(Styles.scaleMax); verify(!limit.visible, "not where the screen has room for all");
-            find(page, "sizeSlider").moved(112.3);
-            find(page, "radiusSlider").moved(40);
-            find(page, "opacitySlider").moved(55);
+            find(page, "setting-look.scale").moved(112.3);
+            find(page, "setting-look.radius").moved(40);
+            find(page, "setting-look.opacity").moved(55);
             page.put("shadow", 2); page.put("border", false); page.put("blur", false);
             compare(JSON.parse(page.cfg_followStyle), { opacity: 55, blur: false, blurLevel: 1, scale: 110, radius: 40, border: false, borderWidth: 1, shadow: 2 });
             compare([page.look.scale, page.look.opacity], [110, 55]);
@@ -247,7 +259,8 @@ Item {
         function test_ai_sources_models_and_limits() {
             if (ai.status !== Loader.Ready) skip("KDE's settings modules are not installed");
             const page = ai.item;
-            compare([page.cfg_showAi, page.cfg_aiKeepHistory, page.sources.length], [false, false, 0], "off, nothing kept, nothing connected");
+            compare([layout.status === Loader.Ready ? layout.item.cfg_showAi : false, page.cfg_aiKeepHistory, page.sources.length], [false, false, 0], "off, nothing kept, nothing connected");
+            verify(page.cfg_showAi === undefined, "the tab is switched on in Tabs only");
             page.cfg_aiSources = JSON.stringify([
                 { id: "claude-cli-1", kind: "claude-cli", server: "", model: "" },
                 { id: "local-1", kind: "local", server: "http://192.168.1.20:8080/v1", model: "llama" },
@@ -265,13 +278,18 @@ Item {
             page.remove("anthropic-1");
             compare([JSON.parse(page.cfg_aiSources).map(s => s.id), page.cfg_aiDefault], [["claude-cli-1", "local-1"], ""]);
             verify(page.cfg_aiSources.indexOf("key") < 0, "nothing of a key is ever in the settings");
-            // the limits are numbers within their bounds
-            page.cfg_aiMaxTokens = 999999;
-            page.cfg_aiMaxChars = 1;
-            compare([page.cfg_aiMaxTokens, page.cfg_aiMaxChars], [8192, 200]);
+            // the limits are numbers within their bounds (folded: "Limits")
+            const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
+            openFold(page, "ai.limits");
+            const tokens = find(page, "setting-aiMaxTokens"), chars = find(page, "setting-aiMaxChars");
+            compare([tokens.from, tokens.to, chars.from, chars.to], [128, 8192, 200, 20000]);
+            page.cfg_aiMaxTokens = 4096;
+            compare(tokens.value, 4096, "shows the setting");
+            tokens.value = 1024; tokens.valueModified();
+            compare(page.cfg_aiMaxTokens, 1024, "and writes it back");
             page.cfg_aiMaxTokens = 2048; page.cfg_aiMaxChars = 4000;
-            page.cfg_aiNotify = false; page.cfg_aiKeepHistory = true; page.cfg_showAi = true;
-            compare([page.cfg_aiNotify, page.cfg_aiKeepHistory, page.cfg_showAi], [false, true, true]);
+            page.cfg_aiNotify = false; page.cfg_aiKeepHistory = true;
+            compare([page.cfg_aiNotify, page.cfg_aiKeepHistory], [false, true]);
             // what Claude Code is run with is said and cannot be set
             let note = null;
             (function walk(item) { if (item.objectName === "claudeCodeNote") note = item; for (const c of item.children) walk(c); })(page);
@@ -284,7 +302,7 @@ Item {
             verify(pages.normalize("media,notes,clipboard").join(",").indexOf("notes,ai,cloud,clipboard") > 0, "its place among the tabs");
             if (cloud.status !== Loader.Ready) skip("KDE's settings modules are not installed");
             const page = cloud.item;
-            compare([page.cfg_showCloud, layout.status === Loader.Ready ? layout.item.cfg_showCloud : false], [false, false], "off until the user switches it on");
+            compare([page.cfg_showCloud, layout.status === Loader.Ready ? layout.item.cfg_showCloud : false], [undefined, false], "off until the user switches it on (in Tabs)");
             // a cloud hidden, and given a name of one's own
             page.remotes = [{ name: "drive", type: "drive" }, { name: "db", type: "dropbox" }];
             page.setHidden("drive", true); page.setHidden("db", true); page.setHidden("drive", false);
@@ -298,9 +316,11 @@ Item {
             compare([page.syncSource(page.remotes[0]), page.syncSource(page.remotes[1])], ["", ""]);
             page.clients = { dropbox: true, syncthing: false };
             compare([page.syncSource(page.remotes[0]), page.syncSource(page.remotes[1])], ["", "Dropbox"]);
-            // the limits stay within their bounds
-            page.cfg_cloudWarnPercent = 5; page.cfg_cloudCacheMB = 1; page.cfg_cloudAlertPauseHours = 9999;
-            compare([page.cfg_cloudWarnPercent, page.cfg_cloudCacheMB, page.cfg_cloudAlertPauseHours], [50, 50, 168]);
+            // the limits stay within their bounds (folded: "Details")
+            const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
+            openFold(page, "cloud.details");
+            const bounds = ["cloudWarnPercent", "cloudCacheMB", "cloudAlertPauseHours"].map(k => find(page, "setting-" + k)).map(spin => [spin.from, spin.to]);
+            compare(bounds, [[50, 100], [50, 20000], [1, 168]]);
             let how = null;
             (function walk(item) { if (item.objectName === "howTo") how = item; for (const c of item.children) walk(c); })(page);
             verify(how !== null && how.text.indexOf("rclone config reconnect NAME:") > 0 && how.text.indexOf("https://rclone.org/install.sh") > 0);
@@ -375,20 +395,20 @@ Item {
             if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
             const page = appearance.item;
             const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
-            const chooser = find(page, "islandLayoutChooser"), notchCard = find(page, "layoutNotch"), ovalCard = find(page, "layoutOval");
-            const section = find(page, "notchSettings"), top = find(page, "topSlider");
+            const chooser = find(page, "setting-islandLayout"), notchCard = find(page, "layoutNotch"), ovalCard = find(page, "layoutOval");
+            const section = find(page, "notchSettings"), oval = find(page, "ovalSettings"), top = find(page, "setting-topMargin");
             verify(chooser !== null && notchCard !== null && ovalCard !== null && section !== null);
             page.cfg_islandLayout = 0;
             verify(chooser.children.indexOf(notchCard) < chooser.children.indexOf(ovalCard), "the notch comes first");
             verify(notchCard.current && !ovalCard.current);
-            verify(section.visible && !top.enabled, "the notch's settings, no distance from the top");
+            verify(section.visible && !oval.visible, "the notch's settings, no distance from the top (hidden, not greyed)");
             mouseClick(ovalCard);
             compare(page.cfg_islandLayout, 1);
             verify(ovalCard.current && !notchCard.current);
-            verify(!section.visible && top.enabled, "the oval layout: its distance from the top, no notch settings");
+            verify(!section.visible && oval.visible && top.enabled, "the oval layout: its distance from the top, no notch settings");
             mouseClick(notchCard);
             compare(page.cfg_islandLayout, 0);
-            verify(section.visible && !top.enabled);
+            verify(section.visible && !oval.visible);
         }
 
         // The notch's own settings (under the layout): the preview follows what is set; the widest
@@ -399,8 +419,10 @@ Item {
             if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
             const page = appearance.item;
             const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
-            const combo = find(page, "fullscreenModeCombo"), hint = find(page, "fullscreenModeHint");
-            const size = find(page, "peekSize"), delay = find(page, "peekDelay"), width = find(page, "peekWidth"), call = find(page, "peekEvents");
+            page.cfg_fullscreenMode = 2;
+            openFold(page, "appearance.fullscreen");
+            const combo = find(page, "setting-fullscreenMode"), hint = find(page, "fullscreenModeHint");
+            const size = find(page, "setting-peekSize"), delay = find(page, "setting-peekDelay"), width = find(page, "setting-peekWidth"), call = find(page, "setting-peekEvents");
             verify(combo !== null && hint !== null && size !== null && delay !== null && width !== null && call !== null);
             for (const layout of [0, 1]) {
                 page.cfg_islandLayout = layout;
@@ -466,6 +488,7 @@ Item {
             const page = appearance.item;
             page.cfg_islandLayout = 0;
             const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
+            openFold(page, "appearance.notch");
             const preview = find(page, "notchPreview"), slider = find(page, "notchWidthSlider");
             verify(preview !== null && slider !== null);
             const outline = preview.children.find(c => c.ear !== undefined);
@@ -479,7 +502,7 @@ Item {
             compare(outline.height, 30, "or as set");
             page.cfg_notchMaxWidth = 0;
             // over full screen (the full-screen mode, below): peeking or shrunk the notch has a size and width of its own
-            const dodgeSize = find(page, "notchDodgeSize"), dodgeWidth = find(page, "notchDodgeWidth");
+            const dodgeSize = find(page, "setting-notchDodgeSize"), dodgeWidth = find(page, "setting-notchDodgeWidth");
             page.cfg_fullscreenMode = 0;
             verify(!dodgeSize.visible && !dodgeWidth.visible);
             page.cfg_fullscreenMode = 2;
@@ -518,7 +541,7 @@ Item {
             page.cfg_notchEars = false;
             compare(outline.ear, 0);
             // the controls show the settings and write them back
-            const color = find(page, "notchColorCombo"), border = find(page, "notchBorderCheck"), width = find(page, "notchBorderWidthSpin");
+            const color = find(page, "setting-notchColor"), border = find(page, "setting-notchBorderEnabled"), width = find(page, "setting-notchBorderWidth");
             page.cfg_notchColor = 2; compare(color.currentIndex, 2);
             color.currentIndex = 1; color.activated(1); compare(page.cfg_notchColor, 1);
             page.cfg_notchBorderEnabled = true; verify(border.checked);

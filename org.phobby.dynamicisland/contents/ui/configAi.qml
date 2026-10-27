@@ -21,13 +21,13 @@ import "ai/AiStream.js" as Stream
 
 KCM.SimpleKCM {
     id: page
+    header: SettingsSearch { page: page; pageName: "configAi" }
 
     property string cfg_language
     Binding { target: Lang; property: "setting"; value: page.cfg_language; restoreMode: Binding.RestoreNone }
 
-    property alias cfg_showAi: enableCheck.checked
-    property alias cfg_aiMaxTokens: tokensSpin.value
-    property alias cfg_aiMaxChars: charsSpin.value
+    property int cfg_aiMaxTokens
+    property int cfg_aiMaxChars
     property alias cfg_aiKeepHistory: keepCheck.checked
     property alias cfg_aiNotify: notifyCheck.checked
     property string cfg_aiSources: "[]"
@@ -61,12 +61,8 @@ KCM.SimpleKCM {
         spacing: Kirigami.Units.largeSpacing
 
         Kirigami.FormLayout {
+            id: form
             Layout.fillWidth: true
-            QQC2.CheckBox {
-                id: enableCheck
-                Kirigami.FormData.label: Lang.i18n("AI:")
-                text: Lang.i18n("Show the AI page in the island")
-            }
             QQC2.Label {
                 textFormat: Text.PlainText
                 Layout.fillWidth: true
@@ -78,52 +74,25 @@ KCM.SimpleKCM {
             }
             QQC2.ComboBox {
                 id: defaultCombo
+                objectName: "setting-aiDefault"
                 Kirigami.FormData.label: Lang.i18n("Answers by default:")
-                enabled: enableCheck.checked && page.sources.length > 0
+                enabled: page.sources.length > 0
+                Accessible.name: Lang.i18n("Answers by default:") + " " + currentText
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 16
                 model: page.sources.map(s => page.label(s))
                 currentIndex: Math.max(0, page.sources.findIndex(s => s.id === page.cfg_aiDefault))
                 onActivated: index => page.cfg_aiDefault = page.sources[index].id
             }
-            QQC2.SpinBox {
-                id: tokensSpin
-                Kirigami.FormData.label: Lang.i18n("Longest answer:")
-                enabled: enableCheck.checked
-                from: 128
-                to: 8192
-                stepSize: 128
-                textFromValue: value => Lang.i18n("%1 tokens", value)
-                valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 2048
-            }
-            QQC2.SpinBox {
-                id: charsSpin
-                Kirigami.FormData.label: Lang.i18n("Longest question:")
-                enabled: enableCheck.checked
-                from: 200
-                to: 20000
-                stepSize: 500
-                textFromValue: value => Lang.i18n("%1 characters", value)
-                valueFromText: text => parseInt(text.replace(/\D+/g, "")) || 4000
-            }
-            QQC2.Label {
-                textFormat: Text.PlainText
-                Layout.fillWidth: true
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-                wrapMode: Text.Wrap
-                font: Kirigami.Theme.smallFont
-                opacity: 0.7
-                text: Lang.i18n("An answer stops at its limit (a token is about three quarters of a word; with a service that is paid for, this caps what one answer can cost). A longer question is not sent: that is work for the Claude app or a terminal.")
-            }
             QQC2.CheckBox {
                 id: notifyCheck
+                objectName: "setting-aiNotify"
                 Kirigami.FormData.label: Lang.i18n("On the island:")
-                enabled: enableCheck.checked
                 text: Lang.i18n("Say “Answer ready” when an answer arrived while its page was not shown")
             }
             QQC2.CheckBox {
                 id: keepCheck
+                objectName: "setting-aiKeepHistory"
                 Kirigami.FormData.label: Lang.i18n("The chat:")
-                enabled: enableCheck.checked
                 text: Lang.i18n("Keep it in a file on this computer")
             }
             QQC2.Label {
@@ -136,9 +105,39 @@ KCM.SimpleKCM {
                 text: keepCheck.checked ? Lang.i18n("The chat is written to ~/.local/share/dynamicisland/ai-chat.json, readable by you only, and is there again after a restart. Switching this off deletes the file.")
                                         : Lang.i18n("The chat is only in memory: it is gone when the shell restarts or the widget is removed.")
             }
+            SettingsFold {
+                title: Lang.i18n("Limits")
+                foldId: "ai.limits"
+                twin: form
+                keys: ["aiMaxTokens", "aiMaxChars"]
+                content: Kirigami.FormLayout {
+                    SettingSpin {
+                        settings: page; key: "aiMaxTokens"
+                        Kirigami.FormData.label: Lang.i18n("Longest answer:")
+                        from: 128; to: 8192; stepSize: 128
+                        unit: Lang.i18n("%1 tokens")
+                    }
+                    SettingSpin {
+                        settings: page; key: "aiMaxChars"
+                        Kirigami.FormData.label: Lang.i18n("Longest question:")
+                        from: 200; to: 20000; stepSize: 500
+                        unit: Lang.i18n("%1 characters")
+                    }
+                    QQC2.Label {
+                        textFormat: Text.PlainText
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+                        wrapMode: Text.Wrap
+                        font: Kirigami.Theme.smallFont
+                        opacity: 0.7
+                        text: Lang.i18n("An answer stops at its limit (a token is about three quarters of a word; with a service that is paid for, this caps what one answer can cost). A longer question is not sent: that is work for the Claude app or a terminal.")
+                    }
+                }
+            }
         }
 
         Kirigami.Heading {
+            objectName: "setting-aiSources"
             textFormat: Text.PlainText
             level: 4
             text: Lang.i18n("What is connected")
