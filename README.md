@@ -16,11 +16,11 @@ A notch joined to the top edge of your KDE Plasma desktop. Music, downloads, tim
 
 The default for fresh installs is a **notch with the Symbiot Black gradient**: charcoal `#292c30` through `#202326` to black `#0e1012`, with a muted slate accent inspired by a dark Plasma desktop. The illustration above highlights the notch shape.
 
-- **Settings → Appearance → Layout: Notch:** enable the border, choose its colour, thickness (1–8 px) and opacity (0–100%). The edge follows the sides and lower corners, keeping the top joined to the screen. A live preview shows your choices.
+- **Settings → Appearance → Notch → Notch details:** enable the border, choose its colour, thickness (1–8 px) and opacity (0–100%). The edge follows the sides and lower corners, keeping the top joined to the screen. A live preview shows your choices.
 - **Settings → Appearance:** choose **Symbiot Black** or another preset, edit the gradient and save your look.
 - **Prefer the rounded version?** Select **Settings → Appearance → Layout → Oval layout**. Return to **Notch** at any time. An island that ran before this version keeps the layout it had (the oval one unless the notch was switched on) and says once that the notch is there.
 
-Existing saved preferences are preserved. The notch covers the panel beneath it; set its **Width** under Settings → Appearance → Layout: Notch, narrower to leave room for panel widgets or wider (up to 1200 px).
+Existing saved preferences are preserved. The notch covers the panel beneath it; set its **Width** under Settings → Appearance → Notch, narrower to leave room for panel widgets or wider (up to 1200 px).
 
 
 ## Contents
@@ -149,8 +149,8 @@ Plasma's own volume popup keeps appearing beside the island's. To keep only one:
 - **The tabs** along the top switch pages; so does the mouse wheel or a two-finger swipe over anything that is not a list.
 - **Click** the small pill: it shrinks to a dot. Click the dot: the pill is back. ([Dot mode](#dot-mode) can be switched off.)
 - **Right click** the island for its menu; the gear at the top right of the open island opens the settings.
-- **Settings → Layout** shows, hides and orders the pages. AI and Cloud are off until switched on there.
-- **Language**: the island speaks Turkish when the system does, English otherwise; Settings → Language changes it at once.
+- **Settings → Tabs** shows, hides and orders the pages. AI and Cloud are off until switched on there; a tab's own settings page is in the sidebar while the tab is on, and the search at the top of every page finds any setting.
+- **Language**: the island speaks Turkish when the system does, English otherwise; Settings → General → Language changes it at once.
 
 ## The island, state by state
 
@@ -222,7 +222,7 @@ The default shape joins the screen's top edge like a laptop's notch: square abov
 
 - **What you see:** cards for CPU, CPU temperature, GPU, memory, battery, network down/up and disk. In the *Dynamic* view the busiest cards are larger; in the *Fixed* view every card keeps its place.
 - **How to use:** the card under the pointer grows and shows its details (the network card names the active connection). A click opens `btop` in your terminal with that metric's graph.
-- **Settings:** Settings → General → *System view* (Fixed / Dynamic). Settings → Alerts: battery, device battery and temperature thresholds.
+- **Settings:** Settings → Tabs → *System view* (Fixed / Dynamic). Settings → Activities → *Warning thresholds*: battery, device battery and temperature.
 - **Requirements and limits:** the values come from Plasma's sensor service (ksystemstats), which the island starts if it is not running. A sensor the driver does not offer hides its card. The click needs the native module and `btop` 1.4 or newer.
 
 ### Weather
@@ -256,7 +256,7 @@ The default shape joins the screen's top edge like a laptop's notch: square abov
 - **What you see:** up to six buttons of your choice and, below, the volume and screen brightness sliders.
 - **How to use:** a click switches a button. Holding one edits the set (drag to move, "−" to remove, add from the row below, *Done*). Holding **Bluetooth**, **Wi-Fi** or **VPN** opens its devices or networks instead.
 - **Available buttons:** Do Not Disturb, Night Light, power profile, Bluetooth, Wi-Fi, updates, airplane mode, VPN, hotspot, record screen, screenshot, camera, microphone, sound, KDE Connect, find phone, dark mode, keep awake, lock, calculator, System Settings. A button whose part is missing is dimmed.
-- **Settings:** Settings → Controls: the same six, in order. Settings → Layout → Modules: the volume slider.
+- **Settings:** Settings → Controls: the same six, in order. Settings → Tabs → Modules: the volume slider.
 - **Requirements and limits:** the brightness slider needs a display Plasma can dim. Buttons that start a program (screenshot, calculator, lock…) need the native module.
 
 ### Apps
@@ -324,7 +324,7 @@ The default shape joins the screen's top edge like a laptop's notch: square abov
 <!-- GIF: ai-question.gif | A question is typed on the AI page; three dots show that the answer is on its way; the answer appears as formatted text. Answered by a demo server with canned answers. | AI: a question and its answer (demo provider) -->
 
 - **What you see:** a field, the answer as it is written (Markdown, code in boxes with *Copy*), and on the pill three dots while it is on its way and "Answer ready" when you were elsewhere.
-- **How to use:** Settings → Layout: switch *AI* on. On the page connect what should answer, then type; Enter sends, Shift+Enter is a new line. *New chat* starts over; Escape gives the keyboard back.
+- **How to use:** Settings → Tabs: switch *AI* on. On the page connect what should answer, then type; Enter sends, Shift+Enter is a new line. *New chat* starts over; Escape gives the keyboard back.
 - **What can answer:** Claude Code or Antigravity on this computer; a model server on this computer (Ollama, LM Studio, llama.cpp, Jan, KoboldCpp or any OpenAI-compatible address); a service with your own key (Anthropic, OpenAI, OpenRouter, Groq, Google Gemini or another OpenAI-compatible one).
 - **Settings:** Settings → AI: the sources and the default one, the longest answer and question, *Keep the chat in a file*, "Answer ready" on the island.
 - **Requirements and limits:** it is a question box, **not an agent**: nothing is given a tool or a file, and nothing of your clipboard, screen, notes or calendar is added. Keys are kept in KDE Wallet. A question to a service is sent to that service and may cost what that service charges. The chat is forgotten when the shell stops unless you choose to keep it.
@@ -336,7 +336,7 @@ The default shape joins the screen's top edge like a laptop's notch: square abov
 <!-- GIF: cloud-browse.gif | The Cloud page lists a remote's folders; a folder is opened; a file is dragged out to the desktop; another is dropped in to upload. Shown with a made-up remote. | Cloud: browse, drag out, drop in (a made-up remote) -->
 
 - **What you see:** each rclone remote with how full it is, its folders and files with size and date, a sync state where a client reports one (Syncthing, Dropbox), and a warning when a cloud is nearly full.
-- **How to use:** Settings → Layout: switch *Cloud* on. Click into folders; drag a file out to the desktop or a file manager; drop files on the page to upload (it asks first). *Download*, *Show in folder*, *Copy path* and *Upload…* do the same without dragging.
+- **How to use:** Settings → Tabs: switch *Cloud* on. Click into folders; drag a file out to the desktop or a file manager; drop files on the page to upload (it asks first). *Download*, *Show in folder*, *Copy path* and *Upload…* do the same without dragging.
 - **Settings:** Settings → Cloud: which remotes are shown and under which name, the thresholds (90 % and 98 %), alerts and their pause, the question before an upload, the cache and *Clear cache*.
 - **Requirements and limits:** needs `rclone` with at least one remote (`rclone config`); the page shows how to set it up when it is missing. The island only runs the `rclone` command: it can list, measure, copy from and copy to; it cannot delete, move, rename or sync. rclone's own configuration and tokens are never opened.
 
@@ -365,7 +365,7 @@ One kind of activity for everything that moves files: its name, "412 MB / 1.8 GB
 | `git clone`, `wget`, `curl`, `pip download` | Found by their process; bytes and speed from what they wrote |
 | `apt`, PackageKit (Discover) | The stage and, where known, the progress |
 
-**Settings → Download tracking:** the main switch, each source, background jobs, how long and how large something must be to be shown, the watched folders and commands. Commands are found by looking at the process list every three seconds; nothing is installed or wrapped. What was and was not tried with the real programs is in the [reference](docs/REFERENCE.md#file-transfers-what-can-and-cannot-be-tracked).
+**Settings → Activities:** the *Download tracking* switch; under *Download tracking details* each source, background jobs, how long and how large something must be to be shown, the watched folders and commands. Commands are found by looking at the process list every three seconds; nothing is installed or wrapped. What was and was not tried with the real programs is in the [reference](docs/REFERENCE.md#file-transfers-what-can-and-cannot-be-tracked).
 
 ## Suggestions
 
@@ -407,8 +407,8 @@ A small cat sits beside the pill. It falls asleep when nothing happens (after 20
 <!-- GIF: layout-reorder.gif | In Settings → Layout a page is dragged to another place and one is switched off; the island's tabs follow. | Layout: ordering and hiding pages -->
 <!-- GIF: language-switch.gif | Settings → Language is switched from English to Türkçe; the island's texts change at once. | Language -->
 
-- **Settings → Layout → Tabs:** drag a page by its handle to move its tab; its switch shows or hides it. *Restore default order* puts them back. **Modules:** the parts inside a page that can be switched.
-- **Settings → Language:** Automatic, Türkçe or English, for the island and its settings only, without restarting Plasma.
+- **Settings → Tabs:** drag a page by its handle to move its tab; its switch shows or hides it. *Restore default order* puts them back. **Modules:** the parts inside a page that can be switched.
+- **Settings → General → Language:** Automatic, Türkçe or English, for the island and its settings only, without restarting Plasma.
 
 ## For developers: push your own activity
 

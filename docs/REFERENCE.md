@@ -238,6 +238,29 @@ while a window fills its screen (`fullscreenMode`).
 
 ## Settings
 
+The window's pages: **General** (language, clock, notifications, Response,
+dot mode, new versions), **Appearance** (layout, the notch's or the oval
+island's place, full screen, the look), **Tabs** (which pages and in what
+order, their modules, the System view), **Activities** (the split island and
+download tracking; folded: the events shown, their priority, the warning
+thresholds, what download tracking looks at), a page for each tab with
+settings of its own (Weather, Controls, Tools, Habits, Calendar, Notes, AI,
+Cloud), in the sidebar only while that tab is on, then **Cat**,
+**Suggestions** and **Diagnostics** (with the island's about and its tour).
+Each page shows the few settings it is opened for; the rest is in folding
+parts (*Details*, *Customize*, *Fine tuning*…) that open with the mouse or
+the keyboard, are made only when first opened and stay as they were left
+(`~/.config/dynamicisland-settings-ui.conf`, the window's own, not the
+widget's settings). Settings that only apply in one layout or while a switch
+is on are hidden while they do not apply. The search at the top of every
+page finds any setting by its name or its page, also on the page of a tab
+that is off, and opens it there. **Response** on General (Calm / Balanced /
+Lively) sets the hover and collapse delays and how long events and
+notifications stay; *Customize* shows the four values, and values that match
+none of the three show as *Custom*. A new island shows a short tour at its
+first opening (layout, tabs, what is missing); one that ran before does not
+(settings schema 3); Diagnostics → About shows it again.
+
 | Setting | Description |
 |---|---|
 | Appearance | Follow the system (its colours; opacity, blur, place, size, roundness, border and shadow can still be set under Fine tuning, apart from the custom look's), or a custom look: see [Appearance](#appearance) |
@@ -246,12 +269,12 @@ while a window fills its screen (`fullscreenMode`).
 | Distance from top / below panels | Position |
 | Notifications, display time | Behaviour when a notification arrives |
 | New versions of the island | *Never look* (no request at all), *Ask me* (as it comes: once a day the version number is read from the repository's `metadata.json`; a newer one is asked about on the island, at most once a day per version) or *Install by itself* (installs without asking, then asks before the shell restarts). An update is `contents/scripts/island-update.sh`: the archive of the tag `v<version>` from GitHub (`main` when there is no such tag, and only if it is that version), its `install.sh`, then a restart of plasmashell. Needs the native module, `curl` and `tar`; the installer's output is in `~/.cache/dynamicisland/update/install.log`. Settings and data are not touched |
-| Hover delay / close on leave | Default 120 ms / 400 ms |
+| Hover delay / close on leave | Default 120 ms / 400 ms (General → Response: Balanced; Customize) |
 | Preferred player | E.g. `spotify`. This player is shown if it is playing (or nothing else is); if empty Plasma chooses. Matches the identity/desktop file name case-insensitively. A player that says "Playing" while its position stands still for ~9 s (Spotify after a Spotify Connect session was stopped on the phone) counts as not playing |
-| Volume | The volume slider in Controls (Layout → Modules) |
+| Volume | The volume slider in Controls (Tabs → Modules) |
 | System view | Fixed (5 cards, 2 rows) / Dynamic (default: the cards that are active right now grow, no gaps; with few active cards the two busiest stay large). In both views the card under the mouse grows and shows its details. Clicking a card opens `btop` in the default terminal with only that metric's graph (needs the native module and btop ≥ 1.4; btop's own configuration file is not touched) |
 
-**Layout** tab: the pages of the expanded island in one list. Drag a page by
+**Tabs** page: the pages of the expanded island in one list. Drag a page by
 its handle to move its tab (the row lifts while it is dragged, the others make
 room); the switch next to it shows or hides it (these are the same settings
 as before: showMediaModule, showTools…; Media also turns the media live
@@ -263,7 +286,7 @@ Apps, Tools, Habits, Calendar, Notes, Clipboard. The order is stored as `pageOrd
 This order only places the tabs; which live activity the small island shows
 first is the priority list of the Activities tab, so privacy indicators,
 calls and screen recording still come first whatever the page order is.
-**Controls** tab: the buttons of the Controls page, like a phone's quick
+**Controls** page (while the Controls tab is on): the buttons of the Controls page, like a phone's quick
 settings: at most six, in the order shown (drag by the handle), the others
 listed below to add. Their colours: on, each its own (Focus purple, Night
 Light orange…) or one colour for all; off, as the island's buttons
@@ -296,58 +319,58 @@ switches the colour scheme with `plasma-apply-colorscheme` and remembers the
 one it left (`darkColorScheme` / `lightColorScheme`), so a custom scheme
 comes back; without one it takes the Light/Dark counterpart by name, else
 Breeze. NFC is not offered: Plasma has no NFC switch.
-**Activities** tab: priority order (up/down), split island on/off, keep
-playing media visible, momentary event duration, a
+**Activities** page: priority order (up/down), split island on/off, keep
+playing media visible (how long a momentary event stays is General's Response), a
 separate switch for every system event and live activity type.
-**Download tracking** tab: the main switch; the sources (browser downloads,
+**Download tracking** (Activities; the switch up front, the rest under *Download tracking details*): the main switch; the sources (browser downloads,
 packages, git clone, command-line downloaders); background jobs too (off by
 default); how long something must have lasted and how large a command-line
 download must be to be shown; whether the end is said; the watched folders
 and how long a finished file is waited for; the watched commands (the
 defaults can be switched off one by one, own names added).
-**Alerts** tab: low/critical battery threshold, Bluetooth device/phone battery
+**Warning thresholds** (Activities, folded): low/critical battery threshold, Bluetooth device/phone battery
 threshold, CPU/GPU temperature threshold.
-**Calendar** tab: on/off, how many minutes before the start to pin (15), how
+**Calendar** page: how many minutes before the start to pin (15), how
 many minutes after the end to disappear (10), all-day events, update interval
 (5 min) and the connected calendar links ("Connect a Calendar" wizard; see
 below).
-**Tools** tab: timer/alarm sound (a file can be chosen), Pomodoro durations
+**Tools** page: timer/alarm sound (a file can be chosen), Pomodoro durations
 and number of rounds, the Pomodoro statistics and their reset.
-**Layout** tab, two lists that are kept apart. *Tabs*: the pages along the top
+**Tabs** page, two lists that are kept apart. *Tabs*: the pages along the top
 of the expanded island; drag one by its handle to move its tab, switch it off
 to take it out of the tab bar altogether. The last tab that is on cannot be
 switched off ("At least one tab has to stay on"). *Modules*: the parts inside
 a page that can be switched (the volume slider in Controls).
-**Weather** tab: the place (search by name, or forget it), the units and the
+**Weather** page: the place (search by name, or forget it), the units and the
 alert; see "Weather" below.
-**Suggestions** tab: on/off (off until you switch them on: nothing is
+**Suggestions** page: on/off (off until you switch them on: nothing is
 suggested and nothing learned before), the least pause between two
 suggestions (5 minutes), and every rule with its switch, its mode (asks / automatic), what
 it has learned so far and "forget" for it; "Forget everything that was
 learned" (asks first). A rule this system cannot make says so. What is
 changed there holds at once; see "Suggestions" below.
-**Notes** tab: the connected apps, where quick notes go, how often they are
+**Notes** page: the connected apps, where quick notes go, how often they are
 fetched, and "Carry on in the note that was being edited" (on by default).
-**AI** tab: the AI page's switch (off until switched on), what is connected
+**AI** page (the tab is switched on in Tabs; off until then): what is connected
 to answer with its model and "Disconnect", which source answers by default,
 the longest answer and question, "Keep the chat in a file" and "Answer ready"
 on the island; see "AI" below.
-**Cloud** tab: the Cloud page's switch (off until switched on) and its
+**Cloud** page (the tab is switched on in Tabs; off until then): its
 indicator, the clouds rclone knows (shown or hidden, a name of one's own, where
 the sync state comes from), storage thresholds, alerts and their pause, the
 question before an upload, the cache and "Clear cache", and how a cloud is
 added; see "Cloud" below.
-**Appearance** tab: besides the look itself, "Add New…" (a theme from a file
+**Appearance** page: besides the look itself, "Add New…" (a theme from a file
 or from the store), "Export Theme…" and the gradient controls; see
 "Appearance" below.
-**Habits** tab: the permanent habits (rename, delete, drag into order), the
+**Habits** page: the permanent habits (rename, delete, drag into order), the
 time of the evening review, its reminder on/off, the calendar's colours
 (GitHub green / the system's accent colour, also in Appearance) and "Reset
 all data" (asks first); see "Habits" below.
-**Cat** tab: the cat beside the island: on/off, side, size, coat, what it
+**Cat** page: the cat beside the island: on/off, side, size, coat, what it
 reacts to, what may be done to it, sleep, the dot, reduced motion, and a
 preview that is the cat itself; see "Cat" below.
-**Language** tab: Automatic (Turkish when the system is Turkish, English
+**Language** (General): Automatic (Turkish when the system is Turkish, English
 otherwise), Türkçe or English. Applies at once, to the island and the
 settings, without restarting Plasma; see "Translations" below.
 
@@ -917,7 +940,7 @@ its own; `tests/tst_suggestions_island.qml` what the island shows.
 ## AI
 
 A tab for quick questions: text in, text out. It is **off** until it is
-switched on (Settings → Layout or AI), and while it is off none of it is
+switched on (Settings → Tabs), and while it is off none of it is
 loaded. A question is typed (Enter sends, Shift+Enter is a new line), the
 answer is shown while it is written, as Markdown, with code blocks in boxes of
 their own and "Copy"; a follow-up goes into the same chat; the button stops an
@@ -1061,7 +1084,7 @@ A tab for the clouds of this computer, the counterpart of a menu bar's cloud
 icon: folders and files **by name** (with size and date), how full each cloud
 is, its sync state where something says it, alerts, a file dragged out to the
 desktop, files dropped in to upload. It is **off** until switched on (Settings
-→ Layout or Cloud); while it is off none of it is loaded.
+→ Tabs); while it is off none of it is loaded.
 
 The clouds are the remotes of the user's **rclone** (Google Drive, OneDrive,
 Dropbox, Nextcloud/WebDAV, a server of one's own: whatever `rclone config`
@@ -1290,7 +1313,7 @@ monospace font), images (as thumbnails) and copied files.
 - History size and what is kept are Klipper's own settings (System Tray →
   Clipboard → Configure Clipboard…).
 
-The page can be turned off in Settings → Layout.
+The page can be turned off in Settings → Tabs.
 
 ## D-Bus API
 
@@ -1585,7 +1608,7 @@ the final name by cutting off the suffix and took every rename for the end:
 no file of the guessed name, so "Failed", twice for one download. It now
 follows the file itself (its inode): renamed to another partial name it goes
 on, renamed to anything else it is done under that name. A partial file that
-is gone without one is waited for (3 s, Settings → Download tracking) under a
+is gone without one is waited for (3 s, Settings → Activities → Download tracking details) under a
 matching name (`name.bin`, `name(1).bin`, `name (1).bin`, at least as large);
 none, and it was cancelled. `tests/tst_downloads.qml` replays the recorded
 sequences in a folder.

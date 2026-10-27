@@ -113,7 +113,7 @@ org.phobby.dynamicisland/
     ├── PageCatalog.qml                           the expanded pages and their default order
     ├── ControlCatalog.qml                        the buttons the Controls page can show (at most 6)
     ├── AmbientGlow.qml, AlbumColor.qml           the glow: cover colour, music, bass pops
-    └── config*.qml                                settings pages (configLayout: page order)
+    └── config*.qml                                settings pages (configLayout: Tabs, the page order)
 native/
 ├── windowblur.*               org.phobby.dynamicisland.effects (shaped KWin blur)
 └── core/                      org.phobby.dynamicisland.core:
@@ -326,8 +326,8 @@ provider (see "AI" below) and spends a little of the account's usage.
 | Weather | Expanded → Weather page: "Choose a Location", type a city, pick it; hover a day, click it for its hours, the arrow goes back. Settings → Weather: units |
 | Notes, carrying on | Open a note on the Notes page, move the pointer away so the island closes, open it again: the same note's editor. Lock a note in BetterNotes (0.1.15+): the page asks for the master password, then shows the note |
 | Themes | Settings → Appearance → Custom: a gradient under Fine tuning; "Export Theme…", then "Add New…" → From a File with that file. The store needs its address first (see "Themes: files and the store") |
-| AI | Settings → Layout: switch "AI" on. Expanded → AI page: "Claude Code" (found by itself when installed and signed in), ask something; move the pointer away while it answers, press Escape and leave: three dots, then "Answer ready". `tools/ai-cli-check --user-memory --trace` for the checks with the real command |
-| Cloud | Needs `rclone` with at least one remote (`rclone config`). Settings → Layout: switch "Cloud" on. Expanded → Cloud page: go into a folder, rest the pointer on a small file and drag it to the desktop, drop a file on the list. Without rclone the page shows how to install it |
+| AI | Settings → Tabs: switch "AI" on. Expanded → AI page: "Claude Code" (found by itself when installed and signed in), ask something; move the pointer away while it answers, press Escape and leave: three dots, then "Answer ready". `tools/ai-cli-check --user-memory --trace` for the checks with the real command |
+| Cloud | Needs `rclone` with at least one remote (`rclone config`). Settings → Tabs: switch "Cloud" on. Expanded → Cloud page: go into a folder, rest the pointer on a small file and drag it to the desktop, drop a file on the list. Without rclone the page shows how to install it |
 | Suggestions | Start a screen recording (Spectacle, OBS): the question with its three answers. Settings → Suggestions shows what each rule learned |
 | Habits | Expanded → Habits page: add habits, tick some; set the review time in Settings → Habits to a minute from now for the evening question. Its rules are checked without the clock: `tools/habits-test` |
 | Clipboard | Copy a text, a piece of code and an image (e.g. a Spectacle screenshot); they appear on the Clipboard page, a click copies one again |
@@ -335,7 +335,7 @@ provider (see "AI" below) and spends a little of the account's usage.
 | Calendar | Connect a calendar on the island's Calendar page (gear button), create an event 20 minutes from now; it is pinned to the island 15 minutes before |
 | KDE Connect | `kdeconnect-cli --list-devices` · `kdeconnect-cli -d <id> --ping` · send a file from the phone / call the phone |
 | Updates | Controls page; compare with `pkcon get-updates` |
-| Temperature | Lower the threshold in Settings → Alerts (e.g. 50 °C) |
+| Temperature | Lower the threshold in Settings → Activities → Warning thresholds (e.g. 50 °C) |
 | Custom activity | `island-push --id demo --title "Demo" --progress 30` → `island-push --id demo --done --status success` |
 
 ## Translations

@@ -115,3 +115,139 @@ What does **not** change: no setting is removed or renamed, every key keeps
 its value and meaning, the island's look and behaviour stay as they were
 (apart from the full-screen and requirement fixes before this). The settings
 are only arranged anew.
+
+## 4. After the simplification
+
+Commits `5e5dd58` (the settings) and `1094082` (the tour, schema 3). Pictures:
+`docs/ui-audit/after/` (the same tool and defaults as before, English and
+Turkish, 820 px; the tour's three steps in
+[island-tour.png](ui-audit/after/island-tour.png)).
+
+After, page by page: General [en](ui-audit/after/en/general.png) [tr](ui-audit/after/tr/general.png) · Appearance [en](ui-audit/after/en/appearance.png) [tr](ui-audit/after/tr/appearance.png) · Tabs [en](ui-audit/after/en/layout.png) [tr](ui-audit/after/tr/layout.png) · Activities [en](ui-audit/after/en/activities.png) [tr](ui-audit/after/tr/activities.png) · Weather [en](ui-audit/after/en/weather.png) [tr](ui-audit/after/tr/weather.png) · Controls [en](ui-audit/after/en/controls.png) [tr](ui-audit/after/tr/controls.png) · Tools [en](ui-audit/after/en/tools.png) [tr](ui-audit/after/tr/tools.png) · Habits [en](ui-audit/after/en/habits.png) [tr](ui-audit/after/tr/habits.png) · Calendar [en](ui-audit/after/en/calendar.png) [tr](ui-audit/after/tr/calendar.png) · Notes [en](ui-audit/after/en/notes.png) [tr](ui-audit/after/tr/notes.png) · AI [en](ui-audit/after/en/ai.png) [tr](ui-audit/after/tr/ai.png) · Cloud [en](ui-audit/after/en/cloud.png) [tr](ui-audit/after/tr/cloud.png) · Cat [en](ui-audit/after/en/cat.png) [tr](ui-audit/after/tr/cat.png) · Suggestions [en](ui-audit/after/en/suggestions.png) [tr](ui-audit/after/tr/suggestions.png) · Diagnostics [en](ui-audit/after/en/diagnostics.png) [tr](ui-audit/after/tr/diagnostics.png).
+
+### Pages
+
+| Before (18) | After (15; 13 with a new island's tabs) | Why |
+|---|---|---|
+| General, Language | **General** (language at the top) | the language is one choice; General is where it is looked for |
+| Appearance | **Appearance** | the layout, its own settings (notch or oval, whichever is chosen), full screen, the look |
+| Layout, (General's System view) | **Tabs** | the page that decides which tabs there are; the System view is how one of them looks |
+| Activities, Alerts, Download tracking | **Activities** (Alerts and Download tracking folded in it) | three pages of one feature: what the small island shows |
+| Weather, Controls, Tools, Habits, Calendar, Notes, AI, Cloud | the same, **only while their tab is on** | a page for a tab that is off had nothing to do; the search still finds them |
+| Cat, Suggestions, Diagnostics | the same (Diagnostics also has the island's about and the tour) | |
+
+A *Privacy and data* and an *Advanced* page were not made (section 3, #1):
+each setting stays beside the feature it belongs to, folded where it is
+rarely changed, and the search finds it.
+
+### Settings, before and after
+
+| | Before | After |
+|---|---|---|
+| Keys in `main.xml` | 217 | 218 (+ `tourShown`, the island's own) |
+| Set in the window | about 165 | 166 (`tools/settings-index`: each on a page and in the search; 50 are the island's own state, 2 are set on its pages: the apps, the glow) |
+| Controls shown when a page opens (all pages, a new island's settings) | 232 | 101 |
+| Height of all pages at 820 px | 17 254 px | 11 590 px |
+| Appearance | 3152 px, 28 controls | 1336 px, 10 controls |
+| General | 1112 px, 27 controls | 596 px, 11 controls |
+| Cat | 985 px, 17 controls | 502 px, 4 controls |
+| Activities (+ Alerts, Download tracking) | 2625 px over three pages, 57 controls | 400 px, 3 controls (2384 px with every part open) |
+
+### What was folded (91 of the 153 entries of the search)
+
+| Page | Part | Settings |
+|---|---|---|
+| General | Customize (Response) | hover delay, collapse delay, how long events and notifications stay |
+| General | Dot mode details (while dot mode is on) | start as, dot size, hovering the dot, events in dot mode, critical events |
+| General | Details | preferred player |
+| Appearance | Notch details | the preview, border (on, width, colour, opacity), upper corners, height, opening as wide, over full screen (also for a window under it, size and width there), hiding the cat |
+| Appearance | Full-screen details (not in Normal) | the preview, the part that shows, opens after, trigger width, important events |
+| Appearance | Saved looks (custom look only) | profiles |
+| Appearance | Fine tuning | blur, horizontal position, corner roundness, background and gradient, controls, buttons and text colours, border, shadow |
+| Activities | Events shown | the 9 system events and 5 live activities |
+| Activities | Priority | the priority list |
+| Activities | Warning thresholds | battery, critical, device battery, CPU and GPU temperature |
+| Activities | Download tracking details (while it is on) | sources, background, how long and how large, the end, folders, waiting, commands |
+| Calendar | Details | keep after it ends, update interval |
+| AI | Limits | longest answer, longest question |
+| Cloud | Details | storage thresholds, the same alert again, fetching for dragging, cache |
+| Cat | Behaviour (while the cat is on) | reactions, pointer, sulking, sleep, dot, motion |
+| Suggestions | Customize (while they are on) | cards a day, a rule's wait, between two cards, half-life |
+
+Hidden instead of greyed: the notch's settings in the oval layout and the
+oval island's place (distance from the top, below top panels) in the notch
+layout; the colours, ready-made looks and saved looks while following the
+system, *Colours from* in a custom look; the look's border and shadow in the
+notch layout (it has its own); the time format without the clock; keeping
+media visible without the split island; the cat's settings while it is off.
+
+### Migration (settings schema 3)
+
+No key was removed, renamed or given another meaning: a page that moved
+reads and writes the same keys (`tools/settings-index` checks that every key
+is on a page). Step 3 of `SettingsMigration.js` only decides the tour: a new
+island shows it at its first opening; one that ran before (schema 1 or 2, a
+version it noted, settings it kept or that were brought back) gets
+`tourShown` and never sees it. Its look and behaviour do not change.
+`tests/settingsmigration.test.js` checks both, also undone and taken again.
+
+### Island (proposal #9)
+
+Not changed in this round, as planned: names for the tab icons in a
+tooltip, the page-dot row only for a swipe, a *More* menu past nine tabs.
+The island's own buttons (`PillButton`, `IconButton`) now have an accessible
+name and role; the island still takes no keyboard focus by itself (by
+design: it would take it from the window in front).
+
+### Checked, and how
+
+- `tools/run-tests`: every test, `text-check`, `i18n-check` (1455 texts, 0
+  missing), `scroll-check`, `settings-index --check` (166 of 166 reachable).
+- `tests/tst_settings_ui.qml`: a part is made only when opened, opens and
+  closes with Space on its focused header, is remembered across a new page;
+  the search in English and Turkish, a result opens its part, a setting
+  shown only while a switch is on is shown by that switch; Response;
+  **every entry of the search found on its page** (with the switches that
+  show it on, every part opened, in the notch and oval layouts, a custom,
+  a gradient and the system's look); the tour.
+- Narrow window (520 px, Turkish): nothing runs past the edge any more
+  ([Cat](ui-audit/after/tr-narrow-cat.png)).
+- Opening a page, off screen, made and drawn once in an engine of its own
+  (`tools/settings-shots`, one run each, so a few ms of noise): General
+  84 → 71 ms, Appearance 270 → 187 ms, Activities with Alerts and Download
+  tracking 208 ms over three pages → 82 ms, Cat 91 → 86 ms; with every part
+  opened Appearance is 188 ms, Activities 80 ms. Closed parts cost nothing.
+- Retracted over full screen (A2's peeking), measured in
+  `tools/nested-session` (Wayland, headless, 1920×1080) with
+  `tools/bench/run --reps 2 --warmup 45 --duration 90`: music playing, the
+  notch with its cat (`media-cat-notch`), then the same with Konsole in
+  full screen in front and the full-screen mode *Peek at the edge*
+  (`media-cat-peek`, new scenarios of `tools/bench/run`):
+
+  | | plasmashell CPU | wakeups/s | RSS / PSS | KWin CPU |
+  |---|---|---|---|---|
+  | notch, nothing in full screen | 2.69 % / 2.74 % | 895 / 968 | 303–360 / 141–198 MB | 1.17 % / 1.13 % |
+  | peeking over full screen | 0.16 % / 0.17 % | 7 / 7 | 304 / 141 MB | 0.00 % / 0.01 % |
+
+  Drawn up, the island's content is a still picture and the album light,
+  equaliser and cat stop: the shell is as quiet as with the island idle and
+  its cat hidden; memory does not change.
+- In `tools/nested-session` the island loads with these settings and its
+  log has no QML error (the first try found one: the tour's wiring,
+  fixed in `0e7422e`).
+
+### Not verified on a real screen
+
+- Nothing was tried on the live desktop; everything in the isolated Wayland
+  session or off screen. No X11 session.
+- The tour on a real island (headless, nothing can hover the island to open
+  it): checked as a component off screen and by its tests, and that the
+  island loads with it.
+- The settings window in Plasma itself: the pages, the search and the
+  folding parts were checked off screen; the sidebar hiding a tab's page
+  (`ConfigCategory.visible`, as Plasma's own Folder View does) and a search
+  result opening a page that is not in the sidebar were not tried in the
+  real window.
+- Keyboard: the folding parts (Tab, Space) and the search (Down, Enter,
+  Escape) are tested; a whole pass with Tab through every page was not made.
+- Screen readers: names and roles were set, not heard with Orca.

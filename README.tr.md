@@ -23,7 +23,7 @@ Yeni kurulumlarda varsayılan görünüm **Symbiot Siyahı gradyanlı çentik**:
 Mevcut kayıtlı tercihler korunur. Çentik altındaki paneli örter; panel öğelerine yer bırakmak için Ayarlar → Görünüm → Düzen: Çentik altındaki **Genişlik** ayarını kullanın; daha geniş de olabilir (1200 px'e kadar).
 
 
-Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarlar → Dil).
+Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarlar → Genel → Dil).
 
 ## İçindekiler
 
@@ -151,8 +151,8 @@ Plasma'nın kendi ses açılır penceresi adanınkinin yanında görünmeye deva
 - Üstteki **sekmeler** sayfa değiştirir; liste olmayan her yerde fare tekerleği ya da iki parmakla kaydırma da öyle.
 - Küçük hapa **tıklayın**: noktaya küçülür. Noktaya tıklayın: hap geri gelir. ([Nokta modu](#nokta-modu) kapatılabilir.)
 - Menüsü için adaya **sağ tıklayın**; açık adanın sağ üstündeki dişli ayarları açar.
-- **Ayarlar → Düzen** sayfaları gösterir, gizler ve sıralar. Yapay Zeka ve Bulut orada açılana kadar kapalıdır.
-- **Dil**: sistem Türkçe ise ada Türkçe, değilse İngilizce konuşur; Ayarlar → Dil bunu anında değiştirir.
+- **Ayarlar → Sekmeler** sayfaları gösterir, gizler ve sıralar. Yapay Zeka ve Bulut orada açılana kadar kapalıdır; bir sekmenin kendi ayar sayfası sekme açıkken kenar çubuğundadır, her sayfanın üstündeki arama her ayarı bulur.
+- **Dil**: sistem Türkçe ise ada Türkçe, değilse İngilizce konuşur; Ayarlar → Genel → Dil bunu anında değiştirir.
 
 ## Adanın durumları
 
@@ -224,7 +224,7 @@ Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğ
 
 - **Ne görürsünüz:** CPU, CPU sıcaklığı, GPU, bellek, pil, ağ indirme/yükleme ve disk kartları. *Dinamik* görünümde en meşgul kartlar daha büyüktür; *Sabit* görünümde her kart yerinde kalır.
 - **Nasıl kullanılır:** imlecin altındaki kart büyür ve ayrıntılarını gösterir (ağ kartı etkin bağlantının adını verir). Tıklama, o ölçünün grafiğiyle `btop`'u uçbiriminizde açar.
-- **Ayarlar:** Ayarlar → Genel → *Sistem görünümü* (Sabit / Dinamik). Ayarlar → Uyarılar: pil, aygıt pili ve sıcaklık eşikleri.
+- **Ayarlar:** Ayarlar → Sekmeler → *Sistem görünümü* (Sabit / Dinamik). Ayarlar → Etkinlikler → *Uyarı eşikleri*: pil, aygıt pili ve sıcaklık.
 - **Gereksinim ve sınırlar:** değerler Plasma'nın algılayıcı servisinden (ksystemstats) gelir; çalışmıyorsa ada onu başlatır. Sürücünün sunmadığı bir algılayıcının kartı gizlenir. Tıklama için yerel modül ve `btop` 1.4 ya da daha yenisi gerekir.
 
 ### Hava Durumu
@@ -258,7 +258,7 @@ Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğ
 - **Ne görürsünüz:** seçtiğiniz en fazla altı düğme ve altında ses ile ekran parlaklığı kaydırıcıları.
 - **Nasıl kullanılır:** tıklama bir düğmeyi açıp kapatır. Birini basılı tutmak takımı düzenler (taşımak için sürükle, kaldırmak için "−", alttaki sıradan ekle, *Bitti*). **Bluetooth**, **Wi-Fi** ya da **VPN**'i basılı tutmak ise aygıtlarını ya da ağlarını açar.
 - **Kullanılabilir düğmeler:** Rahatsız Etmeyin, Gece Işığı, güç profili, Bluetooth, Wi-Fi, güncellemeler, uçak modu, VPN, erişim noktası, ekran kaydı, ekran görüntüsü, kamera, mikrofon, ses, KDE Connect, telefonu bul, karanlık mod, uyanık tut, kilitle, hesap makinesi, Sistem Ayarları. Parçası eksik olan düğme soluk görünür.
-- **Ayarlar:** Ayarlar → Kontroller: aynı altı düğme, sırasıyla. Ayarlar → Düzen → Modüller: ses kaydırıcısı.
+- **Ayarlar:** Ayarlar → Kontroller: aynı altı düğme, sırasıyla. Ayarlar → Sekmeler → Modüller: ses kaydırıcısı.
 - **Gereksinim ve sınırlar:** parlaklık kaydırıcısı Plasma'nın kısabildiği bir ekran ister. Program başlatan düğmeler (ekran görüntüsü, hesap makinesi, kilitle…) yerel modül ister.
 
 ### Uygulamalar
@@ -326,7 +326,7 @@ Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğ
 <!-- GIF: ai-question.gif | Yapay Zeka sayfasında bir soru yazılıyor; üç nokta yanıtın yolda olduğunu gösteriyor; yanıt biçimlendirilmiş metin olarak beliriyor. Hazır yanıtlar veren bir demo sunucusu yanıtlıyor. | Yapay Zeka: bir soru ve yanıtı (demo sağlayıcı) -->
 
 - **Ne görürsünüz:** bir alan, yazıldıkça görünen yanıt (Markdown, *Kopyala* düğmeli kutularda kod) ve hapta, yanıt yoldayken üç nokta, siz başka yerdeyken "Cevap hazır".
-- **Nasıl kullanılır:** Ayarlar → Düzen: *Yapay Zeka*'yı açın. Sayfada neyin yanıt vereceğini bağlayın, sonra yazın; Enter gönderir, Shift+Enter yeni satırdır. *Yeni sohbet* baştan başlar; Escape klavyeyi geri verir.
+- **Nasıl kullanılır:** Ayarlar → Sekmeler: *Yapay Zeka*'yı açın. Sayfada neyin yanıt vereceğini bağlayın, sonra yazın; Enter gönderir, Shift+Enter yeni satırdır. *Yeni sohbet* baştan başlar; Escape klavyeyi geri verir.
 - **Kim yanıt verebilir:** bu bilgisayardaki Claude Code ya da Antigravity; bu bilgisayardaki bir model sunucusu (Ollama, LM Studio, llama.cpp, Jan, KoboldCpp ya da OpenAI uyumlu herhangi bir adres); kendi anahtarınızla bir servis (Anthropic, OpenAI, OpenRouter, Groq, Google Gemini ya da OpenAI uyumlu bir başkası).
 - **Ayarlar:** Ayarlar → Yapay Zeka: kaynaklar ve varsayılanı, en uzun yanıt ve soru, sohbeti bir dosyada saklama, adada "Cevap hazır".
 - **Gereksinim ve sınırlar:** bu bir soru kutusudur, **ajan değildir**: hiçbir şeye araç ya da dosya verilmez; panonuzdan, ekranınızdan, notlarınızdan ya da takviminizden hiçbir şey eklenmez. Anahtarlar KDE Cüzdan'da tutulur. Bir servise sorulan soru o servise gönderilir ve o servisin ücretine tabi olabilir. Siz saklamayı seçmedikçe sohbet, kabuk durduğunda unutulur.
@@ -338,7 +338,7 @@ Ekranın üstünde bir panel varsa ada, dizüstü ekranlardaki çentik gibi doğ
 <!-- GIF: cloud-browse.gif | Bulut sayfası bir uzağın klasörlerini listeliyor; bir klasör açılıyor; bir dosya masaüstüne sürükleniyor; bir başkası yüklemek için bırakılıyor. Uydurma bir uzakla gösterilmiştir. | Bulut: gezin, sürükleyip indir, bırakıp yükle (uydurma bir uzak) -->
 
 - **Ne görürsünüz:** her rclone uzağı ve ne kadar dolu olduğu, boyut ve tarihiyle klasörleri ve dosyaları, bir istemcinin bildirdiği yerde senkron durumu (Syncthing, Dropbox) ve bulut dolmak üzereyken bir uyarı.
-- **Nasıl kullanılır:** Ayarlar → Düzen: *Bulut*'u açın. Klasörlere tıklayarak girin; bir dosyayı masaüstüne ya da dosya yöneticisine sürükleyin; yüklemek için dosyaları sayfaya bırakın (önce sorar). *İndir*, *Klasörde göster*, *Yolu kopyala* ve *Yükle…* aynısını sürüklemeden yapar.
+- **Nasıl kullanılır:** Ayarlar → Sekmeler: *Bulut*'u açın. Klasörlere tıklayarak girin; bir dosyayı masaüstüne ya da dosya yöneticisine sürükleyin; yüklemek için dosyaları sayfaya bırakın (önce sorar). *İndir*, *Klasörde göster*, *Yolu kopyala* ve *Yükle…* aynısını sürüklemeden yapar.
 - **Ayarlar:** Ayarlar → Bulut: hangi uzakların hangi adla gösterileceği, eşikler (%90 ve %98), uyarılar ve duraklatması, yüklemeden önceki soru, önbellek ve *Önbelleği temizle*.
 - **Gereksinim ve sınırlar:** en az bir uzağı olan `rclone` gerekir (`rclone config`); eksikse sayfa nasıl kurulacağını gösterir. Ada yalnızca `rclone` komutunu çalıştırır: listeleyebilir, ölçebilir, buluttan ve buluta kopyalayabilir; silemez, taşıyamaz, yeniden adlandıramaz, eşitleyemez. rclone'un kendi yapılandırması ve belirteçleri asla açılmaz.
 
@@ -409,8 +409,8 @@ Hapın yanında küçük bir kedi oturur. Hiçbir şey olmayınca uykuya dalar (
 <!-- GIF: layout-reorder.gif | Ayarlar → Düzen içinde bir sayfa başka bir yere sürükleniyor ve biri kapatılıyor; adanın sekmeleri buna uyuyor. | Düzen: sayfaları sıralama ve gizleme -->
 <!-- GIF: language-switch.gif | Ayarlar → Dil English'ten Türkçe'ye çevriliyor; adanın metinleri anında değişiyor. | Dil -->
 
-- **Ayarlar → Düzen → Sekmeler:** bir sayfayı tutamacından sürükleyip sekmesini taşıyın; anahtarı onu gösterir ya da gizler. *Varsayılan sıraya döndür* hepsini eski yerine koyar. **Modüller:** bir sayfanın içindeki açılıp kapatılabilen parçalar.
-- **Ayarlar → Dil:** Otomatik, Türkçe ya da English; yalnızca ada ve ayarları için, Plasma'yı yeniden başlatmadan.
+- **Ayarlar → Sekmeler:** bir sayfayı tutamacından sürükleyip sekmesini taşıyın; anahtarı onu gösterir ya da gizler. *Varsayılan sıraya döndür* hepsini eski yerine koyar. **Modüller:** bir sayfanın içindeki açılıp kapatılabilen parçalar.
+- **Ayarlar → Genel → Dil:** Otomatik, Türkçe ya da English; yalnızca ada ve ayarları için, Plasma'yı yeniden başlatmadan.
 
 ## Geliştiriciler için: kendi etkinliğini gönder
 

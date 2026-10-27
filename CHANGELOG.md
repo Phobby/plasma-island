@@ -61,6 +61,23 @@
   system's region does (its time format, also when the island speaks
   another language), or always in 24 or 12 hours.
 
+- **Settings, simpler** (docs/UI-AUDIT.md): 18 pages are 15, 13 with a new
+  island's tabs. Language is on General; Alerts and Download tracking are
+  folded parts of Activities; Layout is called Tabs and has the System view.
+  A tab's own page is in the sidebar only while the tab is on. Each page shows
+  the few settings it is opened for and folds the rest (*Details*,
+  *Customize*, *Fine tuning*…), made only when opened and left as they were;
+  what does not apply in the layout or mode chosen is hidden, not greyed.
+  A **search** at the top of every page finds any setting (in Turkish too,
+  without accents) and opens it where it is. **Response** on General: Calm,
+  Balanced or Lively for the hover and collapse delays and how long events
+  and notifications stay. Long explanations are behind "?" buttons. No
+  setting was removed or renamed.
+- **A short tour** at a new island's first opening: where it sits, which
+  tabs, what this computer has; three steps, can be skipped, shown once
+  (Diagnostics → About shows it again). An island that ran before does not
+  see it (settings schema 3).
+
 ### Fixed
 - **Full screen, what counts:** only the window in front on the island's
   screen and on the desktop and activity shown. A full-screen window on

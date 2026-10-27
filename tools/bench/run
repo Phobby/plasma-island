@@ -73,6 +73,18 @@ class Media(Driver):
         p = [l.split()[0] for l in session("ps", capture=True).splitlines() if "tools/demo/player" in l or "pw-play" in l]
         if p: subprocess.run(["kill", *p])
 
+class MediaFullscreen(Media):
+    """Music playing, and a window over the whole screen in front (Konsole in full screen):
+    the island as it is over a video or a browser's F11."""
+    def start(self):
+        super().start()
+        session("spawn", "fullscreen", "konsole", "--separate", "--fullscreen", "-e", "sleep", "100000")
+        time.sleep(4)
+    def stop(self):
+        super().stop()
+        p = [l.split()[0] for l in session("ps", capture=True).splitlines() if "konsole" in l and "--fullscreen" in l]
+        if p: subprocess.run(["kill", *p])
+
 class Notifications(Driver):
     """`count` notifications, one every `gap` seconds, from made-up applications."""
     def __init__(self, count=200, gap=0.4): self.count, self.gap, self.proc = count, gap, None
@@ -156,6 +168,9 @@ SCENARIOS = [
     ("media-glow", "music playing; the glow follows it, no cat", True, {"catEnabled": "false", "ambientGlow": "true"}, Media, False),
     ("media-glow-cat", "music playing; glow, and the cat nods with its headphones", True, {"ambientGlow": "true"}, Media, False),
     ("media-cat", "music playing; no glow, the cat with its headphones", True, {"ambientGlow": "false"}, Media, False),
+    ("media-cat-notch", "music playing, the notch with its cat; nothing in full screen", True, {"islandLayout": "0", "ambientGlow": "false"}, Media, False),
+    ("media-cat-peek", "the same, a window in full screen: the notch drawn up to the edge (peek), its animations stopped", True,
+     {"islandLayout": "0", "ambientGlow": "false", "fullscreenMode": "2", "settingsSchema": "3"}, MediaFullscreen, False),
     ("theme-flat", "an opaque, flat look (Midnight), no blur", True, {"appearanceMode": "1", "customStyle": ("theme", "midnight"), "catEnabled": "false"}, None, False),
     ("theme-glass", "a see-through look with blur (Glass)", True, {"appearanceMode": "1", "customStyle": ("theme", "glass"), "catEnabled": "false"}, None, False),
     ("theme-gradient", "a gradient with blur (Aurora)", True, {"appearanceMode": "1", "customStyle": ("theme", "aurora"), "catEnabled": "false"}, None, False),

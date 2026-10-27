@@ -8,7 +8,8 @@
 # setting of contents/config/main.xml handed in as cfg_<key> with its default (--set
 # changes one), the window as tall as the page, and grabbed whole into DIR/<page>.png.
 # --open opens every folding part ("Details") first, so that what is in them shows too.
-# Prints the page's height and how many settings (controls that take a value) it shows.
+# Prints the page's height, how many settings (controls that take a value) it shows and how
+# long it took to open (made and drawn once, in an engine of its own: as the window opens it).
 # Run with a home of its own (empty, made for the run): nothing of the user's own files
 # (what the suggestions learned, themes, notes) can be in the pictures; --real-home uses yours.
 # Off screen (QT_QPA_PLATFORM=offscreen): Qt's software renderer draws it, so blur and
@@ -61,7 +62,7 @@ Item {
             (function walk(i) {
                 if (!i.visible) return;
                 const kind = String(i);
-                if (/^(CheckBox|Switch|ComboBox|SpinBox|Slider|TextField|RadioButton|ColorButton)(_QMLTYPE|\(|_)/.test(kind) || i.objectName === "settingControl") ++n;
+                if (/^(CheckBox|Switch|ComboBox|SpinBox|Slider|TextField|RadioButton|ColorButton|SettingCheck|SettingCombo|SettingSpin)(_QMLTYPE|\(|_)/.test(kind) || i.objectName === "settingControl") ++n;
                 for (const c of i.children) walk(c);
             })(item);
             return n;
@@ -78,10 +79,14 @@ Item {
             for (const name of %(pages)s) {
                 const props = {};
                 for (const key in values) props["cfg_" + key] = values[key];
+                // (how long it takes to open: made and drawn once, in an engine that has not made it before)
+                const t0 = Date.now();
                 loader.setSource("file:%(ui)s/" + name + ".qml", props);
                 tryVerify(() => loader.status !== Loader.Loading, 5000);
                 if (loader.status !== Loader.Ready) { console.log("SHOT " + name + " could not be loaded"); continue; }
                 const page = loader.item;
+                waitForRendering(loader);
+                const opened = Date.now() - t0;
                 wait(300);
                 if (%(open)s) { openAll(page); wait(400); }
                 // as tall as what it has to show
@@ -93,7 +98,7 @@ Item {
                     wait(150);
                 }
                 grabImage(loader).save("%(out)s/" + name + ".png");
-                console.log("SHOT " + name + " height " + h + " controls " + controls(page));
+                console.log("SHOT " + name + " height " + h + " controls " + controls(page) + " ms " + opened);
                 loader.source = "";
                 wait(50);
             }
