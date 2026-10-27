@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- **Peek or shrink on the desktop too** (Settings → Appearance, *Full
+  screen*: *On the desktop too, when nothing is going on*; off by default).
+  With *Peek at the edge* or *Shrink*, once the island has shown nothing but
+  itself for a while (2–120 s, 10 by default) it draws up or in as over a
+  full-screen window; the edge opens it, and a notification, a live
+  activity or opening it brings it back at once.
 - **Layout: Notch / Oval layout** (Settings → Appearance → Layout). The notch is
   the first choice and a fresh install's default; the oval layout is the
   rounded island of earlier versions. An island that ran before keeps the

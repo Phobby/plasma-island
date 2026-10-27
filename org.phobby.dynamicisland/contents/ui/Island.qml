@@ -59,6 +59,9 @@ Item {
     // moves it up); nothing in it moves (the glow, the bars of the music, a ring, a pulse), it takes
     // no pointer (the strip at the edge does) and what comes waits.
     property bool resting: false
+    // Whether what comes waits while it rests: not when it went up only because nothing was going on
+    // (on the desktop, main.qml), where what comes brings it back.
+    property bool restingHolds: true
     // Resting, what it shows is a picture of itself taken as it went up: the same pixels, nothing laid
     // out anew, and everything under the picture stopped, as hidden. (No picture to be had: as it is.)
     property bool frozen: false
@@ -156,8 +159,8 @@ Item {
                                     : "transparent"
     // A running live activity pulses.
     readonly property bool dotPulse: mode === "dot" && dotEvents !== 2 && (primary !== null || suggestionHint)
-    Binding { target: island.manager; property: "quiet"; value: island.dot && island.dotEvents !== 1 || island.resting }
-    Binding { target: island.manager; property: "quietCritical"; value: island.dotCriticalExpand && !island.resting }
+    Binding { target: island.manager; property: "quiet"; value: island.dot && island.dotEvents !== 1 || island.resting && island.restingHolds }
+    Binding { target: island.manager; property: "quietCritical"; value: island.dotCriticalExpand && !(island.resting && island.restingHolds) }
 
     // ---- state ----------------------------------------------------------------
     property bool expanded: false

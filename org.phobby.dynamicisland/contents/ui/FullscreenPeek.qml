@@ -15,6 +15,11 @@
       * shrink (3): `shrunk`, the notch drawn in to a nub; the pointer on it
         opens it in the same way.
 
+    On the desktop too, where wanted (`idleDelay` > 0): once nothing has
+    gone on in it (`idle`) for that long it is drawn up or shrunk as for
+    such a window, peek or shrink only (`idleAway`); anything that comes
+    (a notification, a live activity, the island opened) brings it back.
+
     No flicker: after it went back up the strip opens it again only once
     the pointer has left it (or was not on it), so a pointer kept at the
     edge does not open and close it over and over. A call ringing opens it
@@ -39,13 +44,18 @@ Item {
     // A call ringing, and whether that opens it.
     property bool ringing: false
     property bool callOpens: true
+    // Nothing going on in the island (main.qml), and how long that lasts before it goes (ms; 0 = never).
+    property bool idle: false
+    property int idleDelay: 0
+    // Drawn up or shrunk for that, on the desktop.
+    property bool idleAway: false
 
     readonly property bool hidden: mode === 0 && over
     // Drawn up or shrunk for such a window, now or after a while.
-    readonly property bool active: (mode === 2 || mode === 3) && over
+    readonly property bool active: (mode === 2 || mode === 3) && (over || idleAway)
     property bool shown: false
-    readonly property bool away: mode === 2 && over && !shown
-    readonly property bool shrunk: mode === 3 && over && !shown
+    readonly property bool away: mode === 2 && active && !shown
+    readonly property bool shrunk: mode === 3 && active && !shown
     // (whether the strip may open it: see above)
     property bool armed: true
     signal openRequested()
@@ -62,6 +72,15 @@ Item {
         else { opening.stop(); armed = true; }
     }
     onRingingChanged: if (ringing && callOpens) show()
+    onIdleChanged: if (!idle) idleAway = false
+    onIdleDelayChanged: if (idleDelay <= 0) idleAway = false
+    onModeChanged: idleAway = false
+    Timer {
+        id: idling
+        interval: Math.max(0, peek.idleDelay)
+        running: peek.idleDelay > 0 && (peek.mode === 2 || peek.mode === 3) && peek.idle && !peek.idleAway
+        onTriggered: peek.idleAway = true
+    }
     Timer {
         id: opening
         interval: Math.max(0, peek.delay)

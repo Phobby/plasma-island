@@ -984,6 +984,10 @@ PlasmoidItem {
         delay: root.cfg.peekDelay
         ringing: root.ringing
         callOpens: root.cfg.peekEvents
+        // On the desktop too, where wanted: nothing in it, nothing open over it, the pointer not on it
+        // (drawn up or shrunk, the pointer there is the edge's: see edgeHovered).
+        idle: island.mode === "idle" && !island.menuOpen && !island.wantsKeyboard && (!island.hovered || peek.away || peek.shrunk)
+        idleDelay: root.cfg.peekIdle ? root.cfg.peekIdleDelay * 1000 : 0
         onOpenRequested: island.expanded = true
     }
     // Opened otherwise while it is drawn up or in (a click on the nub, the menu, a shortcut): it comes down.
@@ -1126,6 +1130,7 @@ PlasmoidItem {
             manager: activities
             showClock: root.cfg.showClock && !peek.shrunk
             resting: peek.away || peek.hidden
+            restingHolds: peek.over
             hoverAbove: root.peekBridge && edgeHover.hovered
             hoverDelay: root.cfg.hoverDelay
             collapseDelay: root.cfg.collapseDelay

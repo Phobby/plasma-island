@@ -208,6 +208,14 @@ while a window fills its screen (`fullscreenMode`).
   part that shows, pulsing: green a call, red a screen recording, the
   privacy dot's colour for the microphone or camera, yellow a critical
   warning. Other events wait until it comes down.
+- **On the desktop too, when nothing is going on** (off by default; with
+  *Peek at the edge* or *Shrink*): without a full-screen window, once the
+  island has shown nothing but itself for *On the desktop, after* seconds
+  (2–120, 10 by default: no live activity, no notification or event, not
+  open, no menu, the pointer not on it) it is drawn up or shrunk just as
+  over a full-screen window, and the edge opens it the same way. Unlike
+  there, nothing waits: a notification, a live activity starting or the
+  island opened brings it back at once, and the time starts again after it.
 - While it is drawn up nothing of it moves: what it shows is a picture of
   itself taken as it went up (the same pixels, nothing laid out anew), and
   everything under it is stopped (the clock, the glow, the equalizer, a

@@ -7,6 +7,8 @@
     at the edge opens it only after the delay, leaving it closes it and it
     goes back up, not while it is typed in; a pointer kept at the edge does
     not open it over and over; a call ringing opens it, nothing else does.
+    On the desktop too, where wanted: nothing going on in it for a while, it
+    is drawn up or shrunk the same way, and anything that comes brings it back.
     Drawn up, the island rests: what moves in it stops, it takes no pointer,
     and what comes waits (a call too, until it comes down).
 */
@@ -53,7 +55,8 @@ Item {
         function init() {
             peek.mode = 0; peek.over = false; peek.edgeHovered = false; peek.hovered = false;
             peek.open = false; peek.busy = false; peek.ringing = false; peek.callOpens = true; peek.opened = 0;
-            island.resting = false; island.expanded = false;
+            peek.idle = false; peek.idleDelay = 0;
+            island.resting = false; island.restingHolds = true; island.expanded = false;
         }
         // (the state while a window comes, is there and goes)
         function states() { return [peek.hidden, peek.away, peek.shrunk, peek.active]; }
@@ -166,6 +169,53 @@ Item {
             verify(!peek.shown && !peek.shrunk && !peek.active);
             peek.over = true;
             verify(peek.shrunk, "a new window: the nub again");
+        }
+
+        function test_on_the_desktop_when_nothing_goes_on() {
+            const seen = [];
+            for (const mode of [0, 1, 2, 3]) {
+                init();
+                peek.mode = mode;
+                peek.idle = true; peek.idleDelay = 150;
+                wait(80);
+                verify(!peek.active, "not before the delay: " + mode);
+                wait(250);
+                seen.push(states());
+                peek.idle = false;
+                compare(states(), [false, false, false, false], "something comes: back at once, " + mode);
+            }
+            compare(seen[0], [false, false, false, false], "hide: never on the desktop");
+            compare(seen[1], [false, false, false, false], "normal: nothing changes");
+            compare(seen[2], [false, true, false, true], "peek: drawn up");
+            compare(seen[3], [false, false, true, true], "shrink: the nub");
+            // off: never
+            init();
+            peek.mode = 2; peek.idle = true;
+            wait(300);
+            verify(!peek.active, "not wanted: it stays");
+            // the time starts again after each thing that went on
+            peek.idleDelay = 200;
+            wait(120); peek.idle = false; peek.idle = true; wait(120);
+            verify(!peek.away, "interrupted: the delay starts again");
+            tryVerify(() => peek.away, 400);
+            // the edge opens it as over a full-screen window
+            peek.edgeHovered = true;
+            tryVerify(() => peek.shown, 400);
+            compare(peek.opened, 1);
+            // switched off while it is up: it comes down
+            init();
+            peek.mode = 3; peek.idle = true; peek.idleDelay = 100;
+            tryVerify(() => peek.shrunk, 400);
+            peek.idleDelay = 0;
+            verify(!peek.active, "switched off: down");
+        }
+
+        function test_resting_without_holding() {
+            island.restingHolds = false;
+            island.resting = true;
+            verify(!activities.quiet && activities.quietCritical, "drawn up only for being idle: what comes still comes");
+            island.resting = false;
+            island.restingHolds = true;
         }
 
         function test_island_resting() {

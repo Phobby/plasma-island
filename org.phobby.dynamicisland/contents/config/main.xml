@@ -90,6 +90,10 @@
     <!-- Also for a maximised window, as for one that fills the screen (hide, peek, shrink); a maximised window
          reaching under the notch too. Off: above a top panel a maximised window never meets the island. -->
     <entry name="peekMaximized" type="Bool"><default>false</default></entry>
+    <!-- Peek or shrink on the desktop too: once nothing has gone on in the island for peekIdleDelay seconds
+         it is drawn up or in as over a full-screen window; whatever comes brings it back -->
+    <entry name="peekIdle" type="Bool"><default>false</default></entry>
+    <entry name="peekIdleDelay" type="Int"><default>10</default><min>2</min><max>300</max></entry>
     <!-- Paths given by hand for commands ({ "claude": "/opt/claude/bin/claude" }, "~/" = home), looked at first
          (Settings › Diagnostics); empty = only where the island looks by itself -->
     <entry name="commandPaths" type="String"><default></default></entry>

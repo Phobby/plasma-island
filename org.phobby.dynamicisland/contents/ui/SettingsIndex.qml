@@ -86,6 +86,8 @@ QtObject {
         { key: "notchHideCat", page: "configAppearance", label: Lang.i18n("Hide the cat in the notch layout"), context: Lang.i18n("Cat:"), fold: Lang.i18n("Notch details"), needs: "catEnabled" },
         { key: "fullscreenMode", page: "configAppearance", label: Lang.i18n("Full-screen mode:"), context: "", fold: "", needs: "" },
         { key: "peekMaximized", page: "configAppearance", label: Lang.i18n("Also for maximised windows"), context: "", fold: "", needs: "" },
+        { key: "peekIdle", page: "configAppearance", label: Lang.i18n("On the desktop too, when nothing is going on"), context: "", fold: "", needs: "" },
+        { key: "peekIdleDelay", page: "configAppearance", label: Lang.i18n("On the desktop, after:"), context: "", fold: "", needs: "peekIdle" },
         { key: "peekSize", page: "configAppearance", label: Lang.i18n("Part that shows:"), context: "", fold: Lang.i18n("Full-screen details"), needs: "" },
         { key: "peekDelay", page: "configAppearance", label: Lang.i18n("Opens after:"), context: "", fold: Lang.i18n("Full-screen details"), needs: "" },
         { key: "peekWidth", page: "configAppearance", label: Lang.i18n("Trigger width:"), context: "", fold: Lang.i18n("Full-screen details"), needs: "" },

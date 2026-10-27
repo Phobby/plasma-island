@@ -4,7 +4,8 @@
     Settings → Appearance, Layout: the full-screen mode, for both layouts
     (main.qml, FullscreenPeek.qml): what the island does while a window fills
     its screen. Normal, Hide, Peek at the edge or Shrink, each with what it
-    does under it, and whether maximised windows count; in its Details the
+    does under it, whether maximised windows count and whether it peeks or
+    shrinks on the desktop too once nothing goes on; in its Details the
     preview and, for peeking, how much shows, how soon it opens, how wide the
     place at the edge is that opens it and whether a call opens it.
 
@@ -130,6 +131,31 @@ Kirigami.FormLayout {
         Kirigami.ContextualHelpButton {
             toolTipText: Lang.i18n("Off: only a window in full screen counts (any application: a video, a browser's F11, a terminal, a game), and only the one in front, on the island's screen and the desktop shown. While a top panel shows, a maximised window never meets the island anyway.")
         }
+    }
+    // (on the desktop too: only peeking or shrinking, hiding would leave nothing to bring it back)
+    RowLayout {
+        visible: section.opensAtEdge
+        QQC2.CheckBox {
+            id: idleCheck
+            objectName: "setting-peekIdle"
+            text: Lang.i18n("On the desktop too, when nothing is going on")
+            Binding { target: idleCheck; property: "checked"; value: section.page.cfg_peekIdle }
+            onToggled: section.page.cfg_peekIdle = checked
+            Accessible.name: text
+        }
+        Kirigami.ContextualHelpButton {
+            toolTipText: Lang.i18n("Without a full-screen window: once the island has shown nothing but itself for a while (no music, timer, download or other live activity, no notification, not open and the pointer not on it), it draws up or in just as it does in full screen. The pointer at the edge opens it; anything that comes brings it back at once.")
+        }
+    }
+    ValueSlider {
+        // (search needs: "peekIdle")
+        objectName: "setting-peekIdleDelay"
+        Kirigami.FormData.label: Lang.i18n("On the desktop, after:")
+        visible: section.opensAtEdge && section.page.cfg_peekIdle
+        from: 2; to: 120; stepSize: 1
+        value: section.page.cfg_peekIdleDelay
+        valueText: Lang.i18n("%1 s", section.page.cfg_peekIdleDelay)
+        onMoved: value => section.page.cfg_peekIdleDelay = Math.round(value)
     }
 
     // ---- the rest: folded (not there in the normal mode, which has nothing more) ---------
