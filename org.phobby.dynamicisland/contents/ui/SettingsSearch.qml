@@ -29,6 +29,8 @@ ColumnLayout {
 
     spacing: 0
 
+    // (the list of results, in the popup: for tests, which do not find it among the page's items)
+    readonly property alias resultList: list
     readonly property var results: field.text.trim().length === 0 ? [] : SettingsIndex.find(field.text, 12)
 
     function go(entry: var): void {
@@ -125,7 +127,8 @@ ColumnLayout {
         placeholderText: Lang.i18n("Search all settings…")
         Accessible.name: Lang.i18n("Search all settings")
         onTextChanged: if (text.trim().length > 0) popup.open(); else popup.close()
-        Keys.onDownPressed: if (search.results.length > 0) { popup.open(); list.forceActiveFocus(); list.currentIndex = 0; }
+        // (the list takes the keyboard: the popup has to take it first, and gives it back when it closes)
+        Keys.onDownPressed: if (search.results.length > 0) { popup.focus = true; popup.open(); list.forceActiveFocus(); list.currentIndex = 0; }
         Keys.onReturnPressed: if (search.results.length > 0) search.go(search.results[0])
         Keys.onEnterPressed: if (search.results.length > 0) search.go(search.results[0])
         Keys.onEscapePressed: event => { if (text.length > 0) { text = ""; event.accepted = true; } else event.accepted = false; }
@@ -141,6 +144,7 @@ ColumnLayout {
         padding: 1
         closePolicy: QQC2.Popup.CloseOnEscape | QQC2.Popup.CloseOnPressOutsideParent
         focus: false
+        onClosed: focus = false
         contentItem: ListView {
             id: list
             objectName: "settingsSearchResults"

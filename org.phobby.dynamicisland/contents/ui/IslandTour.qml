@@ -68,7 +68,7 @@ Rectangle {
             maximumLineCount: 3
             elide: Text.ElideRight
             text: tour.step === 0 ? Lang.i18n("The notch hangs from the top edge, over a panel; the oval island floats a little below it.")
-                : tour.step === 1 ? Lang.i18n("Tap a tab to switch it on or off. Everything else is in the settings.")
+                : tour.step === 1 ? Lang.i18n("Click a tab to switch it on or off. Everything else is in the settings.")
                 : tour.nativeAvailable ? Lang.i18n("The full install is there. A tab that needs another program says so when it is opened.")
                 : Lang.i18n("The native module is not installed: calls, screen recording, blur and a few tabs stay off. Diagnostics says how to install it.")
             color: tour.theme.subText

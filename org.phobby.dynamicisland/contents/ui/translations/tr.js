@@ -9,7 +9,7 @@ var table = {
     "Which tabs do you want?": "Hangi sekmeler olsun?",
     "What this computer has": "Bu bilgisayarda olanlar",
     "The notch hangs from the top edge, over a panel; the oval island floats a little below it.": "Çentik üst kenardan, panelin üzerinden sarkar; oval ada biraz aşağıda durur.",
-    "Tap a tab to switch it on or off. Everything else is in the settings.": "Açmak ya da kapatmak için bir sekmeye dokun. Gerisi ayarlarda.",
+    "Click a tab to switch it on or off. Everything else is in the settings.": "Açmak ya da kapatmak için bir sekmeye tıkla. Gerisi ayarlarda.",
     "The full install is there. A tab that needs another program says so when it is opened.": "Tam kurulum var. Başka bir program isteyen sekme, açıldığında bunu söyler.",
     "The native module is not installed: calls, screen recording, blur and a few tabs stay off. Diagnostics says how to install it.": "Yerel modül kurulu değil: aramalar, ekran kaydı, bulanıklık ve birkaç sekme kapalı kalır. Nasıl kurulacağı Tanılama'da.",
     "Open Diagnostics": "Tanılama'yı aç",

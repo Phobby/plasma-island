@@ -166,6 +166,15 @@ Item {
             field.forceActiveFocus();
             field.text = "dot size";
             verify(search.results.length > 0 && search.results[0].key === "dotSize");
+            // Down to the results, Enter goes there (on this page: shown here, the field emptied)
+            keyClick(Qt.Key_Down);
+            const list = search.resultList;
+            verify(list !== null && list.activeFocus, "the results take the keyboard");
+            compare(list.currentIndex, 0);
+            keyClick(Qt.Key_Return);
+            compare([field.text, search.revealing], ["", "dotSize"]);
+            field.forceActiveFocus();
+            field.text = "dot";
             keyClick(Qt.Key_Escape);
             compare(field.text, "", "Escape empties it");
             page.cfg_dotMode = false;

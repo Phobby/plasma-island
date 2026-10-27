@@ -50,6 +50,10 @@ Item {
     // Ambient glow (the colour of the cover, following the music); see AmbientGlow.qml.
     property bool ambientGlow: false
     signal ambientGlowToggled()
+    // The first opening's tour (ExpandedContent, IslandTour.qml): the configuration while it is to be shown, else null.
+    property var tourConfig: null
+    property bool nativeAvailable: true
+    signal diagnosticsRequested()
     // Drawn up to the edge over a window that fills the screen (main.qml, the full-screen mode): only
     // a small part of it shows. Its size, its shape and what it shows stay as they are (main.qml only
     // moves it up); nothing in it moves (the glow, the bars of the music, a ring, a pulse), it takes
@@ -678,6 +682,9 @@ Item {
                 suggestions: island.suggestions
                 ambientGlow: island.ambientGlow
                 onAmbientGlowToggled: island.ambientGlowToggled()
+                tourConfig: island.tourConfig
+                nativeAvailable: island.nativeAvailable
+                onDiagnosticsRequested: island.diagnosticsRequested()
             }
         }
     }
