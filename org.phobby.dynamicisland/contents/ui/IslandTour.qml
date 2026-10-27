@@ -45,8 +45,8 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 14
-        spacing: 8
+        anchors.margins: 12
+        spacing: 6
 
         Text {
             textFormat: Text.PlainText
@@ -97,21 +97,32 @@ Rectangle {
                 }
             }
 
-            Flow {
+            // (the tabs in as many rows as it takes; more than there is room for: they scroll, and
+            // never reach the buttons below)
+            IslandFlickable {
+                id: tabsView
+                objectName: "tourTabs"
                 visible: tour.step === 1
                 anchors.fill: parent
-                spacing: 6
-                Repeater {
-                    model: tour.tabs
-                    delegate: PillButton {
-                        required property var modelData
-                        objectName: "tourTab-" + modelData.key
-                        theme: tour.theme
-                        text: modelData.title
-                        readonly property bool on: tour.cfg[modelData.config] === true
-                        primary: on
-                        // (the last tab that is on stays on)
-                        onClicked: if (!on || tour.tabsOn > 1) tour.cfg[modelData.config] = !on
+                contentWidth: width
+                contentHeight: tabsFlow.implicitHeight
+                Flow {
+                    id: tabsFlow
+                    width: tabsView.width
+                    spacing: 4
+                    Repeater {
+                        model: tour.tabs
+                        delegate: PillButton {
+                            required property var modelData
+                            objectName: "tourTab-" + modelData.key
+                            theme: tour.theme
+                            height: 22
+                            text: modelData.title
+                            readonly property bool on: tour.cfg[modelData.config] === true
+                            primary: on
+                            // (the last tab that is on stays on)
+                            onClicked: if (!on || tour.tabsOn > 1) tour.cfg[modelData.config] = !on
+                        }
                     }
                 }
             }

@@ -3,9 +3,9 @@
 
     Settings → Appearance, Layout: the full-screen mode, for both layouts
     (main.qml, FullscreenPeek.qml): what the island does while a window fills
-    its screen. Normal, Hide, Peek at the edge or Shrink, each with what it
-    does under it, whether maximised windows count and whether it peeks or
-    shrinks on the desktop too once nothing goes on; in its Details the
+    its screen: stays, hides, slides up or shrinks, said as what it does,
+    with how it comes back under it; whether maximised windows count and
+    whether it does so on the desktop too once nothing goes on; in its Details the
     preview and, for peeking, how much shows, how soon it opens, how wide the
     place at the edge is that opens it and whether a call opens it.
 
@@ -58,12 +58,13 @@ Kirigami.FormLayout {
         }
     }
 
-    // The four, in the order shown; `value` is what is kept (fullscreenMode).
+    // The four, in the order shown; `value` is what is kept (fullscreenMode); `text` says what the
+    // island does, `hint` how it comes back.
     readonly property var modes: [
-        { value: 1, text: Lang.i18n("Normal"), description: Lang.i18n("Over full-screen applications the island stays as it is.") },
-        { value: 0, text: Lang.i18n("Hide"), description: Lang.i18n("In full screen the island is hidden completely.") },
-        { value: 2, text: Lang.i18n("Peek at the edge"), description: Lang.i18n("In full screen the island draws up to the top edge and only a small part of it shows. Move the pointer to the top edge and it opens.") },
-        { value: 3, text: Lang.i18n("Shrink"), description: Lang.i18n("In full screen the island draws in to a small nub at the top edge. Move the pointer onto it and it opens.") }
+        { value: 1, text: Lang.i18n("Stays as it is"), hint: Lang.i18n("Nothing changes.") },
+        { value: 0, text: Lang.i18n("Hides"), hint: Lang.i18n("It comes back when the window leaves full screen.") },
+        { value: 2, text: Lang.i18n("Slides up, a thin strip shows"), hint: Lang.i18n("Move the pointer to the top edge and it opens.") },
+        { value: 3, text: Lang.i18n("Shrinks to a small nub"), hint: Lang.i18n("Move the pointer onto the nub and it opens.") }
     ]
     readonly property int mode: section.page.cfg_fullscreenMode
     readonly property int modeIndex: Math.max(0, modes.findIndex(m => m.value === section.mode))
@@ -74,56 +75,45 @@ Kirigami.FormLayout {
         Kirigami.FormData.isSection: true
         Kirigami.FormData.label: Lang.i18n("Full screen")
     }
-    QQC2.ComboBox {
-        id: modeCombo
+    ColumnLayout {
+        id: modeChoice
         objectName: "setting-fullscreenMode"
-        Kirigami.FormData.label: Lang.i18n("Full-screen mode:")
-        model: section.modes
-        textRole: "text"
-        Binding { target: modeCombo; property: "currentIndex"; value: section.modeIndex }
-        onActivated: index => section.page.cfg_fullscreenMode = section.modes[index].value
-        Accessible.name: Lang.i18n("Full-screen mode:") + " " + currentText
-        // (each with what it does under it)
-        delegate: QQC2.ItemDelegate {
-            required property var modelData
-            required property int index
-            width: ListView.view ? ListView.view.width : implicitWidth
-            highlighted: modeCombo.highlightedIndex === index
-            contentItem: ColumnLayout {
-                spacing: 0
-                QQC2.Label {
-                    textFormat: Text.PlainText
-                    text: modelData.text
-                    font.weight: index === modeCombo.currentIndex ? Font.DemiBold : Font.Normal
-                }
-                QQC2.Label {
-                    textFormat: Text.PlainText
-                    Layout.fillWidth: true
-                    Layout.maximumWidth: Kirigami.Units.gridUnit * 22
-                    text: modelData.description
-                    wrapMode: Text.Wrap
-                    font: Kirigami.Theme.smallFont
-                    opacity: 0.75
-                }
+        Kirigami.FormData.label: Lang.i18n("In full screen, the island:")
+        Kirigami.FormData.buddyFor: modeButtons.count > 0 ? modeButtons.itemAt(0) : null
+        spacing: 0
+        QQC2.ButtonGroup { id: modeGroup }
+        Repeater {
+            id: modeButtons
+            model: section.modes
+            delegate: QQC2.RadioButton {
+                required property var modelData
+                required property int index
+                objectName: "fullscreenMode-" + modelData.value
+                text: modelData.text
+                QQC2.ButtonGroup.group: modeGroup
+                checked: section.mode === modelData.value
+                onToggled: if (checked) section.page.cfg_fullscreenMode = modelData.value
             }
         }
     }
     Hint {
         objectName: "fullscreenModeHint"
-        text: section.modes[section.modeIndex].description
+        text: section.modes[section.modeIndex].hint
               + (section.mode === 1 && !section.page.notch ? " " + Lang.i18n("In the oval layout that is under the full-screen window, as before.") : "")
     }
     Hint {
         visible: section.opensAtEdge && !Qt.platform.pluginName.startsWith("wayland")
-        text: Lang.i18n("Only on Wayland: elsewhere a window that fills the screen lies over the island, which is then as with Normal.")
+        text: Lang.i18n("Only on Wayland: elsewhere a window that fills the screen lies over the island, which then stays as it is.")
     }
 
+    // ---- when else ------------------------------------------------------------------------
     RowLayout {
+        Kirigami.FormData.label: Lang.i18n("Also:")
         visible: section.mode !== 1
         QQC2.CheckBox {
             id: maximizedCheck
             objectName: "setting-peekMaximized"
-            text: Lang.i18n("Also for maximised windows")
+            text: Lang.i18n("For maximised windows")
             Binding { target: maximizedCheck; property: "checked"; value: section.page.cfg_peekMaximized }
             onToggled: section.page.cfg_peekMaximized = checked
             Accessible.name: text
@@ -132,30 +122,29 @@ Kirigami.FormLayout {
             toolTipText: Lang.i18n("Off: only a window in full screen counts (any application: a video, a browser's F11, a terminal, a game), and only the one in front, on the island's screen and the desktop shown. While a top panel shows, a maximised window never meets the island anyway.")
         }
     }
-    // (on the desktop too: only peeking or shrinking, hiding would leave nothing to bring it back)
+    // (on the desktop too: only sliding up or shrinking, hiding would leave nothing to bring it back)
     RowLayout {
         visible: section.opensAtEdge
         QQC2.CheckBox {
             id: idleCheck
             objectName: "setting-peekIdle"
-            text: Lang.i18n("On the desktop too, when nothing is going on")
+            text: Lang.i18n("On the desktop when nothing is going on, after")
             Binding { target: idleCheck; property: "checked"; value: section.page.cfg_peekIdle }
             onToggled: section.page.cfg_peekIdle = checked
             Accessible.name: text
         }
+        SettingSpin {
+            // (search needs: "peekIdle")
+            settings: section.page; key: "peekIdleDelay"
+            enabled: section.page.cfg_peekIdle
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 5
+            from: 2; to: 300
+            unit: Lang.i18n("%1 s")
+            Accessible.name: Lang.i18n("Waiting time on the desktop")
+        }
         Kirigami.ContextualHelpButton {
             toolTipText: Lang.i18n("Without a full-screen window: once the island has shown nothing but itself for a while (no music, timer, download or other live activity, no notification, not open and the pointer not on it), it draws up or in just as it does in full screen. The pointer at the edge opens it; anything that comes brings it back at once.")
         }
-    }
-    ValueSlider {
-        // (search needs: "peekIdle")
-        objectName: "setting-peekIdleDelay"
-        Kirigami.FormData.label: Lang.i18n("On the desktop, after:")
-        visible: section.opensAtEdge && section.page.cfg_peekIdle
-        from: 2; to: 120; stepSize: 1
-        value: section.page.cfg_peekIdleDelay
-        valueText: Lang.i18n("%1 s", section.page.cfg_peekIdleDelay)
-        onMoved: value => section.page.cfg_peekIdleDelay = Math.round(value)
     }
 
     // ---- the rest: folded (not there in the normal mode, which has nothing more) ---------

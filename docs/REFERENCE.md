@@ -114,7 +114,7 @@ of its own, the glow of the cover comes from its lower edge.
 - **Full screen:** see *Full-screen mode* below (both layouts). The notch has
   two of its own there: peeking or shrunk, it also draws up for any window
   of that screen and desktop that reaches under it (moved up to the edge; a
-  maximised one only with *Also for maximised windows*), as a panel's *Dodge
+  maximised one only with *Also: For maximised windows*), as a panel's *Dodge
   windows* does (can be switched off); and come down and open over such a
   window it can have a size (80–240 %) and a width (80–1200 px) of its own,
   *As usual* otherwise (drawn up, it keeps the size it has).
@@ -178,12 +178,15 @@ Memos), **Clipboard** (what was copied recently: texts, code, images, files).
 ### Full-screen mode
 
 Settings → Appearance, *Full screen*, for both layouts: what the island does
-while a window fills its screen (`fullscreenMode`).
+while a window fills its screen (`fullscreenMode`), four choices under
+*In full screen, the island:*, each said as what it does, with how it comes
+back below them. (In earlier texts and in the code: Normal, Hide, Peek at
+the edge, Shrink.)
 
-- **Normal:** it stays as it is. The notch stays over the window; the oval
+- **Stays as it is** (Normal): The notch stays over the window; the oval
   island's window lies under it, as it always did.
-- **Hide** (default, as before): it is hidden completely.
-- **Peek at the edge:** it is only moved up (260 ms), never made smaller:
+- **Hides** (Hide; default, as before): it is hidden completely.
+- **Slides up, a thin strip shows** (Peek at the edge): it is only moved up (260 ms), never made smaller:
   its width, height, corners and what it shows stay as they are, until only
   a few pixels of it show at the top edge (*Part that shows*, 2–16 px,
   default 4): the notch's lower edge with its rounded corners, or the lower
@@ -201,17 +204,17 @@ while a window fills its screen (`fullscreenMode`).
   edge it does not open again until the pointer has left the strip (no
   flicker). The oval island comes down to its usual place; between the edge
   and it the pointer still counts as on it.
-- **Shrink:** it draws in to a small nub at the edge; the pointer on it opens
+- **Shrinks to a small nub** (Shrink): it draws in to a small nub at the edge; the pointer on it opens
   it in the same way.
 - **Important events:** an incoming call opens it (*Open in full screen too,
   for an incoming call*, on by default). Everything else only colours the
   part that shows, pulsing: green a call, red a screen recording, the
   privacy dot's colour for the microphone or camera, yellow a critical
   warning. Other events wait until it comes down.
-- **On the desktop too, when nothing is going on** (off by default; with
-  *Peek at the edge* or *Shrink*): without a full-screen window, once the
-  island has shown nothing but itself for *On the desktop, after* seconds
-  (2–120, 10 by default: no live activity, no notification or event, not
+- **Also: On the desktop when nothing is going on, after** *n s* (off by
+  default; only when sliding up or shrinking): without a full-screen window,
+  once the island has shown nothing but itself for that many seconds
+  (2–300, 10 by default: no live activity, no notification or event, not
   open, no menu, the pointer not on it) it is drawn up or shrunk just as
   over a full-screen window, and the edge opens it the same way. Unlike
   there, nothing waits: a notification, a live activity starting or the
@@ -222,7 +225,7 @@ while a window fills its screen (`fullscreenMode`).
   ring, a pulse); the cat goes up with it, its feet no lower than the
   island's lower edge, and keeps still (measured in `tools/nested-session`:
   plasmashell 0.10–0.15 % CPU there against 0.7–0.8 % with Normal over the
-  same window, the same memory). With *Normal* nothing changes.
+  same window, the same memory). With *Stays as it is* nothing changes.
 - **What counts as filling the screen:** the window in front on the island's
   screen (the active one, or the one activated last there while another
   screen has the focus) when the window manager says it is full screen (any
@@ -239,7 +242,7 @@ while a window fills its screen (`fullscreenMode`).
   one kind of window over a full-screen one (the notch's window; the oval
   island moves into such a window only while it peeks or is shrunk there).
   On X11 a window that fills the screen lies over the island, which is then
-  as with *Normal*.
+  as with *Stays as it is*.
 - From earlier settings: the notch's *Over full screen* is taken over as it
   was (Hide → Hide, Show → Normal, Dodge → Peek at the edge, Shrink →
   Shrink), once (settings version 2).

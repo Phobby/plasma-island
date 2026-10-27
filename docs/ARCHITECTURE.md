@@ -196,7 +196,7 @@ over for the windows of the island's screen, of the desktop shown and of the
 activity shown, and only for the window in front there (the active one, or
 the one activated last when another screen has the focus). A window as large
 as the screen without the flag (a game in a borderless window) counts too; a
-maximised one only with *Also for maximised windows*. Nothing is polled: the
+maximised one only with *Also: For maximised windows*. Nothing is polled: the
 model's changes are looked at once after each burst of them. Measured in
 `tools/nested-session` (KWin 6.6.6, 1920x1080, `--xwayland` for xterm; state
 read from a KWin script; the island's decision from

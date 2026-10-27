@@ -183,7 +183,7 @@ A click on the small pill turns it into a dot (15 px, 10–28 in the settings) s
 
 The default shape joins the screen's top edge like a laptop's notch: square above, rounded below, over the top panel (also one that hides itself), opening downwards. Symbiot Black is the default gradient; black and other custom colours are available. The panel under it cannot be clicked: if a clock or task buttons sit in the middle of your panel, limit its width. **Settings → Appearance → Layout**: *Notch* (the default for fresh installs) or *Oval layout*, the rounded island of earlier versions; details in [REFERENCE](docs/REFERENCE.md#layout-notch--oval-layout).
 
-**Full-screen mode** (same page, both layouts): over a full-screen window the island stays (*Normal*), hides (*Hide*, the default), draws up to the top edge with only a thin strip showing (*Peek at the edge*: the pointer at the edge opens it, clicks beside the strip go to the window) or shrinks to a nub (*Shrink*); the last two, if wanted, on the desktop too once nothing has gone on for a while. A call, a recording or the microphone colours the strip. Wayland only; details in [REFERENCE](docs/REFERENCE.md#full-screen-mode).
+**Full screen** (same page, both layouts): over a full-screen window the island stays as it is, hides (the default), slides up to the top edge with only a thin strip showing (the pointer at the edge opens it, clicks beside the strip go to the window) or shrinks to a small nub (the pointer on it opens it); the last two, if wanted, on the desktop too once nothing has gone on for a while. A call, a recording or the microphone colours the strip. Wayland only; details in [REFERENCE](docs/REFERENCE.md#full-screen-mode).
 
 ## The pages
 

@@ -413,43 +413,49 @@ Item {
 
         // The notch's own settings (under the layout): the preview follows what is set; the widest
         // is "no limit" below 80 px.
-        // The full-screen mode, for both layouts: Normal, Hide, Peek at the edge, Shrink, each with what it does
-        // under it; peeking has the part that shows, the delay, the trigger width and the call; the preview plays it.
+        // The full-screen mode, for both layouts: stays, hides, slides up, shrinks, each said as what it does, with
+        // how it comes back under it; peeking has the part that shows, the delay, the trigger width and the call;
+        // the desktop too only for sliding up and shrinking; the preview plays it.
         function test_fullscreen_mode_settings() {
             if (appearance.status !== Loader.Ready) skip("KDE's settings modules are not installed");
             const page = appearance.item;
             const find = (item, name) => { if (item.objectName === name) return item; for (const c of item.children) { const f = find(c, name); if (f) return f; } return null; };
             page.cfg_fullscreenMode = 2;
             openFold(page, "appearance.fullscreen");
-            const combo = find(page, "setting-fullscreenMode"), hint = find(page, "fullscreenModeHint");
+            const choice = find(page, "setting-fullscreenMode"), hint = find(page, "fullscreenModeHint");
+            const radio = value => find(choice, "fullscreenMode-" + value);
+            const idle = find(page, "setting-peekIdle"), maximized = find(page, "setting-peekMaximized");
             const size = find(page, "setting-peekSize"), delay = find(page, "setting-peekDelay"), width = find(page, "setting-peekWidth"), call = find(page, "setting-peekEvents");
-            verify(combo !== null && hint !== null && size !== null && delay !== null && width !== null && call !== null);
+            verify(choice !== null && hint !== null && size !== null && delay !== null && width !== null && call !== null);
+            verify(idle !== null && maximized !== null);
             for (const layout of [0, 1]) {
                 page.cfg_islandLayout = layout;
                 verify(find(page, "fullscreenSettings").visible, "in both layouts");
-                compare(combo.count, 4);
+                const order = choice.children.filter(c => String(c.objectName).startsWith("fullscreenMode-")).map(c => c.objectName);
+                compare(order, ["fullscreenMode-1", "fullscreenMode-0", "fullscreenMode-2", "fullscreenMode-3"], "stays, hides, slides up, shrinks");
                 const values = [], texts = [];
-                for (let i = 0; i < combo.count; ++i) {
-                    combo.currentIndex = i; combo.activated(i);
+                for (const v of [1, 0, 2, 3]) {
+                    page.cfg_fullscreenMode = v === 1 ? 0 : 1;
+                    mouseClick(radio(v));
                     values.push(page.cfg_fullscreenMode);
                     texts.push(hint.text);
                 }
-                compare(values, [1, 0, 2, 3], "Normal, Hide, Peek at the edge, Shrink");
+                compare(values, [1, 0, 2, 3], "a click chooses it");
                 compare(new Set(texts).size, 4, "each says what it does");
                 page.cfg_fullscreenMode = 1;
-                verify(!size.visible && !delay.visible && !width.visible && !call.visible, "normal: nothing more");
+                verify(!size.visible && !delay.visible && !width.visible && !call.visible && !maximized.visible && !idle.visible, "normal: nothing more");
                 page.cfg_fullscreenMode = 0;
-                verify(!size.visible && !call.visible, "hide: nothing more");
+                verify(!size.visible && !call.visible && maximized.visible && !idle.visible, "hide: maximised windows, not the desktop");
                 page.cfg_fullscreenMode = 2;
-                verify(size.visible && delay.visible && width.visible && call.visible, "peeking: all of it");
+                verify(size.visible && delay.visible && width.visible && call.visible && idle.visible, "peeking: all of it");
                 page.cfg_fullscreenMode = 3;
-                verify(!size.visible && !width.visible && delay.visible && call.visible, "shrunk: no strip, but the delay and the call");
+                verify(!size.visible && !width.visible && delay.visible && call.visible && idle.visible, "shrunk: no strip, but the delay and the call");
             }
-            // the combo follows the setting it was not used for
+            // the choice follows the setting it was not used for
             page.cfg_fullscreenMode = 2;
-            compare(combo.currentIndex, 2);
+            verify(radio(2).checked && !radio(0).checked);
             page.cfg_fullscreenMode = 0;
-            compare(combo.currentIndex, 1);
+            verify(radio(0).checked && !radio(2).checked);
             // the sliders write their values; the trigger width is "as wide as the island" below 40 px
             const slider = r => r.children.find(c => c.stepSize !== undefined && c.from !== undefined);
             page.cfg_fullscreenMode = 2;

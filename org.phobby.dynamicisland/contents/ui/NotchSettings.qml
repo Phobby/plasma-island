@@ -342,7 +342,7 @@ Kirigami.FormLayout {
                     text: section.page.cfg_notchDodgeWidth > 0 ? Lang.i18n("%1 px", section.page.cfg_notchDodgeWidth) : Lang.i18n("As usual")
                 }
                 Kirigami.ContextualHelpButton {
-                    toolTipText: Lang.i18n("While it is open over a window that fills the screen (Full-screen mode: Peek at the edge or Shrink, below); as usual: the size and width set for it everywhere.")
+                    toolTipText: Lang.i18n("While it is open over a window that fills the screen (Full screen, below: sliding up or shrinking); as usual: the size and width set for it everywhere.")
                 }
             }
 

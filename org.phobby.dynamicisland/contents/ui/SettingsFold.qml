@@ -107,7 +107,13 @@ ColumnLayout {
             width: parent.width
             active: fold.made
             sourceComponent: fold.content
-            onLoaded: if (fold.twin && item.twinFormLayouts !== undefined) item.twinFormLayouts = [fold.twin]
+            onLoaded: {
+                if (!fold.twin || item.twinFormLayouts === undefined) return;
+                item.twinFormLayouts = [fold.twin];
+                // (wide or narrow as the page is: left to itself it is narrow while it is first laid out and
+                // the page around it moves to and fro as it opens)
+                if (fold.twin.wideMode !== undefined) item.wideMode = Qt.binding(() => fold.twin.wideMode);
+            }
         }
     }
 }

@@ -103,6 +103,7 @@ Item {
             verify(part.expanded);
             tryVerify(() => part.item !== null);
             verify(SettingsMemory.isOpen("general.details"), "remembered");
+            compare(part.item.wideMode, part.twin.wideMode, "laid out as the page is from the start: nothing jumps as it opens");
             const field = named(page, "setting-preferredPlayer");
             verify(field !== null);
             field.text = "elisa"; field.textEdited();
@@ -232,6 +233,13 @@ Item {
             compare(config.islandLayout, 1, "the oval layout chosen");
             mouseClick(named(tour, "tourNext"));
             compare(tour.step, 1);
+            // the tabs, in a room smaller than they take: they scroll there and never reach the buttons below
+            tour.height = 180;
+            wait(50);
+            const tabs = named(tour, "tourTabs"), skip = named(tour, "tourSkip");
+            verify(tabs.mapToItem(tour, 0, tabs.height).y <= skip.mapToItem(tour, 0, 0).y, "the tabs end above the buttons");
+            verify(tabs.clip);
+            tour.height = 230;
             mouseClick(named(tour, "tourTab-weather"));
             compare(config.showWeather, false, "a tab switched off");
             mouseClick(named(tour, "tourTab-weather"));

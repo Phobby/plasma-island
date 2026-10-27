@@ -3,12 +3,17 @@
 ## Unreleased
 
 ### Added
-- **Peek or shrink on the desktop too** (Settings → Appearance, *Full
-  screen*: *On the desktop too, when nothing is going on*; off by default).
-  With *Peek at the edge* or *Shrink*, once the island has shown nothing but
-  itself for a while (2–120 s, 10 by default) it draws up or in as over a
-  full-screen window; the edge opens it, and a notification, a live
+- **Slide up or shrink on the desktop too** (Settings → Appearance, *Full
+  screen*: *Also: On the desktop when nothing is going on, after* n s; off
+  by default). When the island slides up or shrinks in full screen, it does
+  so on the desktop too once it has shown nothing but itself for a while
+  (2–300 s, 10 by default); the edge opens it, and a notification, a live
   activity or opening it brings it back at once.
+- **Full screen, said plainly:** the four choices are buttons that say what
+  the island does (*Stays as it is*, *Hides*, *Slides up, a thin strip
+  shows*, *Shrinks to a small nub*) with one line under them on how it comes
+  back, in place of a list of names and two paragraphs; *For maximised
+  windows* and the desktop are under *Also*.
 - **Layout: Notch / Oval layout** (Settings → Appearance → Layout). The notch is
   the first choice and a fresh install's default; the oval layout is the
   rounded island of earlier versions. An island that ran before keeps the
@@ -85,6 +90,12 @@
   see it (settings schema 3).
 
 ### Fixed
+- **The tour's tabs** no longer run into the Skip / Back / Next buttons
+  where the open island is too low for all of them: they are a little
+  smaller and scroll in their own room.
+- **A settings part opened** (Customize, Details…) is laid out as the page
+  is from the start: it no longer opens with its labels above its fields
+  and moves the page to and fro.
 - **Full screen, what counts:** only the window in front on the island's
   screen and on the desktop and activity shown. A full-screen window on
   another virtual desktop no longer draws the island up (or hides it) on an
