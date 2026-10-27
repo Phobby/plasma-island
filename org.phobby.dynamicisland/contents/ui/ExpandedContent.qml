@@ -36,6 +36,10 @@ Item {
     // The ambient glow's switch on the Media page.
     property bool ambientGlow: false
     signal ambientGlowToggled()
+    // The first opening's tour (IslandTour.qml): the configuration to write to while it is to be shown, else null.
+    property var tourConfig: null
+    property bool nativeAvailable: true
+    signal diagnosticsRequested()
 
     // True while the user types a reply: the island keeps keyboard focus
     // and does not collapse.
@@ -151,7 +155,7 @@ Item {
     WheelHandler {
         id: pageWheel
         objectName: "pages"
-        enabled: !expanded.holding
+        enabled: !expanded.holding && !tourLoader.active
         margin: expanded.theme.padding
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         // of the gesture `known`: how far it has come (in page turns), and whether it turned the page
@@ -505,6 +509,18 @@ Item {
                     }
                 }
             }
+        }
+    }
+    Loader {
+        id: tourLoader
+        anchors.fill: parent
+        z: 50
+        active: expanded.tourConfig !== null && expanded.active
+        sourceComponent: IslandTour {
+            theme: expanded.theme
+            cfg: expanded.tourConfig
+            nativeAvailable: expanded.nativeAvailable
+            onDiagnosticsRequested: expanded.diagnosticsRequested()
         }
     }
     Component { id: genericCard; ActivityCard {} }

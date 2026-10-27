@@ -13,11 +13,14 @@
 //    3 = shrink), the value as it was: show is normal, hide is hide, dodging is peeking.
 //    A new island has what one had before: hide (on the oval layout a window that fills
 //    the screen lies over the island anyway). notchFullscreen is left as it was.
+// 3: the first-run tour (tourShown). A new island shows it at its first opening; one that
+//    ran before is not shown it: nothing of what it shows was changed for it (the settings
+//    window was only arranged anew, no setting was renamed or given another meaning).
 //
 // Pure functions of plain values: main.qml hands in the settings, writes what comes back.
 .pragma library
 
-const CURRENT = 2;
+const CURRENT = 3;
 const NOTCH = 0;
 const OVAL = 1;
 const HIDE = 0;
@@ -49,7 +52,7 @@ function fullscreenOf(c) {
     return mode(Number(c.settingsSchema) >= 2 ? c.fullscreenMode : c.notchFullscreen);
 }
 
-// What to write: { settingsSchema, islandLayout, layoutNotice, fullscreenMode } or {} when there is nothing to do.
+// What to write: { settingsSchema, islandLayout, layoutNotice, fullscreenMode, tourShown } or {} when there is nothing to do.
 function migrate(c, restored) {
     const from = Number(c.settingsSchema) || 0;
     if (from >= CURRENT) return {};
@@ -60,6 +63,8 @@ function migrate(c, restored) {
         if (out.islandLayout === OVAL && c.layoutNotice === 0) out.layoutNotice = 1;
     }
     if (from < 2) out.fullscreenMode = mode(c.notchFullscreen);
+    // (an island of schema 1 or 2 ran before by definition; a new one comes from 0)
+    if (from < 3 && (from >= 1 || usedBefore(c, restored)) && c.tourShown !== true) out.tourShown = true;
     return out;
 }
 

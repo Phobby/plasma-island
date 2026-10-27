@@ -19,6 +19,7 @@ import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
+import org.kde.plasma.plasmoid
 import "Diagnostics.js" as Diagnostics
 
 KCM.SimpleKCM {
@@ -30,6 +31,7 @@ KCM.SimpleKCM {
     property string cfg_commandPaths
     property string cfg_installedVersion
 
+    function widget(): var { try { return Plasmoid.configuration; } catch (e) { return null; } }
 
     // The native module's LocalTools, of this window's own (the island's is in the shell's other engine).
     Loader { id: localLoader; source: "LocalBridge.qml" }
@@ -306,6 +308,19 @@ KCM.SimpleKCM {
                 Kirigami.FormData.label: Lang.i18n("The island:")
                 QQC2.Button { icon.name: "internet-services"; text: Lang.i18n("GitHub page"); onClicked: Qt.openUrlExternally(RequirementCatalog.repoUrl) }
                 QQC2.Button { icon.name: "tools-report-bug"; text: Lang.i18n("Report a problem"); onClicked: Qt.openUrlExternally(RequirementCatalog.issuesUrl) }
+            }
+            RowLayout {
+                Kirigami.FormData.label: Lang.i18n("First opening:")
+                QQC2.Button {
+                    id: tourButton
+                    objectName: "tourAgain"
+                    icon.name: "help-hint"
+                    text: tourAsked ? Lang.i18n("Shown at the island's next opening") : Lang.i18n("Show the tour again")
+                    enabled: !tourAsked
+                    property bool tourAsked: false
+                    // (written at once, not with Apply: like the statistics of Tools, it is the island's own state)
+                    onClicked: { const c = page.widget(); if (c) { c.tourShown = false; tourAsked = true; } }
+                }
             }
         }
     }

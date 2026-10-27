@@ -32,7 +32,7 @@ STATE = {
     "pomodoroPhase", "pomodoroEndsAt", "pomodoroRound", "pomodoroStats", "alarmAt",
     "calendarDismissed", "calendarStatus", "weatherAnnounced", "habitsData", "notesLastOpen",
     "suggestionsAvailable", "suggestionsData", "aiAcknowledged", "cloudAlerted", "cloudLastTarget",
-    "darkColorScheme", "lightColorScheme", "alarmTime", "alarmLabel",
+    "darkColorScheme", "lightColorScheme", "tourShown", "alarmTime", "alarmLabel",
     # earlier settings a custom look starts from (Styles.parse), or the first search starts from
     "surfaceOpacity", "blurEnabled", "themeMode", "weatherPlaceName",
 }

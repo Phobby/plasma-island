@@ -5,7 +5,8 @@
     only when opened, remembered, with the keyboard), the search (SettingsIndex:
     every setting, by its name and place, in both languages; SettingsSearch:
     a result opens its part and shows it, or the switch that shows it), General's
-    Response choice, and every setting of the index found on its page.
+    Response choice, every setting of the index found on its page, and the first
+    opening's tour on the island (IslandTour).
     Skipped where KDE's settings modules are not installed. tools/run-tests runs
     it with a configuration folder of its own (SettingsMemory writes there).
 */
@@ -20,6 +21,31 @@ Item {
 
     Loader { id: general; anchors.fill: parent; source: "../org.phobby.dynamicisland/contents/ui/configGeneral.qml" }
     Loader { id: other; anchors.fill: parent; visible: false }
+
+    Theme { id: islandTheme; follow: false }
+    // What the tour writes to (the widget's configuration).
+    QtObject {
+        id: config
+        property int islandLayout: 0
+        property bool tourShown: false
+        property bool showMediaModule: true
+        property bool showSystemModule: true
+        property bool showNotificationModule: true
+        property bool showQuickSettings: true
+        property bool showTools: true
+        property bool showCalendar: true
+        property bool showNotes: true
+        property bool showClipboard: true
+        property bool showWeather: true
+        property bool showApps: true
+        property bool showHabits: true
+        property bool showAi: false
+        property bool showCloud: false
+    }
+    Component {
+        id: tourComponent
+        IslandTour { width: 420; height: 230; theme: islandTheme; cfg: config }
+    }
 
     TestCase {
         name: "SettingsUi"
@@ -183,6 +209,44 @@ Item {
             compare(checked, SettingsIndex.entries.length);
             other.source = ""; other.visible = false;
             SettingsMemory.store.open = "{}";
+        }
+
+        // The first opening's tour: three steps, each choice written at once, the last tab stays on,
+        // skipped or done it is not shown again.
+        function test_tour() {
+            config.tourShown = false; config.islandLayout = 0;
+            const tour = createTemporaryObject(tourComponent, root);
+            let finished = 0;
+            tour.finished.connect(() => ++finished);
+            compare(tour.step, 0);
+            mouseClick(named(tour, "tourLayout1"));
+            compare(config.islandLayout, 1, "the oval layout chosen");
+            mouseClick(named(tour, "tourNext"));
+            compare(tour.step, 1);
+            mouseClick(named(tour, "tourTab-weather"));
+            compare(config.showWeather, false, "a tab switched off");
+            mouseClick(named(tour, "tourTab-weather"));
+            compare(config.showWeather, true, "and on again");
+            // all but one off: that one stays
+            for (const p of tour.tabs) if (p.key !== "media") config[p.config] = false;
+            mouseClick(named(tour, "tourTab-media"));
+            compare(config.showMediaModule, true, "the last tab stays on");
+            for (const p of tour.tabs) config[p.config] = !(p.key === "ai" || p.key === "cloud");
+            mouseClick(named(tour, "tourBack"));
+            compare(tour.step, 0);
+            mouseClick(named(tour, "tourNext")); mouseClick(named(tour, "tourNext"));
+            compare(tour.step, 2);
+            compare(named(tour, "tourNext").text, "Done");
+            mouseClick(named(tour, "tourNext"));
+            compare([config.tourShown, finished], [true, 1]);
+            // skipped at once: the same
+            config.tourShown = false;
+            const again = createTemporaryObject(tourComponent, root);
+            mouseClick(named(again, "tourSkip"));
+            compare(config.tourShown, true);
+            // named for a screen reader
+            compare([named(again, "tourSkip").Accessible.role, named(again, "tourSkip").Accessible.name], [Accessible.Button, "Skip"]);
+            config.islandLayout = 0;
         }
     }
 }

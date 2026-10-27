@@ -314,7 +314,7 @@ PlasmoidItem {
     function settingsNow(kept: bool): var {
         return { settingsSchema: root.cfg.settingsSchema, islandLayout: root.cfg.islandLayout, notchMode: root.cfg.notchMode,
                  installedVersion: root.cfg.installedVersion, settingsKept: kept, layoutNotice: root.cfg.layoutNotice,
-                 fullscreenMode: root.cfg.fullscreenMode, notchFullscreen: root.cfg.notchFullscreen };
+                 fullscreenMode: root.cfg.fullscreenMode, notchFullscreen: root.cfg.notchFullscreen, tourShown: root.cfg.tourShown };
     }
     function migrateSettings(kept: bool, restored: bool): void {
         const changes = Migration.migrate(root.settingsNow(kept), restored);
@@ -322,7 +322,8 @@ PlasmoidItem {
         if (changes.settingsSchema !== undefined)
             console.info("org.phobby.dynamicisland: settings brought up to version " + changes.settingsSchema
                          + (changes.islandLayout !== undefined ? ", layout " + (changes.islandLayout === 0 ? "notch" : "oval") : "")
-                         + (changes.fullscreenMode !== undefined ? ", full-screen mode " + changes.fullscreenMode : ""));
+                         + (changes.fullscreenMode !== undefined ? ", full-screen mode " + changes.fullscreenMode : "")
+                         + (changes.tourShown !== undefined ? ", no first-run tour (ran before)" : ""));
     }
     Timer {
         interval: 4000
@@ -1150,6 +1151,11 @@ PlasmoidItem {
             dropPage: root.cfg.showCloud && root.cloudBackend !== null ? "cloud" : ""
             ambientGlow: root.cfg.ambientGlow
             onAmbientGlowToggled: root.cfg.ambientGlow = !root.cfg.ambientGlow
+            // A new island's first opening: the tour (once the settings are brought up to date, which
+            // says whether it ran before: one that did never sees it).
+            tourConfig: root.cfg.settingsSchema >= 3 && root.cfg.tourShown !== true ? root.cfg : null
+            nativeAvailable: root.core !== null
+            onDiagnosticsRequested: { island.expanded = false; root.openSettingsAt("configDiagnostics:"); }
             systemView: root.cfg.systemView === 0 ? "fixed" : "dynamic"
             // The gear in the expanded header: Plasma's settings window of this widget.
             onSettingsRequested: {

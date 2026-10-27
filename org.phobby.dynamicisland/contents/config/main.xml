@@ -96,6 +96,9 @@
     <!-- Written by the island: the settings page (and row) to open with the settings window ("configDiagnostics:claude");
          read and emptied by the settings window -->
     <entry name="settingsJump" type="String"><default></default></entry>
+    <!-- The first opening's tour (IslandTour.qml) was shown, or skipped; an island that ran before
+         schema 3 has it set by the migration and never sees it; Diagnostics → About empties it -->
+    <entry name="tourShown" type="Bool"><default>false</default></entry>
     <!-- The notch, peeking or shrunk: also where a window reaches under it (moved up to the edge; maximised only with peekMaximized), as a panel's
          "Dodge windows"; and its size (percent) and width (px at 100 %) once open over such a window; 0 = as usual -->
     <entry name="notchDodgeWindows" type="Bool"><default>true</default></entry>
