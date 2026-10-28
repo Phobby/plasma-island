@@ -8,7 +8,9 @@ island, whose code anybody can read.
 What it takes is one `POST /` with a JSON body `{ message, contact, report, island, language,
 session }`, made by `contents/ui/Feedback.js` (at most 2000 characters of text, 120 of contact,
 12000 of report). It sends the text as plain text, and the diagnostics report, when the user
-ticked it, as a file `diagnostics.txt` in reply to it. One message a minute from one address;
+ticked it, as a file `diagnostics.txt` in reply to it. About one message a minute from one address
+(Cloudflare's limiter counts roughly: a few quick ones can pass before it closes; the island
+itself sends at most one a minute);
 nothing is kept or logged. Its tests: `tests/feedbackrelay.test.js`, and `tests/tst_feedback.qml`
 runs the island's form against it (with a stand-in Telegram).
 
@@ -45,7 +47,7 @@ You need a Telegram account, a free Cloudflare account and Node.js (for `npx wra
         -H 'Content-Type: application/json' -d '{"message":"Hello from curl"}'
    ```
 
-   It answers `{"ok":true}` and the message is in your chat. A second one within a minute
+   It answers `{"ok":true}` and the message is in your chat. A few more within a minute
    answers 429.
 5. **The island.** Put the address into `FEEDBACK_URL` in
    `org.phobby.dynamicisland/contents/ui/Project.js`, then run `tools/run-tests`, commit and push.
@@ -57,7 +59,7 @@ You need a Telegram account, a free Cloudflare account and Node.js (for `npx wra
 - **The token got out, or the bot is flooded:** in @BotFather, `/mybots` → the bot → *API
   Token* → *Revoke current token*, then `npx wrangler secret put BOT_TOKEN` with the new one.
   Islands need no change: they never had the token.
-- **Too many messages:** the limit is in `wrangler.toml` (`[[ratelimits]]`, one a minute from
+- **Too many messages:** the limit is in `wrangler.toml` (`[[ratelimits]]`, about one a minute from
   one address). Anybody can still write to the address; a new Worker name (a new address in
   `FEEDBACK_URL`) shuts out what keeps coming to the old one.
 - **Nothing arrives:** `npx wrangler tail` shows each request's answer while you try again

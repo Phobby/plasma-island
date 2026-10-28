@@ -4,7 +4,8 @@
 // this module for a handler. Setup: README.md beside this file.
 import { handle } from "./relay.mjs";
 
-// One message a minute from one address: the Worker's rate limiting binding (LIMITER in
+// About one message a minute from one address (Cloudflare's limiter counts roughly: tried on
+// 2026-10-28, four quick ones passed and the fifth was refused): the rate limiting binding (LIMITER in
 // wrangler.toml) where it is there, else Cloudflare's cache of this data centre (which does
 // nothing on a *.workers.dev address: there the binding is what limits).
 async function limited(env, key) {

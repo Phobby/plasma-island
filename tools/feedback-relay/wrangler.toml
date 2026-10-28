@@ -14,7 +14,8 @@ preview_urls = false
 [observability]
 enabled = false
 
-# One message a minute from one address (worker.mjs reads it as env.LIMITER).
+# About one message a minute from one address (worker.mjs reads it as env.LIMITER; Cloudflare
+# counts roughly, so a few quick ones can pass before it closes).
 # namespace_id is any number of your own, unique in your Cloudflare account.
 [[ratelimits]]
 name = "LIMITER"

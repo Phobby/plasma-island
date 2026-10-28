@@ -18,6 +18,6 @@ const ISSUES_URL = REPO_URL + "/issues";
 // Where Settings › Diagnostics › Feedback sends what the user wrote: the project's relay
 // (tools/feedback-relay, a Cloudflare Worker that keeps the Telegram bot's token and passes the
 // text on). Empty: the island has no feedback address, and the page offers the issue tracker.
-const FEEDBACK_URL = "";
+const FEEDBACK_URL = "https://island-feedback.phoby.workers.dev/";
 // The clone and install, as one line to copy.
 const INSTALL_COMMAND = "git clone " + REPO_URL + ".git && cd " + REPOSITORY + " && ./install.sh && systemctl --user restart plasma-plasmashell";
