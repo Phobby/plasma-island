@@ -319,7 +319,8 @@ PlasmoidItem {
     function settingsNow(kept: bool): var {
         return { settingsSchema: root.cfg.settingsSchema, islandLayout: root.cfg.islandLayout, notchMode: root.cfg.notchMode,
                  installedVersion: root.cfg.installedVersion, settingsKept: kept, layoutNotice: root.cfg.layoutNotice,
-                 fullscreenMode: root.cfg.fullscreenMode, notchFullscreen: root.cfg.notchFullscreen, tourShown: root.cfg.tourShown };
+                 fullscreenMode: root.cfg.fullscreenMode, notchFullscreen: root.cfg.notchFullscreen, tourShown: root.cfg.tourShown,
+                 peekSize: root.cfg.peekSize };
     }
     function migrateSettings(kept: bool, restored: bool): void {
         const changes = Migration.migrate(root.settingsNow(kept), restored);
@@ -328,7 +329,8 @@ PlasmoidItem {
             console.info("org.phobby.dynamicisland: settings brought up to version " + changes.settingsSchema
                          + (changes.islandLayout !== undefined ? ", layout " + (changes.islandLayout === 0 ? "notch" : "oval") : "")
                          + (changes.fullscreenMode !== undefined ? ", full-screen mode " + changes.fullscreenMode : "")
-                         + (changes.tourShown !== undefined ? ", no first-run tour (ran before)" : ""));
+                         + (changes.tourShown !== undefined ? ", no first-run tour (ran before)" : "")
+                         + (changes.peekStrip !== undefined ? ", strip " + changes.peekStrip + " px" : ""));
     }
     Timer {
         interval: 4000
@@ -1013,9 +1015,9 @@ PlasmoidItem {
     Timer { id: ovalReturn; interval: 420 }
     // There, where its Dialog would be (px below the top of the screen).
     readonly property real ovalDown: root.ovalOverlay && root.notchWindow !== null ? Math.max(0, dialog.y - root.ownScreen.y) : 0
-    // Drawn up: only cfg.peekSize px of the small island below the edge (its lower edge, the notch's rounded
-    // corners or the pill's), the island as large as it is.
-    readonly property real peekAwayY: root.cfg.peekSize - island.restBottom * theme.scale - root.ovalDown
+    // Drawn up: only cfg.peekStrip px of the small island below the edge (its lower edge, the notch's rounded
+    // corners or the pill's), the island as large as it is; 0: all of it above the edge, nothing drawn.
+    readonly property real peekAwayY: root.cfg.peekStrip - island.restBottom * theme.scale - root.ovalDown
     readonly property int peekMove: 260
     // How far the island is moved down in its window now (for where it takes the pointer and is blurred).
     readonly property real hostShift: ovalShift.y + peekShift.y
@@ -1107,8 +1109,9 @@ PlasmoidItem {
         // (in steps, 12 a second, and only while there is something to say: see Island's dot).
         Rectangle {
             objectName: "peekSignal"
-            visible: root.peekSignal !== ""
-            readonly property real room: peek.away ? root.cfg.peekSize : 6
+            // (with nothing showing, drawn up: the light at the edge says it instead)
+            visible: root.peekSignal !== "" && !(peek.away && root.cfg.peekStrip === 0)
+            readonly property real room: peek.away ? root.cfg.peekStrip : 6
             width: Math.min(island.surfaceRect.width * theme.scale * 0.5, 120)
             height: Math.max(2, room - 2)
             radius: height / 2
@@ -1259,8 +1262,9 @@ PlasmoidItem {
         readonly property real centre: islandHost.x + (island.surfaceRect.x + island.surfaceRect.width / 2) * theme.scale
         width: Math.min(parent ? parent.width : 0, (root.cfg.peekWidth > 0 && peek.away ? root.cfg.peekWidth : island.surfaceRect.width) * theme.scale)
         x: Math.max(0, Math.min((parent ? parent.width : 0) - width, centre - width / 2))
-        // (drawn up: what shows of it, from the topmost row of pixels down; nothing below it takes the pointer)
-        height: peek.away ? root.cfg.peekSize : Math.max(1, root.hostShift + island.surfaceRect.y * theme.scale + 2)
+        // (drawn up: what shows of it, from the topmost row of pixels down, at least cfg.peekTrigger px, also
+        // with nothing showing; nothing below it takes the pointer)
+        height: peek.away ? Math.max(root.cfg.peekStrip, root.cfg.peekTrigger) : Math.max(1, root.hostShift + island.surfaceRect.y * theme.scale + 2)
         HoverHandler { id: edgeHover }
         Rectangle {
             anchors.fill: parent
@@ -1269,6 +1273,23 @@ PlasmoidItem {
         }
     }
     readonly property rect peekEdgeRect: Qt.rect(peekEdge.x, 0, peekEdge.width, peekEdge.height)
+    // The light at the edge, drawn up (PeekGlow.qml): while the pointer is at the place that opens it, and
+    // in an event's colour while one waits; with nothing showing that light is there even when it is off.
+    PeekGlow {
+        objectName: "peekGlow"
+        parent: peekEdge.parent
+        z: 10
+        readonly property real spread: Math.round(32 * theme.scale)
+        width: Math.min(parent ? parent.width : 0, peekEdge.width + 2 * spread)
+        height: Math.round(18 * theme.scale)
+        x: Math.max(0, Math.min((parent ? parent.width : 0) - width, peekEdge.centre - width / 2))
+        y: 0
+        color: root.peekSignal !== "" ? root.peekSignalColor
+             : root.cfg.peekGlowColor === 2 ? root.cfg.peekGlowCustom
+             : root.cfg.peekGlowColor === 0 ? theme.accent : Kirigami.Theme.highlightColor
+        strength: root.cfg.peekGlowStrength / 100
+        lit: peek.away && (root.cfg.peekGlow && edgeHover.hovered || root.peekSignal !== "" && (root.cfg.peekGlow || root.cfg.peekStrip === 0))
+    }
 
     // ---- where the island takes the pointer ------------------------------------------
     // The window is larger than what is drawn (room for the shadow, the morph, the larger

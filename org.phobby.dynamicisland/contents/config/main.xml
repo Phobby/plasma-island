@@ -83,7 +83,20 @@
     <!-- Peeking: how much of it shows (px), how long the pointer rests on it before it opens (ms), how wide the
          place at the edge that opens it is (px at 100 % size; 0 = as wide as the island), and whether an incoming
          call opens it (a recording, the microphone and a critical warning only colour the strip) -->
+    <!-- Before settings version 4: how much showed (2-16 px); read once by SettingsMigration.js into peekStrip -->
     <entry name="peekSize" type="Int"><default>4</default><min>2</min><max>16</max></entry>
+    <!-- How much of it shows, drawn up (px; 0 = nothing: the island is wholly above the edge, and the place
+         at the edge that opens it is still there), and how high that place is when nothing or less shows
+         (px from the topmost row down) -->
+    <entry name="peekStrip" type="Int"><default>2</default><min>0</min><max>12</max></entry>
+    <entry name="peekTrigger" type="Int"><default>1</default><min>1</min><max>8</max></entry>
+    <!-- The light at the edge, drawn up: it lights up while the pointer is at the place that opens it, and
+         in an event's colour (a call, a recording…); 0 = the island's look's own accent, 1 = the system's accent colour,
+         2 = peekGlowCustom; how strong (%) -->
+    <entry name="peekGlow" type="Bool"><default>true</default></entry>
+    <entry name="peekGlowColor" type="Int"><default>1</default><min>0</min><max>2</max></entry>
+    <entry name="peekGlowCustom" type="String"><default>#3daee9</default></entry>
+    <entry name="peekGlowStrength" type="Int"><default>60</default><min>10</min><max>100</max></entry>
     <entry name="peekDelay" type="Int"><default>150</default><min>0</min><max>1000</max></entry>
     <entry name="peekWidth" type="Int"><default>0</default><min>0</min><max>1200</max></entry>
     <entry name="peekEvents" type="Bool"><default>true</default></entry>

@@ -61,6 +61,12 @@ KCM.SimpleKCM {
     // Over a window that fills the screen, both layouts (FullscreenSettings.qml).
     property int cfg_fullscreenMode
     property int cfg_peekSize
+    property int cfg_peekStrip
+    property int cfg_peekTrigger
+    property bool cfg_peekGlow
+    property int cfg_peekGlowColor
+    property string cfg_peekGlowCustom
+    property int cfg_peekGlowStrength
     property int cfg_peekDelay
     property int cfg_peekWidth
     property bool cfg_peekEvents

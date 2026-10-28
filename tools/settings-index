@@ -26,7 +26,7 @@ OUT = UI / "SettingsIndex.qml"
 STATE = {
     "previewActive", "previewMode", "previewSource", "previewStyle", "previewTop", "previewOffsetX",
     "previewFollowStyle", "systemScheme", "notchMode", "settingsSchema", "layoutNotice",
-    "notchFullscreen", "settingsJump", "notchPanelSeen", "scaleLimitSeen", "settingsKept",
+    "notchFullscreen", "peekSize", "settingsJump", "notchPanelSeen", "scaleLimitSeen", "settingsKept",
     "updateAsked", "installedVersion", "dotState", "updatesAnnounced", "timerEndsAt", "timerTotal",
     "timerPausedRemaining", "stopwatchStartedAt", "stopwatchElapsed", "stopwatchLaps",
     "pomodoroPhase", "pomodoroEndsAt", "pomodoroRound", "pomodoroStats", "alarmAt",

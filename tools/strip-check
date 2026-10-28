@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+# strip-check — the island drawn up (Appearance › Full screen, "Slides up"), measured in
+# tools/nested-session: for each strip height how many rows of it are drawn below the screen's top
+# edge (0 px: none at all), how high the place that opens it is (the input region, drawn as a red
+# outline with DYNAMICISLAND_DEBUG_REGION=1), and, with nothing showing, that the pointer at the
+# topmost row lights the edge and then opens it. The island is drawn up on the empty desktop
+# (peekIdle), so no window is needed. Pictures go to the folder given (default: a new one).
+#
+#   tools/strip-check [OUT_DIR] [--keep]
+#
+# A session of its own (ISLAND_SESSION_NAME=strip-check); your desktop is not touched.
+import os, subprocess, sys, tempfile, time
+from PIL import Image
+
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+args = [a for a in sys.argv[1:] if not a.startswith("--")]
+out = args[0] if args else tempfile.mkdtemp(prefix="strip-check-")
+os.makedirs(out, exist_ok=True)
+base = tempfile.mkdtemp(prefix="strip-session-")
+env = dict(os.environ, ISLAND_SESSION_DIR=os.path.join(base, "session"), ISLAND_SESSION_NAME="strip-check")
+
+def tool(*a, check=True):
+    r = subprocess.run([os.path.join(HERE, "tools", "nested-session")] + list(a), env=env, capture_output=True, text=True)
+    if check and r.returncode != 0: sys.exit("strip-check: nested-session " + " ".join(a) + " failed:\n" + r.stdout + r.stderr)
+    return r.stdout.strip()
+def pointer(*steps):
+    return subprocess.Popen([os.path.join(HERE, "tools", "nested-session"), "run", "python3", os.path.join(HERE, "tools", "eipointer")] + list(steps), env=env)
+def shot(name):
+    p = os.path.join(out, name + ".png"); tool("shot", p); return Image.open(p).convert("RGB")
+
+# the notch, 310 px wide in the middle of a 1920 px screen: x 805 to 1115 (inside it, past the cat)
+X0, X1 = 820, 1100
+def rows(img, test, top=0, bottom=40, x0=X0, x1=X1):
+    """The rows (from the top) in which some pixel between x0 and x1 passes `test`."""
+    found = []
+    for y in range(top, bottom):
+        if any(test(img.getpixel((x, y))) for x in range(x0, x1, 2)): found.append(y)
+    return found
+def differs(bg):
+    return lambda p: max(abs(p[i] - bg[i]) for i in range(3)) > 8
+red = lambda p: p[0] > 200 and p[1] < 90 and p[2] < 90
+
+tool("start"); tool("install")
+results, failed = [], False
+def check(what, ok, detail):
+    global failed
+    failed |= not ok
+    results.append(f"{'ok  ' if ok else 'FAIL'}  {what}: {detail}")
+
+for debug in (False, True):
+    tool("shell", *(["DYNAMICISLAND_DEBUG_REGION=1"] if debug else []))
+    tool("set", "fullscreenMode", "2", "peekIdle", "true", "peekIdleDelay", "2", "notchMaxWidth", "310",
+         "peekDelay", "1500", "peekTrigger", "1", "tourShown", "true")
+    for strip in (0, 1, 2, 12):
+        tool("set", "peekStrip", str(strip))
+        time.sleep(4.5)
+        img = shot(f"strip-{strip}{'-region' if debug else ''}")
+        bg = img.getpixel((60, 600))
+        if not debug:
+            drawn = rows(img, differs(bg))
+            check(f"strip {strip} px: rows drawn below the edge", len(drawn) == strip, f"{len(drawn)} ({drawn[:3]}{'…' if len(drawn) > 3 else ''})")
+        else:
+            frame = rows(img, red, 0, 40, 700, 1220)
+            height = (max(frame) + 1) if frame else 0
+            check(f"strip {strip} px: the place that opens it", height == max(strip, 1), f"{height} px high (outline rows {frame[:1]}…{frame[-1:]})")
+
+# nothing showing: the topmost row lights the edge, then opens it
+tool("shell"); tool("set", "fullscreenMode", "2", "peekIdle", "true", "peekIdleDelay", "2", "notchMaxWidth", "310",
+                    "peekDelay", "1500", "peekStrip", "0", "peekGlow", "true", "tourShown", "true")
+time.sleep(4.5)
+before = shot("glow-before")
+bg = before.getpixel((60, 600))
+p = pointer("move", "960", "300", "sleep", "200", "glide", "960", "0", "300", "sleep", "3500")
+time.sleep(1.1)
+lit = shot("glow-lit")
+glowing = rows(lit, differs(bg), 0, 30, 760, 1160)
+top = max(max(abs(lit.getpixel((960, 0))[i] - bg[i]) for i in range(3)), 0)
+check("nothing showing, the pointer at the top: the light", len(glowing) >= 8 and top >= 40, f"{len(glowing)} rows lit, the top row {top} brighter")
+time.sleep(2.2)
+opened = shot("glow-opened")
+check("and after the delay: open", len(rows(opened, differs(bg), 0, 200)) > 100, f"{len(rows(opened, differs(bg), 0, 200))} rows of the island")
+p.wait()
+# the light switched off: nothing at all at the edge
+tool("set", "peekGlow", "false")
+p = pointer("move", "960", "500", "sleep", "3800", "glide", "960", "0", "200", "sleep", "800")
+time.sleep(4.6)
+dark = shot("glow-off")
+check("the light off, nothing showing: nothing at the edge", len(rows(dark, differs(bg), 0, 30, 760, 1160)) == 0, f"{len(rows(dark, differs(bg), 0, 30, 760, 1160))} rows")
+p.wait()
+
+print("\n".join(results)); print("pictures:", out)
+if "--keep" not in sys.argv: tool("stop", check=False)
+sys.exit(1 if failed else 0)

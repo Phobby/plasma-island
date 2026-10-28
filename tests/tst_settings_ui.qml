@@ -195,9 +195,10 @@ Item {
                 tryVerify(() => other.status === Loader.Ready, 5000, name);
                 const page = other.item;
                 // (the oval layout's, the notch's, peeking's, a gradient's, following the system's: each as it is shown)
-                const variants = name === "configAppearance" ? [{ cfg_islandLayout: 0, cfg_fullscreenMode: 2, cfg_appearanceMode: 1 },
+                // (and the light at the edge in a colour of its own, which has its colour button then)
+                const variants = name === "configAppearance" ? [{ cfg_islandLayout: 0, cfg_fullscreenMode: 2, cfg_appearanceMode: 1, cfg_peekGlowColor: 2 },
                                                                 { cfg_islandLayout: 1, cfg_fullscreenMode: 2, cfg_appearanceMode: 1, cfg_customStyle: JSON.stringify(Styles.defaults("aurora")) },
-                                                                { cfg_islandLayout: 0, cfg_fullscreenMode: 2, cfg_appearanceMode: 0 }] : [{}];
+                                                                { cfg_islandLayout: 0, cfg_fullscreenMode: 2, cfg_appearanceMode: 0, cfg_peekGlowColor: 1 }] : [{}];
                 const found = {};
                 for (const v of variants) {
                     for (const e of byPage[name]) if (e.needs.length > 0) page["cfg_" + e.needs] = true;

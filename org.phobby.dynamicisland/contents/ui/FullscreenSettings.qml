@@ -5,9 +5,10 @@
     (main.qml, FullscreenPeek.qml): what the island does while a window fills
     its screen: stays, hides, slides up or shrinks, said as what it does,
     with how it comes back under it; whether maximised windows count and
-    whether it does so on the desktop too once nothing goes on; in its Details the
-    preview and, for peeking, how much shows, how soon it opens, how wide the
-    place at the edge is that opens it and whether a call opens it.
+    whether it does so on the desktop too once nothing goes on; for peeking, how
+    much shows (0 px: nothing) and the light at the edge, with its colour; in its
+    Details the preview, the light's strength, how high and wide the place at the
+    edge is that opens it, how soon it opens and whether a call opens it.
 
     The preview plays it with what is set, before it is applied: a screen,
     the island at its top, and "Try it" puts a window over the whole of it;
@@ -147,13 +148,66 @@ Kirigami.FormLayout {
         }
     }
 
+    // ---- peeking: how much shows, and the light at the edge ---------------------------------
+    ValueSlider {
+        objectName: "setting-peekStrip"
+        Kirigami.FormData.label: Lang.i18n("Part that shows:")
+        visible: section.peeking
+        from: 0; to: 12; stepSize: 1
+        value: section.page.cfg_peekStrip
+        valueText: section.page.cfg_peekStrip > 0 ? Lang.i18n("%1 px", section.page.cfg_peekStrip) : Lang.i18n("Nothing")
+        onMoved: value => section.page.cfg_peekStrip = Math.round(value)
+    }
+    RowLayout {
+        Kirigami.FormData.label: Lang.i18n("Light at the edge:")
+        visible: section.peeking
+        QQC2.CheckBox {
+            id: glowCheck
+            objectName: "setting-peekGlow"
+            text: Lang.i18n("Light up when the pointer reaches it")
+            Binding { target: glowCheck; property: "checked"; value: section.page.cfg_peekGlow }
+            onToggled: section.page.cfg_peekGlow = checked
+            Accessible.name: text
+        }
+    }
+    RowLayout {
+        objectName: "setting-peekGlowColor"
+        // (search needs: "peekGlow")
+        Kirigami.FormData.label: Lang.i18n("Light colour:")
+        visible: section.peeking && section.page.cfg_peekGlow
+        QQC2.ComboBox {
+            id: glowColour
+            model: [Lang.i18n("The island's look"), Lang.i18n("Accent colour"), Lang.i18n("A colour of my own")]
+            currentIndex: section.page.cfg_peekGlowColor
+            onActivated: index => section.page.cfg_peekGlowColor = index
+            Accessible.name: Lang.i18n("Light colour:")
+        }
+        ColorPickerButton {
+            id: glowCustom
+            objectName: "setting-peekGlowCustom"
+            // (search needs: "peekGlow")
+            visible: section.page.cfg_peekGlowColor === 2
+            showAlphaChannel: false
+            Binding { target: glowCustom; property: "color"; value: section.page.cfg_peekGlowCustom || "#3daee9" }
+            onAccepted: c => section.page.cfg_peekGlowCustom = "#" + [c.r, c.g, c.b].map(v => Math.round(v * 255).toString(16).padStart(2, "0")).join("")
+            Accessible.name: Lang.i18n("A colour of my own")
+        }
+    }
+    Hint {
+        objectName: "peekInvisibleHint"
+        visible: section.peeking && section.page.cfg_peekStrip === 0 && !section.page.cfg_peekGlow
+        color: Kirigami.Theme.neutralTextColor
+        opacity: 1
+        text: Lang.i18n("The island is wholly hidden: move the pointer to the top edge of the screen to open it.")
+    }
+
     // ---- the rest: folded (not there in the normal mode, which has nothing more) ---------
     SettingsFold {
         title: Lang.i18n("Full-screen details")
         foldId: "appearance.fullscreen"
         twin: section
         visible: section.mode !== 1
-        keys: ["peekSize", "peekDelay", "peekWidth", "peekEvents"]
+        keys: ["peekGlowStrength", "peekTrigger", "peekDelay", "peekWidth", "peekEvents"]
         content: Kirigami.FormLayout {
 
             // ---- the preview ------------------------------------------------------------------
@@ -198,7 +252,7 @@ Kirigami.FormLayout {
                         width: screenBox.down ? screenBox.pillW * 1.6 : screenBox.pillW
                         height: screenBox.down ? screenBox.pillH * 2.6 : screenBox.pillH
                         readonly property real rest: section.page.notch ? 0 : Math.round(4 * screenBox.k)
-                        y: screenBox.away ? section.page.cfg_peekSize - screenBox.pillH : rest
+                        y: screenBox.away ? section.page.cfg_peekStrip - screenBox.pillH : rest
                         scale: screenBox.small ? 0.5 : 1
                         transformOrigin: Item.Top
                         opacity: screenBox.full && section.mode === 0 ? 0 : 1
@@ -232,7 +286,7 @@ Kirigami.FormLayout {
                         visible: screenBox.away || screenBox.small
                         readonly property real wanted: section.page.cfg_peekWidth > 0 ? section.page.cfg_peekWidth * screenBox.k : islandShape.width
                         width: Math.min(screenBox.width, screenBox.small ? islandShape.width : wanted)
-                        height: screenBox.small ? islandShape.height * 0.5 + islandShape.rest : section.page.cfg_peekSize
+                        height: screenBox.small ? islandShape.height * 0.5 + islandShape.rest : Math.max(section.page.cfg_peekStrip, section.page.cfg_peekTrigger)
                         anchors.horizontalCenter: parent.horizontalCenter
                         HoverHandler { id: edgeHover }
                         Rectangle {
@@ -243,6 +297,18 @@ Kirigami.FormLayout {
                             border.color: Qt.alpha("#ff453a", 0.7)
                         }
                     }
+                    // the light at the edge, as the island draws it (and for a moment with "Preview the light")
+                    PeekGlow {
+                        objectName: "fullscreenPreviewGlow"
+                        width: Math.min(screenBox.width, edgeStrip.width + 40 * screenBox.k)
+                        height: Math.round(18 * screenBox.k)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        color: section.page.cfg_peekGlowColor === 2 ? section.page.cfg_peekGlowCustom
+                             : section.page.cfg_peekGlowColor === 0 ? section.shown.accent : Kirigami.Theme.highlightColor
+                        strength: section.page.cfg_peekGlowStrength / 100
+                        lit: glowPreview.running || screenBox.away && section.page.cfg_peekGlow && edgeHover.hovered
+                    }
+                    Timer { id: glowPreview; interval: 2500 }
                     Timer {
                         id: opening
                         interval: Math.max(1, section.page.cfg_peekDelay)
@@ -266,6 +332,13 @@ Kirigami.FormLayout {
                         icon.name: checked ? "view-restore" : "view-fullscreen"
                         text: checked ? Lang.i18n("Leave full screen") : Lang.i18n("Try it")
                     }
+                    QQC2.Button {
+                        objectName: "fullscreenGlowPreview"
+                        visible: section.peeking
+                        icon.name: "games-highscores"
+                        text: Lang.i18n("Preview the light")
+                        onClicked: glowPreview.restart()
+                    }
                     Hint {
                         Layout.maximumWidth: Kirigami.Units.gridUnit * 8
                         visible: tryButton.checked && section.opensAtEdge
@@ -275,18 +348,32 @@ Kirigami.FormLayout {
             }
 
             // ---- peeking --------------------------------------------------------------------------
-            ValueSlider {
-                objectName: "setting-peekSize"
-                Kirigami.FormData.label: Lang.i18n("Part that shows:")
-                visible: section.peeking
-                from: 2; to: 16; stepSize: 1
-                value: section.page.cfg_peekSize
-                valueText: Lang.i18n("%1 px", section.page.cfg_peekSize)
-                onMoved: value => section.page.cfg_peekSize = Math.round(value)
-            }
             Hint {
                 visible: section.peeking
                 text: Lang.i18n("Only moved up, never made smaller: its lower edge shows. That strip opens it, from the topmost row of pixels down, so the pointer pushed against the edge finds it; nothing else of it takes a click.")
+            }
+            ValueSlider {
+                objectName: "setting-peekGlowStrength"
+                // (search needs: "peekGlow")
+                Kirigami.FormData.label: Lang.i18n("Light strength:")
+                visible: section.peeking && section.page.cfg_peekGlow
+                from: 10; to: 100; stepSize: 10
+                value: section.page.cfg_peekGlowStrength
+                valueText: Lang.percent(section.page.cfg_peekGlowStrength)
+                onMoved: value => section.page.cfg_peekGlowStrength = Math.round(value / 10) * 10
+            }
+            ValueSlider {
+                objectName: "setting-peekTrigger"
+                Kirigami.FormData.label: Lang.i18n("Opening place:")
+                visible: section.peeking
+                from: 1; to: 8; stepSize: 1
+                value: section.page.cfg_peekTrigger
+                valueText: Lang.i18n("%1 px", section.page.cfg_peekTrigger)
+                onMoved: value => section.page.cfg_peekTrigger = Math.round(value)
+            }
+            Hint {
+                visible: section.peeking
+                text: Lang.i18n("How high the place is that opens it, from the topmost row of pixels down, where less of the island shows (or nothing): those rows of the window under it take no click. 1 px is enough for a pointer pushed against the edge.")
             }
             ValueSlider {
                 objectName: "setting-peekDelay"

@@ -16,11 +16,14 @@
 // 3: the first-run tour (tourShown). A new island shows it at its first opening; one that
 //    ran before is not shown it: nothing of what it shows was changed for it (the settings
 //    window was only arranged anew, no setting was renamed or given another meaning).
+// 4: the strip that shows of the island drawn up. It was peekSize (2-16 px, 4 as it came); it is
+//    peekStrip now (0-12 px, 2 for a new island, 0: nothing shows). An island that ran before keeps
+//    what it showed: its peekSize, as it was (more than 12: 12). peekSize is left as it was.
 //
 // Pure functions of plain values: main.qml hands in the settings, writes what comes back.
 .pragma library
 
-const CURRENT = 3;
+const CURRENT = 4;
 const NOTCH = 0;
 const OVAL = 1;
 const HIDE = 0;
@@ -52,7 +55,13 @@ function fullscreenOf(c) {
     return mode(Number(c.settingsSchema) >= 2 ? c.fullscreenMode : c.notchFullscreen);
 }
 
-// What to write: { settingsSchema, islandLayout, layoutNotice, fullscreenMode, tourShown } or {} when there is nothing to do.
+// The strip an earlier peekSize means (2-16 px, as it came 4) within the new range (0-12).
+function strip(value) {
+    const v = Math.round(Number(value));
+    return isNaN(v) ? 4 : Math.max(0, Math.min(12, v));
+}
+
+// What to write: { settingsSchema, islandLayout, layoutNotice, fullscreenMode, tourShown, peekStrip } or {} when there is nothing to do.
 function migrate(c, restored) {
     const from = Number(c.settingsSchema) || 0;
     if (from >= CURRENT) return {};
@@ -65,6 +74,7 @@ function migrate(c, restored) {
     if (from < 2) out.fullscreenMode = mode(c.notchFullscreen);
     // (an island of schema 1 or 2 ran before by definition; a new one comes from 0)
     if (from < 3 && (from >= 1 || usedBefore(c, restored)) && c.tourShown !== true) out.tourShown = true;
+    if (from < 4 && (from >= 1 || usedBefore(c, restored))) out.peekStrip = strip(c.peekSize);
     return out;
 }
 

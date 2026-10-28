@@ -1482,5 +1482,17 @@ var table = {
     "Sent. Thank you!": "Gönderildi. Teşekkürler!",
     "The feedback address did not take it. Shorten it, or tell the author on GitHub.": "Geri bildirim adresi bunu kabul etmedi. Kısaltın ya da geliştiriciye GitHub'da yazın.",
     "It could not be sent: no connection, or the feedback address did not answer. What you wrote is still here: try again later.": "Gönderilemedi: bağlantı yok ya da geri bildirim adresi yanıt vermedi. Yazdıklarınız burada duruyor: daha sonra yeniden deneyin.",
-    "At most %1 an hour: the next one can be sent in %2 min.": "Saatte en fazla %1: bir sonraki %2 dk sonra gönderilebilir."
+    "At most %1 an hour: the next one can be sent in %2 min.": "Saatte en fazla %1: bir sonraki %2 dk sonra gönderilebilir.",
+    "Nothing": "Hiç",
+    "Light at the edge:": "Kenar ışığı:",
+    "Light up when the pointer reaches it": "Fare oraya gelince parlasın",
+    "Light colour:": "Işık rengi:",
+    "The island's look": "Adanın görünümü",
+    "Accent colour": "Vurgu rengi",
+    "A colour of my own": "Kendi rengim",
+    "The island is wholly hidden: move the pointer to the top edge of the screen to open it.": "Ada tamamen görünmez: açmak için fareyi ekranın üst kenarına götürün.",
+    "Preview the light": "Işığı önizle",
+    "Light strength:": "Işık yoğunluğu:",
+    "Opening place:": "Açılma bölgesi:",
+    "How high the place is that opens it, from the topmost row of pixels down, where less of the island shows (or nothing): those rows of the window under it take no click. 1 px is enough for a pointer pushed against the edge.": "Adayı açan bölgenin yüksekliği, en üst piksel satırından aşağı; adanın daha azı (ya da hiçbiri) görünürken geçerlidir: alttaki pencerenin bu satırları tıklama almaz. Kenara itilen bir fare için 1 px yeter."
 };

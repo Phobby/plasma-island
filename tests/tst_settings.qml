@@ -425,7 +425,7 @@ Item {
             const choice = find(page, "setting-fullscreenMode"), hint = find(page, "fullscreenModeHint");
             const radio = value => find(choice, "fullscreenMode-" + value);
             const idle = find(page, "setting-peekIdle"), maximized = find(page, "setting-peekMaximized");
-            const size = find(page, "setting-peekSize"), delay = find(page, "setting-peekDelay"), width = find(page, "setting-peekWidth"), call = find(page, "setting-peekEvents");
+            const size = find(page, "setting-peekStrip"), delay = find(page, "setting-peekDelay"), width = find(page, "setting-peekWidth"), call = find(page, "setting-peekEvents");
             verify(choice !== null && hint !== null && size !== null && delay !== null && width !== null && call !== null);
             verify(idle !== null && maximized !== null);
             for (const layout of [0, 1]) {
@@ -469,7 +469,32 @@ Item {
             compare(page.cfg_peekDelay, 400);
             const sz = slider(size);
             sz.value = 9; sz.moved();
-            compare(page.cfg_peekSize, 9);
+            compare(page.cfg_peekStrip, 9);
+            // nothing shows: the slider goes down to 0, and says so; without the light the page says how to open it
+            compare(sz.from, 0);
+            sz.value = 0; sz.moved();
+            compare(page.cfg_peekStrip, 0);
+            compare(size.valueText, "Nothing");
+            const glow = find(page, "setting-peekGlow"), colour = find(page, "setting-peekGlowColor"), note = find(page, "peekInvisibleHint");
+            verify(glow !== null && colour !== null && note !== null);
+            page.cfg_peekGlow = true;
+            verify(colour.visible && !note.visible, "the light on: its colour, no note");
+            page.cfg_peekGlow = false;
+            verify(!colour.visible && note.visible, "no light and nothing shows: how to open it");
+            page.cfg_peekStrip = 2;
+            verify(!note.visible);
+            page.cfg_peekGlow = true;
+            const trigger = find(page, "setting-peekTrigger"), strength = find(page, "setting-peekGlowStrength");
+            verify(trigger !== null && trigger.visible && strength !== null && strength.visible, "in the details");
+            const t = slider(trigger);
+            t.value = 3; t.moved();
+            compare(page.cfg_peekTrigger, 3);
+            // the preview lights up for a moment
+            const lit = find(page, "fullscreenPreviewGlow");
+            verify(lit !== null && !lit.lit);
+            find(page, "fullscreenGlowPreview").clicked();
+            verify(lit.lit);
+            page.cfg_peekTrigger = 1;
             page.cfg_peekEvents = true;
             verify(call.checked);
             call.toggle(); call.toggled();
@@ -486,7 +511,7 @@ Item {
             verify(box.small && !box.away);
             tryIt.toggle();
             verify(!box.full && !box.small);
-            page.cfg_peekWidth = 0; page.cfg_peekDelay = 150; page.cfg_peekSize = 4; page.cfg_fullscreenMode = 0;
+            page.cfg_peekWidth = 0; page.cfg_peekDelay = 150; page.cfg_peekStrip = 2; page.cfg_fullscreenMode = 0;
         }
 
         function test_notch_settings_preview_and_limits() {
