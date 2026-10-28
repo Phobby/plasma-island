@@ -3,6 +3,14 @@
 ## Unreleased
 
 ### Added
+- **Nothing showing, a light at the edge** (Settings → Appearance → Full
+  screen, slid up): *Part that shows* goes from 0 to 12 px (2 for a new
+  island; one that ran before keeps its own, settings version 4); at 0
+  nothing of the island is drawn, and *Opening place* (1–8 px from the
+  topmost row) still opens it. *Light at the edge*: a soft light where the
+  island is while the pointer is there, in the look's accent, the system's
+  accent or a colour of one's own, at a strength set, with *Preview the
+  light*; events colour it when nothing shows.
 - **Feedback from the settings** (Settings → Diagnostics → *Feedback*): a few
   lines to the author, a way to answer if wanted, and the diagnostics report
   if ticked (without the user's name, the computer's name and the home
@@ -105,6 +113,14 @@
   see it (settings schema 3).
 
 ### Fixed
+- **A window at the notch's edge no longer sends it back and forth.** With
+  *Shrinks to a small nub* (and with a size or width set for over a
+  full-screen window) a window held at the outer part of the notch made it
+  shrink and grow every frame for as long as it stayed there: the notch is
+  now measured at rest, a window counts until it is clear by a few pixels,
+  nothing changes while one is dragged, the state holds for a moment between
+  changes and stops itself if it still goes back and forth; an island opened
+  by the pointer stays open when such a window comes.
 - **The tour's tabs** no longer run into the Skip / Back / Next buttons
   where the open island is too low for all of them: they are a little
   smaller and scroll in their own room.

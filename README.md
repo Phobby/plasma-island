@@ -42,6 +42,8 @@ These are on the `main` branch and come with an installation from a clone of it 
 |---|---|
 | **The notch, as it comes** | The island is joined to the screen's top edge, over a top panel, in the **Symbiot Black** gradient with a thin slate border. The rounded island of earlier versions is the *Oval layout* (Settings → Appearance → Layout). |
 | **Full screen, four ways** | Over a full-screen window the island stays as it is, hides, slides up leaving a thin strip at the edge, or shrinks to a small nub; the last two on the desktop too after a while of nothing going on, if you want. [More](#full-screen) |
+| **Nothing showing, a light at the edge** | Slid up, the strip can be 0 px: nothing of the island is drawn, and pushing the pointer against the top edge still opens it. A soft light at the edge shows where it is as the pointer gets there, in the island's accent, the system's or a colour of your own. |
+| **No back and forth** | A window dragged up to the notch no longer makes it go up and down: it is looked at once the window is let go, against the notch's size at rest. |
 | **The notch's width** | Automatic, or set narrower or wider up to 1200 px, so that panel widgets beside it stay clickable; the open island can follow it. |
 | **Size up to 240 %** | Kept within the screen; the settings say when its edge was reached. |
 | **Colours of the buttons** | One button colour for the island's buttons, tiles and cards, and the Controls buttons each in their own colour or one for all. |
@@ -51,6 +53,7 @@ These are on the `main` branch and come with an installation from a clone of it 
 | **A short tour** | Three steps at a new island's first opening: the layout, the tabs, what this computer has. |
 | **Time format** | The clock as the system's region writes it, or always 24 or 12 hours. |
 | **The handle stays out of the way** | The widget's small icon on the desktop shows only while the desktop is being edited. |
+| **Feedback from the settings** | Settings → Diagnostics → *Feedback*: a few lines to the author, at most three an hour, and the report if you tick it. [More](#diagnostics-and-what-is-missing) |
 
 **Updating from 0.2.2 or earlier** keeps your choices: an island that ran before keeps the layout it had (the oval one, unless you had switched the notch on in a build that had that switch) and says once that the notch is there; it is not shown the tour. Appearance settings you never changed take the new defaults, so a look left as it came becomes Symbiot Black: *Follow the system* in Settings → Appearance brings the old one back.
 
@@ -96,19 +99,24 @@ Not used by the notch: the distance from the top, *Place below top panels*, and 
 |---|---|---|
 | Stays as it is | Nothing changes | – |
 | **Hides** (as it comes) | It is gone | When the window leaves full screen |
-| Slides up, a thin strip shows | It moves up to the edge, as large as it is, until only a few pixels show; clicks beside the strip go to the window | The pointer at the top edge, after a short rest |
+| Slides up, a thin strip shows | It moves up to the edge, as large as it is, until only the strip shows (0–12 px, 2 as it comes; 0: nothing at all); clicks beside it go to the window | The pointer at the top edge, after a short rest; the light at the edge shows it is there |
 | Shrinks to a small nub | It draws in to a small nub at the edge | The pointer on the nub |
 
 - **Also:** *For maximised windows* (off as it comes: only a real full-screen window counts, in any application: a video, a browser's F11, a terminal, a game). *On the desktop when nothing is going on, after* 2–300 s (10 as it comes, off as it comes): sliding up or shrinking happens on the empty desktop too; a notification, a live activity or opening it brings it back at once.
-- **Full-screen details:** how much of the strip shows (2–16 px, 4), how long the pointer rests before it opens (0–1000 ms, 150), how wide the place at the edge is that opens it, and whether an incoming call opens it. A recording, the microphone or camera, a critical warning and a call colour the strip. A live preview with *Try it*.
-- **What counts:** only the window in front, on the island's own screen and on the desktop and activity shown. A full-screen window on another virtual desktop does nothing.
+<!-- GIF: window-dodge.gif | A calculator window is moved up under the notch and the notch slides up behind the top edge; the pointer reaches the edge, a soft blue light shows there and the island opens; the pointer goes, the island closes and goes back up; the window is moved down and the notch comes back. The pointer is not drawn. | A window under the notch, the light at the edge -->
+<p align="center"><img src="docs/media/window-dodge.gif" alt="A calculator window is moved up under the notch and the notch slides up behind the top edge; the pointer reaches the edge, a soft blue light shows there and the island opens; the pointer goes, the island closes and goes back up; the window is moved down and the notch comes back. The pointer is not drawn." width="800"><br><sub>A window under the notch, the light at the edge</sub></p>
+
+- **On the page:** *Part that shows* (0–12 px), *Light at the edge* (*Light up when the pointer reaches it*, on as it comes) and its colour: *The island's look*, *Accent colour* (the system's, as it comes) or *A colour of my own*. With nothing showing and the light off the page says how to open it.
+- **Full-screen details:** a preview with *Try it* and *Preview the light*, the light's strength (10–100 %, 60), *Opening place*: how many rows from the topmost one down open it where less of the island shows (1–8 px, 1; those rows of the window under it take no click), how long the pointer rests before it opens (0–1000 ms, 150), how wide that place is, and whether an incoming call opens it. A recording, the microphone or camera, a critical warning and a call colour the strip, or the light when nothing shows.
+- **What counts:** only the window in front, on the island's own screen and on the desktop and activity shown. A full-screen window on another virtual desktop does nothing. A window that reaches under the notch (in the notch's own settings, on as it comes) is measured against the notch's size at rest, counts once the windows have stood still for a moment (not while one is being dragged) and stops counting once it is clear of the notch by a few pixels. Opened by the pointer, the island stays open when such a window comes.
 - **Wayland only.** Elsewhere a window that fills the screen lies over the island, which then stays as it is. Details: [reference](docs/REFERENCE.md#full-screen-mode).
 
 ### Dot mode
 
 A click on the notch shrinks it to a dot (a small half circle at the edge, 15 px; 10–28 in the settings), so that it is out of the way; a click on the dot brings the notch back. What is under the rest of the panel stays clickable.
 
-<!-- GIF: dot-mode.gif | A click shrinks the notch to a small half circle at the top edge; a button of a window right beside it is clicked; a click on the dot brings the notch back. | Dot mode -->
+<!-- GIF: dot-mode.gif | A click shrinks the notch with the clock to a small half circle at the top edge; a click on the dot brings the notch back. The pointer is not drawn. | Dot mode -->
+<p align="center"><img src="docs/media/dot-mode.gif" alt="A click shrinks the notch with the clock to a small half circle at the top edge; a click on the dot brings the notch back. The pointer is not drawn." width="800"><br><sub>Dot mode</sub></p>
 
 The dot's centre says what is going on: orange, green or red for the microphone, the camera or the screen in use; the accent colour for a live activity (pulsing) or waiting notifications. While it is a dot, notifications and events are kept for later (or shown and then back to the dot: *Events in dot mode*). An incoming call, an alarm and low battery open it in every case unless you switch that off.
 
@@ -127,7 +135,7 @@ The dot's centre says what is going on: orange, green or red for the microphone,
 | Open | Hover, or a click with dot mode off | The pages below |
 | Privacy dots | Microphone or camera in use | An orange or green dot beside the notch, in every state |
 | Dot | After a click, in dot mode | A small half circle at the edge |
-| Slid up / nub | Over a full-screen window, if [chosen](#full-screen) | A thin strip at the edge, or a small nub |
+| Slid up / nub | Over a full-screen window, if [chosen](#full-screen) | A thin strip at the edge (or nothing, and the light when the pointer gets there), or a small nub |
 
 Which activity wins when several last at once is a list you can reorder (Settings → Activities → *Priority*): privacy, call, screen recording, passing events, timer, transfers, media.
 
@@ -696,6 +704,8 @@ Three more things worth knowing:
 | No blur, clicks beside the island do not pass through, pages say the native module is missing | The native module is not installed or plasmashell does not see it (installed from the KDE Store as a `.plasmoid`, or with `--no-native`): run `./install.sh` from a clone of this repository and restart plasmashell; Settings → Diagnostics shows the build packages for Kubuntu, Fedora and Arch. After a Plasma or Qt update, run it again |
 | A command is installed but "not found" | The island looks on the desktop shell's `PATH`, in the folders installers put commands into (`~/.local/bin`, `~/.cargo/bin`, npm's, nvm's, `/usr/local/bin`, `/snap/bin`, Flatpak's…) and for AppImages in `~/Applications`. Anywhere else: Settings → Diagnostics → the command → *Command path* |
 | The island hides (or does not) over a full-screen window | Settings → Appearance → *Full screen*. Only the window in front on the island's screen counts; a maximised one only with *For maximised windows*. Not on X11 |
+| Slid up, nothing shows at the top | *Part that shows* is 0 px: push the pointer against the top edge above the island's place (the light shows when it gets there), or set a strip of 1 px or more |
+| The island goes up and down while a window touches it | Fixed on `main` (2026-10-28): the notch is measured at rest and a window is looked at once it is let go. Should it happen again, `journalctl --user -f \| grep "full screen"` shows "held as it is for a second" when the island had to stop itself; `tools/avoid-check` plays the case in a session of its own |
 | The notch covers my panel's clock or task buttons | Settings → Appearance → Notch → *Width*: narrower; or the *Oval layout* |
 | Where exactly does the island take clicks? | Start plasmashell with `DYNAMICISLAND_DEBUG_REGION=1` in its environment: a red outline is drawn around the region (`systemctl --user set-environment DYNAMICISLAND_DEBUG_REGION=1`, restart plasmashell; `unset-environment` afterwards) |
 | Typing into the island | The island never takes the keyboard by itself. It takes it when a field is clicked (Notes, AI, a reply) and gives it back with Escape; while it has it, the island stays open |
@@ -715,6 +725,8 @@ Three more things worth knowing:
 
 - **Only one setup was tested:** Plasma 6.6.6 on Wayland with an NVIDIA card, one monitor. X11, other compositors' versions, several monitors and a screen too narrow for the cat's side were not tried. On X11 the notch goes to the top edge, but whether it stays over the panel is the window manager's matter, the full-screen choices other than *Hides* do nothing, and the click region also clips what is drawn, so the glow may be cut.
 - **The newest parts were checked in an isolated session and off screen**, not on every real desktop: the tour on a real island, the settings window's sidebar hiding a tab's page, a whole keyboard pass through every page and a screen reader were not tried (see [docs/UI-AUDIT.md](docs/UI-AUDIT.md#not-verified-on-a-real-screen)).
+- **A panel that hides itself at the bottom** was reported to stay open and not to respond while a window was dragged against the notch. In an isolated session the window part was found and fixed (see Troubleshooting); the panel part could not be played there (its screen edge does not answer the emulated pointer, with or without the island), so whether it is gone was not seen on a real desktop.
+- **Deciding about a window under the notch waits** until the windows have stood still for 0.3 s, so the island slides up a moment after a window is let go, not while it is dragged.
 - **The notch covers the panel under it**, and that part cannot be clicked; the island cannot see where a panel's widgets are (use *Width*).
 - **Notifications appear twice**, Plasma's popup and the island's.
 - **Dragging onto the island:** only the visible island takes a drag; dragging a file between the island and another program was written the way Qt offers it but could not be tried between two programs.

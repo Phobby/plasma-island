@@ -44,6 +44,8 @@ Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarla
 |---|---|
 | **Geldiği gibi çentik** | Ada, ekranın üst kenarına ve üst panelin üzerine birleşik, **Symbiot Siyahı** gradyanında ve ince, soluk gri bir kenarlıkla gelir. Önceki sürümlerin yuvarlak adası *Oval düzen*dir (Ayarlar → Görünüm → Düzen). |
 | **Tam ekranda dört seçenek** | Tam ekran bir pencerenin üzerinde ada olduğu gibi kalır, gizlenir, kenarda ince bir şerit bırakarak yukarı çekilir ya da küçük bir çıkıntıya küçülür; son ikisi, isterseniz, bir süre hiçbir şey olmayınca masaüstünde de. [Ayrıntılar](#tam-ekran) |
+| **Hiçbir şey görünmeden, kenarda bir ışık** | Yukarı çekilmişken şerit 0 px olabilir: adanın hiçbir yeri çizilmez, fareyi üst kenara itmek yine de onu açar. Fare oraya gelince kenarda yumuşak bir ışık adanın yerini gösterir; adanın vurgusu, sistemin vurgusu ya da kendi renginiz. |
+| **İleri geri yok** | Çentiğe doğru sürüklenen bir pencere artık onu inip kalkmaya zorlamaz: pencere bırakılınca, çentiğin dinlenme boyutuna göre bir kez bakılır. |
 | **Çentiğin genişliği** | Otomatik ya da 1200 px'e kadar daha dar veya daha geniş ayarlanır; böylece yanındaki panel öğeleri tıklanabilir kalır, açık ada da onu izleyebilir. |
 | **%240'a kadar boyut** | Ekranın içinde tutulur; ayarlar ekran kenarına ulaşıldığını söyler. |
 | **Düğmelerin renkleri** | Adanın düğmeleri, kutucukları ve kartları için tek bir düğme rengi; Kontroller düğmeleri her biri kendi renginde ya da hepsi tek renkte. |
@@ -53,6 +55,7 @@ Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarla
 | **Kısa bir tanıtım** | Yeni bir adanın ilk açılışında üç adım: düzen, sekmeler, bu bilgisayarda neyin olduğu. |
 | **Saat biçimi** | Saat, sistemin bölgesinin yazdığı gibi ya da her zaman 24 veya 12 saat. |
 | **Tutamaç yolda durmaz** | Widget'ın masaüstündeki küçük simgesi yalnızca masaüstü düzenlenirken görünür. |
+| **Ayarlardan geri bildirim** | Ayarlar → Tanılama → *Geri bildirim*: geliştiriciye birkaç satır, saatte en fazla üç kez; işaretlerseniz rapor da. [Ayrıntılar](#tanılama-ve-eksik-olanlar) |
 
 **0.2.2 ya da daha eskisinden güncellemek** seçimlerinizi korur: daha önce çalışmış bir ada sahip olduğu düzeni korur (o anahtarın olduğu bir derlemede çentiği açmadıysanız oval düzeni) ve çentiğin geldiğini bir kez söyler; tanıtım ona gösterilmez. Hiç değiştirmediğiniz görünüm ayarları yeni varsayılanları alır, yani geldiği gibi bırakılmış bir görünüm Symbiot Siyahı olur: Ayarlar → Görünüm içindeki *Sistemi takip et* eskisini geri getirir.
 
@@ -98,19 +101,24 @@ Ada, dizüstü ekranlarındaki çentik gibi ekranın üst kenarına birleşik te
 |---|---|---|
 | Olduğu gibi kalır | Hiçbir şey değişmez | – |
 | **Gizlenir** (geldiği gibi) | Kaybolur | Pencere tam ekrandan çıkınca |
-| Yukarı çekilir, ince bir şeridi görünür | Olduğu boyutta, yalnızca birkaç pikseli görünene kadar kenara çekilir; şeridin yanındaki tıklamalar pencereye gider | İmleç üst kenarda kısa bir süre durunca |
+| Yukarı çekilir, ince bir şeridi görünür | Olduğu boyutta, yalnızca şerit görünene kadar kenara çekilir (0–12 px, geldiği gibi 2; 0: hiçbir şey); yanındaki tıklamalar pencereye gider | İmleç üst kenarda kısa bir süre durunca; kenar ışığı orada olduğunu gösterir |
 | Küçük bir çıkıntıya küçülür | Kenarda küçük bir çıkıntıya çekilir | İmleç çıkıntının üzerine gelince |
 
 - **Ayrıca:** *Büyütülmüş pencerelerde* (geldiği gibi kapalı: yalnızca gerçek bir tam ekran pencere sayılır, hangi uygulama olursa olsun: bir video, tarayıcıda F11, bir uçbirim, bir oyun). *Masaüstünde boştayken de, şu süre sonra:* 2–300 sn (geldiği gibi 10, geldiği gibi kapalı): yukarı çekilme ya da küçülme boş masaüstünde de olur; bir bildirim, canlı bir etkinlik ya da açmak onu hemen geri getirir.
-- **Tam ekran ayrıntıları:** şeridin ne kadarının görüneceği (2–16 px, 4), imlecin açmadan önce ne kadar duracağı (0–1000 ms, 150), kenarda onu açan yerin ne kadar geniş olduğu ve gelen bir aramanın onu açıp açmayacağı. Bir kayıt, mikrofon ya da kamera, kritik bir uyarı ve bir arama şeridi renklendirir. *Dene* düğmeli canlı bir önizleme.
-- **Ne sayılır:** yalnızca öndeki pencere, adanın kendi ekranında ve gösterilen masaüstü ile etkinlikte. Başka bir sanal masaüstündeki tam ekran pencere hiçbir şey yapmaz.
+<!-- GIF: window-dodge.gif | Bir hesap makinesi penceresi çentiğin altına taşınıyor ve çentik üst kenarın ardına çekiliyor; imleç kenara geliyor, orada yumuşak mavi bir ışık beliriyor ve ada açılıyor; imleç gidince ada kapanıp yeniden yukarı çekiliyor; pencere aşağı taşınınca çentik geri geliyor. İmleç çizilmemiştir. | Çentiğin altında bir pencere, kenar ışığı -->
+<p align="center"><img src="docs/media/window-dodge.gif" alt="Bir hesap makinesi penceresi çentiğin altına taşınıyor ve çentik üst kenarın ardına çekiliyor; imleç kenara geliyor, orada yumuşak mavi bir ışık beliriyor ve ada açılıyor; imleç gidince ada kapanıp yeniden yukarı çekiliyor; pencere aşağı taşınınca çentik geri geliyor. İmleç çizilmemiştir." width="800"><br><sub>Çentiğin altında bir pencere, kenar ışığı</sub></p>
+
+- **Sayfada:** *Görünen parça* (0–12 px), *Kenar ışığı* (*Fare oraya gelince parlasın*, geldiği gibi açık) ve rengi: *Adanın görünümü*, *Vurgu rengi* (sistemin, geldiği gibi) ya da *Kendi rengim*. Hiçbir şey görünmüyor ve ışık kapalıysa sayfa onu nasıl açacağınızı söyler.
+- **Tam ekran ayrıntıları:** *Dene* ve *Işığı önizle* düğmeli bir önizleme, ışığın yoğunluğu (%10–100, 60), *Açılma bölgesi*: adanın daha azı göründüğünde onu açan, en üst satırdan aşağı kaç satır olduğu (1–8 px, 1; alttaki pencerenin bu satırları tıklama almaz), imlecin açmadan önce ne kadar duracağı (0–1000 ms, 150), bu bölgenin ne kadar geniş olduğu ve gelen bir aramanın onu açıp açmayacağı. Bir kayıt, mikrofon ya da kamera, kritik bir uyarı ve bir arama şeridi, hiçbir şey görünmüyorsa ışığı renklendirir.
+- **Ne sayılır:** yalnızca öndeki pencere, adanın kendi ekranında ve gösterilen masaüstü ile etkinlikte. Başka bir sanal masaüstündeki tam ekran pencere hiçbir şey yapmaz. Çentiğin altına uzanan bir pencere (çentiğin kendi ayarlarında, geldiği gibi açık) çentiğin dinlenme boyutuna göre ölçülür, pencereler bir an hareketsiz kalınca sayılır (biri sürüklenirken değil) ve çentikten birkaç piksel uzaklaşınca sayılmaz olur. Fareyle açılmış ada, böyle bir pencere gelince açık kalır.
 - **Yalnızca Wayland.** Başka yerde ekranı dolduran pencere adanın üstüne biner ve ada olduğu gibi kalır. Ayrıntılar: [başvuru belgesi](docs/REFERENCE.md#full-screen-mode) (İngilizce).
 
 ### Nokta modu
 
 Çentiğe tıklamak onu yoldan çekilsin diye bir noktaya küçültür (kenarda küçük bir yarım daire, 15 px; ayarlarda 10–28); noktaya tıklamak çentiği geri getirir. Panelin geri kalanındakiler tıklanabilir kalır.
 
-<!-- GIF: dot-mode.gif | Bir tıklama çentiği üst kenarda küçük bir yarım daireye küçültüyor; hemen yanındaki bir pencerenin düğmesine tıklanıyor; noktaya tıklamak çentiği geri getiriyor. | Nokta modu -->
+<!-- GIF: dot-mode.gif | Bir tıklama saatli çentiği üst kenarda küçük bir yarım daireye küçültüyor; noktaya bir tıklama çentiği geri getiriyor. İmleç çizilmemiştir. | Nokta modu -->
+<p align="center"><img src="docs/media/dot-mode.gif" alt="Bir tıklama saatli çentiği üst kenarda küçük bir yarım daireye küçültüyor; noktaya bir tıklama çentiği geri getiriyor. İmleç çizilmemiştir." width="800"><br><sub>Nokta modu</sub></p>
 
 Noktanın ortası ne olduğunu söyler: mikrofon, kamera ya da ekran kullanımı için turuncu, yeşil ya da kırmızı; canlı etkinlik (nabız gibi atar) ya da bekleyen bildirimler için vurgu rengi. Nokta halindeyken bildirimler ve olaylar sonraya saklanır (ya da gösterilip noktaya dönülür: *Nokta modunda olaylar*). Gelen arama, alarm ve düşük pil, siz kapatmadıkça her durumda adayı açar.
 
@@ -129,7 +137,7 @@ Noktanın ortası ne olduğunu söyler: mikrofon, kamera ya da ekran kullanımı
 | Açık | Üzerine gelme ya da nokta modu kapalıyken tıklama | Aşağıdaki sayfalar |
 | Gizlilik noktaları | Mikrofon ya da kamera kullanımda | Çentiğin yanında, her durumda turuncu ya da yeşil bir nokta |
 | Nokta | Nokta modunda bir tıklamadan sonra | Kenarda küçük bir yarım daire |
-| Yukarı çekilmiş / çıkıntı | Tam ekran bir pencerenin üzerinde, [seçildiyse](#tam-ekran) | Kenarda ince bir şerit ya da küçük bir çıkıntı |
+| Yukarı çekilmiş / çıkıntı | Tam ekran bir pencerenin üzerinde, [seçildiyse](#tam-ekran) | Kenarda ince bir şerit (ya da hiçbir şey ve fare gelince ışık) veya küçük bir çıkıntı |
 
 Birden fazla şey sürerken hangisinin öne geçeceği yeniden sıralayabileceğiniz bir listedir (Ayarlar → Etkinlikler → *Öncelik*): gizlilik, arama, ekran kaydı, anlık olaylar, zamanlayıcı, aktarımlar, medya.
 
@@ -697,6 +705,8 @@ Bilinmesi gereken üç şey daha:
 | Ne eksik, neden? | **Ayarlar → Tanılama** her özelliğin neye ihtiyaç duyduğunu, bulunup bulunmadığını, nerede arandığını, yolu ve sürümü, oturumu, Plasma'yı ve Qt'yi listeler. Gereksinimi eksik bir özellik bunu gösterildiği yerde, kopyalanacak komutla söyler (ada onu asla çalıştırmaz). *Tanılama çıktısını kopyala* raporu, kullanıcı adınız, bilgisayarın adı ve ev klasörünüz çıkarılmış olarak hata bildirimi için panoya koyar |
 | Bulanıklık yok, adanın yanındaki tıklamalar geçmiyor, sayfalar yerel modülün eksik olduğunu söylüyor | Yerel modül kurulu değil ya da plasmashell onu görmüyor (KDE Store'dan `.plasmoid` olarak ya da `--no-native` ile kurulmuş): bu deponun bir klonundan `./install.sh` çalıştırın ve plasmashell'i yeniden başlatın; Ayarlar → Tanılama Kubuntu, Fedora ve Arch için derleme paketlerini gösterir. Bir Plasma ya da Qt güncellemesinden sonra yeniden çalıştırın |
 | Bir komut kurulu ama "bulunamadı" | Ada masaüstü kabuğunun `PATH`'ine, kurucuların komut koyduğu klasörlere (`~/.local/bin`, `~/.cargo/bin`, npm'inki, nvm'inki, `/usr/local/bin`, `/snap/bin`, Flatpak'inki…) ve `~/Applications` içindeki AppImage'lara bakar. Başka bir yerdeyse: Ayarlar → Tanılama → komut → *Komut yolu* |
+| Yukarı çekilmişken üstte hiçbir şey görünmüyor | *Görünen parça* 0 px: fareyi adanın yerinin üstünde üst kenara itin (oraya gelince ışık belirir) ya da 1 px ya da daha fazla bir şerit seçin |
+| Bir pencere değince ada inip kalkıyor | `main` dalında düzeltildi (2026-10-28): çentik dinlenme boyutuyla ölçülür ve pencereye bırakılınca bakılır. Yine olursa `journalctl --user -f \| grep "full screen"` adanın kendini durdurmak zorunda kaldığında "held as it is for a second" yazar; `tools/avoid-check` bu durumu kendine ait bir oturumda oynatır |
 | Ada tam ekran bir pencerenin üzerinde gizleniyor (ya da gizlenmiyor) | Ayarlar → Görünüm → *Tam ekran*. Yalnızca adanın ekranındaki öndeki pencere sayılır; büyütülmüş bir pencere yalnızca *Büyütülmüş pencerelerde* ile. X11'de değil |
 | Çentik panelimin saatini ya da görev düğmelerini örtüyor | Ayarlar → Görünüm → Çentik → *Genişlik*: daha dar; ya da *Oval düzen* |
 | Ada tıklamaları tam olarak nerede alıyor? | plasmashell'i ortamında `DYNAMICISLAND_DEBUG_REGION=1` ile başlatın: bölgenin çevresine kırmızı bir çerçeve çizilir (`systemctl --user set-environment DYNAMICISLAND_DEBUG_REGION=1`, plasmashell'i yeniden başlatın; sonra `unset-environment`) |
@@ -717,6 +727,8 @@ Bilinmesi gereken üç şey daha:
 
 - **Yalnızca tek bir kurulum test edildi:** NVIDIA kartlı, tek monitörlü, Wayland üzerinde Plasma 6.6.6. X11, başka sürümler, birden fazla monitör ve kedinin taraf değiştirmesini gerektirecek kadar dar bir ekran denenmedi. X11'de çentik üst kenara gider ama panelin üzerinde kalıp kalmadığı pencere yöneticisine bağlıdır, *Gizlenir* dışındaki tam ekran seçenekleri bir şey yapmaz ve tıklama bölgesi çizileni de kırptığından ışık kesilebilir.
 - **En yeni parçalar izole bir oturumda ve ekran dışında denetlendi**, her gerçek masaüstünde değil: tanıtımın gerçek bir adada görünüşü, ayarlar penceresinin kenar çubuğunun bir sekmenin sayfasını gizlemesi, tüm sayfalarda baştan sona klavyeyle gezinme ve bir ekran okuyucu denenmedi (bkz. [docs/UI-AUDIT.md](docs/UI-AUDIT.md#not-verified-on-a-real-screen), İngilizce).
+- **Altta kendini gizleyen bir panelin**, bir pencere çentiğe sürüklenirken açık kalıp yanıt vermediği bildirildi. İzole bir oturumda pencere kısmı bulunup düzeltildi (bkz. Sorun giderme); panel kısmı orada oynatılamadı (ekran kenarı, ada olsa da olmasa da öykünülen fareye yanıt vermiyor), bu yüzden gidip gitmediği gerçek bir masaüstünde görülmedi.
+- **Çentiğin altındaki bir pencereye karar** pencereler 0,3 sn hareketsiz kalana kadar bekler; ada, bir pencere sürüklenirken değil, bırakıldıktan bir an sonra yukarı çekilir.
 - **Çentik altındaki paneli örter** ve o kısma tıklanamaz; ada, panelin öğelerinin nerede olduğunu göremez (*Genişlik* ayarını kullanın).
 - **Bildirimler iki kez görünür**: Plasma'nın penceresi ve adanınki.
 - **Adaya sürükleme:** yalnızca görünen ada bir sürüklemeyi alır; ada ile başka bir program arasında dosya sürükleme Qt'nin sunduğu biçimde yazıldı ama iki program arasında denenemedi.

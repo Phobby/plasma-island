@@ -193,14 +193,21 @@ the edge, Shrink.)
 - **Hides** (Hide; default, as before): it is hidden completely.
 - **Slides up, a thin strip shows** (Peek at the edge): it is only moved up (260 ms), never made smaller:
   its width, height, corners and what it shows stay as they are, until only
-  a few pixels of it show at the top edge (*Part that shows*, 2–16 px,
-  default 4): the notch's lower edge with its rounded corners, or the lower
-  edge of the oval capsule. It comes down the same way. The pointer resting
-  on that strip for *Opens after* (0–1000 ms, default 150) opens it as a
-  hover would; the place that takes the pointer is exactly what shows, from
-  the topmost row of pixels down, so the pointer pushed against the edge
-  finds it, and nothing else of the island's window takes a click (measured
-  in `tools/nested-session`: rows 0–3 open it at 4 px, row 4 does not). It is only as wide as the
+  a few pixels of it show at the top edge (*Part that shows*, `peekStrip`,
+  0–12 px, default 2): the notch's lower edge with its rounded corners, or
+  the lower edge of the oval capsule; at 0 px nothing of it is drawn at all.
+  It comes down the same way. The pointer resting on the place that opens
+  it for *Opens after* (0–1000 ms, default 150) opens it as a hover would;
+  that place is what shows, and at least *Opening place* (`peekTrigger`,
+  1–8 px, default 1) from the topmost row of pixels down, so the pointer
+  pushed against the edge finds it also with nothing showing, and nothing
+  else of the island's window takes a click. Measured with
+  `tools/strip-check` in `tools/nested-session`: rows drawn below the edge
+  at 0, 1, 2 and 12 px: 0, 1, 2 and 12, and nothing else of the top edge
+  (the cat included); the opening place, from the
+  `DYNAMICISLAND_DEBUG_REGION` outline: 1, 1, 2 and 12 px high. Settings
+  version 4: an island that ran before keeps the strip it had (`peekSize`,
+  2–16 px, as it was; above 12: 12). It is only as wide as the
   island, or *Trigger width* (px at 100 % size); everywhere else the pointer
   and clicks go to the full-screen window (a browser's or a player's own
   top bar can still be reached beside it; keep the width small where they
@@ -209,11 +216,21 @@ the edge, Shrink.)
   edge it does not open again until the pointer has left the strip (no
   flicker). The oval island comes down to its usual place; between the edge
   and it the pointer still counts as on it.
+- **The light at the edge** (`PeekGlow.qml`; *Light at the edge*, on by
+  default): slid up, the pointer at the place that opens it lights the
+  edge over the island's place, a soft half ellipse 18 px deep (at 100 %),
+  fading in and out (180 ms) and still while it shows. Its colour: the
+  island's look's accent, the system's accent colour (default) or one of
+  one's own (`peekGlowColor`, `peekGlowCustom`); its strength 10–100 %
+  (60). With nothing showing it is the only sign of where the island is;
+  it then also shows the events below in their colour, even when it is
+  off. With nothing showing and the light off, the page says how to open
+  it. Drawn only: it takes no pointer.
 - **Shrinks to a small nub** (Shrink): it draws in to a small nub at the edge; the pointer on it opens
   it in the same way.
 - **Important events:** an incoming call opens it (*Open in full screen too,
   for an incoming call*, on by default). Everything else only colours the
-  part that shows, pulsing: green a call, red a screen recording, the
+  part that shows (or, with nothing showing, the light), pulsing: green a call, red a screen recording, the
   privacy dot's colour for the microphone or camera, yellow a critical
   warning. Other events wait until it comes down.
 - **Also: On the desktop when nothing is going on, after** *n s* (off by
@@ -243,6 +260,24 @@ the edge, Shrink.)
   window behind another or on another desktop does not. Told by Plasma's
   task manager model as it changes; nothing is polled. Case by case:
   ARCHITECTURE, "What counts as full screen".
+- **No back and forth** (since 2026-10-28; `Fullscreen.js`, `FullscreenBackend.qml`,
+  `FullscreenPeek.qml`). Found in `tools/nested-session`: with *Shrinks to
+  a small nub*, a window held at the outer part of the notch made it shrink
+  and grow every frame (30 changes a second, plasmashell at 13–16 % of a
+  core): what a window "reaches into" was the notch as drawn now, and shrunk
+  it is half as wide. Now: the place looked at is the notch at rest (the
+  width and size set, its height at that size: `Fullscreen.restArea`); a
+  window that reached into it counts until it is 6 px clear of it; whether
+  one reaches into it changes only once the windows have been still for
+  300 ms (a window being dragged changes nothing until it is let go); the
+  state changes no sooner than 350 ms after its last change, and more than
+  four changes in a second hold it for a second and log "held as it is for a
+  second"; opened by the pointer, the island stays open when such a window
+  comes. `tools/avoid-check` plays it (a window moved up under the notch,
+  held at its edge, along the top edge, and a pointer dragging a title to
+  the edge, through `tools/eipointer`) and fails on more than six changes or
+  two busy seconds: after the fix one or two changes in modes 2 and 3, at
+  most 12 % of a core for a second.
 - **Wayland only:** the island peeks from a layer-shell overlay window, the
   one kind of window over a full-screen one (the notch's window; the oval
   island moves into such a window only while it peeks or is shrunk there).
