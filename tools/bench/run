@@ -181,9 +181,11 @@ class DodgeDrag(Driver):
     (a KWin script, tools/avoid/move.qml): the island slides up and comes back each time."""
     def start(self):
         session("spawn", "kcalc", "kcalc"); time.sleep(4)
-        loop = ([[860, y] for y in range(420, -1, -10)] + [[x, 0] for x in range(860, 1300, 8)] + [[x, 0] for x in range(1300, 400, -8)]
-                + [[400, y] for y in range(0, 421, 10)] + [[x, 420] for x in range(400, 861, 10)])
-        path = session_dir() / "dodge-drag.qml"
+        # (held a second at the top and at the bottom: a window let go there is looked at, and the island goes)
+        loop = ([[860, y] for y in range(420, -1, -10)] + [[860, 0]] * 50 + [[x, 0] for x in range(860, 1300, 8)] + [[x, 0] for x in range(1300, 400, -8)]
+                + [[400, 0]] * 50 + [[400, y] for y in range(0, 421, 10)] + [[400, 420]] * 50 + [[x, 420] for x in range(400, 861, 10)])
+        # (a new name each time: KWin keeps a script it loaded under its file's name, and would play the old one)
+        path = session_dir() / f"dodge-drag-{time.time_ns()}.qml"
         template = (REPO / "tools" / "avoid" / "move.qml").read_text()
         # (the path played over and over: the script starts again from its first step when it ends)
         template = template.replace("if (step >= path.length) { running = false; console.info(\"AVOID end\"); return; }", "if (step >= path.length) step = 0;")
@@ -223,7 +225,7 @@ SCENARIOS = [
      {"islandLayout": "0", "catEnabled": "false", "fullscreenMode": "2", "settingsSchema": "4", "peekStrip": "0"}, Fullscreen, False),
     ("peek-light", "nothing showing, a screen recording going on: the light at the edge lit all the time", True,
      {"islandLayout": "0", "catEnabled": "false", "fullscreenMode": "2", "settingsSchema": "4", "peekStrip": "0"}, FullscreenRecording, False),
-    ("dodge-drag", "a window moved under the notch and away again, over and over: it slides up and comes back each time", True,
+    ("dodge-drag", "a window moved under the notch, held there a second, along the edge, down again and held, over and over (about 9 s a round)", True,
      {"islandLayout": "0", "catEnabled": "false", "fullscreenMode": "2", "settingsSchema": "4"}, DodgeDrag, False),
     ("theme-flat", "an opaque, flat look (Midnight), no blur", True, {"appearanceMode": "1", "customStyle": ("theme", "midnight"), "catEnabled": "false"}, None, False),
     ("theme-glass", "a see-through look with blur (Glass)", True, {"appearanceMode": "1", "customStyle": ("theme", "glass"), "catEnabled": "false"}, None, False),
