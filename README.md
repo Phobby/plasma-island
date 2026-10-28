@@ -662,7 +662,17 @@ CPU as per cent of **one** core (the machine has twelve threads), medians of thr
 - Everything that needs a pointer: hovering, an open page, scrolling a list, stroking the cat
 <!-- PERF:END -->
 
-The notch and the full-screen modes came after these measurements: they are not in the table.
+The notch and the full-screen modes came after these measurements. Taken on 2026-10-28 with today's code, the same way (`tools/bench/run`, three runs of two minutes after a minute's wait, no cat; [docs/PERFORMANCE.md](docs/PERFORMANCE.md#the-notch-and-full-screen-2026-10-28)):
+
+| State | plasmashell | + KWin | Wakeups/s | Memory (RSS / PSS) |
+|---|---|---|---|---|
+| The notch with the clock | 0.12 % | 0.00 % | 4 | 285 / 114 MB |
+| Over a full-screen window, slid up (2 px showing) | 0.12 % | 0.00 % | 4 | 289 / 118 MB |
+| The same, nothing showing (0 px) | 0.11 % | 0.00 % | 4 | 290 / 119 MB |
+| Nothing showing, a screen recording going on: the light at the edge lit | 0.19 % | 0.04 % | 31 | 290 / 118 MB |
+| A window moved under the notch and away again, over and over: it slides up and comes back about twice in nine seconds | 1.12 % | 1.24 % | 325 | 291 / 120 MB |
+
+In the last, KWin's share is also the moving of the window, a step every 20 ms; no second went above 3 % of a core, and the island never had to stop itself.
 
 ## Privacy and the network
 

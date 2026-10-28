@@ -78,6 +78,27 @@ code exactly it measured is not recorded. No figure on this page or in the
 READMEs comes from it. It is the only place where music was measured, and the
 code that plays it has changed since: so there is no figure for music.
 
+## The notch and full screen (2026-10-28)
+
+Taken after the full-screen fixes, with the code of that day, by the same
+method (`tools/bench/run --reps 3 --warmup 60 --duration 120`, the cat off),
+medians of the three runs, CPU as per cent of one core:
+
+| Scenario | plasmashell | + KWin | Wakeups/s | RSS / PSS | Worst second |
+|---|---|---|---|---|---|
+| `notch`: the notch with the clock | 0.12 % | 0.00 % | 4 | 285 / 114 MB | 2 % |
+| `peek`: a window in full screen, slid up, 2 px showing | 0.12 % | 0.00 % | 4 | 289 / 118 MB | 2 % |
+| `peek-hidden`: the same at 0 px | 0.11 % | 0.00 % | 4 | 290 / 119 MB | 2 % |
+| `peek-light`: 0 px and a screen recording going on (the stand-in of `tools/demo/scenes`), the light lit all the time | 0.19 % | 0.04 % | 31 | 290 / 118 MB | 2 % |
+| `dodge-drag`: a `kcalc` window moved under the notch, held a second, along the edge, down and held, over and over (a KWin script; about nine seconds a round) | 1.12 % | 1.24 % | 325 | 291 / 120 MB | 3 % |
+
+In `dodge-drag` the island slid up and came back 41 times in the last run's
+three minutes (its log), never held itself ("held as it is for a second" not
+logged); KWin's share is also the moving of the window, a step every 20 ms.
+Slid up, with or without a strip, costs what the notch costs; the light lit
+by an event costs its event's timer. The raw files were not kept in
+`docs/perf/raw` (they belong to the older table).
+
 ## The machine
 
 | | |

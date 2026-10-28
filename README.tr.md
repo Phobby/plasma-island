@@ -664,7 +664,17 @@ CPU, **tek** çekirdeğin yüzdesi olarak (makinede on iki iş parçacığı var
 - İmleç gerektiren her şey: üzerine gelme, açık bir sayfa, liste kaydırma, kediyi okşama
 <!-- PERF:END -->
 
-Çentik ve tam ekran kipleri bu ölçümlerden sonra geldi: tabloda yer almıyorlar.
+Çentik ve tam ekran kipleri bu ölçümlerden sonra geldi. 2026-10-28'de bugünkü kodla, aynı yolla alındı (`tools/bench/run`, bir dakika bekledikten sonra iki dakikalık üç koşu, kedisiz; [docs/PERFORMANCE.md](docs/PERFORMANCE.md#the-notch-and-full-screen-2026-10-28), İngilizce):
+
+| Durum | plasmashell | + KWin | Uyanma/sn | Bellek (RSS / PSS) |
+|---|---|---|---|---|
+| Saatli çentik | %0,12 | %0,00 | 4 | 285 / 114 MB |
+| Tam ekran bir pencerenin üzerinde, yukarı çekilmiş (2 px görünüyor) | %0,12 | %0,00 | 4 | 289 / 118 MB |
+| Aynısı, hiçbir şey görünmüyor (0 px) | %0,11 | %0,00 | 4 | 290 / 119 MB |
+| Hiçbir şey görünmüyor, bir ekran kaydı sürüyor: kenar ışığı yanık | %0,19 | %0,04 | 31 | 290 / 118 MB |
+| Bir pencere çentiğin altına taşınıp yeniden uzaklaştırılıyor, tekrar tekrar: dokuz saniyede yaklaşık iki kez yukarı çekilip geri geliyor | %1,12 | %1,24 | 325 | 291 / 120 MB |
+
+Sonuncusunda KWin'in payı pencerenin her 20 ms'de bir taşınmasını da içerir; hiçbir saniye bir çekirdeğin %3'ünü geçmedi ve ada kendini durdurmak zorunda kalmadı.
 
 ## Gizlilik ve ağ
 
