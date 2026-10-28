@@ -1,0 +1,19 @@
+# The island's feedback relay (worker.mjs), as Cloudflare's `wrangler` deploys it.
+# The bot's token and the chat's id are secrets, not written here:
+#   npx wrangler secret put BOT_TOKEN
+#   npx wrangler secret put CHAT_ID
+# See README.md beside this file.
+name = "island-feedback"
+main = "worker.mjs"            # relay.mjs beside it has the rules
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# One message a minute from one address (worker.mjs reads it as env.LIMITER).
+# namespace_id is any number of your own, unique in your Cloudflare account.
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "4271"
+
+  [ratelimits.simple]
+  limit = 1
+  period = 60

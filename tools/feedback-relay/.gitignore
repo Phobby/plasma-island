@@ -1,0 +1,4 @@
+# What wrangler leaves here, and local secrets: never committed.
+.wrangler/
+.dev.vars
+node_modules/

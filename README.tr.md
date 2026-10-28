@@ -596,6 +596,7 @@ Açık adanın sağ üstündeki dişli onu açar (adanın sağ tık menüsü de)
 
 - **Bir özelliğin olduğu yerde** bir kart, neye ihtiyaç duyduğunu ve neyin eksik olduğunu, nedenini, nasıl edinileceğini (sayfası ve dağıtıma göre kopyalanacak bir komut), *Komut yolunu elle ver* ve *Tekrar kontrol et* düğmelerini gösterir. Ada o komutu asla çalıştırmaz. Yerel modül yoksa ona ihtiyaç duyan her özellik tam kurulum gerektiğini söyler.
 - **Ayarlar → Tanılama** bu bilgisayarı (adanın sürümü, oturum, Plasma, Qt, yerel modüller), her özelliği neye ihtiyaç duyduğu, bulunup bulunmadığı, nerede arandığı, yolu ve sürümüyle listeler; elle verebileceğiniz bir **komut yolu** da vardır. *Tanılama çıktısını kopyala*, hata bildirimi için raporu kullanıcı adınız, bilgisayarın adı ve ev klasörünüz olmadan panoya koyar. *Hakkında* bu sayfaya ve sorun bildirme formuna bağlantı verir ve tanıtımı yeniden gösterir.
+- Ayarlar → Tanılama'nın sonunda **Geri bildirim**: geliştiriciye birkaç satır, isterseniz bir yanıt yolu ve işaretlerseniz rapor. *Ne gönderilir* bilgisayardan tam olarak neyin çıkacağını gösterir; yalnızca *Gönder* ile, projenin aktarıcısı üzerinden geliştiricinin Telegram'ına gider (botun anahtarı aktarıcıdadır, adada asla). Projenin henüz bir aktarıcı adresi yokken sayfa bunun yerine GitHub'daki sorun kayıtlarına bağlantı verir.
 - Komutlar masaüstü kabuğunun `PATH`'inde, kurucuların koyduğu klasörlerde (`~/.local/bin`, `~/.cargo/bin`, npm'inki, nvm'inki, `/usr/local/bin`, `/snap/bin`, Flatpak'inki…) ve `~/Applications` içinde AppImage olarak aranır. Ayrıntılar [başvuru belgesinde](docs/REFERENCE.md#requirements-and-diagnostics) (İngilizce).
 
 ## Geliştiriciler için: kendi etkinliğini gönder
@@ -675,6 +676,7 @@ CPU, **tek** çekirdeğin yüzdesi olarak (makinede on iki iş parçacığı var
 | Adanın kendi yeni sürümleri | sürüm numarası için günde bir kez `raw.githubusercontent.com` (*Hiç bakma* seçiliyken değil); arşiv için `github.com`, **yalnızca bir güncelleme kurulurken** | yalnızca güncelleme için `sh`, `curl`, `tar` ve indirilen `install.sh` | kurulurken indirilen arşiv ve kurucunun son çıktısı, `~/.cache/dynamicisland/update` içinde |
 | İndirme takibi | asla | hiçbiri (süreç listesini ve indirme klasörünü okur) | hiçbir şey |
 | Gereksinimler, Tanılama | asla | bir komutu aramak için hiçbiri (yerel modül klasörlere bakar); Tanılama sayfası bulduğu her komuta, kabuk olmadan, `--version` sorar | elle verdiğiniz bir komut yolu, ayarlarda; bulunanlar bir süre bellekte tutulur |
+| Geri bildirim (Ayarlar → Tanılama) | **yalnızca Gönder'e bastığınızda**: yazdıklarınız, verdiyseniz yanıt yolu, adanın sürümü, dili ve oturumu, işaretlediyseniz tanılama raporu; projenin aktarıcısına, o da geliştiricinin Telegram'ına iletir | hiçbiri | hiçbir şey |
 | Öneriler | asla | hiçbiri | öğrendiklerini `~/.local/share/dynamicisland/suggestions.json` içine |
 | Alışkanlıklar, Pomodoro, Uygulamalar, Araçlar | asla | başlattığınız uygulamalar | verilerini ayarlara |
 | Pano | asla | hiçbiri | hiçbir şey (geçmiş Klipper'ındır) |

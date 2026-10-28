@@ -72,9 +72,13 @@ if [ -n "$runner" ]; then
     # (KDE's colour button asks for KDE's own i18n, which a bare QML engine does not have)
     # (a configuration folder of its own: what the settings window remembers of itself, the open
     # folding parts, is written there and not into the user's)
+    # (the feedback relay's own code on a local port, with a stand-in Telegram: tests/tst_feedback.qml)
+    relay=""
+    if command -v node >/dev/null 2>&1; then node tests/feedback-server.mjs 47391 & relay=$!; fi
     config="$(mktemp -d)"
     out="$(XDG_CONFIG_HOME="$config" QT_QPA_PLATFORM=offscreen "$runner" -input tests -silent 2>&1)" || failed=1
     rm -rf "$config"
+    [ -n "$relay" ] && kill "$relay" 2>/dev/null
     printf '%s\n' "$out" | grep -v -E "^(Testing|\*\*\*)|i18nc is not defined" || true
     # The companion with the desktop's own animations switched off: Plasma's units read that from
     # the desktop's configuration, so this one file runs again with a configuration that has them off.

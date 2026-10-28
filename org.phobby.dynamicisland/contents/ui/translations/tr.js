@@ -1466,5 +1466,22 @@ var table = {
     "Report a problem": "Sorun bildir",
     "Settings › Diagnostics says how to install it": "Nasıl kurulacağı Ayarlar › Tanılama'da",
     "BetterNotes is read through the island's native module, which is not installed.": "BetterNotes adanın yerel modülü üzerinden okunur, o da yüklü değil.",
-    "Diagnostics": "Tanılama"
+    "Diagnostics": "Tanılama",
+    "Feedback": "Geri bildirim",
+    "A few lines to the author: what you like, what is missing, what went wrong. Sent only when you press Send, through the project's feedback address to the author's Telegram; nothing else is sent, and nothing in the background.": "Geliştiriciye birkaç satır: neyi sevdiğiniz, neyin eksik olduğu, neyin ters gittiği. Yalnızca Gönder'e bastığınızda, projenin geri bildirim adresi üzerinden geliştiricinin Telegram'ına gider; başka hiçbir şey gönderilmez, arka planda da hiçbir şey.",
+    "This copy of the island has no feedback address, so nothing can be sent from here. Tell the author on GitHub instead.": "Adanın bu kopyasında geri bildirim adresi yok, bu yüzden buradan bir şey gönderilemez. Bunun yerine geliştiriciye GitHub'da yazın.",
+    "What would you like to tell the author?": "Geliştiriciye ne söylemek istersiniz?",
+    "%1 / %2": "%1 / %2",
+    "How to answer you (optional): a Telegram name or an e-mail address": "Size nasıl yanıt verilsin (isteğe bağlı): bir Telegram adı ya da e-posta adresi",
+    "How to answer you (optional)": "Size nasıl yanıt verilsin (isteğe bağlı)",
+    "Add the diagnostics report (without your user name, the computer's name and your home folder)": "Tanılama raporunu ekle (kullanıcı adınız, bilgisayarın adı ve ev klasörünüz olmadan)",
+    "Sending…": "Gönderiliyor…",
+    "Send": "Gönder",
+    "What is sent": "Ne gönderilir",
+    "That is longer than %1 characters: shorten it a little.": "Bu %1 karakterden uzun: biraz kısaltın.",
+    "Sent. Thank you!": "Gönderildi. Teşekkürler!",
+    "The feedback address asks to wait: try again in a minute.": "Geri bildirim adresi beklemenizi istiyor: bir dakika sonra yeniden deneyin.",
+    "The feedback address did not take it. Shorten it, or tell the author on GitHub.": "Geri bildirim adresi bunu kabul etmedi. Kısaltın ya da geliştiriciye GitHub'da yazın.",
+    "It could not be sent: no connection, or the feedback address did not answer. What you wrote is still here: try again later.": "Gönderilemedi: bağlantı yok ya da geri bildirim adresi yanıt vermedi. Yazdıklarınız burada duruyor: daha sonra yeniden deneyin.",
+    "The next one can be sent in a minute.": "Bir sonraki bir dakika sonra gönderilebilir."
 };

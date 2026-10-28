@@ -7,7 +7,8 @@
     (commandPaths), whether the island's native and effects modules loaded,
     and this computer's session, Plasma and Qt. "Copy diagnostics" puts all
     of it on the clipboard for a bug report, with the user's name, the
-    computer's name and the home folder left out (Diagnostics.js).
+    computer's name and the home folder left out (Diagnostics.js). Feedback
+    (FeedbackForm.qml) sends a few lines to the author, only with its button.
 
     Commands are looked for as the island looks for them (native module:
     userpaths.h); a version is asked of a command (`--version`) only here,
@@ -289,6 +290,15 @@ KCM.SimpleKCM {
                     }
                 }
             }
+        }
+
+        // A few lines to the author, sent only with its button (FeedbackForm.qml).
+        FeedbackForm {
+            id: feedback
+            Layout.fillWidth: true
+            Layout.topMargin: Kirigami.Units.largeSpacing
+            reportText: () => page.reportText()
+            meta: ({ island: page.islandVersion, language: Lang.language, session: String(page.info.session || "") })
         }
 
         Kirigami.FormLayout {

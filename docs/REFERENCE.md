@@ -1466,8 +1466,18 @@ Connect, Qt Multimedia, LayerShellQt and KDE Wallet.
   as text, with the user name, the computer's name and the home folder
   written as `<user>`, `<host>` and `~` (`Diagnostics.js`). The island's
   GitHub page and its issues are linked there.
+- **Feedback** (Settings → Diagnostics, `FeedbackForm.qml`, `Feedback.js`): a
+  few lines to the author, an optional way to answer and, only if ticked, the
+  diagnostics report as above; *What is sent* shows the exact JSON before it
+  leaves. Sent only with *Send*, one a minute, to `FEEDBACK_URL`: the
+  project's relay (`tools/feedback-relay`, a Cloudflare Worker), which keeps
+  the Telegram bot's token and chat id as its secrets and passes the text on
+  as plain text, the report as a file. The island never has the token. With
+  `FEEDBACK_URL` empty the form is not shown and the page links GitHub's
+  issues instead. Text at most 2000 characters, the way to answer 120, the
+  report 12000; no connection or a refusal says so and keeps the text.
 - The island's own addresses (repository, theme catalog, version check,
-  install line) come from one file, `Project.js`.
+  install line, feedback relay) come from one file, `Project.js`.
 
 ## Known limitations
 
