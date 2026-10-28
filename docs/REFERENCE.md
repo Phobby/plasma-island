@@ -1469,13 +1469,19 @@ Connect, Qt Multimedia, LayerShellQt and KDE Wallet.
 - **Feedback** (Settings → Diagnostics, `FeedbackForm.qml`, `Feedback.js`): a
   few lines to the author, an optional way to answer and, only if ticked, the
   diagnostics report as above; *What is sent* shows the exact JSON before it
-  leaves. Sent only with *Send*, one a minute, to `FEEDBACK_URL`: the
+  leaves. Sent only with *Send*, at most three in an hour, to `FEEDBACK_URL`: the
   project's relay (`tools/feedback-relay`, a Cloudflare Worker), which keeps
   the Telegram bot's token and chat id as its secrets and passes the text on
   as plain text, the report as a file. The island never has the token. With
   `FEEDBACK_URL` empty the form is not shown and the page links GitHub's
   issues instead. Text at most 2000 characters, the way to answer 120, the
   report 12000; no connection or a refusal says so and keeps the text.
+  Three an hour is counted twice: the form keeps the times of what it sent
+  in the settings window's own file (`~/.config/dynamicisland-settings-ui.conf`,
+  group `Feedback`), so a reopened window still knows them; the relay counts
+  exactly per sender (an address, an IPv6 one by its /64) and for everybody
+  (20 an hour), and a fourth is answered 429 with how long to wait, which the
+  form shows in minutes.
 - The island's own addresses (repository, theme catalog, version check,
   install line, feedback relay) come from one file, `Project.js`.
 

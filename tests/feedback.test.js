@@ -72,5 +72,25 @@ test("where it may be sent", () => {
     check("not an address", F.usable("javascript:alert(1)"), false);
 });
 
+test("three an hour, and how long until the next", () => {
+    const H = 3600000, now = 1e12;
+    check("none sent", F.waitFor([], now), 0);
+    check("two sent", F.waitFor([now - 1000, now - 2000], now), 0);
+    check("three sent: until the oldest is an hour old", F.waitFor([now - 50 * 60000, now - 20 * 60000, now - 60000], now), 10 * 60000);
+    check("an old one does not count", F.waitFor([now - H - 1, now - 1000, now - 2000], now), 0);
+    check("recent, oldest first", F.recent([now - 5, now - H - 5, now - 9, "x"], now), [now - 9, now - 5]);
+    check("minutes", [F.minutes(1), F.minutes(60000), F.minutes(60001), F.minutes(35 * 60000)], [1, 1, 2, 35]);
+});
+
+test("the relay's wait, and the stored times", () => {
+    check("retryAfter", F.retryAfter('{"ok":false,"retryAfter":2100}'), 2100000);
+    check("not said: an hour", F.retryAfter('{"ok":false}'), 3600000);
+    check("not JSON: an hour", F.retryAfter("Too Many Requests"), 3600000);
+    check("too long a wait is not believed", F.retryAfter('{"retryAfter":999999}'), 3600000);
+    check("times", F.parseTimes("[1, 2, \"3\"]"), [1, 2, 3]);
+    check("broken", F.parseTimes("{"), []);
+    check("not a list", F.parseTimes("{\"a\":1}"), []);
+});
+
 if (failed > 0) { console.log(failed + " of " + checked + " checks failed"); process.exit(1); }
 console.log(checked + " checks passed");

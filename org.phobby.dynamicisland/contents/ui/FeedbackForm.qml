@@ -10,12 +10,18 @@
     diagnostics report (already without the user's name, the computer's name
     and the home folder). "What is sent" shows exactly that before it leaves.
 
+    At most three in an hour: the times of what was sent are kept in the
+    settings window's own file (beside SettingsMemory's), so closing the
+    window does not reset them, and the relay, which counts for itself, says
+    how long to wait when it is asked too often.
+
     Without an address (a copy built without one) the page says so and offers
     the issue tracker instead. Feedback.js has the rules and the limits.
 */
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
+import QtCore
 import org.kde.kirigami as Kirigami
 import "Feedback.js" as Feedback
 import "Project.js" as Project
@@ -38,11 +44,41 @@ ColumnLayout {
     property int requests: 0
     property int seq: 0
 
+    // What was sent (ms), and until when the relay asked to wait. Kept in the settings window's
+    // own file (`memoryFile`); `remember: false` keeps them only here.
+    property bool remember: true
+    property url memoryFile: StandardPaths.writableLocation(StandardPaths.GenericConfigLocation) + "/dynamicisland-settings-ui.conf"
+    // (made only when it remembers: a Settings writes its values back when it goes, unchanged too)
+    Loader {
+        id: memoryLoader
+        active: form.remember
+        sourceComponent: Settings {
+            location: form.memoryFile
+            category: "Feedback"
+            property string sent: "[]"
+            property real waitUntil: 0
+        }
+    }
+    readonly property var memory: memoryLoader.item
+    property var sentTimes: memory ? Feedback.parseTimes(memory.sent) : []
+    property real waitUntil: memory ? Number(memory.waitUntil) || 0 : 0
+    function keep(): void {
+        if (!memory) return;
+        memory.sent = JSON.stringify(Feedback.recent(sentTimes, Date.now()));
+        memory.waitUntil = waitUntil;
+        memory.sync();
+    }
+    // (the clock, again every half minute, for the wait's minutes)
+    property real now: Date.now()
+    Timer { interval: 30000; running: form.visible && form.wait > 0; repeat: true; onTriggered: form.now = Date.now() }
+    readonly property real wait: Math.max(Feedback.waitFor(sentTimes, now), waitUntil - now, 0)
+
     readonly property var built: Feedback.payload(message.text, contact.text, withReport.checked, withReport.checked ? form.reportText() : "", form.meta)
     readonly property bool tooLong: message.text.trim().length > Feedback.MAX_MESSAGE
 
     function send(): void {
-        if (!configured || !built.ok || state === "sending" || pause.running) return;
+        now = Date.now();
+        if (!configured || !built.ok || state === "sending" || wait > 0) return;
         const run = ++seq;
         state = "sending";
         watchdog.restart();
@@ -51,8 +87,12 @@ ColumnLayout {
             if (xhr.readyState !== XMLHttpRequest.DONE || run !== seq) return;
             watchdog.stop();
             const result = Feedback.outcome(xhr.status);
+            form.now = Date.now();
+            if (result === "sent") form.sentTimes = Feedback.recent(form.sentTimes.concat([form.now]), form.now);
+            if (result === "busy") form.waitUntil = form.now + Feedback.retryAfter(xhr.responseText);
+            form.keep();
             // (the text emptied first: a change of it clears the state)
-            if (result === "sent") { message.text = ""; pause.restart(); }
+            if (result === "sent") message.text = "";
             form.state = result;
         };
         ++requests;
@@ -61,8 +101,6 @@ ColumnLayout {
         xhr.send(JSON.stringify(built.body));
     }
     Timer { id: watchdog; interval: 20000; onTriggered: { ++form.seq; form.state = "failed"; } }
-    // (one at a time: after a message is sent, the next can follow a minute later)
-    Timer { id: pause; interval: 60000 }
 
     spacing: Kirigami.Units.smallSpacing
 
@@ -139,7 +177,7 @@ ColumnLayout {
                 objectName: "feedbackSend"
                 icon.name: "document-send"
                 text: form.state === "sending" ? Lang.i18n("Sending…") : Lang.i18n("Send")
-                enabled: form.built.ok && form.state !== "sending" && !pause.running
+                enabled: form.built.ok && form.state !== "sending" && form.wait <= 0
                 onClicked: form.send()
             }
             QQC2.ToolButton {
@@ -173,10 +211,10 @@ ColumnLayout {
             text: form.tooLong ? Lang.i18n("That is longer than %1 characters: shorten it a little.", Feedback.MAX_MESSAGE)
                 : form.state === "sending" ? Lang.i18n("Sending…")
                 : form.state === "sent" ? Lang.i18n("Sent. Thank you!")
-                : form.state === "busy" ? Lang.i18n("The feedback address asks to wait: try again in a minute.")
+                : form.state === "busy" && form.wait > 0 ? Lang.i18n("At most %1 an hour: the next one can be sent in %2 min.", Feedback.PER_HOUR, Feedback.minutes(form.wait))
                 : form.state === "refused" ? Lang.i18n("The feedback address did not take it. Shorten it, or tell the author on GitHub.")
                 : form.state === "failed" ? Lang.i18n("It could not be sent: no connection, or the feedback address did not answer. What you wrote is still here: try again later.")
-                : pause.running ? Lang.i18n("The next one can be sent in a minute.")
+                : form.wait > 0 ? Lang.i18n("At most %1 an hour: the next one can be sent in %2 min.", Feedback.PER_HOUR, Feedback.minutes(form.wait))
                 : ""
         }
     }

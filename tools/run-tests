@@ -79,6 +79,7 @@ if [ -n "$runner" ]; then
     out="$(XDG_CONFIG_HOME="$config" QT_QPA_PLATFORM=offscreen "$runner" -input tests -silent 2>&1)" || failed=1
     rm -rf "$config"
     [ -n "$relay" ] && kill "$relay" 2>/dev/null
+    rm -f "${TMPDIR:-/tmp}"/tst_feedback-*.conf
     printf '%s\n' "$out" | grep -v -E "^(Testing|\*\*\*)|i18nc is not defined" || true
     # The companion with the desktop's own animations switched off: Plasma's units read that from
     # the desktop's configuration, so this one file runs again with a configuration that has them off.

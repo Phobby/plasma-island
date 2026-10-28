@@ -6,8 +6,9 @@
 - **Feedback from the settings** (Settings → Diagnostics → *Feedback*): a few
   lines to the author, a way to answer if wanted, and the diagnostics report
   if ticked (without the user's name, the computer's name and the home
-  folder). *What is sent* shows it first; it is sent only with *Send*, one a
-  minute, through the project's relay (`tools/feedback-relay`, a Cloudflare
+  folder). *What is sent* shows it first; it is sent only with *Send*, at most
+  three in an hour (counted by the island and, exactly, by the relay, which
+  also takes twenty an hour from everybody together), through the project's relay (`tools/feedback-relay`, a Cloudflare
   Worker that keeps the Telegram bot's token) to the author's Telegram. A
   copy without a relay address (`FEEDBACK_URL` in `Project.js`) offers
   GitHub's issues instead.

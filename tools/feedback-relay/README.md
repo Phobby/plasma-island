@@ -8,10 +8,12 @@ island, whose code anybody can read.
 What it takes is one `POST /` with a JSON body `{ message, contact, report, island, language,
 session }`, made by `contents/ui/Feedback.js` (at most 2000 characters of text, 120 of contact,
 12000 of report). It sends the text as plain text, and the diagnostics report, when the user
-ticked it, as a file `diagnostics.txt` in reply to it. About one message a minute from one address
-(Cloudflare's limiter counts roughly: a few quick ones can pass before it closes; the island
-itself sends at most one a minute);
-nothing is kept or logged. Its tests: `tests/feedbackrelay.test.js`, and `tests/tst_feedback.qml`
+ticked it, as a file `diagnostics.txt` in reply to it. **At most three messages an hour from one
+sender** (an address; an IPv6 one by its /64) and twenty from everybody together, counted
+exactly over a sliding hour by a Durable Object (`FeedbackLimit`); a fourth is answered 429 with
+how many seconds to wait, which the island shows. A message Telegram did not take is not
+counted. The island counts its own three an hour as well. Nothing of the text is kept or logged;
+the counter keeps only the times of the last hour's messages. Its tests: `tests/feedbackrelay.test.js`, and `tests/tst_feedback.qml`
 runs the island's form against it (with a stand-in Telegram).
 
 ## Setting it up
@@ -47,8 +49,8 @@ You need a Telegram account, a free Cloudflare account and Node.js (for `npx wra
         -H 'Content-Type: application/json' -d '{"message":"Hello from curl"}'
    ```
 
-   It answers `{"ok":true}` and the message is in your chat. A few more within a minute
-   answers 429.
+   It answers `{"ok":true}` and the message is in your chat. The fourth within an hour answers
+   429 with `retryAfter`, the seconds until the next one may go.
 5. **The island.** Put the address into `FEEDBACK_URL` in
    `org.phobby.dynamicisland/contents/ui/Project.js`, then run `tools/run-tests`, commit and push.
    Islands installed from then on (and updated to the next version) have the Feedback form;
@@ -59,8 +61,9 @@ You need a Telegram account, a free Cloudflare account and Node.js (for `npx wra
 - **The token got out, or the bot is flooded:** in @BotFather, `/mybots` → the bot → *API
   Token* → *Revoke current token*, then `npx wrangler secret put BOT_TOKEN` with the new one.
   Islands need no change: they never had the token.
-- **Too many messages:** the limit is in `wrangler.toml` (`[[ratelimits]]`, about one a minute from
-  one address). Anybody can still write to the address; a new Worker name (a new address in
-  `FEEDBACK_URL`) shuts out what keeps coming to the old one.
+- **Other limits:** `PER_SENDER_HOURLY` (3) and `TOTAL_HOURLY` (20) in `wrangler.toml`
+  (`[vars]`), then `npx wrangler deploy`. The island's own count is `PER_HOUR` in
+  `contents/ui/Feedback.js`. Even so, many senders together can fill the twenty of an hour; a
+  new Worker name (a new address in `FEEDBACK_URL`) shuts out what keeps coming to the old one.
 - **Nothing arrives:** `npx wrangler tail` shows each request's answer while you try again
   (502: Telegram did not take it, usually a wrong token or chat id; 500: a secret is missing).

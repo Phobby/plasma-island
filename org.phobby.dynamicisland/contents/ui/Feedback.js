@@ -2,7 +2,9 @@
 // Settings › Diagnostics › Feedback (FeedbackForm.qml): what is sent when the user presses Send,
 // and what the answer of the feedback address means. The address is a small relay of the
 // project's own (tools/feedback-relay), which passes the text on to the author's Telegram; the
-// bot's token is kept there, never in the island. Nothing is sent without the button.
+// bot's token is kept there, never in the island. Nothing is sent without the button, and at
+// most three in an hour: the island counts what it sent, the relay counts what it took (per
+// sender, and everybody's together) and answers 429 with how long to wait.
 //
 // The limits are the relay's too (tools/feedback-relay/worker.js checks the same).
 // Pure functions of plain values; tests/feedback.test.js.
@@ -11,6 +13,9 @@
 const MAX_MESSAGE = 2000;
 const MAX_CONTACT = 120;
 const MAX_REPORT = 12000;
+// At most this many in any hour (the relay's PER_SENDER).
+const PER_HOUR = 3;
+const HOUR_MS = 60 * 60 * 1000;
 
 // A text as it is sent: no control characters but line breaks and tabs, trimmed, at most `max`.
 function clean(text, max) {
@@ -53,4 +58,35 @@ function outcome(status) {
 function usable(url) {
     const u = String(url || "");
     return /^https:\/\/[^\s/]+/.test(u) || /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/.test(u);
+}
+
+// The times (ms) of what was sent within the hour before `now`, oldest first.
+function recent(times, now) {
+    return (Array.isArray(times) ? times : []).map(Number).filter(t => t > now - HOUR_MS && t <= now).sort((a, b) => a - b);
+}
+
+// How long (ms) until one more may be sent: 0 while fewer than PER_HOUR went in the last hour.
+function waitFor(times, now) {
+    const r = recent(times, now);
+    return r.length < PER_HOUR ? 0 : r[r.length - PER_HOUR] + HOUR_MS - now;
+}
+
+// A wait as whole minutes, at least one.
+function minutes(ms) {
+    return Math.max(1, Math.ceil(Number(ms) / 60000));
+}
+
+// How long (ms) the relay asked to wait (its 429 answer: { retryAfter: seconds }); an hour when
+// it did not say.
+function retryAfter(answer) {
+    try {
+        const s = Number(JSON.parse(String(answer || "")).retryAfter);
+        if (s > 0 && s <= 3600) return s * 1000;
+    } catch (e) {}
+    return HOUR_MS;
+}
+
+// The stored times as a list (they are kept as JSON in the settings window's own file).
+function parseTimes(text) {
+    try { const v = JSON.parse(String(text || "[]")); return Array.isArray(v) ? v.map(Number).filter(t => t > 0) : []; } catch (e) { return []; }
 }

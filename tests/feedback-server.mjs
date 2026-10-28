@@ -6,13 +6,13 @@
 //   node tests/feedback-server.mjs PORT
 //   POST /          the relay
 //   GET  /calls     what "Telegram" was asked: [{ method, chat, text, file }]
-//   POST /reset     forget the calls and who sent (the one-a-minute limit)
+//   POST /reset     forget the calls and the counts (three an hour from one sender)
 import http from "node:http";
-import { handle } from "../tools/feedback-relay/relay.mjs";
+import { handle, slide, PER_SENDER, WINDOW_MS } from "../tools/feedback-relay/relay.mjs";
 
 const port = Number(process.argv[2] || 47391);
 let calls = [];
-let seen = new Set();
+let counts = {};
 const env = { BOT_TOKEN: "000:test-token", CHAT_ID: "42", TELEGRAM_API: "http://telegram.invalid" };
 
 async function telegram(url, options) {
@@ -32,14 +32,20 @@ http.createServer(async (req, res) => {
     for await (const c of req) chunks.push(c);
     const body = Buffer.concat(chunks);
     if (req.url === "/calls") { res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify(calls)); return; }
-    if (req.url === "/reset") { calls = []; seen = new Set(); res.writeHead(200); res.end("{}"); return; }
+    if (req.url === "/reset") { calls = []; counts = {}; res.writeHead(200); res.end("{}"); return; }
     const request = new Request("http://127.0.0.1:" + port + req.url, {
         method: req.method,
         headers: Object.assign({}, req.headers, { "cf-connecting-ip": req.socket.remoteAddress }),
         body: req.method === "GET" || req.method === "HEAD" ? undefined : body
     });
-    const limited = async key => { const was = seen.has(key); seen.add(key); return was; };
-    const answer = await handle(request, env, { fetch: telegram, limited });
+    // (the counter as the Worker's, in memory: the same sliding hour)
+    const take = async who => {
+        const now = Date.now();
+        const r = slide(counts[who] || [], now, PER_SENDER, WINDOW_MS);
+        counts[who] = r.times;
+        return { ok: r.ok, retryAfter: r.retryAfter, undo: async () => { counts[who].splice(counts[who].lastIndexOf(now), 1); } };
+    };
+    const answer = await handle(request, env, { fetch: telegram, take });
     res.writeHead(answer.status, { "Content-Type": "application/json" });
     res.end(await answer.text());
 }).listen(port, "127.0.0.1");

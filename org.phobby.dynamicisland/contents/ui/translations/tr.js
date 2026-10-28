@@ -1480,8 +1480,7 @@ var table = {
     "What is sent": "Ne gönderilir",
     "That is longer than %1 characters: shorten it a little.": "Bu %1 karakterden uzun: biraz kısaltın.",
     "Sent. Thank you!": "Gönderildi. Teşekkürler!",
-    "The feedback address asks to wait: try again in a minute.": "Geri bildirim adresi beklemenizi istiyor: bir dakika sonra yeniden deneyin.",
     "The feedback address did not take it. Shorten it, or tell the author on GitHub.": "Geri bildirim adresi bunu kabul etmedi. Kısaltın ya da geliştiriciye GitHub'da yazın.",
     "It could not be sent: no connection, or the feedback address did not answer. What you wrote is still here: try again later.": "Gönderilemedi: bağlantı yok ya da geri bildirim adresi yanıt vermedi. Yazdıklarınız burada duruyor: daha sonra yeniden deneyin.",
-    "The next one can be sent in a minute.": "Bir sonraki bir dakika sonra gönderilebilir."
+    "At most %1 an hour: the next one can be sent in %2 min.": "Saatte en fazla %1: bir sonraki %2 dk sonra gönderilebilir."
 };
