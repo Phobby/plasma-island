@@ -149,6 +149,52 @@ class Download(Serve):
         try: (session_dir() / "home" / "Downloads" / "big.bin").unlink()
         except OSError: pass
 
+class Fullscreen(Driver):
+    """A window over the whole screen in front (Konsole in full screen), nothing playing."""
+    def start(self):
+        session("spawn", "fullscreen", "konsole", "--separate", "--fullscreen", "-e", "sleep", "100000")
+        time.sleep(4)
+    def stop(self):
+        p = [l.split()[0] for l in session("ps", capture=True).splitlines() if "konsole" in l and "--fullscreen" in l]
+        if p: subprocess.run(["kill", *p])
+
+class FullscreenRecording(Fullscreen):
+    """The same, and a screen recording going on (the stand-in of tools/demo/scenes): the island, drawn
+    up with nothing showing, says so with the light at the edge, lit for as long as it lasts."""
+    def start(self):
+        super().start()
+        session("spawn", "screen", "gst-launch-1.0", "-q", "videotestsrc", "is-live=true", "pattern=black", "!",
+                "video/x-raw,width=320,height=180,framerate=10/1", "!", "pipewiresink", "mode=provide",
+                "stream-properties=props,node.name=demo-screen,media.class=Video/Source")
+        session("spawn", "recorder", "gst-launch-1.0", "-q", "pipewiresrc", "autoconnect=false",
+                "stream-properties=props,application.name=Recorder,node.name=demo-recorder", "!", "fakesink")
+        time.sleep(3)
+        session("run", "pw-link", "demo-screen:capture_1", "demo-recorder:input_1")
+        time.sleep(2)
+    def stop(self):
+        p = [l.split()[0] for l in session("ps", capture=True).splitlines() if "gst-launch" in l]
+        if p: subprocess.run(["kill", *p])
+        super().stop()
+
+class DodgeDrag(Driver):
+    """A window (kcalc) moved up under the notch, along the top edge and down again, over and over
+    (a KWin script, tools/avoid/move.qml): the island slides up and comes back each time."""
+    def start(self):
+        session("spawn", "kcalc", "kcalc"); time.sleep(4)
+        loop = ([[860, y] for y in range(420, -1, -10)] + [[x, 0] for x in range(860, 1300, 8)] + [[x, 0] for x in range(1300, 400, -8)]
+                + [[400, y] for y in range(0, 421, 10)] + [[x, 420] for x in range(400, 861, 10)])
+        path = session_dir() / "dodge-drag.qml"
+        template = (REPO / "tools" / "avoid" / "move.qml").read_text()
+        # (the path played over and over: the script starts again from its first step when it ends)
+        template = template.replace("if (step >= path.length) { running = false; console.info(\"AVOID end\"); return; }", "if (step >= path.length) step = 0;")
+        path.write_text(template.replace("PATH", json.dumps(loop)))
+        sid = session("run", "qdbus6", "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting.loadDeclarativeScript", str(path), "dodgedrag", capture=True)
+        session("run", "qdbus6", "org.kde.KWin", f"/Scripting/Script{sid}", "org.kde.kwin.Script.run")
+    def stop(self):
+        session("run", "qdbus6", "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting.unloadScript", "dodgedrag", check=False)
+        p = [l.split()[0] for l in session("ps", capture=True).splitlines() if "kcalc" in l]
+        if p: subprocess.run(["kill", *p])
+
 ALL_OFF = {k: "false" for k in """showMediaModule showSystemModule showVolumeModule showNotificationModule showNotifications showWeather showApps
     showQuickSettings showTools showHabits showCalendar showNotes showClipboard showAi showCloud showKdeConnect showUpdates showThermalWarning
     showPowerEvents showBluetoothEvents showOsdEvents showKeyboardEvents showNetworkEvents showDndEvents showRecording showPrivacy showUnlock
@@ -171,6 +217,14 @@ SCENARIOS = [
     ("media-cat-notch", "music playing, the notch with its cat; nothing in full screen", True, {"islandLayout": "0", "ambientGlow": "false"}, Media, False),
     ("media-cat-peek", "the same, a window in full screen: the notch drawn up to the edge (peek), its animations stopped", True,
      {"islandLayout": "0", "ambientGlow": "false", "fullscreenMode": "2", "settingsSchema": "3"}, MediaFullscreen, False),
+    ("peek", "a window in full screen: the notch drawn up, a 2 px strip showing, no cat", True,
+     {"islandLayout": "0", "catEnabled": "false", "fullscreenMode": "2", "settingsSchema": "4"}, Fullscreen, False),
+    ("peek-hidden", "the same with nothing showing (strip 0 px)", True,
+     {"islandLayout": "0", "catEnabled": "false", "fullscreenMode": "2", "settingsSchema": "4", "peekStrip": "0"}, Fullscreen, False),
+    ("peek-light", "nothing showing, a screen recording going on: the light at the edge lit all the time", True,
+     {"islandLayout": "0", "catEnabled": "false", "fullscreenMode": "2", "settingsSchema": "4", "peekStrip": "0"}, FullscreenRecording, False),
+    ("dodge-drag", "a window moved under the notch and away again, over and over: it slides up and comes back each time", True,
+     {"islandLayout": "0", "catEnabled": "false", "fullscreenMode": "2", "settingsSchema": "4"}, DodgeDrag, False),
     ("theme-flat", "an opaque, flat look (Midnight), no blur", True, {"appearanceMode": "1", "customStyle": ("theme", "midnight"), "catEnabled": "false"}, None, False),
     ("theme-glass", "a see-through look with blur (Glass)", True, {"appearanceMode": "1", "customStyle": ("theme", "glass"), "catEnabled": "false"}, None, False),
     ("theme-gradient", "a gradient with blur (Aurora)", True, {"appearanceMode": "1", "customStyle": ("theme", "aurora"), "catEnabled": "false"}, None, False),
