@@ -6,7 +6,13 @@
 name = "island-feedback"
 main = "worker.mjs"            # relay.mjs beside it has the rules
 compatibility_date = "2026-10-01"
+# Only the workers.dev address; no preview addresses.
 workers_dev = true
+preview_urls = false
+
+# Nothing is logged: the Worker writes no log, and Cloudflare's own log collection is off.
+[observability]
+enabled = false
 
 # One message a minute from one address (worker.mjs reads it as env.LIMITER).
 # namespace_id is any number of your own, unique in your Cloudflare account.
