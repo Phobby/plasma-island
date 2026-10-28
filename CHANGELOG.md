@@ -3,6 +3,12 @@
 ## Unreleased
 
 ### Added
+- **Symbiot Black and the notch's border, as a new island comes:** the
+  Symbiot Black gradient (charcoal to near black) and a thin slate border
+  (Settings → Appearance → Layout → *Notch details*: on/off, 1–8 px, colour,
+  opacity), drawn along the sides and lower corners only. Appearance
+  settings left at their old defaults take the new ones; the layout an
+  island had is kept (see *Layout* below).
 - **Slide up or shrink on the desktop too** (Settings → Appearance, *Full
   screen*: *Also: On the desktop when nothing is going on, after* n s; off
   by default). When the island slides up or shrinks in full screen, it does
