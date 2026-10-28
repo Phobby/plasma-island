@@ -57,6 +57,8 @@ Item {
             peek.open = false; peek.busy = false; peek.ringing = false; peek.callOpens = true; peek.opened = 0;
             peek.idle = false; peek.idleDelay = 0;
             island.resting = false; island.restingHolds = true; island.expanded = false;
+            // (the states as they follow at once; the dwell and the breaker have tests of their own)
+            peek.dwell = 0; peek.most = 1000; peek.changes = [];
         }
         // (the state while a window comes, is there and goes)
         function states() { return [peek.hidden, peek.away, peek.shrunk, peek.active]; }
@@ -169,6 +171,45 @@ Item {
             verify(!peek.shown && !peek.shrunk && !peek.active);
             peek.over = true;
             verify(peek.shrunk, "a new window: the nub again");
+        }
+
+        function test_no_back_and_forth_a_dwell() {
+            peek.dwell = 350; peek.most = 4; peek.changedAt = -1e9;
+            peek.mode = 2;
+            peek.over = true;
+            verify(peek.away, "the first change at once");
+            peek.over = false;
+            verify(peek.away, "not again within the dwell");
+            tryVerify(() => !peek.active, 800, "taken after it");
+            peek.over = true; peek.over = false;
+            wait(450);
+            verify(!peek.active, "a moment's window, there and gone within the dwell: nothing changed");
+        }
+
+        function test_no_back_and_forth_the_breaker() {
+            peek.dwell = 0; peek.most = 4; peek.changes = [];
+            peek.mode = 3;
+            let changes = 0;
+            const count = () => ++changes;
+            peek.steadyChanged.connect(count);
+            // a window at the edge of the notch, every frame in and out
+            for (let i = 0; i < 30; ++i) { peek.over = !peek.over; wait(16); }
+            peek.steadyChanged.disconnect(count);
+            verify(changes <= 6, "held after a few: " + changes);
+            peek.over = false;
+            tryVerify(() => !peek.active, 2500, "and taken again once it holds still");
+            // (the hold over before the next test)
+            wait(1100);
+        }
+
+        function test_open_stays_open_when_a_window_comes() {
+            peek.mode = 2;
+            peek.open = true; peek.hovered = true;
+            peek.over = true;
+            verify(peek.shown && !peek.away, "opened by the pointer: it stays down and open");
+            compare(peek.opened, 0, "nothing new opened it");
+            peek.hovered = false; peek.open = false;
+            tryVerify(() => peek.away, 600, "closed: up");
         }
 
         function test_on_the_desktop_when_nothing_goes_on() {

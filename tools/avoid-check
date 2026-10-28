@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+# avoid-check — the full-screen mode's window dodging, played in tools/nested-session: a window
+# moved up under the notch, held at the notch's very edge, dragged along the top edge and let go
+# there, by its geometry (a KWin script) and by a pointer dragging its title (tools/eipointer).
+# For each the island's changes ("a window fills the screen" in its log) and plasmashell's CPU are
+# counted; it fails when the island goes back and forth (more than MOST changes in a scenario) or
+# the shell stays busy (more than CPU % of one core in two seconds running: one second of an
+# animation, the island drawn up or a window maximised, is not a loop).
+#
+#   tools/avoid-check [--mode 2|3] [--keep]     (--keep: leave the session running)
+#
+# Its own session (ISLAND_SESSION_NAME=avoid-check, in a folder of its own): your desktop is not
+# touched. Before the fix of 2026-10-28 the edge hold in mode 3 changed 30 times a second at 15 %.
+import json, os, subprocess, sys, tempfile, time
+
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MOST, CPU = 6, 10.0
+mode = sys.argv[sys.argv.index("--mode") + 1] if "--mode" in sys.argv else "3"
+keep = "--keep" in sys.argv
+base = tempfile.mkdtemp(prefix="avoid-check-")
+env = dict(os.environ, ISLAND_SESSION_DIR=os.path.join(base, "session"), ISLAND_SESSION_NAME="avoid-check")
+log = os.path.join(base, "session", "logs", "plasmashell.log")
+
+def tool(*args, check=True):
+    r = subprocess.run([os.path.join(HERE, "tools", "nested-session")] + list(args), env=env, capture_output=True, text=True)
+    if check and r.returncode != 0: sys.exit("avoid-check: nested-session " + " ".join(args) + " failed:\n" + r.stdout + r.stderr)
+    return r.stdout.strip()
+def kwin(script, name, declarative=False):
+    method = "loadDeclarativeScript" if declarative else "loadScript"
+    sid = tool("run", "qdbus6", "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting." + method, script, name)
+    tool("run", "qdbus6", "org.kde.KWin", "/Scripting/Script" + sid, "org.kde.kwin.Script.run")
+def changes():
+    try: return sum(1 for l in open(log, errors="replace") if "a window fills the screen" in l)
+    except FileNotFoundError: return 0
+def cpu(pid):
+    f = open(f"/proc/{pid}/stat").read().rsplit(")", 1)[1].split()
+    return int(f[11]) + int(f[12])
+def measure(seconds, pid):
+    hz, c0, n0, series = os.sysconf("SC_CLK_TCK"), cpu(pid), changes(), []
+    for i in range(seconds):
+        time.sleep(1); c1 = cpu(pid)
+        series.append(100.0 * (c1 - c0) / hz)
+        c0 = c1
+    return changes() - n0, series
+def busy(series):
+    return any(a > CPU and b > CPU for a, b in zip(series, series[1:]))
+def place(x, y):
+    p = os.path.join(base, "place.js")
+    open(p, "w").write('for (const w of workspace.stackingOrder) if (w.resourceClass === "org.kde.kcalc") '
+                       '{ w.setMaximize(false, false); w.frameGeometry = {x: %d, y: %d, width: w.frameGeometry.width, height: w.frameGeometry.height}; }' % (x, y))
+    kwin(p, "place%d" % time.time_ns()); time.sleep(0.8)
+
+tool("start"); tool("install"); tool("shell")
+tool("set", "fullscreenMode", mode, "peekMaximized", "true", "notchMaxWidth", "310", "tourShown", "true")
+tool("spawn", "kcalc", "kcalc")
+time.sleep(4)
+pid = tool("pid", "plasmashell")
+# the notch, 310 px wide in the middle of a 1920 px screen: 805 to 1115
+template = open(os.path.join(HERE, "tools", "avoid", "move.qml")).read()
+def path_of(name, points):
+    p = os.path.join(base, name + ".qml")
+    open(p, "w").write(template.replace("PATH", json.dumps(points)))
+    return p
+results, failed = [], False
+scenarios = [
+    ("up under the notch and held", [[860, y] for y in range(400, -1, -8)] + [[860, 0]] * 200),
+    ("held at the notch's edge", [[1110 - 50, y] for y in range(400, -1, -8)] + [[1110 - 50 + (i % 3), 0] for i in range(300)]),
+    ("along the top edge", [[x, 0] for x in range(300, 1500, 6)] + [[x, 0] for x in range(1500, 300, -6)]),
+]
+for name, points in scenarios:
+    place(860, 420)
+    kwin(path_of("s%d" % len(results), points), "move%d" % len(results), declarative=True)
+    n, worst = measure(int(len(points) * 0.02) + 3, pid)
+    results.append((name, n, worst))
+place(860, 420)
+# a pointer dragging the window's title up to the edge, about there for a while, let go at the edge
+steps = ["move", "1000", "430", "sleep", "200", "down", "sleep", "100", "glide", "1000", "3", "700"]
+for k in range(40): steps += ["glide", str(1000 + (k % 2) * 8), str(2 + k % 3), "100"]
+steps += ["sleep", "300", "up", "sleep", "500"]
+proc = subprocess.Popen([os.path.join(HERE, "tools", "nested-session"), "run", "python3", os.path.join(HERE, "tools", "eipointer")] + steps, env=env)
+n, worst = measure(9, pid); proc.wait()
+results.append(("a pointer dragging it to the edge", n, worst))
+
+for name, n, series in results:
+    bad = n > MOST or busy(series)
+    failed |= bad
+    print(f"{'FAIL' if bad else 'ok  '}  mode {mode}: {name}: {n} changes, CPU % a second: " + " ".join(f"{c:.0f}" for c in series))
+if not keep: tool("stop", check=False)
+else: print("session left running in", base)
+sys.exit(1 if failed else 0)

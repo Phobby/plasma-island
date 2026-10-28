@@ -24,8 +24,15 @@
     the pointer has left it (or was not on it), so a pointer kept at the
     edge does not open and close it over and over. A call ringing opens it
     at once if `callOpens`; everything else only colours the strip (main.qml).
+
+    No back and forth: `over` is taken as `steady` no sooner than `dwell` ms
+    after its last change, and if it still changes more than `most` times a
+    second it is held as it is for a second (and that is logged). The island
+    open (the pointer opened it) stays open when such a window comes; it goes
+    up once it is closed.
 */
 import QtQuick
+import "Fullscreen.js" as Fullscreen
 
 Item {
     id: peek
@@ -50,9 +57,35 @@ Item {
     // Drawn up or shrunk for that, on the desktop.
     property bool idleAway: false
 
-    readonly property bool hidden: mode === 0 && over
+    // `over` as it is taken (see above).
+    property bool steady: false
+    property int dwell: 350
+    property int most: 4
+    property var changes: []
+    property real changedAt: -1e9
+    function take(): void {
+        if (steady === over) { dwelling.stop(); return; }
+        if (holding.running) return;
+        const now = Date.now();
+        const wait = changedAt + dwell - now;
+        if (wait > 0) { dwelling.interval = wait; dwelling.restart(); return; }
+        if (Fullscreen.tooOften(changes, now, most, 1000)) {
+            console.warn("org.phobby.dynamicisland: full screen: " + changes.length + " changes within a second; held as it is for a second");
+            holding.restart();
+            return;
+        }
+        changes = changes.filter(t => t > now - 1000).concat([now]);
+        changedAt = now;
+        steady = over;
+    }
+    onOverChanged: take()
+    Component.onCompleted: { steady = over; }
+    Timer { id: dwelling; onTriggered: peek.take() }
+    Timer { id: holding; interval: 1000; onTriggered: { peek.changes = []; peek.take(); } }
+
+    readonly property bool hidden: mode === 0 && steady
     // Drawn up or shrunk for such a window, now or after a while.
-    readonly property bool active: (mode === 2 || mode === 3) && (over || idleAway)
+    readonly property bool active: (mode === 2 || mode === 3) && (steady || idleAway)
     property bool shown: false
     readonly property bool away: mode === 2 && active && !shown
     readonly property bool shrunk: mode === 3 && active && !shown
@@ -66,7 +99,8 @@ Item {
         shown = true;
         openRequested();
     }
-    onActiveChanged: { shown = false; armed = true; opening.stop(); }
+    // (open when it comes: it stays down and open until it is closed, then goes up: goingBack)
+    onActiveChanged: { shown = active && open; armed = true; opening.stop(); }
     onEdgeHoveredChanged: {
         if (edgeHovered) { if (armed && (away || shrunk)) opening.restart(); }
         else { opening.stop(); armed = true; }

@@ -32,6 +32,11 @@ Item {
     // Whether a maximised window counts as one that fills the screen (Appearance › Layout).
     property bool maximized: false
     property bool covered: false
+    // A window reaching under the notch counts, or stops counting, only once the windows have been
+    // still for `settle` ms (a window being dragged changes nothing until it is let go), and stops
+    // only once it is `margin` px clear of it (Fullscreen.reachesHeld).
+    property int settle: 300
+    property int margin: 6
     function windows(): var {
         const out = [];
         const R = TaskManager.AbstractTasksModel;
@@ -54,9 +59,15 @@ Item {
         const all = windows();
         // (with no screen given: the screen is the active window's own size)
         active = Fullscreen.fills(all, screen.width > 0 ? screen : null, maximized);
-        covered = Fullscreen.reaches(all, area, maximized);
+        const reaching = Fullscreen.reachesHeld(all, area, maximized, covered, margin);
+        if (reaching !== covered) settling.restart(); else settling.stop();
         console.debug(watch.log, "windows:", JSON.stringify(all), "screen:", JSON.stringify(screen),
-                      "desktop:", desktops.currentDesktop, "fills:", active, "reaches:", covered);
+                      "desktop:", desktops.currentDesktop, "fills:", active, "reaches:", reaching);
+    }
+    Timer {
+        id: settling
+        interval: watch.settle
+        onTriggered: watch.covered = Fullscreen.reachesHeld(watch.windows(), watch.area, watch.maximized, watch.covered, watch.margin)
     }
     // (many changes come at once, a title changing over and over among them: looked at once, after them)
     function later(): void { Qt.callLater(watch.look); }

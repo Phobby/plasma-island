@@ -958,9 +958,12 @@ PlasmoidItem {
             item.area = Qt.binding(() => root.notchWanted && root.fullscreenMode >= 2 && root.cfg.notchDodgeWindows ? root.notchArea : Qt.rect(0, 0, 0, 0));
         }
     }
+    // (the notch at rest: the width and size set, the panel's height; never as it is drawn now, shrunk,
+    // drawn up or open, which would change what it looks at: Fullscreen.restArea)
     readonly property rect notchArea: {
-        const w = Math.round(island.pillWidth * theme.scale), h = Math.round(theme.pillHeight * theme.scale);
-        return Qt.rect(root.notchScreen.x + (root.notchScreen.width - w) / 2 + theme.offsetX, root.notchScreen.y, w, h);
+        const room = theme.screenWidth > 0 ? (theme.screenWidth - 2 * theme.screenMargin) / theme.restScale - 2 * theme.windowSidePad : 0;
+        const a = Fullscreen.restArea(root.notchScreen, root.cfg.notchMaxWidth, theme.pillWidth, theme.restPillHeight, theme.restScale, theme.offsetX, room);
+        return Qt.rect(a.x, a.y, a.width, a.height);
     }
     readonly property bool overFullscreen: fullscreenSeen.item !== null && fullscreenSeen.item.active
     readonly property bool overWindow: root.overFullscreen || fullscreenSeen.item !== null && fullscreenSeen.item.covered

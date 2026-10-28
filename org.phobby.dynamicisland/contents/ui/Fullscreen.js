@@ -52,6 +52,38 @@ function reaches(windows, area, maximized) {
     });
 }
 
+// The notch's place, where a window that reaches into it counts (see reaches): the notch as it is
+// at rest, never as it is drawn now. `width`: the width set for it (0: the clock's, `baseWidth`),
+// within `room` (the screen's, at that size); `height` the notch's own at rest; `scale` the size
+// set; all at 100 % and then scaled. (What the island does over such a window, shrinking it,
+// drawing it up, opening it larger, would otherwise change what it looks at, and a window at the
+// edge of the notch made it go back and forth every frame.)
+function restArea(screen, width, baseWidth, height, scale, offsetX, room) {
+    if (!screen || !(screen.width > 0) || !(scale > 0)) return { x: 0, y: 0, width: 0, height: 0 };
+    const set = Number(width) > 0 ? Math.max(2 * height, Math.min(Number(width), room > 0 ? room : Infinity)) : baseWidth;
+    const w = Math.round(set * scale), h = Math.round(height * scale);
+    return { x: screen.x + (screen.width - w) / 2 + (Number(offsetX) || 0), y: screen.y, width: w, height: h };
+}
+
+// A rectangle grown by `by` px on every side (above the screen's edge too, which changes nothing).
+function grown(area, by) {
+    if (!area || !(area.width > 0)) return area;
+    return { x: area.x - by, y: area.y - by, width: area.width + 2 * by, height: area.height + 2 * by };
+}
+
+// Whether a window reaches into the notch's place, with a margin to leave: one that reached into it
+// has to be `margin` px clear of it before it stops counting, so a window held at its edge does not
+// count, stop and count again.
+function reachesHeld(windows, area, maximized, was, margin) {
+    return reaches(windows, was ? grown(area, margin) : area, maximized);
+}
+
+// How often the full-screen state may change: the times (ms) of the last changes, and whether one
+// more at `now` is too many (more than `most` within `span` ms: something goes back and forth).
+function tooOften(times, now, most, span) {
+    return times.filter(t => t > now - span).length >= most;
+}
+
 // What the strip at the edge says, the most important first: "call" (one is ringing or
 // going on), "recording" (the screen), "critical" (a warning waits), "privacy" (the
 // microphone or the camera in use), "" nothing.

@@ -114,5 +114,30 @@ test("only a call ringing opens it, and only if wanted", () => {
     check("recording", F.opens({ recording: true, critical: true, privacy: true }, true), false);
 });
 
+test("the notch's place: at rest, whatever it does now", () => {
+    const screen = { x: 0, y: 0, width: 2560, height: 1440 };
+    check("the width set", F.restArea(screen, 310, 180, 36, 1, 0, 2500), { x: 1125, y: 0, width: 310, height: 36 });
+    check("the clock's", F.restArea(screen, 0, 180, 36, 1, 0, 2500).width, 180);
+    check("at the size set", F.restArea(screen, 310, 180, 36, 1.5, 0, 1600), { x: 1047.5, y: 0, width: 465, height: 54 });
+    check("moved sideways", F.restArea(screen, 310, 180, 36, 1, 40, 2500).x, 1165);
+    check("never narrower than two of its heights", F.restArea(screen, 20, 180, 36, 1, 0, 2500).width, 72);
+    check("no screen", F.restArea(null, 310, 180, 36, 1, 0, 0).width, 0);
+});
+
+test("a window at the notch's edge: in once, out only when clear", () => {
+    const area = { x: 100, y: 0, width: 300, height: 36 };
+    const at = y => [{ geometry: { x: 0, y: y, width: 500, height: 300 } }];
+    check("reaches in", F.reachesHeld(at(30), area, false, false, 6), true);
+    check("just below: not yet in", F.reachesHeld(at(38), area, false, false, 6), false);
+    check("just below after it was in: still counts", F.reachesHeld(at(38), area, false, true, 6), true);
+    check("clear by the margin: out", F.reachesHeld(at(43), area, false, true, 6), false);
+});
+
+test("too often", () => {
+    check("few", F.tooOften([100, 200, 300], 400, 4, 1000), false);
+    check("four within a second", F.tooOften([100, 200, 300, 350], 400, 4, 1000), true);
+    check("old ones do not count", F.tooOften([100, 200, 300, 350], 1500, 4, 1000), false);
+});
+
 console.log(failed === 0 ? `${checked} checks passed` : `${failed} of ${checked} checks FAILED`);
 process.exit(failed > 0 ? 1 : 0);

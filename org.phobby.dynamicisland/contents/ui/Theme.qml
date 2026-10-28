@@ -91,6 +91,9 @@ QtObject {
     readonly property real screenMargin: 16
     readonly property bool scaleLimited: requestedScale > scaleLimit + 0.001
     readonly property real scale: Math.min(requestedScale, scaleLimit)
+    // The size set, without a size set for a while (scaleOverride), and the notch's height at it: the
+    // notch at rest, where a window reaching under it is looked for (Fullscreen.restArea).
+    readonly property real restScale: Math.min(follow ? systemStyle.scale / 100 : style.scale / 100, scaleLimit)
     readonly property real roundness: follow ? systemStyle.radius / 100 : style.radius / 100
     readonly property int topOffset: follow ? systemTop : style.top
     readonly property int offsetX: follow ? systemOffsetX : style.offsetX
@@ -154,6 +157,8 @@ QtObject {
     property bool drawnIn: false
     readonly property real pillHeight: notch && notchPixels > 0 && !drawnIn ? Math.round(Math.max(20, Math.min(72, notchPixels / Math.min(1, scale))))
                                                                 : Math.round(gu * 2)       // ~36
+    readonly property real restPillHeight: notch && notchPixels > 0 ? Math.round(Math.max(20, Math.min(72, notchPixels / Math.min(1, restScale))))
+                                                                     : Math.round(gu * 2)
     readonly property real liveWidth: Math.round(gu * 13)
     readonly property real notificationWidth: Math.round(gu * 22)
     readonly property real notificationHeight: Math.round(gu * 4)
