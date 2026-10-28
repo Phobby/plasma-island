@@ -7,6 +7,7 @@ A notch joined to the top edge of your KDE Plasma desktop: music, downloads, tim
 [![Licence: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#licence-and-thanks)
 ![Version 0.2.2](https://img.shields.io/badge/version-0.2.2-informational.svg)
 ![Plasma 6](https://img.shields.io/badge/Plasma-6-1d99f3.svg)
+![Wayland](https://img.shields.io/badge/tested%20on-Wayland-6f42c1.svg)
 
 **English** · [Türkçe](README.tr.md)
 
@@ -15,9 +16,12 @@ A notch joined to the top edge of your KDE Plasma desktop: music, downloads, tim
 <!-- GIF: notch-states.gif | The notch at the top of the screen over a dark top panel shows the clock with the cat beside it; a message arrives and the notch widens to show its sender and first line; then a build with a filling progress ring, which ends in "Done". | The notch: idle, a notification, an activity -->
 <p align="center"><img src="docs/media/notch-states.gif" alt="The notch at the top of the screen over a dark top panel shows the clock with the cat beside it; a message arrives and the notch widens to show its sender and first line; then a build with a filling progress ring, which ends in &quot;Done&quot;." width="800"><br><sub>The notch: idle, a notification, an activity</sub></p>
 
+**In one sentence:** a Plasma widget that puts a small black notch at the top of the screen, like the one of a laptop or a phone, and fills it with what is going on right now (a song, a download, a timer, a call, a notification); hover it and it opens into pages for music, the system, the weather, your calendar, notes, quick settings and more. Every part can be switched off, and nothing is sent anywhere unless you connect something.
+
 ## Contents
 
-- [The notch](#the-notch): [with a top panel](#with-a-top-panel) · [Notch settings](#notch-settings) · [Dot mode](#dot-mode) · [States](#states)
+- [What's new since 0.2.2](#whats-new-since-022)
+- [The notch](#the-notch): [with a top panel](#with-a-top-panel) · [Notch settings](#notch-settings) · [Full screen](#full-screen) · [Dot mode](#dot-mode) · [States](#states)
 - [Highlights](#highlights)
 - [Requirements](#requirements)
 - [Installing, updating, removing](#installing-updating-removing)
@@ -26,9 +30,29 @@ A notch joined to the top edge of your KDE Plasma desktop: music, downloads, tim
 - [The cat](#the-cat)
 - [Passing events](#passing-events): [screen recording](#screen-recording-and-sharing) · [notifications](#a-notification-arrives) · [downloads](#downloads-and-file-transfers) · [incoming call](#an-incoming-call) · [privacy dots](#privacy-dots) · [suggestions](#suggestions)
 - [Appearance, themes and the store](#appearance-themes-and-the-store)
-- [Layout and language](#layout-and-language)
+- [The settings window](#the-settings-window): [search](#search-and-folded-details) · [tabs and language](#tabs-and-language) · [Diagnostics](#diagnostics-and-what-is-missing)
 - [For developers: push your own activity](#for-developers-push-your-own-activity)
 - [Performance](#performance) · [Privacy and the network](#privacy-and-the-network) · [Troubleshooting](#troubleshooting) · [Known limits](#known-limits) · [Contributing and security](#contributing-and-security) · [Licence and thanks](#licence-and-thanks)
+
+## What's new since 0.2.2
+
+These are on the `main` branch and come with an installation from a clone of it ([Installing](#installing-updating-removing)). **They are not in a tagged release yet:** *Update* on an installed 0.2.2 island does not bring them until the next version is published. Everything is listed in the [CHANGELOG](CHANGELOG.md#unreleased).
+
+| | |
+|---|---|
+| **The notch, as it comes** | The island is joined to the screen's top edge, over a top panel, in the **Symbiot Black** gradient with a thin slate border. The rounded island of earlier versions is the *Oval layout* (Settings → Appearance → Layout). |
+| **Full screen, four ways** | Over a full-screen window the island stays as it is, hides, slides up leaving a thin strip at the edge, or shrinks to a small nub; the last two on the desktop too after a while of nothing going on, if you want. [More](#full-screen) |
+| **The notch's width** | Automatic, or set narrower or wider up to 1200 px, so that panel widgets beside it stay clickable; the open island can follow it. |
+| **Size up to 240 %** | Kept within the screen; the settings say when its edge was reached. |
+| **Colours of the buttons** | One button colour for the island's buttons, tiles and cards, and the Controls buttons each in their own colour or one for all. |
+| **Requirements say themselves** | Where a feature needs something that is missing (the native module, `rclone`, `btop`, BetterNotes, `claude`…), it says what, why, and the command to copy for Kubuntu, Fedora or Arch. The island never runs that command. |
+| **Settings → Diagnostics** | What each feature needs, whether it was found and where, the session, Plasma and Qt, a path set by hand, and *Copy diagnostics* for a bug report without your name or home folder. |
+| **Simpler settings** | 15 pages instead of 18, details folded, a search over every setting, and *Response*: Calm, Balanced or Lively for the delays. No setting was removed or renamed. |
+| **A short tour** | Three steps at a new island's first opening: the layout, the tabs, what this computer has. |
+| **Time format** | The clock as the system's region writes it, or always 24 or 12 hours. |
+| **The handle stays out of the way** | The widget's small icon on the desktop shows only while the desktop is being edited. |
+
+**Updating from 0.2.2 or earlier** keeps your choices: an island that ran before keeps the layout it had (the oval one, unless you had switched the notch on in a build that had that switch) and says once that the notch is there; it is not shown the tour. Appearance settings you never changed take the new defaults, so a look left as it came becomes Symbiot Black: *Follow the system* in Settings → Appearance brings the old one back.
 
 ## The notch
 
@@ -36,32 +60,49 @@ The island is one piece joined to the screen's top edge, like the notch of a lap
 
 <!-- GIF: notch-hover.gif | The pointer moves onto the notch and it opens downwards into its pages; the pointer leaves and it shrinks back; the pointer is pushed against the top edge above the notch and it opens again. | The notch: hover, close, push against the edge -->
 
-It comes as the **Symbiot Black** gradient (charcoal `#292c30` through `#202326` to near black `#0e1012`) with a thin slate border (`#4c566a`, 70 %). The rounded island of earlier versions is still there: **Settings → Appearance → Shape → Rounded island**.
-
-**Updating from 0.2.2 or earlier:** settings you changed yourself stay as they were; a setting you never changed takes the new default. An island that was left as it came therefore becomes the Symbiot Black notch; *Rounded island* and *Follow the system* (Settings → Appearance) bring the old look back.
+It comes as the **Symbiot Black** gradient (charcoal `#292c30` through `#202326` to near black `#0e1012`) with a thin slate border (`#4c566a`, 70 %). The rounded island of earlier versions is still there: **Settings → Appearance → Layout → Oval layout**.
 
 ### With a top panel
 
-- **The notch covers what is under it**, and that part of the panel cannot be clicked; beside the notch the panel takes its clicks as before. If a clock or task buttons sit in the middle of your panel, narrow the notch with **Settings → Notch → Widest** (the island cannot read where a panel's widgets are). Notifications and the open island are wider for as long as they show.
+- **The notch covers what is under it**, and that part of the panel cannot be clicked; beside the notch the panel takes its clicks as before. If a clock or task buttons sit in the middle of your panel, narrow the notch with **Width** (Settings → Appearance, under the layout): the island cannot read where a panel's widgets are. Notifications and the open island are wider for as long as they show.
 - **Its height** follows the top panel (also while the panel is hidden), or is set by hand. Without a top panel it sits at the top edge all the same, as high as the island.
 - **The cat** stands beside the notch, on the panel.
 - **A dark panel** is where the notch looks most like part of the screen: the clips here use Breeze Dark with an opaque 32 px panel.
 
 ### Notch settings
 
+**Settings → Appearance → Layout: Notch.** The first three are on the page; the rest are folded under *Notch details*.
+
 | Setting | What it does |
 |---|---|
-| Notch mode | *Weld the island to the top edge of the screen* (on as it comes). Changing it needs no restart |
 | Colour | *The island's colours (Appearance)*: the look's colours or gradient, made opaque (as it comes); *Black*: opaque black with light text; *The island's look (Appearance)*: its material, opacity and blur too |
-| Notch border | *Show an edge around the notch*: thickness 1–8 px, colour, opacity 0–100 %. Drawn along the sides and lower corners, never across the screen's edge |
-| Upper corners | *Soften where it meets the edge*: two small curves outwards (off as it comes) |
 | Screen | The screen of the top panel (as it comes), or the primary screen. One notch at a time |
-| Over full screen | *Hide* (as it comes) or *Show* while a window fills that screen. Never shown on the lock screen |
-| Height | The top panel's, or set by hand (24–72 px) |
-| Widest | No limit, or a width in pixels |
-| Cat | *Hide the cat in notch mode* |
+| Width | *Automatic* (as wide as what it shows), or set from narrow up to 1200 px at 100 % size; never past the screen |
+| Preview | The notch small or as a dot, at the top of the details |
+| Notch border | *Show an edge around the notch* (on as it comes): thickness 1–8 px, colour, opacity 0–100 %. Drawn along the sides and lower corners, never across the screen's edge |
+| Upper corners | *Soften where it meets the edge*: two small curves outwards (off as it comes) |
+| Height | The top panel's (as it comes), or set by hand (24–72 px) |
+| When open | *Open it as wide too, where that is wider than the open island* (on as it comes) |
+| Full screen | With *Slides up* or *Shrinks* ([below](#full-screen)): also for a window that reaches under the notch, and the size and width while it is open there |
+| Cat | *Hide the cat in the notch layout* |
 
-A preview at the top of the page shows the notch small or as a dot. Not used in notch mode: the distance from the top, *Place below top panels*, and the look's own border and shadow. More in the [reference](docs/REFERENCE.md#notch-mode).
+Not used by the notch: the distance from the top, *Place below top panels*, and the look's own border and shadow (those are the oval layout's). More in the [reference](docs/REFERENCE.md#layout-notch--oval-layout).
+
+### Full screen
+
+**Settings → Appearance → Full screen**, for both layouts. What the island does while a window fills its screen:
+
+| Choice | What happens | How it comes back |
+|---|---|---|
+| Stays as it is | Nothing changes | – |
+| **Hides** (as it comes) | It is gone | When the window leaves full screen |
+| Slides up, a thin strip shows | It moves up to the edge, as large as it is, until only a few pixels show; clicks beside the strip go to the window | The pointer at the top edge, after a short rest |
+| Shrinks to a small nub | It draws in to a small nub at the edge | The pointer on the nub |
+
+- **Also:** *For maximised windows* (off as it comes: only a real full-screen window counts, in any application: a video, a browser's F11, a terminal, a game). *On the desktop when nothing is going on, after* 2–300 s (10 as it comes, off as it comes): sliding up or shrinking happens on the empty desktop too; a notification, a live activity or opening it brings it back at once.
+- **Full-screen details:** how much of the strip shows (2–16 px, 4), how long the pointer rests before it opens (0–1000 ms, 150), how wide the place at the edge is that opens it, and whether an incoming call opens it. A recording, the microphone or camera, a critical warning and a call colour the strip. A live preview with *Try it*.
+- **What counts:** only the window in front, on the island's own screen and on the desktop and activity shown. A full-screen window on another virtual desktop does nothing.
+- **Wayland only.** Elsewhere a window that fills the screen lies over the island, which then stays as it is. Details: [reference](docs/REFERENCE.md#full-screen-mode).
 
 ### Dot mode
 
@@ -71,7 +112,7 @@ A click on the notch shrinks it to a dot (a small half circle at the edge, 15 px
 
 The dot's centre says what is going on: orange, green or red for the microphone, the camera or the screen in use; the accent colour for a live activity (pulsing) or waiting notifications. While it is a dot, notifications and events are kept for later (or shown and then back to the dot: *Events in dot mode*). An incoming call, an alarm and low battery open it in every case unless you switch that off.
 
-**Settings → General → Dot mode:** on/off, start as (as it was left, always the notch, always the dot), dot size, whether hovering the dot opens the island, events in dot mode, always open for critical events.
+**Settings → General → Dot mode:** on/off; under *Dot mode details*: start as (as it was left, always the notch, always the dot), dot size, whether hovering the dot opens the island, events in dot mode, always open for critical events.
 
 ### States
 
@@ -86,8 +127,9 @@ The dot's centre says what is going on: orange, green or red for the microphone,
 | Open | Hover, or a click with dot mode off | The pages below |
 | Privacy dots | Microphone or camera in use | An orange or green dot beside the notch, in every state |
 | Dot | After a click, in dot mode | A small half circle at the edge |
+| Slid up / nub | Over a full-screen window, if [chosen](#full-screen) | A thin strip at the edge, or a small nub |
 
-Which activity wins when several last at once is a list you can reorder (Settings → Activities): privacy, call, screen recording, passing events, timer, transfers, media.
+Which activity wins when several last at once is a list you can reorder (Settings → Activities → *Priority*): privacy, call, screen recording, passing events, timer, transfers, media.
 
 ## Highlights
 
@@ -98,6 +140,8 @@ Which activity wins when several last at once is a list you can reorder (Setting
 | **Tabs** | Hover to open: Media, System, Weather, Notifications, Controls, Apps, Tools, Habits, Calendar, Notes, Clipboard, and (off until you switch them on) AI and Cloud. |
 | **A cat** | Beside the notch: it sleeps, wears headphones for music, likes to be stroked. It can be switched off. |
 | **Your look** | Symbiot Black as it comes; nine more ready-made looks, your own colours or gradient, or Plasma's colours. Looks are exported and shared as files. |
+| **Out of the way** | Over full screen it hides, slides up or shrinks; a click makes it a dot. |
+| **Says what it needs** | A missing program or module is named where it matters, with the command to copy; Settings → Diagnostics lists all of it. |
 | **Yours to script** | Any program can show its own activity through a small D-Bus API (`island-push`). |
 | **Private by default** | No telemetry. The only request with the settings as they come is a daily look at the newest version number; see [Privacy and the network](#privacy-and-the-network). |
 
@@ -109,11 +153,11 @@ It is a Plasma widget (a plasmoid) written in QML, with an optional small native
 |---|---|
 | Desktop | KDE Plasma 6 (the widget declares Plasma API 6.0 as its minimum) |
 | Tested on | Kubuntu 26.04, Plasma 6.6.6, Qt 6.10.2, KWin on **Wayland**, NVIDIA driver. Nothing else was tried. |
-| X11 | **Not tested.** The notch then goes to the top edge, but whether it stays over the panel is up to the window manager (see [Known limits](#known-limits)). |
-| To build the native module | `cmake`, `extra-cmake-modules`, Qt 6.5 or newer development files (Core, Gui, Qml, DBus, Network, Sql), `libkf6windowsystem-dev` |
+| X11 | **Not tested.** The notch then goes to the top edge, but whether it stays over the panel is up to the window manager, and the full-screen choices other than *Hides* do nothing (see [Known limits](#known-limits)). |
+| To build the native module | `cmake`, `extra-cmake-modules`, Qt 6.5 or newer development files (Core, Gui, Qml, DBus, Network, Sql), `libkf6windowsystem-dev`. Settings → Diagnostics shows the package names for Kubuntu, Fedora and Arch |
 | At run time | PipeWire's `pw-dump` (package `pipewire-bin` on Ubuntu) for the microphone, camera and screen-recording indicators |
 
-Without the native module the widget still runs; what needs it hides itself: the notch on a screen other than the primary one, the shaped blur, clicks passing through beside the island, the recording, microphone and camera indicators, unlock, KDE Connect calls, the update count, the D-Bus API, calendar accounts and every password or key (they live in KDE Wallet), theme files, download tracking, the Cloud and AI helpers.
+Without the native module the widget still runs, and every feature that needs it says so where it is shown, with what to install, instead of breaking: the notch on a screen other than the primary one, the shaped blur, clicks passing through beside the island, the recording, microphone and camera indicators, unlock, KDE Connect calls, the update count, the D-Bus API, calendar accounts and every password or key (they live in KDE Wallet), theme files, download tracking, buttons that start a program, the Cloud and AI helpers.
 
 **Optional programs.** None is needed; each adds one thing.
 
@@ -144,16 +188,18 @@ Or all of it as one line to copy and paste:
 git clone https://github.com/Phobby/plasma-island.git && cd plasma-island && ./install.sh && systemctl --user restart plasma-plasmashell
 ```
 
-`install.sh` asks for no password and downloads nothing: it installs the widget for your user with `kpackagetool6`, builds the native module with CMake and puts it in `~/.local/lib/qml`, puts `island-push` in `~/.local/bin`, and makes the module visible to plasmashell (`QML_IMPORT_PATH` in `~/.config/environment.d/90-dynamicisland.conf`). Running it again upgrades in place.
+`install.sh` asks for no password and downloads nothing: it installs the widget for your user with `kpackagetool6`, builds the native module with CMake and puts it in `~/.local/lib/qml`, puts `island-push` in `~/.local/bin`, and makes the module visible to plasmashell (`QML_IMPORT_PATH` in `~/.config/environment.d/90-dynamicisland.conf`). Running it again upgrades in place. A clone of `main` brings everything in [What's new](#whats-new-since-022).
 
 | | |
 |---|---|
-| Widget only, no native module | `./install.sh --no-native` |
+| Widget only, no native module | `./install.sh --no-native` (what needs the module then says so) |
 | By hand | `kpackagetool6 -t Plasma/Applet -i org.phobby.dynamicisland` (`-u` to upgrade) |
 | Update | The island asks when there is a new version: *Update* fetches it, builds it, installs it and restarts the shell (see below). By hand: `git pull`, then `./install.sh` and restart plasmashell |
 | Remove | `./install.sh --remove`, then restart plasmashell |
 
-**Updating keeps everything.** An update only replaces the widget's files and the native module; nothing is removed first. Your settings, connected accounts, themes and data stay as they are, whichever way you update.
+**Updating keeps everything.** An update only replaces the widget's files and the native module; nothing is removed first. Your settings, connected accounts, themes and data stay as they are, whichever way you update. Settings that changed their place or meaning are brought up to date once, by themselves (the settings have a version of their own); see [What's new](#whats-new-since-022) for what that keeps.
+
+<details><summary>Updating from the island, or with commands</summary>
 
 - **From the island (0.2.0 or newer).** Once a day the island reads the newest version number from this repository. When there is a newer one it asks on the island: *Update* downloads that version (the tag's archive from GitHub), builds and installs it for your user, and restarts the desktop shell; the island shows how far it is meanwhile. Settings → General → *New versions of the island* chooses between *Never look*, *Ask me* (as it comes) and *Install by itself* (it then asks only before the shell restarts). Installing needs the native module and `curl`; without the module the island only says that a new version exists.
 - **By hand, with commands.** Which version is installed and which is the newest (0.2.2 or newer):
@@ -170,37 +216,39 @@ git clone https://github.com/Phobby/plasma-island.git && cd plasma-island && ./i
   sh ~/.local/share/plasma/plasmoids/org.phobby.dynamicisland/contents/scripts/island-update.sh latest --restart
   ```
 
-  In the folder you cloned (the only way from 0.1.0, which has no updater):
+  In the folder you cloned (the only way from 0.1.0, which has no updater, and the way to get what is on `main` before it is released):
 
   ```bash
   git pull && ./install.sh && systemctl --user restart plasma-plasmashell
   ```
 
-**Taken off the desktop and put back, the island comes as it was** (0.2.2 or newer, with the native module). Plasma deletes a widget's settings when the widget is removed; the island therefore also keeps them in `~/.local/share/dynamicisland/settings.json` (readable by you only), and a widget that is new reads them from there once. To start from nothing instead, delete that file before adding the widget (or use *Defaults* in the settings).
+</details>
 
+**Taken off the desktop and put back, the island comes as it was** (0.2.2 or newer, with the native module). Plasma deletes a widget's settings when the widget is removed; the island therefore also keeps them in `~/.local/share/dynamicisland/settings.json` (readable by you only), and a widget that is new reads them from there once. To start from nothing instead, delete that file before adding the widget (or use *Defaults* in the settings).
 
 Removing leaves your data where it is: `~/.local/share/dynamicisland/` (the copy of your settings, themes you added, what the suggestions learned, a kept AI chat), `~/.cache/dynamicisland/` (files fetched from a cloud), the folder "Dynamic Island" in KDE Wallet, and the widget's settings in Plasma's own file until you take the widget off the desktop. Delete them by hand if you want them gone.
 
 **Putting it on the screen.** The island is a window of its own, so it does not matter where the widget goes:
 
 1. Right click the desktop (or a panel in edit mode) → *Add Widgets…* → "Dynamic Island".
-2. A small handle icon appears there; the island itself sits at the top centre of that screen.
-3. The notch joins the top edge, over any top panel. Personalize its edge in Settings → Notch; choose the rounded version in Settings → Appearance → Shape.
+2. The island appears at the top centre of that screen. The widget itself is only a small handle icon, shown while the desktop is being edited (to move or remove it).
+3. The notch joins the top edge, over any top panel. Change it, or choose the oval layout, in Settings → Appearance → Layout.
 
 Plasma's own volume popup keeps appearing beside the island's. To keep only one: Settings → Activities → switch off "Volume, brightness and audio output" in the island, or switch off the volume popups in System Settings → Sound. (Plasma has no switch for its brightness popup.)
 
 ## First steps
 
-- **Hover** the notch: it opens. Move away: it closes (after 0.4 s; both delays are in Settings → General).
+- **The tour.** A new island's first opening shows three short steps: notch or oval layout, which tabs are on, and what this computer is missing. *Skip* ends it; Settings → Diagnostics → About shows it again.
+- **Hover** the notch: it opens. Move away: it closes (after 0.4 s; Settings → General → *Response*: Calm, Balanced or Lively, or each delay by hand under *Customize*).
 - **The tabs** along the top switch pages; so does the mouse wheel or a two-finger swipe over anything that is not a list.
 - **Click** the notch: it shrinks to a dot. Click the dot: the notch is back ([Dot mode](#dot-mode) can be switched off; a click then opens the island).
 - **Right click** the island for its menu; the gear at the top right of the open island opens the settings.
-- **Settings → Layout** shows, hides and orders the tabs. AI and Cloud are off until switched on there.
-- **Language**: the island speaks Turkish when the system does, English otherwise; Settings → Language changes it at once.
+- **Settings → Tabs** shows, hides and orders the tabs. AI and Cloud are off until switched on there.
+- **Language**: the island speaks Turkish when the system does, English otherwise; Settings → General → *Language* changes it at once.
 
 ## The tabs
 
-Every tab below follows the same pattern: what it is for, a clip, what you see, how to use it, and (folded) its settings and limits.
+Every tab below follows the same pattern: what it is for, a clip, what you see, how to use it, and (folded) its settings and limits. A tab's own settings page is in the sidebar of the settings window while the tab is on.
 
 <!-- GIF: tabs-tour.gif | The pointer opens the notch and moves along the tabs: Media, System, Weather, Calendar; each page slides in below the notch. | A tour of the tabs -->
 
@@ -215,7 +263,7 @@ Every tab below follows the same pattern: what it is for, a clip, what you see, 
 
 <details><summary>Settings</summary>
 
-Settings → Activities: the priority order, the split island, how long a passing event stays, and a switch for every kind of event and activity.
+Settings → Activities: the split island, a switch for every kind of event and activity, the priority order, and folded: *Warning thresholds* (battery, device battery, CPU and GPU temperature) and *Download tracking details*.
 
 </details>
 
@@ -250,8 +298,8 @@ Settings → Activities: the priority order, the split island, how long a passin
 
 <details><summary>Settings and limits</summary>
 
-- **Settings:** Settings → General → *System view* (Fixed / Dynamic). Settings → Alerts: battery, device battery and temperature thresholds.
-- **Limits:** the values come from Plasma's sensor service (ksystemstats), which the island starts if it is not running. A sensor the driver does not offer hides its card. The click needs the native module and `btop` 1.4 or newer.
+- **Settings:** Settings → Tabs → *System view* (Fixed / Dynamic). Settings → Activities → *Warning thresholds*: battery, device battery and temperature.
+- **Limits:** the values come from Plasma's sensor service (ksystemstats), which the island starts if it is not running. A sensor the driver does not offer hides its card. The click needs the native module and `btop` 1.4 or newer; without them the card says which is missing.
 
 </details>
 
@@ -282,7 +330,7 @@ Settings → Activities: the priority order, the split island, how long a passin
 
 <details><summary>Settings and limits</summary>
 
-- **Settings:** Settings → General: show incoming notifications, for how long. While Do Not Disturb is on they are held back and counted.
+- **Settings:** Settings → General: show incoming notifications, and under *Response* for how long. While Do Not Disturb is on they are held back and counted.
 - **Limits:** Plasma's own notification popups stay: the island shows notifications in addition (they can be moved to another corner in System Settings → Notifications).
 
 </details>
@@ -298,8 +346,8 @@ Settings → Activities: the priority order, the split island, how long a passin
 
 <details><summary>Settings and limits</summary>
 
-- **Available buttons:** Do Not Disturb, Night Light, power profile, Bluetooth, Wi-Fi, updates, airplane mode, VPN, hotspot, record screen, screenshot, camera, microphone, sound, KDE Connect, find phone, dark mode, keep awake, lock, calculator, System Settings. A button whose part is missing is dimmed.
-- **Settings:** Settings → Controls: the same six, in order. Settings → Layout → Modules: the volume slider.
+- **Available buttons:** Do Not Disturb, Night Light, power profile, Bluetooth, Wi-Fi, updates, airplane mode, VPN, hotspot, record screen, screenshot, camera, microphone, sound, KDE Connect, find phone, dark mode, keep awake, lock, calculator, System Settings. A button whose part is missing is dimmed and says what it needs.
+- **Settings:** Settings → Controls: the same six, in order, and their **colours**: switched on, each in its own colour or one for all; switched off, as the island's buttons or one for all; and a colour of a button's own (vivid on, muted off). Settings → Tabs → *Modules*: the volume slider.
 - **Limits:** the brightness slider needs a display Plasma can dim. Buttons that start a program (screenshot, calculator, lock…) need the native module.
 
 </details>
@@ -377,7 +425,7 @@ Settings → Activities: the priority order, the split island, how long a passin
 
 - **Sources:** BetterNotes (on this computer, no account), Joplin (its Web Clipper service and token), Simplenote (the account), Memos (your server and a token).
 - **Settings:** Settings → Notes: the connected apps, where quick notes go, how often they are fetched, carrying on in the last note.
-- **Limits:** tokens are kept in KDE Wallet. A locked BetterNotes note asks for the master password (BetterNotes 0.1.15 or newer; with an older one the island offers to open it in the app); the password goes to the command's standard input and is kept nowhere. Rich-text notes are shown as plain text and are read-only.
+- **Limits:** tokens are kept in KDE Wallet. A locked BetterNotes note asks for the master password (BetterNotes 0.1.15 or newer; with an older one the island offers to open it in the app); the password goes to the command's standard input and is kept nowhere. Rich-text notes are shown as plain text and are read-only. A BetterNotes that is not found, or too old, is said on the tab with what to do.
 - **Thanks:** BetterNotes is made by [thebanri](https://github.com/thebanri/BetterNotes). Thank you for the app and for its command-line interface, which is what this tab talks to.
 
 </details>
@@ -389,7 +437,7 @@ Settings → Activities: the priority order, the split island, how long a passin
 <!-- GIF: ai-question.gif | A question is typed on the AI tab; three dots show that the answer is on its way; the answer appears as formatted text. Answered by a demo server with canned answers. | AI: a question and its answer (demo provider) -->
 
 - **What you see:** a field, the answer as it is written (Markdown, code in boxes with *Copy*), and on the notch three dots while it is on its way and "Answer ready" when you were elsewhere.
-- **How to use:** Settings → Layout: switch *AI* on. On the tab connect what should answer, then type; Enter sends, Shift+Enter is a new line. *New chat* starts over; Escape gives the keyboard back.
+- **How to use:** Settings → Tabs: switch *AI* on. On the tab connect what should answer, then type; Enter sends, Shift+Enter is a new line. *New chat* starts over; Escape gives the keyboard back.
 
 <details><summary>Sources, settings and limits</summary>
 
@@ -406,7 +454,7 @@ Settings → Activities: the priority order, the split island, how long a passin
 <!-- GIF: cloud-browse.gif | The Cloud tab lists a remote's folders; a folder is opened; a file is dragged out to the desktop; another is dropped in to upload. Shown with a made-up remote. | Cloud: browse, drag out, drop in (a made-up remote) -->
 
 - **What you see:** each rclone remote with how full it is, its folders and files with size and date, a sync state where a client reports one (Syncthing, Dropbox), and a warning when a cloud is nearly full.
-- **How to use:** Settings → Layout: switch *Cloud* on. Click into folders; drag a file out to the desktop or a file manager; drop files on the tab to upload (it asks first). *Download*, *Show in folder*, *Copy path* and *Upload…* do the same without dragging.
+- **How to use:** Settings → Tabs: switch *Cloud* on. Click into folders; drag a file out to the desktop or a file manager; drop files on the tab to upload (it asks first). *Download*, *Show in folder*, *Copy path* and *Upload…* do the same without dragging.
 
 <details><summary>Settings and limits</summary>
 
@@ -448,7 +496,7 @@ A small cat stands beside the notch, on the panel. It changes nothing, keeps not
 <details><summary>Settings, switching it off, less motion</summary>
 
 - **Settings → Cat:** *Show the cat beside the island* (switches it off), the side, size, coat (grey, orange, black, white, black and white, or a colour of your own), what it reacts to (music, the AI and questions, events), whether it may be stroked and clicked, *Never angry*, how long it sulks, when it falls asleep, asleep or hidden beside the dot. The page has buttons to try each reaction.
-- **In notch mode:** Settings → Notch → *Hide the cat in notch mode*.
+- **In the notch layout only:** Settings → Appearance → *Notch details* → *Hide the cat in the notch layout*.
 - **Less motion:** *Reduce motion: still poses, nothing nods or floats*. With the desktop's own animations switched off (System Settings) it stands still whatever is set.
 
 </details>
@@ -469,7 +517,7 @@ Whenever a program records or shares the screen through PipeWire, the notch show
 <!-- GIF: notifications-arrival.gif | A message arrives: the notch widens to show the app, the sender and the first line; a few seconds later a second one from another app; then the clock again. | Notifications on the notch -->
 <p align="center"><img src="docs/media/notifications-arrival.gif" alt="A message arrives: the notch widens to show the app, the sender and the first line; a few seconds later a second one from another app; then the clock again." width="800"><br><sub>Notifications on the notch</sub></p>
 
-The notch widens to show the app, title and first line for 4 s (Settings → General). A click runs its default action, a middle click dismisses it. The last three, with their time and *Clear all*, are on the [Notifications](#notifications) tab.
+The notch widens to show the app, title and first line for 4 s (Settings → General → *Response*). A click runs its default action, a middle click dismisses it. The last three, with their time and *Clear all*, are on the [Notifications](#notifications) tab.
 
 ### Downloads and file transfers
 
@@ -486,14 +534,14 @@ One kind of activity for everything that moves files: its name, "412 MB / 1.8 GB
 | `git clone`, `wget`, `curl`, `pip download` | Found by their process; bytes and speed from what they wrote |
 | `apt`, PackageKit (Discover) | The stage and, where known, the progress |
 
-**Settings → Download tracking:** the main switch, each source, background jobs, how long and how large something must be to be shown, the watched folders and commands. Commands are found by looking at the process list every three seconds; nothing is installed or wrapped. What was and was not tried with the real programs is in the [reference](docs/REFERENCE.md#file-transfers-what-can-and-cannot-be-tracked).
+**Settings → Activities:** the *Download tracking* switch; under *Download tracking details* each source, background jobs, how long and how large something must be to be shown, the watched folders and your own commands. Commands are found by looking at the process list every three seconds; nothing is installed or wrapped. What was and was not tried with the real programs is in the [reference](docs/REFERENCE.md#file-transfers-what-can-and-cannot-be-tracked).
 
 ### An incoming call
 
 <!-- GIF: call-incoming.gif | The cat sleeps beside the notch; a call comes in: the notch widens with a green phone icon, the caller's name and number and a Mute button, and the cat wakes. Made-up caller. | An incoming call through KDE Connect (made-up caller) -->
 <p align="center"><img src="docs/media/call-incoming.gif" alt="The cat sleeps beside the notch; a call comes in: the notch widens with a green phone icon, the caller's name and number and a Mute button, and the cat wakes. Made-up caller." width="800"><br><sub>An incoming call through KDE Connect (made-up caller)</sub></p>
 
-With KDE Connect and a paired phone, an incoming call widens the notch with the caller, the number and *Mute* (which silences the phone's ringtone); answered, it stays as a live activity with the call's time, and a missed call shows briefly. It opens even from the dot. KDE Connect sends no "call ended": the activity ends when its notification closes.
+With KDE Connect and a paired phone, an incoming call widens the notch with the caller, the number and *Mute* (which silences the phone's ringtone); answered, it stays as a live activity with the call's time, and a missed call shows briefly. It opens even from the dot, and over a full-screen window when the island has slid up (unless switched off). KDE Connect sends no "call ended": the activity ends when its notification closes.
 
 ### Privacy dots
 
@@ -514,24 +562,39 @@ The rules: Do Not Disturb before a calendar event, during a screen recording and
 <p align="center"><img src="docs/media/notch-colours.gif" alt="The notch turns opaque black, then back to its own gradient; then it changes through the Aurora, Ocean and Sunset looks and back to Symbiot Black." width="800"><br><sub>The notch's colours and four ready-made looks</sub></p>
 <!-- GIF: appearance-themes.gif | In the settings a ready-made look is chosen, a gradient is tuned and the notch changes at once; the look is exported as a file and added again. | Appearance: looks, a gradient, export and add -->
 
-**Settings → Appearance** has two modes, and the notch takes its colours from them (Settings → Notch → Colour).
+**Settings → Appearance**, from the top: the **layout** (Notch or Oval layout) with the notch's settings, **Full screen**, then the **look**. The notch takes its colours from the look (Notch → *Colour*).
 
-- **Follow the system**: background, text and accent come from Plasma and change with it at once.
-- **Custom** (as it comes: Symbiot Black): ready-made looks (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast and five gradients: Symbiot Black, Aurora, Sunset, Ocean, Midnight Blue) and fine tuning: opacity, blur, horizontal position, size (80–120 %), corner roundness, one colour or a gradient, the colours of controls and text. Every change shows on the island while the window is open. A look can be saved under a name.
-- **Shape:** *Notch (default)* or *Rounded island*. Only the rounded island uses the distance from the top and the look's own border and shadow; the notch has its border in Settings → Notch.
+- **Follow the system**: background, text and accent come from Plasma (its colour scheme or its Plasma style) and change with it at once.
+- **Custom** (as it comes: Symbiot Black): ready-made looks (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast and five gradients: Symbiot Black, Aurora, Sunset, Ocean, Midnight Blue), saved looks under a name, and *Fine tuning*: opacity, blur, horizontal position, **size (80–240 %)**, corner roundness, one colour or a gradient, the colours of controls and text, **button colour** (the fill of the buttons, tiles and cards: automatic, or a colour of your own kept readable), and for the oval layout the distance from the top, border and shadow. Every change shows on the island while the window is open.
 
 **Theme files.** *Export Theme…* writes the look as one `*.islandtheme.json` file. *Add New…* takes one back, from a file or from the store. A theme is **data only**: at most 64 kB of JSON with known fields, no code, no QML, no pictures; anything else is refused, and a download whose checksum is not the catalog's is refused too. Themes you add are kept in `~/.local/share/dynamicisland/themes/`.
 
 **The store** lists the `catalog/` folder of this repository. It makes a request only when you open its tab and when you press *Download*. Its address is one constant (`CATALOG_URL` in `contents/ui/ThemeFile.js`): the `catalog/` folder of this repository's `main` branch, as `raw.githubusercontent.com` serves it. Adding a theme of your own to the catalog: [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Layout and language
+## The settings window
+
+The gear at the top right of the open island opens it (the island's right-click menu too). The pages: **General**, **Appearance**, **Tabs**, **Activities**, then one page for each tab that has settings of its own (Weather, Controls, Tools, Habits, Calendar, Notes, AI, Cloud), shown in the sidebar only while that tab is on, then **Cat**, **Suggestions** and **Diagnostics**.
+
+### Search and folded details
+
+- **A search at the top of every page** finds any setting by its name, also one on a page that is not in the sidebar, in English or Turkish (without accents too), and opens it where it is.
+- **Each page shows the few settings it is opened for** and folds the rest (*Details*, *Customize*, *Fine tuning*…); what does not apply to the layout or mode chosen is hidden. Long explanations are behind "?" buttons.
+- **Response** (Settings → General): *Calm*, *Balanced* (as it comes) or *Lively* sets the hover and collapse delays and how long events and notifications stay; *Customize* sets each by hand.
+
+### Tabs and language
 
 <!-- GIF: language-switch.gif | While a screen recording shows on the notch, the island's language is switched from English to Turkish: "Screen recording" becomes "Ekran kaydı"; then back to English. | Language: the notch's text changes at once -->
 <p align="center"><img src="docs/media/language-switch.gif" alt="While a screen recording shows on the notch, the island's language is switched from English to Turkish: &quot;Screen recording&quot; becomes &quot;Ekran kaydı&quot;; then back to English." width="800"><br><sub>Language: the notch's text changes at once</sub></p>
-<!-- GIF: layout-reorder.gif | In Settings → Layout a tab is dragged to another place and one is switched off; the island's tabs follow. | Layout: ordering and hiding tabs -->
+<!-- GIF: layout-reorder.gif | In Settings → Tabs a tab is dragged to another place and one is switched off; the island's tabs follow. | Tabs: ordering and hiding them -->
 
-- **Settings → Layout → Tabs:** drag a tab by its handle to move it; its switch shows or hides it. *Restore default order* puts them back. **Modules:** the parts inside a tab that can be switched.
-- **Settings → Language:** Automatic, Türkçe or English, for the island and its settings only, without restarting Plasma.
+- **Settings → Tabs:** drag a tab by its handle to move it; its switch shows or hides it (at least one stays on). *Restore default order* puts them back. **Modules:** the parts inside a tab that can be switched. **System view:** Fixed or Dynamic.
+- **Settings → General → Language:** like the system, Türkçe or English, for the island and its settings only, without restarting Plasma. **Time format** beside it: as the system's region writes it, or always 24 or 12 hours.
+
+### Diagnostics and what is missing
+
+- **Where a feature is**, a card says what it needs and is missing, why, how to get it (its page and a command to copy, per distribution), *Set the path by hand* and *Check again*. The island never runs that command. Without the native module every feature that needs it says it needs the full installation.
+- **Settings → Diagnostics** lists this computer (the island's version, the session, Plasma, Qt, the native modules), every feature with what it needs, whether it was found, where it was looked for, its path and version, and a **command path** you can set by hand. *Copy diagnostics* puts the report on the clipboard for a bug report, without your user name, the computer's name or your home folder. *About* links to this page and to the issue form, and shows the tour again.
+- Commands are looked for on the desktop shell's `PATH`, in the folders installers put them into (`~/.local/bin`, `~/.cargo/bin`, npm's, nvm's, `/usr/local/bin`, `/snap/bin`, Flatpak's…) and as AppImages in `~/Applications`. More in the [reference](docs/REFERENCE.md#requirements-and-diagnostics).
 
 ## For developers: push your own activity
 
@@ -590,6 +653,8 @@ CPU as per cent of **one** core (the machine has twelve threads), medians of thr
 - Everything that needs a pointer: hovering, an open page, scrolling a list, stroking the cat
 <!-- PERF:END -->
 
+The notch and the full-screen modes came after these measurements: they are not in the table.
+
 ## Privacy and the network
 
 There is **no telemetry**: the island reports nothing to anybody, and has no account. With the settings as they come, it makes **one network request a day**: it reads the newest version number of the island from this repository (`raw.githubusercontent.com`), and sends nothing but that request. Settings → General → *New versions of the island* → *Never look* switches it off; then there is no network request at all (checked with 0.1.0, which had no such check: 170 s of a fresh start with default settings under `strace`, no connection outside the computer). What each part does once you use it:
@@ -607,6 +672,7 @@ There is **no telemetry**: the island reports nothing to anybody, and has no acc
 | Updates | never (it reads PackageKit's list on this computer) | none | nothing |
 | The island's own new versions | `raw.githubusercontent.com` once a day for the version number (not with *Never look*); `github.com` for the archive, **only when an update is installed** | `sh`, `curl`, `tar` and the downloaded `install.sh`, only for an update | the download while it is installed, and the installer's last output, in `~/.cache/dynamicisland/update` |
 | Download tracking | never | none (it reads the process list and the download folder) | nothing |
+| Requirements, Diagnostics | never | none to look for a command (the native module looks at the folders); the Diagnostics page asks each command it found for its `--version`, without a shell | a command path you set by hand, in the settings; what was found is kept in memory for a while |
 | Suggestions | never | none | what it learned, in `~/.local/share/dynamicisland/suggestions.json` |
 | Habits, Pomodoro, Apps, Tools | never | the applications you start | their data, in the settings |
 | Clipboard | never | none | nothing (the history is Klipper's) |
@@ -623,13 +689,18 @@ Three more things worth knowing:
 | | |
 |---|---|
 | The island does not appear | Restart plasmashell after installing (`systemctl --user restart plasma-plasmashell`), then add the widget. Logs: `journalctl --user -f \| grep -i -E "dynamicisland\|qml"` |
-| No blur, clicks beside the island do not pass through, pages say the native module is missing | The native module is not installed or plasmashell does not see it: run `./install.sh` (not `--no-native`) and restart plasmashell. After a Plasma or Qt update, run it again |
+| Where is the widget I added? | The island is at the top of the screen; the widget's own icon shows only while the desktop is being edited (right click the desktop → *Enter Edit Mode*) |
+| What is missing, and why? | **Settings → Diagnostics** lists what each feature needs, whether it was found, where it was looked for, the path and version, the session, Plasma and Qt. A feature whose requirement is missing says so where it is shown, with the command to copy (never run by the island). *Copy diagnostics* puts the report on the clipboard for a bug report, with your user name, the computer's name and your home folder left out |
+| No blur, clicks beside the island do not pass through, pages say the native module is missing | The native module is not installed or plasmashell does not see it (installed from the KDE Store as a `.plasmoid`, or with `--no-native`): run `./install.sh` from a clone of this repository and restart plasmashell; Settings → Diagnostics shows the build packages for Kubuntu, Fedora and Arch. After a Plasma or Qt update, run it again |
+| A command is installed but "not found" | The island looks on the desktop shell's `PATH`, in the folders installers put commands into (`~/.local/bin`, `~/.cargo/bin`, npm's, nvm's, `/usr/local/bin`, `/snap/bin`, Flatpak's…) and for AppImages in `~/Applications`. Anywhere else: Settings → Diagnostics → the command → *Command path* |
+| The island hides (or does not) over a full-screen window | Settings → Appearance → *Full screen*. Only the window in front on the island's screen counts; a maximised one only with *For maximised windows*. Not on X11 |
+| The notch covers my panel's clock or task buttons | Settings → Appearance → Notch → *Width*: narrower; or the *Oval layout* |
 | Where exactly does the island take clicks? | Start plasmashell with `DYNAMICISLAND_DEBUG_REGION=1` in its environment: a red outline is drawn around the region (`systemctl --user set-environment DYNAMICISLAND_DEBUG_REGION=1`, restart plasmashell; `unset-environment` afterwards) |
 | Typing into the island | The island never takes the keyboard by itself. It takes it when a field is clicked (Notes, AI, a reply) and gives it back with Escape; while it has it, the island stays open |
 | Two islands, or two cats, when the island opens | The widget was added twice to one screen. Only the first one shows now; remove the other (its tooltip says that it is hidden) |
-| BetterNotes is installed but "not found" | The island looks for the `betternotes` command (on the `PATH`, in `~/.local/bin`) and for its menu entry (also the Flatpak's). An AppImage that is only run in place has neither: `./BetterNotes-….AppImage install`. If the page says the native helper is missing, run `./install.sh` and restart plasmashell |
+| BetterNotes is installed but "not found" | The island looks for the `betternotes` command (on the `PATH`, in `~/.local/bin`, an AppImage in `~/Applications`) and for its menu entry (also the Flatpak's). An AppImage kept elsewhere: give its path in Settings → Diagnostics, or `./BetterNotes-….AppImage install`. If the page says the native helper is missing, run `./install.sh` and restart plasmashell |
 | BetterNotes: cannot save, cannot open, a locked note | Saving needs BetterNotes 0.1.13, opening a note in the app 0.1.14, locked notes 0.1.15. Quit a running older BetterNotes and start it again after updating. `betternotes --diagnostics` prints its own report |
-| AI: Claude Code or Antigravity is installed and signed in, but the tab says "not found" (or only offers sources that need a key) | Up to 0.2.0 the island only looked on the desktop shell's `PATH` and in `~/.local/bin`; a `claude` installed with npm (nvm, a prefix of your own, bun, Volta…) is on a terminal's `PATH` only. 0.2.1 looks in those folders too, and needs its native module (`./install.sh`, or *Update* on the island). Still not found: `ln -s "$(command -v claude)" ~/.local/bin/claude` in a terminal, then open the tab again |
+| AI: Claude Code or Antigravity is installed and signed in, but the tab says "not found" (or only offers sources that need a key) | Up to 0.2.0 the island only looked on the desktop shell's `PATH` and in `~/.local/bin`; a `claude` installed with npm (nvm, a prefix of your own, bun, Volta…) is on a terminal's `PATH` only. 0.2.1 looks in those folders too, and needs its native module (`./install.sh`, or *Update* on the island). Still not found: set its path in Settings → Diagnostics, or `ln -s "$(command -v claude)" ~/.local/bin/claude` in a terminal, then open the tab again |
 | Cloud: "rclone was not found" | Install rclone and add a remote in your own terminal (`rclone config`); the page shows the commands to copy and runs none of them |
 | Weather shows nothing | It starts empty on purpose: *Choose a Location* on the page |
 | A scroll turns the page instead of the list (or the other way round) | `QT_LOGGING_RULES="island.wheel.debug=true"` in plasmashell's environment logs who got each wheel step |
@@ -640,8 +711,9 @@ Three more things worth knowing:
 
 ## Known limits
 
-- **Only one setup was tested:** Plasma 6.6.6 on Wayland with an NVIDIA card, one monitor. X11, other compositors' versions, several monitors and a screen too narrow for the cat's side were not tried. On X11 the notch goes to the top edge, but whether it stays over the panel is the window manager's matter, and the click region also clips what is drawn, so the glow may be cut.
-- **The notch covers the panel under it**, and that part cannot be clicked; the island cannot see where a panel's widgets are (use *Widest*).
+- **Only one setup was tested:** Plasma 6.6.6 on Wayland with an NVIDIA card, one monitor. X11, other compositors' versions, several monitors and a screen too narrow for the cat's side were not tried. On X11 the notch goes to the top edge, but whether it stays over the panel is the window manager's matter, the full-screen choices other than *Hides* do nothing, and the click region also clips what is drawn, so the glow may be cut.
+- **The newest parts were checked in an isolated session and off screen**, not on every real desktop: the tour on a real island, the settings window's sidebar hiding a tab's page, a whole keyboard pass through every page and a screen reader were not tried (see [docs/UI-AUDIT.md](docs/UI-AUDIT.md#not-verified-on-a-real-screen)).
+- **The notch covers the panel under it**, and that part cannot be clicked; the island cannot see where a panel's widgets are (use *Width*).
 - **Notifications appear twice**, Plasma's popup and the island's.
 - **Dragging onto the island:** only the visible island takes a drag; dragging a file between the island and another program was written the way Qt offers it but could not be tried between two programs.
 - **Download tracking:** tried with a Flatpak browser, `git clone`, `wget`, `curl`, `pip download`, `apt download` and a PackageKit download. `sudo apt update/install`, a Chromium browser, Firefox as a Snap and pausing inside the browser were not tried.
@@ -659,7 +731,7 @@ The long list, with what was tried for each part, is in the [reference](docs/REF
 
 - **Code, tests, a theme for the store:** [CONTRIBUTING.md](CONTRIBUTING.md). `tools/run-tests` runs every check that needs no running island.
 - **A security problem:** [SECURITY.md](SECURITY.md). Please do not open a public issue for it.
-- **How it is built:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Every feature in detail: [docs/REFERENCE.md](docs/REFERENCE.md). What changed: [CHANGELOG.md](CHANGELOG.md).
+- **How it is built:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Every feature in detail: [docs/REFERENCE.md](docs/REFERENCE.md). What changed: [CHANGELOG.md](CHANGELOG.md). How the settings were simplified: [docs/UI-AUDIT.md](docs/UI-AUDIT.md).
 
 <!-- TODO(owner): roadmap. Only what the owner has decided goes here. -->
 

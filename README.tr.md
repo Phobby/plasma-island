@@ -7,6 +7,7 @@ KDE Plasma masaüstünün üst kenarıyla birleşen bir çentik: müzik, indirme
 [![Lisans: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#lisans-ve-teşekkürler)
 ![Sürüm 0.2.2](https://img.shields.io/badge/version-0.2.2-informational.svg)
 ![Plasma 6](https://img.shields.io/badge/Plasma-6-1d99f3.svg)
+![Wayland](https://img.shields.io/badge/tested%20on-Wayland-6f42c1.svg)
 
 [English](README.md) · **Türkçe**
 
@@ -15,11 +16,14 @@ KDE Plasma masaüstünün üst kenarıyla birleşen bir çentik: müzik, indirme
 <!-- GIF: notch-states.gif | Ekranın üstünde, koyu bir üst panelin üzerindeki çentik saati gösteriyor, yanında kedi; bir mesaj geliyor ve çentik genişleyip göndereni ve ilk satırı gösteriyor; sonra dolan ilerleme halkasıyla bir derleme "Done" ile bitiyor. | Çentik: boşta, bir bildirim, bir etkinlik -->
 <p align="center"><img src="docs/media/notch-states.gif" alt="Ekranın üstünde, koyu bir üst panelin üzerindeki çentik saati gösteriyor, yanında kedi; bir mesaj geliyor ve çentik genişleyip göndereni ve ilk satırı gösteriyor; sonra dolan ilerleme halkasıyla bir derleme &quot;Done&quot; ile bitiyor." width="800"><br><sub>Çentik: boşta, bir bildirim, bir etkinlik</sub></p>
 
-Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarlar → Dil, [klibi](#düzen-ve-dil) aşağıda).
+**Tek cümleyle:** ekranın üstüne, dizüstü bilgisayarlardaki ya da telefonlardaki gibi küçük siyah bir çentik koyan ve onu o an olup bitenle (bir şarkı, bir indirme, bir zamanlayıcı, bir arama, bir bildirim) dolduran bir Plasma widget'ı; üzerine gelince müzik, sistem, hava durumu, takvim, notlar, hızlı ayarlar ve daha fazlası için sayfalara açılır. Her parça kapatılabilir ve siz bir şey bağlamadıkça hiçbir yere hiçbir şey gönderilmez.
+
+Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarlar → Genel → Dil, [klibi](#sekmeler-ve-dil) aşağıda).
 
 ## İçindekiler
 
-- [Çentik](#çentik): [üst panelle](#üst-panelle) · [Çentik ayarları](#çentik-ayarları) · [Nokta modu](#nokta-modu) · [Durumlar](#durumlar)
+- [Yenilikler](#yenilikler)
+- [Çentik](#çentik): [üst panelle](#üst-panelle) · [Çentik ayarları](#çentik-ayarları) · [Tam ekran](#tam-ekran) · [Nokta modu](#nokta-modu) · [Durumlar](#durumlar)
 - [Öne çıkanlar](#öne-çıkanlar)
 - [Gereksinimler](#gereksinimler)
 - [Kurulum, güncelleme, kaldırma](#kurulum-güncelleme-kaldırma)
@@ -28,9 +32,29 @@ Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarla
 - [Kedi](#kedi)
 - [Anlık olaylar](#anlık-olaylar): [ekran kaydı](#ekran-kaydı-ve-paylaşımı) · [bildirimler](#bir-bildirim-geldiğinde) · [indirmeler](#i̇ndirmeler-ve-dosya-aktarımları) · [gelen arama](#gelen-arama) · [gizlilik noktaları](#gizlilik-noktaları) · [öneriler](#öneriler)
 - [Görünüm, temalar ve mağaza](#görünüm-temalar-ve-mağaza)
-- [Düzen ve dil](#düzen-ve-dil)
+- [Ayarlar penceresi](#ayarlar-penceresi): [arama](#arama-ve-katlanan-ayrıntılar) · [sekmeler ve dil](#sekmeler-ve-dil) · [Tanılama](#tanılama-ve-eksik-olanlar)
 - [Geliştiriciler için: kendi etkinliğini gönder](#geliştiriciler-için-kendi-etkinliğini-gönder)
 - [Performans](#performans) · [Gizlilik ve ağ](#gizlilik-ve-ağ) · [Sorun giderme](#sorun-giderme) · [Bilinen sınırlar](#bilinen-sınırlar) · [Katkı ve güvenlik](#katkı-ve-güvenlik) · [Lisans ve teşekkürler](#lisans-ve-teşekkürler)
+
+## Yenilikler
+
+0.2.2'den bu yana gelenler `main` dalındadır ve onun bir klonundan yapılan kurulumla gelir ([Kurulum](#kurulum-güncelleme-kaldırma)). **Henüz etiketli bir sürümde değiller:** kurulu bir 0.2.2 adasındaki *Güncelle*, bir sonraki sürüm yayımlanana kadar bunları getirmez. Hepsinin listesi [CHANGELOG](CHANGELOG.md#unreleased) içindedir (İngilizce).
+
+| | |
+|---|---|
+| **Geldiği gibi çentik** | Ada, ekranın üst kenarına ve üst panelin üzerine birleşik, **Symbiot Siyahı** gradyanında ve ince, soluk gri bir kenarlıkla gelir. Önceki sürümlerin yuvarlak adası *Oval düzen*dir (Ayarlar → Görünüm → Düzen). |
+| **Tam ekranda dört seçenek** | Tam ekran bir pencerenin üzerinde ada olduğu gibi kalır, gizlenir, kenarda ince bir şerit bırakarak yukarı çekilir ya da küçük bir çıkıntıya küçülür; son ikisi, isterseniz, bir süre hiçbir şey olmayınca masaüstünde de. [Ayrıntılar](#tam-ekran) |
+| **Çentiğin genişliği** | Otomatik ya da 1200 px'e kadar daha dar veya daha geniş ayarlanır; böylece yanındaki panel öğeleri tıklanabilir kalır, açık ada da onu izleyebilir. |
+| **%240'a kadar boyut** | Ekranın içinde tutulur; ayarlar ekran kenarına ulaşıldığını söyler. |
+| **Düğmelerin renkleri** | Adanın düğmeleri, kutucukları ve kartları için tek bir düğme rengi; Kontroller düğmeleri her biri kendi renginde ya da hepsi tek renkte. |
+| **Gereksinimler kendini söyler** | Bir özelliğin ihtiyaç duyduğu bir şey eksikse (yerel modül, `rclone`, `btop`, BetterNotes, `claude`…) ne olduğunu, nedenini ve Kubuntu, Fedora ya da Arch için kopyalanacak komutu söyler. Ada o komutu asla çalıştırmaz. |
+| **Ayarlar → Tanılama** | Her özelliğin neye ihtiyaç duyduğu, bulunup bulunmadığı ve nerede, oturum, Plasma ve Qt, elle verilen bir komut yolu; hata bildirimi için adınız ve ev klasörünüz olmadan *Tanılama çıktısını kopyala*. |
+| **Daha sade ayarlar** | 18 yerine 15 sayfa, katlanmış ayrıntılar, her ayarda arama ve *Tepki*: gecikmeler için Sakin, Dengeli ya da Canlı. Hiçbir ayar kaldırılmadı ya da yeniden adlandırılmadı. |
+| **Kısa bir tanıtım** | Yeni bir adanın ilk açılışında üç adım: düzen, sekmeler, bu bilgisayarda neyin olduğu. |
+| **Saat biçimi** | Saat, sistemin bölgesinin yazdığı gibi ya da her zaman 24 veya 12 saat. |
+| **Tutamaç yolda durmaz** | Widget'ın masaüstündeki küçük simgesi yalnızca masaüstü düzenlenirken görünür. |
+
+**0.2.2 ya da daha eskisinden güncellemek** seçimlerinizi korur: daha önce çalışmış bir ada sahip olduğu düzeni korur (o anahtarın olduğu bir derlemede çentiği açmadıysanız oval düzeni) ve çentiğin geldiğini bir kez söyler; tanıtım ona gösterilmez. Hiç değiştirmediğiniz görünüm ayarları yeni varsayılanları alır, yani geldiği gibi bırakılmış bir görünüm Symbiot Siyahı olur: Ayarlar → Görünüm içindeki *Sistemi takip et* eskisini geri getirir.
 
 ## Çentik
 
@@ -38,32 +62,49 @@ Ada, dizüstü ekranlarındaki çentik gibi ekranın üst kenarına birleşik te
 
 <!-- GIF: notch-hover.gif | İmleç çentiğin üzerine geliyor ve çentik aşağıya doğru sayfalarına açılıyor; imleç uzaklaşınca geri küçülüyor; imleç çentiğin üstündeki ekran kenarına dayanıyor ve yeniden açılıyor. | Çentik: üzerine gelme, kapanma, kenara dayama -->
 
-**Symbiot Siyahı** gradyanıyla (koyu gri `#292c30`, `#202326` ve siyaha yakın `#0e1012`) ve ince, soluk gri bir kenarlıkla (`#4c566a`, %70) gelir. Önceki sürümlerin yuvarlak adası hâlâ vardır: **Ayarlar → Görünüm → Şekil → Yuvarlak ada**.
-
-**0.2.2 ya da daha eskisinden güncellerken:** kendi değiştirdiğiniz ayarlar olduğu gibi kalır; hiç değiştirmediğiniz bir ayar yeni varsayılanı alır. Geldiği gibi bırakılmış bir ada bu yüzden Symbiot Siyahı çentiğe dönüşür; *Yuvarlak ada* ve *Sistemi takip et* (Ayarlar → Görünüm) eski görünümü geri getirir.
+**Symbiot Siyahı** gradyanıyla (koyu gri `#292c30`, `#202326` ve siyaha yakın `#0e1012`) ve ince, soluk gri bir kenarlıkla (`#4c566a`, %70) gelir. Önceki sürümlerin yuvarlak adası hâlâ vardır: **Ayarlar → Görünüm → Düzen → Oval düzen**.
 
 ### Üst panelle
 
-- **Çentik altındakini örter** ve panelin o kısmına tıklanamaz; çentiğin yanında panel tıklamaları eskisi gibi alır. Panelinizin ortasında saat ya da görev düğmeleri varsa çentiği **Ayarlar → Çentik → En geniş** ile daraltın (ada, panelin öğelerinin nerede olduğunu okuyamaz). Bildirimler ve açık ada, gösterildikleri sürece daha geniştir.
+- **Çentik altındakini örter** ve panelin o kısmına tıklanamaz; çentiğin yanında panel tıklamaları eskisi gibi alır. Panelinizin ortasında saat ya da görev düğmeleri varsa çentiği **Genişlik** ile daraltın (Ayarlar → Görünüm, düzenin altında): ada, panelin öğelerinin nerede olduğunu okuyamaz. Bildirimler ve açık ada, gösterildikleri sürece daha geniştir.
 - **Yüksekliği** üst paneli izler (panel gizliyken de) ya da elle ayarlanır. Üst panel yoksa yine üst kenarda, adanın kendi yüksekliğinde durur.
 - **Kedi** çentiğin yanında, panelin üzerinde durur.
 - **Koyu bir panel**, çentiğin ekranın bir parçası gibi göründüğü yerdir: buradaki kliplerde Breeze Dark ve opak, 32 px'lik bir panel kullanıldı.
 
 ### Çentik ayarları
 
+**Ayarlar → Görünüm → Düzen: Çentik.** İlk üçü sayfadadır; gerisi *Çentik ayrıntıları* altında katlıdır.
+
 | Ayar | Ne yapar |
 |---|---|
-| Çentik modu | *Adayı ekranın üst kenarına yapıştır* (geldiği gibi açık). Değiştirmek yeniden başlatma gerektirmez |
 | Renk | *Adanın renkleri (Görünüm)*: görünümün renkleri ya da gradyanı, opak hale getirilmiş (geldiği gibi); *Siyah*: açık renk metinle opak siyah; *Adanın görünümü (Görünüm)*: malzemesi, opaklığı ve bulanıklığı da |
-| Çentik kenarlığı | *Çentiğin kenarlığını göster*: kalınlık 1–8 px, renk, opaklık %0–100. Yanlar ve alt köşeler boyunca çizilir, ekran kenarı boyunca asla |
-| Üst köşeler | *Kenarla birleştiği yeri yumuşat*: yana doğru iki küçük kıvrım (geldiği gibi kapalı) |
 | Ekran | *Üst panelin olduğu ekran* (geldiği gibi) ya da *Birincil ekran*. Aynı anda tek çentik |
-| Tam ekranın üstünde | Bir pencere o ekranı doldururken *Gizle* (geldiği gibi) ya da *Göster*. Kilit ekranında asla gösterilmez |
-| Yükseklik | *Üst panelinki* ya da *Elle* (24–72 px) |
-| En geniş | *Sınırsız* ya da piksel cinsinden bir genişlik |
-| Kedi | *Çentik modunda kediyi gizle* |
+| Genişlik | *Otomatik* (gösterdiği kadar geniş) ya da %100 boyutta dardan 1200 px'e kadar; ekranı asla aşmaz |
+| Önizleme | Ayrıntıların başında çentik küçük ya da nokta olarak |
+| Çentik kenarlığı | *Çentiğin kenarlığını göster* (geldiği gibi açık): kalınlık 1–8 px, renk, opaklık %0–100. Yanlar ve alt köşeler boyunca çizilir, ekran kenarı boyunca asla |
+| Üst köşeler | *Kenarla birleştiği yeri yumuşat*: yana doğru iki küçük kıvrım (geldiği gibi kapalı) |
+| Yükseklik | *Üst panelinki* (geldiği gibi) ya da *Elle* (24–72 px) |
+| Açıkken | *Açık adadan genişse, açılınca da bu genişlikte olsun* (geldiği gibi açık) |
+| Tam ekran | *Yukarı çekilir* ya da *Küçülür* seçiliyken ([aşağıda](#tam-ekran)): altına uzanan bir pencerede de, ve orada açıkken boyutu ile genişliği |
+| Kedi | *Çentik düzeninde kediyi gizle* |
 
-Sayfanın başındaki önizleme çentiği küçük ya da nokta olarak gösterir. Çentik modunda kullanılmayanlar: üstten uzaklık, *Üst panellerin altına yerleş* ve görünümün kendi kenarlığı ile gölgesi. Ayrıntılar [başvuru belgesinde](docs/REFERENCE.md#notch-mode) (İngilizce).
+Çentiğin kullanmadıkları: üstten uzaklık, *Üst panellerin altına yerleş* ve görünümün kendi kenarlığı ile gölgesi (bunlar oval düzenindir). Ayrıntılar [başvuru belgesinde](docs/REFERENCE.md#layout-notch--oval-layout) (İngilizce).
+
+### Tam ekran
+
+**Ayarlar → Görünüm → Tam ekran**, iki düzen için de. Bir pencere ekranını doldururken ada ne yapar:
+
+| Seçenek | Ne olur | Nasıl geri gelir |
+|---|---|---|
+| Olduğu gibi kalır | Hiçbir şey değişmez | – |
+| **Gizlenir** (geldiği gibi) | Kaybolur | Pencere tam ekrandan çıkınca |
+| Yukarı çekilir, ince bir şeridi görünür | Olduğu boyutta, yalnızca birkaç pikseli görünene kadar kenara çekilir; şeridin yanındaki tıklamalar pencereye gider | İmleç üst kenarda kısa bir süre durunca |
+| Küçük bir çıkıntıya küçülür | Kenarda küçük bir çıkıntıya çekilir | İmleç çıkıntının üzerine gelince |
+
+- **Ayrıca:** *Büyütülmüş pencerelerde* (geldiği gibi kapalı: yalnızca gerçek bir tam ekran pencere sayılır, hangi uygulama olursa olsun: bir video, tarayıcıda F11, bir uçbirim, bir oyun). *Masaüstünde boştayken de, şu süre sonra:* 2–300 sn (geldiği gibi 10, geldiği gibi kapalı): yukarı çekilme ya da küçülme boş masaüstünde de olur; bir bildirim, canlı bir etkinlik ya da açmak onu hemen geri getirir.
+- **Tam ekran ayrıntıları:** şeridin ne kadarının görüneceği (2–16 px, 4), imlecin açmadan önce ne kadar duracağı (0–1000 ms, 150), kenarda onu açan yerin ne kadar geniş olduğu ve gelen bir aramanın onu açıp açmayacağı. Bir kayıt, mikrofon ya da kamera, kritik bir uyarı ve bir arama şeridi renklendirir. *Dene* düğmeli canlı bir önizleme.
+- **Ne sayılır:** yalnızca öndeki pencere, adanın kendi ekranında ve gösterilen masaüstü ile etkinlikte. Başka bir sanal masaüstündeki tam ekran pencere hiçbir şey yapmaz.
+- **Yalnızca Wayland.** Başka yerde ekranı dolduran pencere adanın üstüne biner ve ada olduğu gibi kalır. Ayrıntılar: [başvuru belgesi](docs/REFERENCE.md#full-screen-mode) (İngilizce).
 
 ### Nokta modu
 
@@ -73,7 +114,7 @@ Sayfanın başındaki önizleme çentiği küçük ya da nokta olarak gösterir.
 
 Noktanın ortası ne olduğunu söyler: mikrofon, kamera ya da ekran kullanımı için turuncu, yeşil ya da kırmızı; canlı etkinlik (nabız gibi atar) ya da bekleyen bildirimler için vurgu rengi. Nokta halindeyken bildirimler ve olaylar sonraya saklanır (ya da gösterilip noktaya dönülür: *Nokta modunda olaylar*). Gelen arama, alarm ve düşük pil, siz kapatmadıkça her durumda adayı açar.
 
-**Ayarlar → Genel → Nokta modu:** açık/kapalı, başlangıç durumu (bırakıldığı gibi, her zaman çentik, her zaman nokta), nokta boyutu, noktanın üzerine gelince adanın açılıp açılmayacağı, nokta modunda olaylar, kritik olaylarda her zaman açılma.
+**Ayarlar → Genel → Nokta modu:** açık/kapalı; *Nokta kipi ayrıntıları* altında: başlangıç durumu (bırakıldığı gibi, her zaman çentik, her zaman nokta), nokta boyutu, noktanın üzerine gelince adanın açılıp açılmayacağı, nokta modunda olaylar, kritik olaylarda her zaman açılma.
 
 ### Durumlar
 
@@ -88,8 +129,9 @@ Noktanın ortası ne olduğunu söyler: mikrofon, kamera ya da ekran kullanımı
 | Açık | Üzerine gelme ya da nokta modu kapalıyken tıklama | Aşağıdaki sayfalar |
 | Gizlilik noktaları | Mikrofon ya da kamera kullanımda | Çentiğin yanında, her durumda turuncu ya da yeşil bir nokta |
 | Nokta | Nokta modunda bir tıklamadan sonra | Kenarda küçük bir yarım daire |
+| Yukarı çekilmiş / çıkıntı | Tam ekran bir pencerenin üzerinde, [seçildiyse](#tam-ekran) | Kenarda ince bir şerit ya da küçük bir çıkıntı |
 
-Birden fazla şey sürerken hangisinin öne geçeceği yeniden sıralayabileceğiniz bir listedir (Ayarlar → Etkinlikler): gizlilik, arama, ekran kaydı, anlık olaylar, zamanlayıcı, aktarımlar, medya.
+Birden fazla şey sürerken hangisinin öne geçeceği yeniden sıralayabileceğiniz bir listedir (Ayarlar → Etkinlikler → *Öncelik*): gizlilik, arama, ekran kaydı, anlık olaylar, zamanlayıcı, aktarımlar, medya.
 
 ## Öne çıkanlar
 
@@ -100,6 +142,8 @@ Birden fazla şey sürerken hangisinin öne geçeceği yeniden sıralayabileceğ
 | **Sekmeler** | Üzerine gelince açılır: Medya, Sistem, Hava Durumu, Bildirimler, Kontroller, Uygulamalar, Araçlar, Alışkanlıklar, Takvim, Notlar, Pano ve (siz açana kadar kapalı) Yapay Zeka ile Bulut. |
 | **Bir kedi** | Çentiğin yanında: uyur, müzikte kulaklık takar, okşanmayı sever. Kapatılabilir. |
 | **Sizin görünümünüz** | Geldiği gibi Symbiot Siyahı; dokuz hazır görünüm daha, kendi renkleriniz ya da gradyanınız, ya da Plasma'nın renkleri. Görünümler dosya olarak dışa aktarılıp paylaşılır. |
+| **Yolda durmaz** | Tam ekranda gizlenir, yukarı çekilir ya da küçülür; bir tıklama onu noktaya çevirir. |
+| **Neye ihtiyacı olduğunu söyler** | Eksik bir program ya da modül, önemli olduğu yerde, kopyalanacak komutla adıyla söylenir; Ayarlar → Tanılama hepsini listeler. |
 | **Betiklenebilir** | Her program küçük bir D-Bus API'siyle (`island-push`) kendi etkinliğini gösterebilir. |
 | **Varsayılan olarak gizli** | Telemetri yok. Ayarlar geldiği gibiyken tek istek, günde bir kez en yeni sürüm numarasına bakmaktır; bkz. [Gizlilik ve ağ](#gizlilik-ve-ağ). |
 
@@ -111,11 +155,11 @@ QML ile yazılmış bir Plasma widget'ıdır (plasmoid); QML'in erişemediği k�
 |---|---|
 | Masaüstü | KDE Plasma 6 (widget en düşük Plasma API 6.0 bildirir) |
 | Test edildiği ortam | Kubuntu 26.04, Plasma 6.6.6, Qt 6.10.2, **Wayland** üzerinde KWin, NVIDIA sürücüsü. Başka hiçbir ortam denenmedi. |
-| X11 | **Denenmedi.** Çentik o zaman üst kenara gider, ama panelin üzerinde kalıp kalmadığı pencere yöneticisine bağlıdır (bkz. [Bilinen sınırlar](#bilinen-sınırlar)). |
-| Yerel modülü derlemek için | `cmake`, `extra-cmake-modules`, Qt 6.5 ya da daha yeni geliştirme dosyaları (Core, Gui, Qml, DBus, Network, Sql), `libkf6windowsystem-dev` |
+| X11 | **Denenmedi.** Çentik o zaman üst kenara gider, ama panelin üzerinde kalıp kalmadığı pencere yöneticisine bağlıdır ve *Gizlenir* dışındaki tam ekran seçenekleri bir şey yapmaz (bkz. [Bilinen sınırlar](#bilinen-sınırlar)). |
+| Yerel modülü derlemek için | `cmake`, `extra-cmake-modules`, Qt 6.5 ya da daha yeni geliştirme dosyaları (Core, Gui, Qml, DBus, Network, Sql), `libkf6windowsystem-dev`. Ayarlar → Tanılama Kubuntu, Fedora ve Arch için paket adlarını gösterir |
 | Çalışma zamanında | Mikrofon, kamera ve ekran kaydı göstergeleri için PipeWire'ın `pw-dump` aracı (Ubuntu'da `pipewire-bin` paketi) |
 
-Yerel modül olmadan widget yine çalışır; ona ihtiyaç duyan kısımlar kendini gizler: birincil olmayan bir ekranda çentik, biçimli bulanıklık, adanın yanındaki tıklamaların alttaki pencereye geçmesi, kayıt, mikrofon ve kamera göstergeleri, kilit açma, KDE Connect aramaları, güncelleme sayısı, D-Bus API'si, takvim hesapları ve tüm parola ve anahtarlar (KDE Cüzdan'da durur), tema dosyaları, indirme takibi, Bulut ve Yapay Zeka yardımcıları.
+Yerel modül olmadan widget yine çalışır; ona ihtiyaç duyan her özellik bozulmak yerine gösterildiği yerde bunu ve neyin kurulacağını söyler: birincil olmayan bir ekranda çentik, biçimli bulanıklık, adanın yanındaki tıklamaların alttaki pencereye geçmesi, kayıt, mikrofon ve kamera göstergeleri, kilit açma, KDE Connect aramaları, güncelleme sayısı, D-Bus API'si, takvim hesapları ve tüm parola ve anahtarlar (KDE Cüzdan'da durur), tema dosyaları, indirme takibi, program başlatan düğmeler, Bulut ve Yapay Zeka yardımcıları.
 
 **İsteğe bağlı programlar.** Hiçbiri zorunlu değil; her biri bir şey ekler.
 
@@ -146,16 +190,18 @@ Ya da hepsi, kopyalayıp yapıştırılacak tek satır olarak:
 git clone https://github.com/Phobby/plasma-island.git && cd plasma-island && ./install.sh && systemctl --user restart plasma-plasmashell
 ```
 
-`install.sh` parola istemez ve hiçbir şey indirmez: widget'ı `kpackagetool6` ile kullanıcınıza kurar, yerel modülü CMake ile derleyip `~/.local/lib/qml` altına koyar, `island-push` aracını `~/.local/bin` altına koyar ve modülü plasmashell'e görünür kılar (`~/.config/environment.d/90-dynamicisland.conf` içinde `QML_IMPORT_PATH`). Yeniden çalıştırmak yerinde günceller.
+`install.sh` parola istemez ve hiçbir şey indirmez: widget'ı `kpackagetool6` ile kullanıcınıza kurar, yerel modülü CMake ile derleyip `~/.local/lib/qml` altına koyar, `island-push` aracını `~/.local/bin` altına koyar ve modülü plasmashell'e görünür kılar (`~/.config/environment.d/90-dynamicisland.conf` içinde `QML_IMPORT_PATH`). Yeniden çalıştırmak yerinde günceller. `main` dalının bir klonu [Yenilikler](#yenilikler) bölümündeki her şeyi getirir.
 
 | | |
 |---|---|
-| Yalnızca widget, yerel modül olmadan | `./install.sh --no-native` |
+| Yalnızca widget, yerel modül olmadan | `./install.sh --no-native` (modül isteyen özellikler o zaman bunu söyler) |
 | Elle | `kpackagetool6 -t Plasma/Applet -i org.phobby.dynamicisland` (güncellemek için `-u`) |
 | Güncelleme | Yeni sürüm çıkınca ada sorar: *Güncelle* onu indirir, derler, kurar ve kabuğu yeniden başlatır (aşağıya bakın). Elle: `git pull`, sonra `./install.sh` ve plasmashell'i yeniden başlatın |
 | Kaldırma | `./install.sh --remove`, sonra plasmashell'i yeniden başlatın |
 
-**Güncelleme her şeyi korur.** Güncelleme yalnızca widget'ın dosyalarını ve yerel modülü değiştirir; önce hiçbir şey kaldırılmaz. Ayarlarınız, bağlı hesaplarınız, temalarınız ve verileriniz, hangi yolla güncellerseniz güncelleyin, olduğu gibi kalır.
+**Güncelleme her şeyi korur.** Güncelleme yalnızca widget'ın dosyalarını ve yerel modülü değiştirir; önce hiçbir şey kaldırılmaz. Ayarlarınız, bağlı hesaplarınız, temalarınız ve verileriniz, hangi yolla güncellerseniz güncelleyin, olduğu gibi kalır. Yeri ya da anlamı değişen ayarlar bir kez, kendiliğinden güncellenir (ayarların kendine ait bir sürümü vardır); bunun neyi koruduğu için [Yenilikler](#yenilikler) bölümüne bakın.
+
+<details><summary>Adadan ya da komutlarla güncelleme</summary>
 
 - **Adadan (0.2.0 ve sonrası).** Ada günde bir kez bu depodan en yeni sürüm numarasını okur. Daha yenisi varsa adada sorar: *Güncelle* o sürümü indirir (GitHub'daki etiketin arşivi), derler, kullanıcınız için kurar ve masaüstü kabuğunu yeniden başlatır; bu sırada ada ne kadar ilerlediğini gösterir. Ayarlar → Genel → *Adanın yeni sürümleri* ile *Hiç bakma*, *Bana sor* (geldiği hali) ve *Kendiliğinden kur* (o zaman yalnızca kabuk yeniden başlamadan önce sorar) arasında seçilir. Kurulum için yerel modül ve `curl` gerekir; modül yoksa ada yalnızca yeni sürüm olduğunu söyler.
 - **Elle, komutlarla.** Hangi sürüm kurulu, en yenisi hangisi (0.2.2 ve sonrası):
@@ -172,37 +218,39 @@ git clone https://github.com/Phobby/plasma-island.git && cd plasma-island && ./i
   sh ~/.local/share/plasma/plasmoids/org.phobby.dynamicisland/contents/scripts/island-update.sh latest --restart
   ```
 
-  Klonladığınız klasörde (güncelleyicisi olmayan 0.1.0'dan tek yol):
+  Klonladığınız klasörde (güncelleyicisi olmayan 0.1.0'dan tek yol ve `main` dalındakileri yayımlanmadan önce almanın yolu):
 
   ```bash
   git pull && ./install.sh && systemctl --user restart plasma-plasmashell
   ```
 
-**Masaüstünden kaldırılıp geri eklenen ada olduğu gibi gelir** (0.2.2 ve sonrası, yerel modülle). Plasma, widget kaldırılınca ayarlarını siler; ada bu yüzden ayarları `~/.local/share/dynamicisland/settings.json` dosyasında da tutar (yalnızca siz okuyabilirsiniz) ve yeni eklenen widget onları bir kez oradan okur. Sıfırdan başlamak için widget'ı eklemeden önce o dosyayı silin (ya da ayarlarda *Varsayılanlar*'ı kullanın).
+</details>
 
+**Masaüstünden kaldırılıp geri eklenen ada olduğu gibi gelir** (0.2.2 ve sonrası, yerel modülle). Plasma, widget kaldırılınca ayarlarını siler; ada bu yüzden ayarları `~/.local/share/dynamicisland/settings.json` dosyasında da tutar (yalnızca siz okuyabilirsiniz) ve yeni eklenen widget onları bir kez oradan okur. Sıfırdan başlamak için widget'ı eklemeden önce o dosyayı silin (ya da ayarlarda *Varsayılanlar*'ı kullanın).
 
 Kaldırma verilerinizi yerinde bırakır: `~/.local/share/dynamicisland/` (ayarlarınızın kopyası, eklediğiniz temalar, önerilerin öğrendikleri, saklanan Yapay Zeka sohbeti), `~/.cache/dynamicisland/` (buluttan alınan dosyalar), KDE Cüzdan'daki "Dynamic Island" klasörü ve widget'ı masaüstünden kaldırana kadar Plasma'nın kendi dosyasındaki ayarları. Gitmesini istiyorsanız elle silin.
 
 **Ekrana yerleştirme.** Ada kendi başına bir penceredir, bu yüzden widget'ın nereye eklendiği önemli değildir:
 
 1. Masaüstüne (ya da düzenleme kipindeki bir panele) sağ tıklayın → araç takımı (widget) ekleme penceresini açın (*Araç Takımları Ekle…*) → "Dinamik Ada".
-2. Orada küçük bir tutamaç simgesi belirir; adanın kendisi o ekranın üst ortasında durur.
-3. Çentik üst kenarla birleşir ve üst panelin üzerinde durur. Kenarlığını Ayarlar → Çentik bölümünden, yuvarlak sürümü Ayarlar → Görünüm → Şekil bölümünden seçin.
+2. Ada o ekranın üst ortasında belirir. Widget'ın kendisi yalnızca küçük bir tutamaç simgesidir ve masaüstü düzenlenirken görünür (taşımak ya da kaldırmak için).
+3. Çentik üst kenarla birleşir ve üst panelin üzerinde durur. Değiştirmek ya da oval düzeni seçmek için: Ayarlar → Görünüm → Düzen.
 
 Plasma'nın kendi ses açılır penceresi adanınkinin yanında görünmeye devam eder. Yalnızca birini bırakmak için: adada Ayarlar → Etkinlikler → "Ses, parlaklık ve ses çıkışı" seçeneğini kapatın ya da Sistem Ayarları → Ses içinden ses açılır pencerelerini kapatın. (Plasma'da parlaklık açılır penceresini kapatan bir ayar yok.)
 
 ## İlk adımlar
 
-- Çentiğin **üzerine gelin**: açılır. Uzaklaşın: kapanır (0,4 sn sonra; iki gecikme de Ayarlar → Genel içindedir).
+- **Tanıtım.** Yeni bir adanın ilk açılışı üç kısa adım gösterir: çentik ya da oval düzen, hangi sekmelerin açık olduğu ve bu bilgisayarda neyin eksik olduğu. *Atla* onu bitirir; Ayarlar → Tanılama → Hakkında onu yeniden gösterir.
+- Çentiğin **üzerine gelin**: açılır. Uzaklaşın: kapanır (0,4 sn sonra; Ayarlar → Genel → *Tepki*: Sakin, Dengeli ya da Canlı, ya da *Özelleştir* altında her gecikme elle).
 - Üstteki **sekmeler** sayfa değiştirir; liste olmayan her yerde fare tekerleği ya da iki parmakla kaydırma da öyle.
 - Çentiğe **tıklayın**: noktaya küçülür. Noktaya tıklayın: çentik geri gelir ([Nokta modu](#nokta-modu) kapatılabilir; o zaman tıklama adayı açar).
 - Menüsü için adaya **sağ tıklayın**; açık adanın sağ üstündeki dişli ayarları açar.
-- **Ayarlar → Düzen** sekmeleri gösterir, gizler ve sıralar. Yapay Zeka ve Bulut orada açılana kadar kapalıdır.
-- **Dil**: sistem Türkçe ise ada Türkçe, değilse İngilizce konuşur; Ayarlar → Dil bunu anında değiştirir.
+- **Ayarlar → Sekmeler** sekmeleri gösterir, gizler ve sıralar. Yapay Zeka ve Bulut orada açılana kadar kapalıdır.
+- **Dil**: sistem Türkçe ise ada Türkçe, değilse İngilizce konuşur; Ayarlar → Genel → *Dil* bunu anında değiştirir.
 
 ## Sekmeler
 
-Aşağıdaki her sekme aynı düzeni izler: ne işe yaradığı, bir klip, ne gördüğünüz, nasıl kullanıldığı ve (katlanmış olarak) ayarları ile sınırları.
+Aşağıdaki her sekme aynı düzeni izler: ne işe yaradığı, bir klip, ne gördüğünüz, nasıl kullanıldığı ve (katlanmış olarak) ayarları ile sınırları. Bir sekmenin kendi ayar sayfası, sekme açıkken ayarlar penceresinin kenar çubuğundadır.
 
 <!-- GIF: tabs-tour.gif | İmleç çentiği açıyor ve sekmeler boyunca ilerliyor: Medya, Sistem, Hava Durumu, Takvim; her sayfa çentiğin altında kayarak beliriyor. | Sekmelerde bir tur -->
 
@@ -217,7 +265,7 @@ Aşağıdaki her sekme aynı düzeni izler: ne işe yaradığı, bir klip, ne g�
 
 <details><summary>Ayarlar</summary>
 
-Ayarlar → Etkinlikler: öncelik sırası, ayrık ada, anlık olayın ne kadar kalacağı ve her olay ve etkinlik türü için bir anahtar.
+Ayarlar → Etkinlikler: bölünmüş ada, her olay ve etkinlik türü için bir anahtar, öncelik sırası ve katlanmış olarak: *Uyarı eşikleri* (pil, aygıt pili, CPU ve GPU sıcaklığı) ile *İndirme takibi ayrıntıları*.
 
 </details>
 
@@ -252,8 +300,8 @@ Ayarlar → Etkinlikler: öncelik sırası, ayrık ada, anlık olayın ne kadar 
 
 <details><summary>Ayarlar ve sınırlar</summary>
 
-- **Ayarlar:** Ayarlar → Genel → *Sistem görünümü* (Sabit / Dinamik). Ayarlar → Uyarılar: pil, aygıt pili ve sıcaklık eşikleri.
-- **Sınırlar:** değerler Plasma'nın algılayıcı servisinden (ksystemstats) gelir; çalışmıyorsa ada onu başlatır. Sürücünün sunmadığı bir algılayıcının kartı gizlenir. Tıklama için yerel modül ve `btop` 1.4 ya da daha yenisi gerekir.
+- **Ayarlar:** Ayarlar → Sekmeler → *Sistem görünümü* (Sabit / Dinamik). Ayarlar → Etkinlikler → *Uyarı eşikleri*: pil, aygıt pili ve sıcaklık.
+- **Sınırlar:** değerler Plasma'nın algılayıcı servisinden (ksystemstats) gelir; çalışmıyorsa ada onu başlatır. Sürücünün sunmadığı bir algılayıcının kartı gizlenir. Tıklama için yerel modül ve `btop` 1.4 ya da daha yenisi gerekir; yoksa kart hangisinin eksik olduğunu söyler.
 
 </details>
 
@@ -284,7 +332,7 @@ Ayarlar → Etkinlikler: öncelik sırası, ayrık ada, anlık olayın ne kadar 
 
 <details><summary>Ayarlar ve sınırlar</summary>
 
-- **Ayarlar:** Ayarlar → Genel: gelen bildirimleri göster, ne kadar süre. Rahatsız Etmeyin açıkken bekletilir ve sayılır.
+- **Ayarlar:** Ayarlar → Genel: gelen bildirimleri göster ve *Tepki* altında ne kadar süre. Rahatsız Etmeyin açıkken bekletilir ve sayılır.
 - **Sınırlar:** Plasma'nın kendi bildirim pencereleri kalır: ada bildirimleri bunlara ek olarak gösterir (Sistem Ayarları → Bildirimler içinden başka bir köşeye taşınabilirler).
 
 </details>
@@ -300,8 +348,8 @@ Ayarlar → Etkinlikler: öncelik sırası, ayrık ada, anlık olayın ne kadar 
 
 <details><summary>Ayarlar ve sınırlar</summary>
 
-- **Kullanılabilir düğmeler:** Rahatsız Etmeyin, Gece Işığı, güç profili, Bluetooth, Wi-Fi, güncellemeler, uçak modu, VPN, erişim noktası, ekran kaydı, ekran görüntüsü, kamera, mikrofon, ses, KDE Connect, telefonu bul, karanlık mod, uyanık tut, kilitle, hesap makinesi, Sistem Ayarları. Parçası eksik olan düğme soluk görünür.
-- **Ayarlar:** Ayarlar → Kontroller: aynı altı düğme, sırasıyla. Ayarlar → Düzen → Modüller: ses kaydırıcısı.
+- **Kullanılabilir düğmeler:** Rahatsız Etmeyin, Gece Işığı, güç profili, Bluetooth, Wi-Fi, güncellemeler, uçak modu, VPN, erişim noktası, ekran kaydı, ekran görüntüsü, kamera, mikrofon, ses, KDE Connect, telefonu bul, karanlık mod, uyanık tut, kilitle, hesap makinesi, Sistem Ayarları. Parçası eksik olan düğme soluk görünür ve neye ihtiyaç duyduğunu söyler.
+- **Ayarlar:** Ayarlar → Kontroller: aynı altı düğme, sırasıyla, ve **renkleri**: açıkken her biri kendi renginde ya da hepsi tek renk; kapalıyken adanın düğmeleri gibi ya da hepsi tek renk; ve bir düğmenin kendine ait rengi (açıkken canlı, kapalıyken soluk). Ayarlar → Sekmeler → *Modüller*: ses kaydırıcısı.
 - **Sınırlar:** parlaklık kaydırıcısı Plasma'nın kısabildiği bir ekran ister. Program başlatan düğmeler (ekran görüntüsü, hesap makinesi, kilitle…) yerel modül ister.
 
 </details>
@@ -379,7 +427,7 @@ Ayarlar → Etkinlikler: öncelik sırası, ayrık ada, anlık olayın ne kadar 
 
 - **Kaynaklar:** BetterNotes (bu bilgisayarda, hesapsız), Joplin (Web Clipper servisi ve belirteci), Simplenote (hesap), Memos (sunucunuz ve bir belirteç).
 - **Ayarlar:** Ayarlar → Notlar: bağlı uygulamalar, hızlı notların nereye gideceği, ne sıklıkla alınacakları, son notta devam etme.
-- **Sınırlar:** belirteçler KDE Cüzdan'da tutulur. Kilitli bir BetterNotes notu ana parolayı sorar (BetterNotes 0.1.15 ya da daha yenisi; daha eskisiyle ada notu uygulamada açmayı önerir); parola komutun standart girdisine gider ve hiçbir yerde saklanmaz. Zengin metinli notlar düz metin olarak gösterilir ve salt okunurdur.
+- **Sınırlar:** belirteçler KDE Cüzdan'da tutulur. Kilitli bir BetterNotes notu ana parolayı sorar (BetterNotes 0.1.15 ya da daha yenisi; daha eskisiyle ada notu uygulamada açmayı önerir); parola komutun standart girdisine gider ve hiçbir yerde saklanmaz. Zengin metinli notlar düz metin olarak gösterilir ve salt okunurdur. Bulunamayan ya da çok eski bir BetterNotes, ne yapılacağıyla birlikte sekmede söylenir.
 - **Teşekkür:** BetterNotes'u [thebanri](https://github.com/thebanri/BetterNotes) geliştiriyor. Uygulama ve bu sekmenin konuştuğu komut satırı arayüzü için teşekkürler.
 
 </details>
@@ -391,7 +439,7 @@ Ayarlar → Etkinlikler: öncelik sırası, ayrık ada, anlık olayın ne kadar 
 <!-- GIF: ai-question.gif | Yapay Zeka sekmesinde bir soru yazılıyor; üç nokta yanıtın yolda olduğunu gösteriyor; yanıt biçimlendirilmiş metin olarak beliriyor. Hazır yanıtlar veren bir demo sunucusu yanıtlıyor. | Yapay Zeka: bir soru ve yanıtı (demo sağlayıcı) -->
 
 - **Ne görürsünüz:** bir alan, yazıldıkça görünen yanıt (Markdown, *Kopyala* düğmeli kutularda kod) ve çentikte, yanıt yoldayken üç nokta, siz başka yerdeyken "Cevap hazır".
-- **Nasıl kullanılır:** Ayarlar → Düzen: *Yapay Zeka*'yı açın. Sekmede neyin yanıt vereceğini bağlayın, sonra yazın; Enter gönderir, Shift+Enter yeni satırdır. *Yeni sohbet* baştan başlar; Escape klavyeyi geri verir.
+- **Nasıl kullanılır:** Ayarlar → Sekmeler: *Yapay Zeka*'yı açın. Sekmede neyin yanıt vereceğini bağlayın, sonra yazın; Enter gönderir, Shift+Enter yeni satırdır. *Yeni sohbet* baştan başlar; Escape klavyeyi geri verir.
 
 <details><summary>Kaynaklar, ayarlar ve sınırlar</summary>
 
@@ -408,7 +456,7 @@ Ayarlar → Etkinlikler: öncelik sırası, ayrık ada, anlık olayın ne kadar 
 <!-- GIF: cloud-browse.gif | Bulut sekmesi bir uzağın klasörlerini listeliyor; bir klasör açılıyor; bir dosya masaüstüne sürükleniyor; bir başkası yüklemek için bırakılıyor. Uydurma bir uzakla gösterilmiştir. | Bulut: gezin, sürükleyip indir, bırakıp yükle (uydurma bir uzak) -->
 
 - **Ne görürsünüz:** her rclone uzağı ve ne kadar dolu olduğu, boyut ve tarihiyle klasörleri ve dosyaları, bir istemcinin bildirdiği yerde senkron durumu (Syncthing, Dropbox) ve bulut dolmak üzereyken bir uyarı.
-- **Nasıl kullanılır:** Ayarlar → Düzen: *Bulut*'u açın. Klasörlere tıklayarak girin; bir dosyayı masaüstüne ya da dosya yöneticisine sürükleyin; yüklemek için dosyaları sekmeye bırakın (önce sorar). *İndir*, *Klasörde göster*, *Yolu kopyala* ve *Yükle…* aynısını sürüklemeden yapar.
+- **Nasıl kullanılır:** Ayarlar → Sekmeler: *Bulut*'u açın. Klasörlere tıklayarak girin; bir dosyayı masaüstüne ya da dosya yöneticisine sürükleyin; yüklemek için dosyaları sekmeye bırakın (önce sorar). *İndir*, *Klasörde göster*, *Yolu kopyala* ve *Yükle…* aynısını sürüklemeden yapar.
 
 <details><summary>Ayarlar ve sınırlar</summary>
 
@@ -450,7 +498,7 @@ Ayarlar → Etkinlikler: öncelik sırası, ayrık ada, anlık olayın ne kadar 
 <details><summary>Ayarlar, kapatma, daha az hareket</summary>
 
 - **Ayarlar → Kedi:** *Kediyi adanın yanında göster* (kapatır), taraf, boyut, tüy (gri, turuncu, siyah, beyaz, siyah-beyaz ya da kendi renginiz), neye tepki verdiği (müzik, Yapay Zeka ve sorular, olaylar), okşanıp tıklanabilirliği, *Sinirlenmesin*, ne kadar küstüğü, ne zaman uyuduğu, noktanın yanında uyuyup uyumadığı ya da gizlendiği. Sayfada her tepkiyi denemek için düğmeler vardır.
-- **Çentik modunda:** Ayarlar → Çentik → *Çentik modunda kediyi gizle*.
+- **Yalnızca çentik düzeninde:** Ayarlar → Görünüm → *Çentik ayrıntıları* → *Çentik düzeninde kediyi gizle*.
 - **Daha az hareket:** *Hareketi azalt: sabit pozlar; kafa sallama ve süzülen işaretler yok*. Masaüstünün kendi animasyonları kapalıyken (Sistem Ayarları) burada ne seçilirse seçilsin kıpırdamaz.
 
 </details>
@@ -471,7 +519,7 @@ Bir program ekranı PipeWire üzerinden kaydettiğinde ya da paylaştığında �
 <!-- GIF: notifications-arrival.gif | Bir mesaj geliyor: çentik genişleyip uygulamayı, göndereni ve ilk satırı gösteriyor; birkaç saniye sonra başka bir uygulamadan ikincisi; sonra yeniden saat. | Çentikte bildirimler -->
 <p align="center"><img src="docs/media/notifications-arrival.gif" alt="Bir mesaj geliyor: çentik genişleyip uygulamayı, göndereni ve ilk satırı gösteriyor; birkaç saniye sonra başka bir uygulamadan ikincisi; sonra yeniden saat." width="800"><br><sub>Çentikte bildirimler</sub></p>
 
-Çentik genişleyip uygulamayı, başlığı ve ilk satırı 4 sn gösterir (Ayarlar → Genel). Tıklama varsayılan eylemi çalıştırır, orta tıklama kapatır. Son üçü, saatleri ve *Tümünü temizle* ile [Bildirimler](#bildirimler) sekmesindedir.
+Çentik genişleyip uygulamayı, başlığı ve ilk satırı 4 sn gösterir (Ayarlar → Genel → *Tepki*). Tıklama varsayılan eylemi çalıştırır, orta tıklama kapatır. Son üçü, saatleri ve *Tümünü temizle* ile [Bildirimler](#bildirimler) sekmesindedir.
 
 ### İndirmeler ve dosya aktarımları
 
@@ -488,14 +536,14 @@ Dosya taşıyan her şey için tek tür etkinlik: adı, "412 MB / 1,8 GB", yüzd
 | `git clone`, `wget`, `curl`, `pip download` | Süreçlerinden bulunur; bayt ve hız yazdıklarından |
 | `apt`, PackageKit (Discover) | Aşama ve bilindiği yerde ilerleme |
 
-**Ayarlar → İndirme Takibi:** ana anahtar, her kaynak, arka plan işleri, gösterilmek için bir şeyin ne kadar sürmesi ve ne kadar büyük olması gerektiği, izlenen klasörler ve komutlar. Komutlar süreç listesine üç saniyede bir bakılarak bulunur; hiçbir şey kurulmaz ya da sarmalanmaz. Gerçek programlarla neyin denenip neyin denenmediği [başvuru belgesinde](docs/REFERENCE.md#file-transfers-what-can-and-cannot-be-tracked) (İngilizce) yazılıdır.
+**Ayarlar → Etkinlikler:** *İndirme takibi* anahtarı; *İndirme takibi ayrıntıları* altında her kaynak, arka plan işleri, gösterilmek için bir şeyin ne kadar sürmesi ve ne kadar büyük olması gerektiği, izlenen klasörler ve kendi komutlarınız. Komutlar süreç listesine üç saniyede bir bakılarak bulunur; hiçbir şey kurulmaz ya da sarmalanmaz. Gerçek programlarla neyin denenip neyin denenmediği [başvuru belgesinde](docs/REFERENCE.md#file-transfers-what-can-and-cannot-be-tracked) (İngilizce) yazılıdır.
 
 ### Gelen arama
 
 <!-- GIF: call-incoming.gif | Kedi çentiğin yanında uyuyor; bir arama geliyor: çentik yeşil bir telefon simgesi, arayanın adı ve numarası ve Mute düğmesiyle genişliyor, kedi uyanıyor. Uydurma bir arayan. | KDE Connect ile gelen arama (uydurma arayan) -->
 <p align="center"><img src="docs/media/call-incoming.gif" alt="Kedi çentiğin yanında uyuyor; bir arama geliyor: çentik yeşil bir telefon simgesi, arayanın adı ve numarası ve Mute düğmesiyle genişliyor, kedi uyanıyor. Uydurma bir arayan." width="800"><br><sub>KDE Connect ile gelen arama (uydurma arayan)</sub></p>
 
-KDE Connect ve eşleşmiş bir telefonla gelen arama çentiği arayan, numara ve *Sessize al* (telefonun zil sesini susturur) ile genişletir; açılınca aramanın süresiyle canlı etkinlik olarak kalır, cevapsız arama kısa süre gösterilir. Noktadayken de açılır. KDE Connect "arama bitti" göndermez: etkinlik, bildirimi kapanınca biter.
+KDE Connect ve eşleşmiş bir telefonla gelen arama çentiği arayan, numara ve *Sessize al* (telefonun zil sesini susturur) ile genişletir; açılınca aramanın süresiyle canlı etkinlik olarak kalır, cevapsız arama kısa süre gösterilir. Noktadayken de, ada tam ekranda yukarı çekilmişken de (kapatılmadıkça) açılır. KDE Connect "arama bitti" göndermez: etkinlik, bildirimi kapanınca biter.
 
 ### Gizlilik noktaları
 
@@ -516,24 +564,39 @@ Kurallar: bir takvim etkinliğinden önce, ekran kaydı sırasında ve Pomodoro 
 <p align="center"><img src="docs/media/notch-colours.gif" alt="Çentik opak siyaha dönüyor, sonra yeniden kendi gradyanına; ardından Aurora, Ocean ve Sunset görünümlerinden geçip Symbiot Siyahı'na dönüyor." width="800"><br><sub>Çentiğin renkleri ve dört hazır görünüm</sub></p>
 <!-- GIF: appearance-themes.gif | Ayarlarda hazır bir görünüm seçiliyor, bir gradyan ayarlanıyor ve çentik anında değişiyor; görünüm dosya olarak dışa aktarılıp yeniden ekleniyor. | Görünüm: temalar, gradyan, dışa aktarma ve ekleme -->
 
-**Ayarlar → Görünüm** iki kip sunar ve çentik renklerini onlardan alır (Ayarlar → Çentik → Renk).
+**Ayarlar → Görünüm**, yukarıdan aşağıya: çentiğin ayarlarıyla **düzen** (Çentik ya da Oval düzen), **Tam ekran**, sonra **görünüm**. Çentik renklerini görünümden alır (Çentik → *Renk*).
 
-- **Sistemi takip et**: arka plan, metin ve vurgu Plasma'dan gelir ve onunla birlikte anında değişir.
-- **Özel** (geldiği gibi: Symbiot Siyahı): hazır görünümler (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast ve beş gradyan: Symbiot Siyahı, Aurora, Sunset, Ocean, Midnight Blue) ve ince ayar: opaklık, bulanıklık, yatay konum, boyut (%80–120), köşe yuvarlaklığı, tek renk ya da gradyan, denetimlerin ve metnin renkleri. Pencere açıkken her değişiklik adada anında görünür. Bir görünüm bir adla kaydedilebilir.
-- **Şekil:** *Çentik (varsayılan)* ya da *Yuvarlak ada*. Üstten uzaklığı ve görünümün kendi kenarlığı ile gölgesini yalnızca yuvarlak ada kullanır; çentiğin kenarlığı Ayarlar → Çentik'tedir.
+- **Sistemi takip et**: arka plan, metin ve vurgu Plasma'dan (renk şemasından ya da Plasma stilinden) gelir ve onunla birlikte anında değişir.
+- **Özel** (geldiği gibi: Symbiot Siyahı): hazır görünümler (Oxygen Metallic, Breeze Dark, Breeze Light, Pure Glass, High Contrast ve beş gradyan: Symbiot Siyahı, Aurora, Sunset, Ocean, Midnight Blue), adla kaydedilen görünümler ve *İnce ayar*: opaklık, bulanıklık, yatay konum, **boyut (%80–240)**, köşe yuvarlaklığı, tek renk ya da gradyan, denetimlerin ve metnin renkleri, **düğme rengi** (düğmelerin, kutucukların ve kartların dolgusu: otomatik ya da okunur tutulan kendi renginiz) ve oval düzen için üstten uzaklık, kenarlık ve gölge. Pencere açıkken her değişiklik adada anında görünür.
 
 **Tema dosyaları.** *Temayı Dışa Aktar…* görünümü tek bir `*.islandtheme.json` dosyası olarak yazar. *Yeni Ekle…* bir dosyadan ya da mağazadan geri alır. Bir tema **yalnızca veridir**: bilinen alanlardan oluşan en fazla 64 kB JSON; kod yok, QML yok, resim yok. Başka her şey reddedilir; sağlama toplamı katalogdakiyle uyuşmayan bir indirme de reddedilir. Eklediğiniz temalar `~/.local/share/dynamicisland/themes/` altında tutulur.
 
 **Mağaza** bu deponun `catalog/` klasörünü listeler. Yalnızca sekmesini açtığınızda ve *İndir*'e bastığınızda istek yapar. Adresi tek bir sabittir (`contents/ui/ThemeFile.js` içinde `CATALOG_URL`): bu deponun `main` dalındaki `catalog/` klasörü, `raw.githubusercontent.com`'un sunduğu biçimiyle. Kataloğa kendi temanızı eklemek için: [CONTRIBUTING.md](CONTRIBUTING.md) (İngilizce).
 
-## Düzen ve dil
+## Ayarlar penceresi
+
+Açık adanın sağ üstündeki dişli onu açar (adanın sağ tık menüsü de). Sayfalar: **Genel**, **Görünüm**, **Sekmeler**, **Etkinlikler**, sonra kendi ayarları olan her sekme için bir sayfa (Hava Durumu, Kontroller, Araçlar, Alışkanlıklar, Takvim, Notlar, Yapay Zeka, Bulut), kenar çubuğunda yalnızca o sekme açıkken, ardından **Kedi**, **Öneriler** ve **Tanılama**.
+
+### Arama ve katlanan ayrıntılar
+
+- **Her sayfanın başındaki arama**, kenar çubuğunda olmayan bir sayfadakiler de dahil her ayarı adıyla, Türkçe ya da İngilizce (Türkçe karakterler olmadan da) bulur ve olduğu yerde açar.
+- **Her sayfa, açıldığı az sayıdaki ayarı gösterir** ve gerisini katlar (*Ayrıntılar*, *Özelleştir*, *İnce ayar*…); seçilen düzende ya da kipte geçerli olmayanlar gizlenir. Uzun açıklamalar "?" düğmelerinin arkasındadır.
+- **Tepki** (Ayarlar → Genel): *Sakin*, *Dengeli* (geldiği gibi) ya da *Canlı*; üzerine gelme ve kapanma gecikmelerini, olayların ve bildirimlerin ne kadar kalacağını ayarlar; *Özelleştir* her birini elle ayarlar.
+
+### Sekmeler ve dil
 
 <!-- GIF: language-switch.gif | Çentikte bir ekran kaydı görünürken adanın dili İngilizceden Türkçeye çevriliyor: "Screen recording", "Ekran kaydı" oluyor; sonra yeniden İngilizce. | Dil: çentiğin metni anında değişiyor -->
 <p align="center"><img src="docs/media/language-switch.gif" alt="Çentikte bir ekran kaydı görünürken adanın dili İngilizceden Türkçeye çevriliyor: &quot;Screen recording&quot;, &quot;Ekran kaydı&quot; oluyor; sonra yeniden İngilizce." width="800"><br><sub>Dil: çentiğin metni anında değişiyor</sub></p>
-<!-- GIF: layout-reorder.gif | Ayarlar → Düzen içinde bir sekme başka bir yere sürükleniyor ve biri kapatılıyor; adanın sekmeleri buna uyuyor. | Düzen: sekmeleri sıralama ve gizleme -->
+<!-- GIF: layout-reorder.gif | Ayarlar → Sekmeler içinde bir sekme başka bir yere sürükleniyor ve biri kapatılıyor; adanın sekmeleri buna uyuyor. | Sekmeler: sıralama ve gizleme -->
 
-- **Ayarlar → Düzen → Sekmeler:** bir sekmeyi tutamacından sürükleyip taşıyın; anahtarı onu gösterir ya da gizler. *Varsayılan sıraya döndür* hepsini eski yerine koyar. **Modüller:** bir sekmenin içindeki açılıp kapatılabilen parçalar.
-- **Ayarlar → Dil:** Otomatik, Türkçe ya da English; yalnızca ada ve ayarları için, Plasma'yı yeniden başlatmadan.
+- **Ayarlar → Sekmeler:** bir sekmeyi tutamacından sürükleyip taşıyın; anahtarı onu gösterir ya da gizler (en az biri açık kalır). *Varsayılan sıraya döndür* hepsini eski yerine koyar. **Modüller:** bir sekmenin içindeki açılıp kapatılabilen parçalar. **Sistem görünümü:** Sabit ya da Dinamik.
+- **Ayarlar → Genel → Dil:** sistem gibi, Türkçe ya da English; yalnızca ada ve ayarları için, Plasma'yı yeniden başlatmadan. Yanında **Saat biçimi**: sistemin bölgesinin yazdığı gibi ya da her zaman 24 veya 12 saat.
+
+### Tanılama ve eksik olanlar
+
+- **Bir özelliğin olduğu yerde** bir kart, neye ihtiyaç duyduğunu ve neyin eksik olduğunu, nedenini, nasıl edinileceğini (sayfası ve dağıtıma göre kopyalanacak bir komut), *Komut yolunu elle ver* ve *Tekrar kontrol et* düğmelerini gösterir. Ada o komutu asla çalıştırmaz. Yerel modül yoksa ona ihtiyaç duyan her özellik tam kurulum gerektiğini söyler.
+- **Ayarlar → Tanılama** bu bilgisayarı (adanın sürümü, oturum, Plasma, Qt, yerel modüller), her özelliği neye ihtiyaç duyduğu, bulunup bulunmadığı, nerede arandığı, yolu ve sürümüyle listeler; elle verebileceğiniz bir **komut yolu** da vardır. *Tanılama çıktısını kopyala*, hata bildirimi için raporu kullanıcı adınız, bilgisayarın adı ve ev klasörünüz olmadan panoya koyar. *Hakkında* bu sayfaya ve sorun bildirme formuna bağlantı verir ve tanıtımı yeniden gösterir.
+- Komutlar masaüstü kabuğunun `PATH`'inde, kurucuların koyduğu klasörlerde (`~/.local/bin`, `~/.cargo/bin`, npm'inki, nvm'inki, `/usr/local/bin`, `/snap/bin`, Flatpak'inki…) ve `~/Applications` içinde AppImage olarak aranır. Ayrıntılar [başvuru belgesinde](docs/REFERENCE.md#requirements-and-diagnostics) (İngilizce).
 
 ## Geliştiriciler için: kendi etkinliğini gönder
 
@@ -592,6 +655,8 @@ CPU, **tek** çekirdeğin yüzdesi olarak (makinede on iki iş parçacığı var
 - İmleç gerektiren her şey: üzerine gelme, açık bir sayfa, liste kaydırma, kediyi okşama
 <!-- PERF:END -->
 
+Çentik ve tam ekran kipleri bu ölçümlerden sonra geldi: tabloda yer almıyorlar.
+
 ## Gizlilik ve ağ
 
 **Telemetri yoktur**: ada kimseye hiçbir şey bildirmez ve hesabı yoktur. Ayarlar geldiği gibi bırakıldığında **günde bir ağ isteği yapar**: adanın en yeni sürüm numarasını bu depodan okur (`raw.githubusercontent.com`) ve o istekten başka hiçbir şey göndermez. Ayarlar → Genel → *Adanın yeni sürümleri* → *Hiç bakma* bunu kapatır; o zaman hiçbir ağ isteği yapılmaz (bu denetimin olmadığı 0.1.0 ile doğrulandı: varsayılan ayarlarla sıfırdan bir başlangıç `strace` altında 170 sn izlendi, bilgisayarın dışına hiçbir bağlantı yok). Her parça, siz onu kullanınca şunları yapar:
@@ -609,6 +674,7 @@ CPU, **tek** çekirdeğin yüzdesi olarak (makinede on iki iş parçacığı var
 | Güncellemeler | asla (PackageKit'in bu bilgisayardaki listesini okur) | hiçbiri | hiçbir şey |
 | Adanın kendi yeni sürümleri | sürüm numarası için günde bir kez `raw.githubusercontent.com` (*Hiç bakma* seçiliyken değil); arşiv için `github.com`, **yalnızca bir güncelleme kurulurken** | yalnızca güncelleme için `sh`, `curl`, `tar` ve indirilen `install.sh` | kurulurken indirilen arşiv ve kurucunun son çıktısı, `~/.cache/dynamicisland/update` içinde |
 | İndirme takibi | asla | hiçbiri (süreç listesini ve indirme klasörünü okur) | hiçbir şey |
+| Gereksinimler, Tanılama | asla | bir komutu aramak için hiçbiri (yerel modül klasörlere bakar); Tanılama sayfası bulduğu her komuta, kabuk olmadan, `--version` sorar | elle verdiğiniz bir komut yolu, ayarlarda; bulunanlar bir süre bellekte tutulur |
 | Öneriler | asla | hiçbiri | öğrendiklerini `~/.local/share/dynamicisland/suggestions.json` içine |
 | Alışkanlıklar, Pomodoro, Uygulamalar, Araçlar | asla | başlattığınız uygulamalar | verilerini ayarlara |
 | Pano | asla | hiçbiri | hiçbir şey (geçmiş Klipper'ındır) |
@@ -625,13 +691,18 @@ Bilinmesi gereken üç şey daha:
 | | |
 |---|---|
 | Ada görünmüyor | Kurulumdan sonra plasmashell'i yeniden başlatın (`systemctl --user restart plasma-plasmashell`), sonra widget'ı ekleyin. Günlükler: `journalctl --user -f \| grep -i -E "dynamicisland\|qml"` |
-| Bulanıklık yok, adanın yanındaki tıklamalar geçmiyor, sayfalar yerel modülün eksik olduğunu söylüyor | Yerel modül kurulu değil ya da plasmashell onu görmüyor: `./install.sh` çalıştırın (`--no-native` olmadan) ve plasmashell'i yeniden başlatın. Bir Plasma ya da Qt güncellemesinden sonra yeniden çalıştırın |
+| Eklediğim widget nerede? | Ada ekranın üstündedir; widget'ın kendi simgesi yalnızca masaüstü düzenlenirken görünür (masaüstüne sağ tıklayın → *Düzenleme Kipine Gir*) |
+| Ne eksik, neden? | **Ayarlar → Tanılama** her özelliğin neye ihtiyaç duyduğunu, bulunup bulunmadığını, nerede arandığını, yolu ve sürümü, oturumu, Plasma'yı ve Qt'yi listeler. Gereksinimi eksik bir özellik bunu gösterildiği yerde, kopyalanacak komutla söyler (ada onu asla çalıştırmaz). *Tanılama çıktısını kopyala* raporu, kullanıcı adınız, bilgisayarın adı ve ev klasörünüz çıkarılmış olarak hata bildirimi için panoya koyar |
+| Bulanıklık yok, adanın yanındaki tıklamalar geçmiyor, sayfalar yerel modülün eksik olduğunu söylüyor | Yerel modül kurulu değil ya da plasmashell onu görmüyor (KDE Store'dan `.plasmoid` olarak ya da `--no-native` ile kurulmuş): bu deponun bir klonundan `./install.sh` çalıştırın ve plasmashell'i yeniden başlatın; Ayarlar → Tanılama Kubuntu, Fedora ve Arch için derleme paketlerini gösterir. Bir Plasma ya da Qt güncellemesinden sonra yeniden çalıştırın |
+| Bir komut kurulu ama "bulunamadı" | Ada masaüstü kabuğunun `PATH`'ine, kurucuların komut koyduğu klasörlere (`~/.local/bin`, `~/.cargo/bin`, npm'inki, nvm'inki, `/usr/local/bin`, `/snap/bin`, Flatpak'inki…) ve `~/Applications` içindeki AppImage'lara bakar. Başka bir yerdeyse: Ayarlar → Tanılama → komut → *Komut yolu* |
+| Ada tam ekran bir pencerenin üzerinde gizleniyor (ya da gizlenmiyor) | Ayarlar → Görünüm → *Tam ekran*. Yalnızca adanın ekranındaki öndeki pencere sayılır; büyütülmüş bir pencere yalnızca *Büyütülmüş pencerelerde* ile. X11'de değil |
+| Çentik panelimin saatini ya da görev düğmelerini örtüyor | Ayarlar → Görünüm → Çentik → *Genişlik*: daha dar; ya da *Oval düzen* |
 | Ada tıklamaları tam olarak nerede alıyor? | plasmashell'i ortamında `DYNAMICISLAND_DEBUG_REGION=1` ile başlatın: bölgenin çevresine kırmızı bir çerçeve çizilir (`systemctl --user set-environment DYNAMICISLAND_DEBUG_REGION=1`, plasmashell'i yeniden başlatın; sonra `unset-environment`) |
 | Adaya yazı yazmak | Ada klavyeyi asla kendiliğinden almaz. Bir alana tıklanınca alır (Notlar, Yapay Zeka, bir yanıt) ve Escape ile geri verir; klavye ondayken ada açık kalır |
 | Ada açılınca iki ada ya da iki kedi görünüyor | Araç aynı ekrana iki kez eklenmiş. Artık yalnızca ilki görünür; diğerini kaldırın (ipucu metni gizli olduğunu söyler) |
-| BetterNotes kurulu ama "bulunamadı" | Ada `betternotes` komutunu (`PATH` üzerinde, `~/.local/bin` içinde) ve menü girdisini (Flatpak'inkini de) arar. Yalnızca indirildiği yerden çalıştırılan bir AppImage'ın ikisi de yoktur: `./BetterNotes-….AppImage install`. Sayfa yerel yardımcının eksik olduğunu söylüyorsa `./install.sh` çalıştırıp plasmashell'i yeniden başlatın |
+| BetterNotes kurulu ama "bulunamadı" | Ada `betternotes` komutunu (`PATH` üzerinde, `~/.local/bin` içinde, `~/Applications` içinde bir AppImage) ve menü girdisini (Flatpak'inkini de) arar. Başka bir yerde tutulan bir AppImage: yolunu Ayarlar → Tanılama'da verin ya da `./BetterNotes-….AppImage install`. Sayfa yerel yardımcının eksik olduğunu söylüyorsa `./install.sh` çalıştırıp plasmashell'i yeniden başlatın |
 | BetterNotes: kaydedemiyor, açamıyor, kilitli not | Kaydetmek için BetterNotes 0.1.13, bir notu uygulamada açmak için 0.1.14, kilitli notlar için 0.1.15 gerekir. Güncelledikten sonra çalışan eski BetterNotes'u kapatıp yeniden başlatın. `betternotes --diagnostics` kendi raporunu yazdırır |
-| Yapay Zeka: Claude Code ya da Antigravity kurulu ve giriş yapılmış, ama sekme "bulunamadı" diyor (ya da yalnızca anahtar isteyen kaynakları öneriyor) | 0.2.0'a kadar ada yalnızca masaüstü kabuğunun `PATH`'ine ve `~/.local/bin`'e bakıyordu; npm ile (nvm, kendi önekiniz, bun, Volta…) kurulan bir `claude` yalnızca uçbirimin `PATH`'indedir. 0.2.1 o klasörlere de bakar ve yerel modülünü gerektirir (`./install.sh` ya da adadaki *Güncelle*). Hâlâ bulunamıyorsa: uçbirimde `ln -s "$(command -v claude)" ~/.local/bin/claude`, sonra sekmeyi yeniden açın |
+| Yapay Zeka: Claude Code ya da Antigravity kurulu ve giriş yapılmış, ama sekme "bulunamadı" diyor (ya da yalnızca anahtar isteyen kaynakları öneriyor) | 0.2.0'a kadar ada yalnızca masaüstü kabuğunun `PATH`'ine ve `~/.local/bin`'e bakıyordu; npm ile (nvm, kendi önekiniz, bun, Volta…) kurulan bir `claude` yalnızca uçbirimin `PATH`'indedir. 0.2.1 o klasörlere de bakar ve yerel modülünü gerektirir (`./install.sh` ya da adadaki *Güncelle*). Hâlâ bulunamıyorsa: yolunu Ayarlar → Tanılama'da verin ya da uçbirimde `ln -s "$(command -v claude)" ~/.local/bin/claude`, sonra sekmeyi yeniden açın |
 | Bulut: "rclone bulunamadı" | rclone'u kurun ve kendi uçbiriminizde bir uzak ekleyin (`rclone config`); sayfa kopyalanacak komutları gösterir, hiçbirini çalıştırmaz |
 | Hava Durumu hiçbir şey göstermiyor | Bilerek boş başlar: sayfada *Konum Seç* |
 | Kaydırma liste yerine sayfayı çeviriyor (ya da tersi) | plasmashell'in ortamında `QT_LOGGING_RULES="island.wheel.debug=true"` her tekerlek adımını kimin aldığını günlüğe yazar |
@@ -642,8 +713,9 @@ Bilinmesi gereken üç şey daha:
 
 ## Bilinen sınırlar
 
-- **Yalnızca tek bir kurulum test edildi:** NVIDIA kartlı, tek monitörlü, Wayland üzerinde Plasma 6.6.6. X11, başka sürümler, birden fazla monitör ve kedinin taraf değiştirmesini gerektirecek kadar dar bir ekran denenmedi. X11'de çentik üst kenara gider ama panelin üzerinde kalıp kalmadığı pencere yöneticisine bağlıdır; tıklama bölgesi çizileni de kırptığından ışık kesilebilir.
-- **Çentik altındaki paneli örter** ve o kısma tıklanamaz; ada, panelin öğelerinin nerede olduğunu göremez (*En geniş* ayarını kullanın).
+- **Yalnızca tek bir kurulum test edildi:** NVIDIA kartlı, tek monitörlü, Wayland üzerinde Plasma 6.6.6. X11, başka sürümler, birden fazla monitör ve kedinin taraf değiştirmesini gerektirecek kadar dar bir ekran denenmedi. X11'de çentik üst kenara gider ama panelin üzerinde kalıp kalmadığı pencere yöneticisine bağlıdır, *Gizlenir* dışındaki tam ekran seçenekleri bir şey yapmaz ve tıklama bölgesi çizileni de kırptığından ışık kesilebilir.
+- **En yeni parçalar izole bir oturumda ve ekran dışında denetlendi**, her gerçek masaüstünde değil: tanıtımın gerçek bir adada görünüşü, ayarlar penceresinin kenar çubuğunun bir sekmenin sayfasını gizlemesi, tüm sayfalarda baştan sona klavyeyle gezinme ve bir ekran okuyucu denenmedi (bkz. [docs/UI-AUDIT.md](docs/UI-AUDIT.md#not-verified-on-a-real-screen), İngilizce).
+- **Çentik altındaki paneli örter** ve o kısma tıklanamaz; ada, panelin öğelerinin nerede olduğunu göremez (*Genişlik* ayarını kullanın).
 - **Bildirimler iki kez görünür**: Plasma'nın penceresi ve adanınki.
 - **Adaya sürükleme:** yalnızca görünen ada bir sürüklemeyi alır; ada ile başka bir program arasında dosya sürükleme Qt'nin sunduğu biçimde yazıldı ama iki program arasında denenemedi.
 - **İndirme takibi:** bir Flatpak tarayıcı, `git clone`, `wget`, `curl`, `pip download`, `apt download` ve bir PackageKit indirmesiyle denendi. `sudo apt update/install`, bir Chromium tarayıcı, Snap olarak Firefox ve tarayıcı içinde duraklatma denenmedi.
@@ -661,7 +733,7 @@ Her parça için neyin denendiğini de içeren uzun liste [başvuru belgesindedi
 
 - **Kod, testler, mağaza için bir tema:** [CONTRIBUTING.md](CONTRIBUTING.md) (İngilizce). `tools/run-tests`, çalışan bir ada gerektirmeyen tüm denetimleri koşturur.
 - **Bir güvenlik sorunu:** [SECURITY.md](SECURITY.md). Lütfen bunun için herkese açık bir kayıt açmayın.
-- **Nasıl yapıldığı:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Her özellik ayrıntısıyla: [docs/REFERENCE.md](docs/REFERENCE.md). Neler değişti: [CHANGELOG.md](CHANGELOG.md). (Bu belgeler İngilizcedir.)
+- **Nasıl yapıldığı:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Her özellik ayrıntısıyla: [docs/REFERENCE.md](docs/REFERENCE.md). Neler değişti: [CHANGELOG.md](CHANGELOG.md). Ayarların nasıl sadeleştirildiği: [docs/UI-AUDIT.md](docs/UI-AUDIT.md). (Bu belgeler İngilizcedir.)
 
 <!-- TODO(owner): yol haritası. Buraya yalnızca sahibinin karar verdikleri yazılır. -->
 
