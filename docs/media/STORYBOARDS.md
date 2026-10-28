@@ -35,6 +35,13 @@ rounded pill were taken out when the notch became the island's shape.
 | `island-push.gif` | an activity pushed with `island-push` |
 | `downloads-tracking.gif` | a download from the local test server, "Finished" |
 | `calendar-pinned.gif` | an event pinned before it starts, then started |
+| `window-dodge.gif` | *Slides up*; a `kcalc` window moved up under the notch (a KWin script, `tools/avoid/move.qml`): the notch slides up; the pointer at the top edge: the light, then open; the pointer goes: back up; the window moved down: the notch back (crop `560,0,800,300`) |
+| `dot-mode.gif` | a click on the notch: the dot; a click on the dot: the notch |
+
+The pointer of `window-dodge` and `dot-mode` is `tools/eipointer`: KWin's
+emulated input inside the headless session (never the real pointer). The
+pictures do not show a pointer, said in their captions; a click is made and
+the pointer moved away at once, since one resting on the notch opens it.
 
 Two of them use stand-ins inside the session, said in their captions: a
 screen recording is a GStreamer source of black pictures that a made-up
@@ -44,9 +51,9 @@ made-up caller.
 
 ## Need a pointer: to be recorded in a windowed session
 
-A headless session has no pointer, and KWin takes input only from programs it
-knows; nothing opens the island without one (hover, a click, the top edge).
-These clips are shot in a **windowed** session
+These need a pointer that can be seen, typing or a drag between programs, so
+they are shot by hand (or `tools/eipointer` for a first try headless; it
+draws no pointer). They are shot in a **windowed** session
 (`tools/nested-session start --windowed --audio`), with the pointer moved
 either by `tools/demo/pointer` (it moves the real pointer of the desktop: the
 desktop cannot be used meanwhile) or by hand, while
@@ -63,7 +70,6 @@ fit, the panel's clock at the right must not be in it).
 |---|---|---|
 | `notch-hover.gif` | none | rest on the notch: it opens; leave: it closes; push the pointer against the top edge above the notch: it opens; leave |
 | `tabs-tour.gif` | the player playing; `weatherLocation` and `calendarSources` from `settings.tsv` | hover; Media, System, Weather, Calendar tabs, a second on each; leave |
-| `dot-mode.gif` | a window (any, e.g. `kcalc`) right under the panel beside the notch | click the notch → dot; click a button of the window right beside the dot; click the dot → notch |
 | `activities-page.gif` | a timer running, a download running (`curl` from the local server) | hover; Activities tab; hover a card; leave |
 | `media-page.gif` | the player playing | hover; Media tab; next; drag the position; the wave button (glow on) |
 | `system-cards.gif` | none | hover; System tab; rest on CPU, then memory, then network |

@@ -12,9 +12,10 @@
 # to go on, a setting changed. The session is started if it is not running
 # (headless, with its silent PipeWire).
 #
-# Scenes marked "pointer" open the island, click and type: they need a windowed
-# session and tools/demo/pointer, which moves your real pointer. They are not
-# in this file yet; docs/media/STORYBOARDS.md says how each is shot.
+# A pointer where a scene needs one (dot-mode, window-dodge) is tools/eipointer:
+# KWin's emulated input in the headless session, never your real pointer; it
+# is not drawn in the pictures. Scenes that type or browse the pages are not in
+# this file yet; docs/media/STORYBOARDS.md says how each is shot.
 #
 # Everything shown is invented (names, messages, events, files); the weather
 # is a real forecast for a large city, not for where anyone lives. A screen
@@ -34,6 +35,8 @@ SESSION = str(REPO / "tools" / "nested-session")
 PORT = 8377
 # the top middle of a 1920x1080 screen: the notch with room for the cat, a notification and the glow
 NOTCH = "560,0,800,110"
+# (a scene with a window under the notch: more of the screen below it)
+CROPS = {"window-dodge": "560,0,800,300"}
 
 def root():
     return Path(os.environ.get("ISLAND_SESSION_DIR") or Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "dynamicisland-session")
@@ -85,6 +88,8 @@ def fresh(**settings):
     for kept in ("settings.json", "suggestions.json"):
         (root() / "home" / ".local" / "share" / "dynamicisland" / kept).unlink(missing_ok=True)
     session("shell")
+    # (the first opening's tour is not what a clip is about)
+    settings.setdefault("tourShown", "true")
     pairs = []
     for key, value in settings.items(): pairs += [key, value]
     if pairs:
@@ -217,6 +222,49 @@ def setup_calendar():
 def play_calendar():
     wait(12.0)
 
+def pointer(*steps):
+    inside(sys.executable, str(REPO / "tools" / "eipointer"), *steps)
+def kwin(script, *, declarative=False):
+    name = f"scene{time.time_ns()}"
+    method = "loadDeclarativeScript" if declarative else "loadScript"
+    r = subprocess.run(["qdbus6", "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting." + method, str(script), name] if "ISLAND_SESSION" in os.environ
+                       else [SESSION, "run", "qdbus6", "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting." + method, str(script), name],
+                       capture_output=True, text=True)
+    sid = r.stdout.strip()
+    inside("qdbus6", "org.kde.KWin", f"/Scripting/Script{sid}", "org.kde.kwin.Script.run")
+def move_window(points):
+    """The test window (kcalc) moved along these top-left corners, 20 ms a step (tools/avoid/move.qml)."""
+    path = root() / f"move-{time.time_ns()}.qml"
+    path.write_text((REPO / "tools" / "avoid" / "move.qml").read_text().replace("PATH", json.dumps(points)))
+    kwin(path, declarative=True)
+    wait(len(points) * 0.02 + 0.3)
+def place_window(x, y):
+    path = root() / "place.js"
+    path.write_text('for (const w of workspace.stackingOrder) if (w.resourceClass === "org.kde.kcalc") '
+                    '{ w.setMaximize(false, false); w.frameGeometry = {x: %d, y: %d, width: w.frameGeometry.width, height: w.frameGeometry.height}; }' % (x, y))
+    kwin(path)
+
+def setup_dodge():
+    fresh(catEnabled="false", fullscreenMode="2", peekStrip="2", peekDelay="900", peekGlow="true")
+    stop("tools/demo/player", "pw-play", "kcalc")
+    session("spawn", "kcalc", "kcalc"); wait(4); place_window(820, 200); wait(1)
+def play_dodge():
+    wait(1.0)
+    move_window([[820, y] for y in range(200, 9, -6)])            # up under the notch: it slides up
+    wait(1.6)
+    pointer("move", "1300", "160", "glide", "960", "0", "500", "sleep", "2600", "glide", "1300", "150", "400", "sleep", "300")
+    wait(1.4)
+    move_window([[820, y] for y in range(10, 201, 6)])             # away again: it comes back
+    wait(1.5)
+def done_dodge(): stop("kcalc")
+def setup_dot(): fresh(catEnabled="false"); stop("tools/demo/player", "pw-play"); pointer("move", "960", "600")
+def play_dot():
+    wait(1.0)
+    # (quick, and away at once: a pointer resting on the notch would open it)
+    pointer("move", "960", "16", "sleep", "40", "down", "sleep", "30", "up", "move", "960", "400")
+    wait(2.2)
+    pointer("move", "960", "4", "sleep", "40", "down", "sleep", "30", "up", "move", "960", "400")
+    wait(2.0)
 def nothing(): pass
 
 # name → (what the clip shows, set-up, play, after)
@@ -235,6 +283,8 @@ SCENES = {
     "island-push": ("an activity pushed by a program over D-Bus, counting up and finishing", setup_push, play_push, nothing),
     "downloads-tracking": ("a download from the local test server with its size, speed and time left", setup_download, play_download, nothing),
     "calendar-pinned": ("an event pinned before it starts, then started", setup_calendar, play_calendar, nothing),
+    "window-dodge": ("a window moved up under the notch: it slides up; the pointer at the edge lights it and opens it; the window goes, it comes back", setup_dodge, play_dodge, done_dodge),
+    "dot-mode": ("a click shrinks the notch to a dot, a click on the dot brings it back", setup_dot, play_dot, nothing),
 }
 
 def main():
@@ -261,7 +311,7 @@ def main():
         what, setup, play, after = SCENES[name]
         setup()
         command = f"{shlex.quote(sys.executable)} {shlex.quote(str(Path(__file__).resolve()))} --play {shlex.quote(name)}"
-        r = subprocess.run([SESSION, "run", str(HERE / "record"), "--out", str(out / f"{name}.gif"), "--crop", NOTCH, "--width", a.width,
+        r = subprocess.run([SESSION, "run", str(HERE / "record"), "--out", str(out / f"{name}.gif"), "--crop", CROPS.get(name, NOTCH), "--width", a.width,
                             "--fps", a.fps, "--colors", a.colors, "--while", command], text=True, capture_output=True)
         after()
         print((r.stdout or r.stderr).strip().splitlines()[-1] if (r.stdout or r.stderr).strip() else f"{name}: nothing recorded", flush=True)
