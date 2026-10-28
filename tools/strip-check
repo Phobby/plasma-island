@@ -80,6 +80,20 @@ time.sleep(2.2)
 opened = shot("glow-opened")
 check("and after the delay: open", len(rows(opened, differs(bg), 0, 200)) > 100, f"{len(rows(opened, differs(bg), 0, 200))} rows of the island")
 p.wait()
+# the light's reach: the pointer below the edge, within the closed notch's height (told by KWin,
+# nothing there takes a click), lights it without opening it; further down it does not
+tool("shell"); tool("set", "fullscreenMode", "2", "peekIdle", "true", "peekIdleDelay", "2", "notchMaxWidth", "310",
+                    "peekDelay", "1500", "peekStrip", "0", "peekGlow", "true", "tourShown", "true")
+p = pointer("move", "960", "600", "sleep", "4500", "glide", "960", "20", "300", "sleep", "1600", "glide", "960", "50", "300", "sleep", "1500")
+time.sleep(5.6)
+near = shot("glow-near")
+lit_rows = rows(near, differs(bg), 0, 30, 760, 1160)
+check("the pointer 20 px below the edge: the light", len(lit_rows) >= 8, f"{len(lit_rows)} rows lit")
+check("and not opened by it", len(rows(near, differs(bg), 40, 200)) == 0, f"{len(rows(near, differs(bg), 40, 200))} rows below")
+time.sleep(1.6)
+far = shot("glow-far")
+check("50 px below the edge: no light", len(rows(far, differs(bg), 0, 30, 760, 1160)) == 0, f"{len(rows(far, differs(bg), 0, 30, 760, 1160))} rows lit")
+p.wait()
 # the light switched off: nothing at all at the edge
 tool("set", "peekGlow", "false")
 p = pointer("move", "960", "500", "sleep", "3800", "glide", "960", "0", "200", "sleep", "800")

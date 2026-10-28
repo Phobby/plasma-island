@@ -8,7 +8,8 @@
   island; one that ran before keeps its own, settings version 4); at 0
   nothing of the island is drawn, and *Opening place* (1–8 px from the
   topmost row) still opens it. *Light at the edge*: a soft light where the
-  island is while the pointer is there, in the look's accent, the system's
+  island is while the pointer comes near (down to a little above the closed
+  notch's lower edge, told by KWin: nothing there takes a click), in the look's accent, the system's
   accent or a colour of one's own, at a strength set, with *Preview the
   light*; events colour it when nothing shows.
 - **Feedback from the settings** (Settings → Diagnostics → *Feedback*): a few

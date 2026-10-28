@@ -1275,7 +1275,23 @@ PlasmoidItem {
     readonly property rect peekEdgeRect: Qt.rect(peekEdge.x, 0, peekEdge.width, peekEdge.height)
     // The light at the edge, drawn up (PeekGlow.qml): while the pointer is at the place that opens it, and
     // in an event's colour while one waits; with nothing showing that light is there even when it is off.
+    // The pointer coming near: from the top edge down to a little above the closed notch's lower edge, as
+    // wide as the light, told by KWin (PointerBridge.qml) so that nothing there takes a click; without it
+    // (an older native module, no KWin) the light comes on at the opening place only.
+    Loader {
+        id: pointerNear
+        active: root.leads && root.cfg.peekGlow && (root.fullscreenMode === 2)
+        source: "PointerBridge.qml"
+        readonly property bool near: item !== null && item.near === true
+        onLoaded: {
+            item.active = Qt.binding(() => peek.away);
+            item.zone = Qt.binding(() => Qt.rect(Math.round(root.windowX + peekGlow.x), Math.round(root.islandScreen.y),
+                                                 Math.round(peekGlow.width),
+                                                 Math.max(1, Math.round(island.restBottom * theme.scale + root.ovalDown) - 4)));
+        }
+    }
     PeekGlow {
+        id: peekGlow
         objectName: "peekGlow"
         parent: peekEdge.parent
         z: 10
@@ -1288,7 +1304,7 @@ PlasmoidItem {
              : root.cfg.peekGlowColor === 2 ? root.cfg.peekGlowCustom
              : root.cfg.peekGlowColor === 0 ? theme.accent : Kirigami.Theme.highlightColor
         strength: root.cfg.peekGlowStrength / 100
-        lit: peek.away && (root.cfg.peekGlow && edgeHover.hovered || root.peekSignal !== "" && (root.cfg.peekGlow || root.cfg.peekStrip === 0))
+        lit: peek.away && (root.cfg.peekGlow && (edgeHover.hovered || pointerNear.near) || root.peekSignal !== "" && (root.cfg.peekGlow || root.cfg.peekStrip === 0))
     }
 
     // ---- where the island takes the pointer ------------------------------------------

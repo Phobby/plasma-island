@@ -89,7 +89,7 @@ QtObject {
         { key: "peekIdle", page: "configAppearance", label: Lang.i18n("On the desktop when nothing is going on, after"), context: "", fold: "", needs: "" },
         { key: "peekIdleDelay", page: "configAppearance", label: Lang.i18n("Waiting time on the desktop"), context: "", fold: "", needs: "peekIdle" },
         { key: "peekStrip", page: "configAppearance", label: Lang.i18n("Part that shows:"), context: "", fold: "", needs: "" },
-        { key: "peekGlow", page: "configAppearance", label: Lang.i18n("Light up when the pointer reaches it"), context: Lang.i18n("Light at the edge:"), fold: "", needs: "" },
+        { key: "peekGlow", page: "configAppearance", label: Lang.i18n("Light up when the pointer comes near"), context: Lang.i18n("Light at the edge:"), fold: "", needs: "" },
         { key: "peekGlowColor", page: "configAppearance", label: Lang.i18n("Light colour:"), context: "", fold: "", needs: "peekGlow" },
         { key: "peekGlowCustom", page: "configAppearance", label: Lang.i18n("A colour of my own"), context: "", fold: "", needs: "peekGlow" },
         { key: "peekGlowStrength", page: "configAppearance", label: Lang.i18n("Light strength:"), context: "", fold: Lang.i18n("Full-screen details"), needs: "peekGlow" },

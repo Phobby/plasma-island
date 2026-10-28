@@ -217,8 +217,13 @@ the edge, Shrink.)
   flicker). The oval island comes down to its usual place; between the edge
   and it the pointer still counts as on it.
 - **The light at the edge** (`PeekGlow.qml`; *Light at the edge*, on by
-  default): slid up, the pointer at the place that opens it lights the
-  edge over the island's place, a soft half ellipse 18 px deep (at 100 %),
+  default): slid up, the pointer coming near lights the edge over the
+  island's place: from the top edge down to 4 px above where the closed
+  notch's lower edge would be, as wide as the light, told by KWin
+  (`native/core/pointerwatch.h`: a KWin script loaded while the island is
+  slid up reads KWin's pointer position and calls back only when it goes
+  in or out), so that nothing there takes the pointer or a click; without
+  the native module, or KWin, at the place that opens it only. A soft half ellipse 18 px deep (at 100 %),
   fading in and out (180 ms) and still while it shows. Its colour: the
   island's look's accent, the system's accent colour (default) or one of
   one's own (`peekGlowColor`, `peekGlowCustom`); its strength 10–100 %

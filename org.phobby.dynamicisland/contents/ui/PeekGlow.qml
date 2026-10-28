@@ -3,8 +3,9 @@
 
     The light at the edge while the island is drawn up over a full-screen
     window (Appearance › Full screen): a soft glow from the top edge down,
-    over the island's place, while the pointer is at the place that opens it
-    or an event waits (a call, a recording…, in its colour). With nothing of
+    over the island's place, while the pointer comes near (from the edge down
+    to a little above the closed notch's lower edge: PointerBridge.qml) or is
+    at the place that opens it, or an event waits (a call, a recording…, in its colour). With nothing of
     the island showing (a strip of 0 px) it is the only sign of where it is.
     It fades in and out and holds still while it shows: nothing in it moves.
     Drawn only; it takes no pointer (main.qml's region is the strip's).

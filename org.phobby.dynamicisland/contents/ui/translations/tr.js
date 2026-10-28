@@ -1485,7 +1485,7 @@ var table = {
     "At most %1 an hour: the next one can be sent in %2 min.": "Saatte en fazla %1: bir sonraki %2 dk sonra gönderilebilir.",
     "Nothing": "Hiç",
     "Light at the edge:": "Kenar ışığı:",
-    "Light up when the pointer reaches it": "Fare oraya gelince parlasın",
+    "Light up when the pointer comes near": "Fare yaklaşınca parlasın",
     "Light colour:": "Işık rengi:",
     "The island's look": "Adanın görünümü",
     "Accent colour": "Vurgu rengi",

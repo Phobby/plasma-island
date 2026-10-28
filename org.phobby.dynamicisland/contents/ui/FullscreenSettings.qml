@@ -164,7 +164,7 @@ Kirigami.FormLayout {
         QQC2.CheckBox {
             id: glowCheck
             objectName: "setting-peekGlow"
-            text: Lang.i18n("Light up when the pointer reaches it")
+            text: Lang.i18n("Light up when the pointer comes near")
             Binding { target: glowCheck; property: "checked"; value: section.page.cfg_peekGlow }
             onToggled: section.page.cfg_peekGlow = checked
             Accessible.name: text

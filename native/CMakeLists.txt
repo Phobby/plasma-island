@@ -64,6 +64,7 @@ qt_add_qml_module(dynamicislandcore
         core/audiolevels.h core/audiolevels.cpp
         core/streamprocess.h core/streamprocess.cpp
         core/filedrag.h core/filedrag.cpp
+        core/pointerwatch.h core/pointerwatch.cpp
     OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qml/org/phobby/dynamicisland/core
 )
 target_include_directories(dynamicislandcore PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)
