@@ -47,14 +47,19 @@ PlasmoidItem {
     // (a title is whatever a player or a web page says it is)
     toolTipTextFormat: Text.PlainText
 
-    compactRepresentation: Kirigami.Icon {
-        source: Plasmoid.icon
-        active: mouse.containsMouse
-        MouseArea {
-            id: mouse
+    // The handle on the desktop: seen only while the desktop is edited (to move or remove the widget).
+    compactRepresentation: Item {
+        Kirigami.Icon {
             anchors.fill: parent
-            hoverEnabled: true
-            onClicked: island.expanded = !island.expanded
+            source: Plasmoid.icon
+            active: mouse.containsMouse
+            visible: !!Plasmoid.containment && !!Plasmoid.containment.corona && Plasmoid.containment.corona.editMode
+            MouseArea {
+                id: mouse
+                anchors.fill: parent
+                hoverEnabled: true
+                onClicked: island.expanded = !island.expanded
+            }
         }
     }
     fullRepresentation: Item {}
