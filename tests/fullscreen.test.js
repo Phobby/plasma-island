@@ -98,11 +98,12 @@ test("the cases seen in a real session", () => {
     check("on another desktop", F.fills([], full), false);
 });
 
-test("what the strip says: a call first, then a recording, a warning, the microphone", () => {
+test("what the strip says: a call first, then a warning; the microphone and a recording nothing", () => {
     check("nothing", F.signalOf({}), "");
     check("microphone", F.signalOf({ privacy: true }), "");
     check("warning over microphone", F.signalOf({ privacy: true, critical: true }), "critical");
-    check("recording over warning", F.signalOf({ privacy: true, critical: true, recording: true }), "recording");
+    check("recording", F.signalOf({ recording: true }), "");
+    check("warning over recording", F.signalOf({ privacy: true, critical: true, recording: true }), "critical");
     check("call over all", F.signalOf({ privacy: true, critical: true, recording: true, calling: true }), "call");
     check("ringing", F.signalOf({ ringing: true }), "call");
 });

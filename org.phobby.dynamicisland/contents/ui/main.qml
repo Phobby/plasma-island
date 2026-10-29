@@ -975,10 +975,8 @@ PlasmoidItem {
     readonly property bool ringing: activities.live.some(a => a.category === "call" && a.pulse)
     readonly property string peekSignal: !(peek.away || peek.shrunk) ? "" : Fullscreen.signalOf({
         ringing: root.ringing, calling: activities.live.some(a => a.category === "call"),
-        recording: activities.live.some(a => a.category === "recording"),
         critical: activities.waitingCritical })
     readonly property color peekSignalColor: root.peekSignal === "call" ? "#30d158"
-                                            : root.peekSignal === "recording" ? theme.danger
                                             : root.peekSignal === "critical" ? "#ffd60a"
                                             : "transparent"
     FullscreenPeek {
