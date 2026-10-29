@@ -85,13 +85,13 @@ function tooOften(times, now, most, span) {
 }
 
 // What the strip at the edge says, the most important first: "call" (one is ringing or
-// going on), "recording" (the screen), "critical" (a warning waits), "privacy" (the
-// microphone or the camera in use), "" nothing.
+// going on), "recording" (the screen), "critical" (a warning waits), "" nothing. The
+// microphone or the camera in use says nothing there: it lasts as long as a call or a
+// meeting does, and a light lit all that time over the full-screen window is in the way.
 function signalOf(s) {
     if (s.ringing === true || s.calling === true) return "call";
     if (s.recording === true) return "recording";
     if (s.critical === true) return "critical";
-    if (s.privacy === true) return "privacy";
     return "";
 }
 

@@ -100,7 +100,7 @@ test("the cases seen in a real session", () => {
 
 test("what the strip says: a call first, then a recording, a warning, the microphone", () => {
     check("nothing", F.signalOf({}), "");
-    check("microphone", F.signalOf({ privacy: true }), "privacy");
+    check("microphone", F.signalOf({ privacy: true }), "");
     check("warning over microphone", F.signalOf({ privacy: true, critical: true }), "critical");
     check("recording over warning", F.signalOf({ privacy: true, critical: true, recording: true }), "recording");
     check("call over all", F.signalOf({ privacy: true, critical: true, recording: true, calling: true }), "call");

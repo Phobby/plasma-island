@@ -10,7 +10,8 @@
     On the desktop too, where wanted: nothing going on in it for a while, it
     is drawn up or shrunk the same way, and anything that comes brings it back.
     Drawn up, the island rests: what moves in it stops, it takes no pointer,
-    and what comes waits (a call too, until it comes down).
+    and what comes waits (a call too, until it comes down). The light at the
+    edge holds still, unless an event waits: then it pulses.
 */
 import QtQuick
 import QtTest
@@ -34,6 +35,7 @@ Item {
     // (something live, for the size of the island with it)
     Activity { id: build; activityId: "peek-test"; category: "transfer"; icon: "run-build"; title: "Tëstwick"; progress: 40; active: false
                Component.onCompleted: activities.register(this) }
+    PeekGlow { id: glow; width: 200; height: 18 }
     Island {
         id: island
         width: 900
@@ -323,5 +325,19 @@ Item {
             compare(island.restBottom, islandTheme.windowTopPad + islandTheme.pillHeight, "the oval one: below its top room");
             islandTheme.notch = true;
         }
-    }
+    
+        function test_the_light_pulses_for_an_event() {
+            const shape = glow.children[0];
+            glow.lit = true;
+            tryCompare(glow, "opacity", 1);
+            wait(300);
+            compare(shape.opacity, 1, "lit by the pointer: it holds still");
+            glow.pulse = true;
+            tryVerify(() => shape.opacity < 0.5, 1500, "an event waits: it pulses");
+            tryCompare(shape, "opacity", 1, 2500, "and comes back up");
+            glow.pulse = false;
+            compare(shape.opacity, 1, "the event gone: still again");
+            glow.lit = false;
+        }
+}
 }

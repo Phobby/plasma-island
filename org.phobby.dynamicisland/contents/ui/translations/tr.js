@@ -1350,7 +1350,7 @@ var table = {
     "Only across the island's place at the top: the rest of the edge is the full-screen window's. A browser or a video player shows its own bar when the pointer reaches its top edge; where that gets in the way, keep the width small.": "Yalnızca üstte adanın bulunduğu aralıkta: kenarın geri kalanı tam ekran pencerenindir. Tarayıcılar ve video oynatıcılar fare üst kenara gelince kendi çubuklarını gösterir; bu ikisi çakışırsa genişliği küçük tut.",
     "Important events:": "Önemli olaylar:",
     "Open in full screen too, for an incoming call": "Gelen aramada tam ekranda da aç",
-    "Everything else only colours the part that shows: green for a call, red for a screen recording, orange or green for the microphone or the camera, yellow for a critical warning.": "Diğer her şey yalnızca görünen parçayı renklendirir: arama için yeşil, ekran kaydı için kırmızı, mikrofon ya da kamera için turuncu ya da yeşil, kritik uyarı için sarı.",
+    "Everything else only colours the part that shows: green for a call, red for a screen recording, yellow for a critical warning. The microphone and the camera in use colour nothing there.": "Diğer her şey yalnızca görünen parçayı renklendirir: arama için yeşil, ekran kaydı için kırmızı, kritik uyarı için sarı. Kullanılan mikrofon ve kamera orada hiçbir şeyi renklendirmez.",
     "Full screen:": "Tam ekran:",
     "While it is open over a window that fills the screen (Full screen, below: sliding up or shrinking); as usual: the size and width set for it everywhere.": "Ekranı kaplayan bir pencerenin üstünde açıkken (aşağıdaki Tam ekran: yukarı çekilince ya da küçülünce); her zamanki gibi: her yer için ayarlanan boyut ve genişlik.",
     "Waiting time on the desktop": "Masaüstünde bekleme süresi",

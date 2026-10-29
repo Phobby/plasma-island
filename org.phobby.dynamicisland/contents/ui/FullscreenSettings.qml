@@ -412,7 +412,7 @@ Kirigami.FormLayout {
             }
             Hint {
                 visible: section.opensAtEdge
-                text: Lang.i18n("Everything else only colours the part that shows: green for a call, red for a screen recording, orange or green for the microphone or the camera, yellow for a critical warning.")
+                text: Lang.i18n("Everything else only colours the part that shows: green for a call, red for a screen recording, yellow for a critical warning. The microphone and the camera in use colour nothing there.")
             }
         }
     }
