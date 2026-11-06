@@ -5,7 +5,7 @@
 A notch joined to the top edge of your KDE Plasma desktop: music, downloads, timers, calls and notifications show in it, and hovering opens its pages below.
 
 [![Licence: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#licence-and-thanks)
-![Version 0.2.2](https://img.shields.io/badge/version-0.2.2-informational.svg)
+![Version 0.3.0](https://img.shields.io/badge/version-0.3.0-informational.svg)
 ![Plasma 6](https://img.shields.io/badge/Plasma-6-1d99f3.svg)
 ![Wayland](https://img.shields.io/badge/tested%20on-Wayland-6f42c1.svg)
 
@@ -20,7 +20,7 @@ A notch joined to the top edge of your KDE Plasma desktop: music, downloads, tim
 
 ## Contents
 
-- [What's new since 0.2.2](#whats-new-since-022)
+- [What's new in 0.3.0](#whats-new-in-030)
 - [The notch](#the-notch): [with a top panel](#with-a-top-panel) · [Notch settings](#notch-settings) · [Full screen](#full-screen) · [Dot mode](#dot-mode) · [States](#states)
 - [Highlights](#highlights)
 - [Requirements](#requirements)
@@ -34,9 +34,9 @@ A notch joined to the top edge of your KDE Plasma desktop: music, downloads, tim
 - [For developers: push your own activity](#for-developers-push-your-own-activity)
 - [Performance](#performance) · [Privacy and the network](#privacy-and-the-network) · [Troubleshooting](#troubleshooting) · [Known limits](#known-limits) · [Contributing and security](#contributing-and-security) · [Licence and thanks](#licence-and-thanks)
 
-## What's new since 0.2.2
+## What's new in 0.3.0
 
-These are on the `main` branch and come with an installation from a clone of it ([Installing](#installing-updating-removing)). **They are not in a tagged release yet:** *Update* on an installed 0.2.2 island does not bring them until the next version is published. Everything is listed in the [CHANGELOG](CHANGELOG.md#unreleased).
+These come with 0.3.0: *Update* on an installed 0.2.2 island brings them once 0.3.0 is published, and an installation from a clone of `main` has them now ([Installing](#installing-updating-removing)). Everything is listed in the [CHANGELOG](CHANGELOG.md#030-2026-11-06).
 
 | | |
 |---|---|
@@ -196,7 +196,7 @@ Or all of it as one line to copy and paste:
 git clone https://github.com/Phobby/plasma-island.git && cd plasma-island && ./install.sh && systemctl --user restart plasma-plasmashell
 ```
 
-`install.sh` asks for no password and downloads nothing: it installs the widget for your user with `kpackagetool6`, builds the native module with CMake and puts it in `~/.local/lib/qml`, puts `island-push` in `~/.local/bin`, and makes the module visible to plasmashell (`QML_IMPORT_PATH` in `~/.config/environment.d/90-dynamicisland.conf`). Running it again upgrades in place. A clone of `main` brings everything in [What's new](#whats-new-since-022).
+`install.sh` asks for no password and downloads nothing: it installs the widget for your user with `kpackagetool6`, builds the native module with CMake and puts it in `~/.local/lib/qml`, puts `island-push` in `~/.local/bin`, and makes the module visible to plasmashell (`QML_IMPORT_PATH` in `~/.config/environment.d/90-dynamicisland.conf`). Running it again upgrades in place. A clone of `main` brings everything in [What's new](#whats-new-in-030).
 
 | | |
 |---|---|
@@ -205,7 +205,7 @@ git clone https://github.com/Phobby/plasma-island.git && cd plasma-island && ./i
 | Update | The island asks when there is a new version: *Update* fetches it, builds it, installs it and restarts the shell (see below). By hand: `git pull`, then `./install.sh` and restart plasmashell |
 | Remove | `./install.sh --remove`, then restart plasmashell |
 
-**Updating keeps everything.** An update only replaces the widget's files and the native module; nothing is removed first. Your settings, connected accounts, themes and data stay as they are, whichever way you update. Settings that changed their place or meaning are brought up to date once, by themselves (the settings have a version of their own); see [What's new](#whats-new-since-022) for what that keeps.
+**Updating keeps everything.** An update only replaces the widget's files and the native module; nothing is removed first. Your settings, connected accounts, themes and data stay as they are, whichever way you update. Settings that changed their place or meaning are brought up to date once, by themselves (the settings have a version of their own); see [What's new](#whats-new-in-030) for what that keeps.
 
 <details><summary>Updating from the island, or with commands</summary>
 

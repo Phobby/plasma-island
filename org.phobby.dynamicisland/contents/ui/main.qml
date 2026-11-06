@@ -1066,6 +1066,8 @@ PlasmoidItem {
         location: PlasmaCore.Types.Floating
         backgroundHints: PlasmaCore.Dialog.NoBackground
         hideOnWindowDeactivate: false
+        // Not transient for the view the widget sits in: an auto-hiding panel stays shown while a window transient for it is visible.
+        transientParent: null
         // (in notch mode the island is in its own window, when there is one)
         visible: root.leads && root.notchWindow === null && !peek.hidden
 

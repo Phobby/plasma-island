@@ -23,6 +23,8 @@ Window {
     property bool keyboard: false
 
     title: "Dynamic Island"
+    // (not transient for the widget's panel: an auto-hiding panel would stay shown, see main.qml's Dialog)
+    transientParent: null
     color: "transparent"
     LayerShell.Window.layer: LayerShell.Window.LayerOverlay
     LayerShell.Window.anchors: LayerShell.Window.AnchorTop

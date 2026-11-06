@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-11-06)
 
 ### Added
 - **Nothing showing, a light at the edge** (Settings → Appearance → Full
@@ -114,6 +114,11 @@
   see it (settings schema 3).
 
 ### Fixed
+- **An auto-hiding panel hides again with the island in it.** Put in a
+  panel set to hide by itself, the island's window was taken as that
+  panel's own popup, and Plasma keeps a panel shown while one of its popups
+  is open: the panel stayed. The island's windows (the Dialog and the
+  notch's window) no longer belong to the panel.
 - **A window at the notch's edge no longer sends it back and forth.** With
   *Shrinks to a small nub* (and with a size or width set for over a
   full-screen window) a window held at the outer part of the notch made it

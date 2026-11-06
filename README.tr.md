@@ -5,7 +5,7 @@
 KDE Plasma masaüstünün üst kenarıyla birleşen bir çentik: müzik, indirmeler, zamanlayıcılar, aramalar ve bildirimler onda görünür, üzerine gelince sayfaları aşağıya açılır.
 
 [![Lisans: GPL-2.0-or-later](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](#lisans-ve-teşekkürler)
-![Sürüm 0.2.2](https://img.shields.io/badge/version-0.2.2-informational.svg)
+![Sürüm 0.3.0](https://img.shields.io/badge/version-0.3.0-informational.svg)
 ![Plasma 6](https://img.shields.io/badge/Plasma-6-1d99f3.svg)
 ![Wayland](https://img.shields.io/badge/tested%20on-Wayland-6f42c1.svg)
 
@@ -38,7 +38,7 @@ Klipler arayüz İngilizceyken kaydedilmiştir; ada Türkçe de konuşur (Ayarla
 
 ## Yenilikler
 
-0.2.2'den bu yana gelenler `main` dalındadır ve onun bir klonundan yapılan kurulumla gelir ([Kurulum](#kurulum-güncelleme-kaldırma)). **Henüz etiketli bir sürümde değiller:** kurulu bir 0.2.2 adasındaki *Güncelle*, bir sonraki sürüm yayımlanana kadar bunları getirmez. Hepsinin listesi [CHANGELOG](CHANGELOG.md#unreleased) içindedir (İngilizce).
+Bunlar 0.3.0 ile gelir: kurulu bir 0.2.2 adasındaki *Güncelle*, 0.3.0 yayımlanınca bunları getirir; `main` dalının bir klonundan yapılan kurulumda şimdiden vardır ([Kurulum](#kurulum-güncelleme-kaldırma)). Hepsinin listesi [CHANGELOG](CHANGELOG.md#030-2026-11-06) içindedir (İngilizce).
 
 | | |
 |---|---|
